@@ -14,9 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.luum.michi.app.resources.Res
-import com.luum.michi.app.resources.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
+
+import michi.shared.generated.resources.Res
+import michi.shared.generated.resources.compose_multiplatform
 
 @Composable
 @Preview
