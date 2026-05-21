@@ -10,19 +10,19 @@ const val MichiAppName = "Michi"
 enum class MichiBrand(
     val appName: String,
     val postsLabel: String = "Posts",
-    val animationLabel: String = "Animation",
-    val illustrationLabel: String = "Illustration",
+    val animationLabel: String = "Animations",
+    val readingLabel: String = "Readings",
 ) {
     ANIMATION(
-        appName = "Animation",
+        appName = "Animations",
         postsLabel = "Posts",
         animationLabel = "Anime",
-        illustrationLabel = "Manga",
+        readingLabel = "Manga",
     ),
-    ILLUSTRATION(
-        appName = "Illustration",
+    READING(
+        appName = "Readings",
         postsLabel = "Posts",
         animationLabel = "Anime",
-        illustrationLabel = "Manga",
+        readingLabel = "Manga",
     ),
 }

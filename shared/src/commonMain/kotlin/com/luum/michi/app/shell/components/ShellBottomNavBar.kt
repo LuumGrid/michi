@@ -26,25 +26,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.MichiBrand
 import com.luum.michi.app.core.platform.PlatformIcons
 
 internal enum class ShellBottomTab(
     val brand: MichiBrand? = null,
 ) {
-    DISCOVERY,
-    SEARCH,
+    HOME,
     ANIMATION(MichiBrand.ANIMATION),
-    ILLUSTRATION(MichiBrand.ILLUSTRATION),
+    READING(MichiBrand.READING),
     ACCOUNT,
 }
 
-internal fun ShellBottomTab.label(): String = when (this) {
-    ShellBottomTab.DISCOVERY -> "Descubrimiento"
-    ShellBottomTab.SEARCH -> "Buscar"
-    ShellBottomTab.ANIMATION,
-    ShellBottomTab.ILLUSTRATION -> requireNotNull(brand).appName
-    ShellBottomTab.ACCOUNT -> "Cuenta"
+internal fun ShellBottomTab.label(strings: LanguageStrings): String = when (this) {
+    ShellBottomTab.HOME -> strings.tabHome
+    ShellBottomTab.ANIMATION -> strings.tabAnimation
+    ShellBottomTab.READING -> strings.tabReading
+    ShellBottomTab.ACCOUNT -> strings.tabAccount
 }
 
 @Composable
@@ -52,6 +52,8 @@ internal fun ShellBottomNavBar(
     selected: ShellBottomTab,
     onSelect: (ShellBottomTab) -> Unit,
 ) {
+    val strings = LanguageProvider.strings
+
     Column {
         HorizontalDivider(
             thickness = 0.5.dp,
@@ -112,13 +114,12 @@ internal fun ShellBottomNavBar(
                     )
                     Icon(
                         painter = when (tab) {
-                            ShellBottomTab.DISCOVERY -> PlatformIcons.Discovery
-                            ShellBottomTab.SEARCH -> PlatformIcons.Search
+                            ShellBottomTab.HOME -> PlatformIcons.Home
                             ShellBottomTab.ANIMATION -> PlatformIcons.Animation
-                            ShellBottomTab.ILLUSTRATION -> PlatformIcons.Illustration
+                            ShellBottomTab.READING -> PlatformIcons.Reading
                             ShellBottomTab.ACCOUNT -> PlatformIcons.Account
                         },
-                        contentDescription = tab.label(),
+                        contentDescription = tab.label(strings),
                         tint = iconColor,
                         modifier = Modifier
                             .padding(top = 8.dp)

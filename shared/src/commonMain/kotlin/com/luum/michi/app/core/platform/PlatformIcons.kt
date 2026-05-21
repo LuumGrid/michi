@@ -20,7 +20,6 @@ import com.luum.michi.app.resources.favorite
 import com.luum.michi.app.resources.filter_list
 import com.luum.michi.app.resources.forum
 import com.luum.michi.app.resources.forward
-import com.luum.michi.app.resources.gallery_thumbnail
 import com.luum.michi.app.resources.grid_layout_side
 import com.luum.michi.app.resources.heart_broken
 import com.luum.michi.app.resources.help_support
@@ -44,7 +43,6 @@ import com.luum.michi.app.resources.settings
 import com.luum.michi.app.resources.settings_accessibility
 import com.luum.michi.app.resources.switch_account
 import com.luum.michi.app.resources.user_activity
-import com.luum.michi.app.resources.video_library
 import org.jetbrains.compose.resources.painterResource
 
 object PlatformIcons {
@@ -54,12 +52,8 @@ object PlatformIcons {
     val Search: Painter @Composable get() = painterResource(Res.drawable.search)
     val Account: Painter @Composable get() = painterResource(Res.drawable.account_circle)
 
-    val Discovery: Painter @Composable get() = Home
     val Animation: Painter @Composable get() = painterResource(Res.drawable.animated_images)
-    val Illustration: Painter @Composable get() = painterResource(Res.drawable.auto_stories)
-    val Library: Painter @Composable get() = painterResource(Res.drawable.favorite)
-    val Profile: Painter @Composable get() = Account
-
+    val Reading: Painter @Composable get() = painterResource(Res.drawable.auto_stories)
     val FilterList: Painter @Composable get() = painterResource(Res.drawable.filter_list)
     val Mood: Painter @Composable get() = painterResource(Res.drawable.mood)
     val Settings: Painter @Composable get() = painterResource(Res.drawable.settings)
@@ -83,9 +77,6 @@ object PlatformIcons {
     val QrScanner: Painter @Composable get() = painterResource(Res.drawable.qr_code_scanner)
 
     val Posts: Painter @Composable get() = painterResource(Res.drawable.dynamic_feed)
-    val Shots: Painter @Composable get() = painterResource(Res.drawable.gallery_thumbnail)
-    val Hubs: Painter @Composable get() = painterResource(Res.drawable.video_library)
-    val Pods: Painter @Composable get() = painterResource(Res.drawable.animated_images)
 
     val Logout: Painter @Composable get() = painterResource(Res.drawable.logout)
     val ManageAccount: Painter @Composable get() = painterResource(Res.drawable.admin_panel_settings)

@@ -88,7 +88,7 @@ private val AccountPostPreviews = listOf(
 private enum class AccountTab {
     POSTS,
     ANIMATION,
-    ILLUSTRATION,
+    READING,
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -409,12 +409,12 @@ private fun AccountTabs(
                     painter = when (tab) {
                         AccountTab.POSTS -> PlatformIcons.Posts
                         AccountTab.ANIMATION -> PlatformIcons.Animation
-                        AccountTab.ILLUSTRATION -> PlatformIcons.Illustration
+                        AccountTab.READING -> PlatformIcons.Reading
                     },
                     contentDescription = when (tab) {
                         AccountTab.POSTS -> brand.postsLabel
                         AccountTab.ANIMATION -> brand.animationLabel
-                        AccountTab.ILLUSTRATION -> brand.illustrationLabel
+                        AccountTab.READING -> brand.readingLabel
                     },
                     selected = isSelected,
                 )
@@ -451,7 +451,7 @@ private fun AccountPostTile(
         when (tab) {
             AccountTab.POSTS -> post.colors
             AccountTab.ANIMATION -> post.colors.reversed()
-            AccountTab.ILLUSTRATION -> listOf(post.colors.first(), Color.Black)
+            AccountTab.READING -> listOf(post.colors.first(), Color.Black)
         }
     }
 
