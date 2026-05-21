@@ -1,0 +1,1 @@
+Reserved for shared network client setup, request execution, and error mapping.

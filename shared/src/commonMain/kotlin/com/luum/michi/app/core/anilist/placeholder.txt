@@ -1,0 +1,1 @@
+Reserved for AniList GraphQL transport contracts, DTOs, and shared mappers.
