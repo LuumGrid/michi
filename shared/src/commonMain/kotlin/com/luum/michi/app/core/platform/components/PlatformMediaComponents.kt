@@ -43,7 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 
-private val StandardCardHeight = 148.dp
+private val StandardCardHeight = 158.dp
+private val StandardCoverWidth = 93.dp
 private val ImageCornerRadius = 12.dp
 
 @Composable
@@ -56,15 +57,21 @@ fun PlatformMediaListCard(
     palette: List<Color>,
     icon: Painter,
     isComplete: Boolean,
-    statusLabel: String,
+    releaseLabel: String?,
+    behindLabel: String?,
+    fallbackStatusLabel: String,
     onOpen: () -> Unit,
     onEdit: () -> Unit,
     onIncrementPrimary: () -> Unit,
     modifier: Modifier = Modifier,
     primaryIncrementLabel: String = "+1",
+    primaryIncrementValueLabel: String? = null,
+    primaryIncrementEnabled: Boolean = !isComplete,
     secondaryProgressLabel: String? = null,
     secondaryProgressRatio: Float? = null,
     secondaryIncrementLabel: String = "+1",
+    secondaryIncrementValueLabel: String? = null,
+    secondaryIncrementEnabled: Boolean = !isComplete,
     onIncrementSecondary: (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -88,7 +95,7 @@ fun PlatformMediaListCard(
                 modifier = Modifier
                     .padding(8.dp) // Slight padding so corners are visible
                     .fillMaxHeight()
-                    .width(86.dp)
+                    .width(StandardCoverWidth)
                     .clip(RoundedCornerShape(ImageCornerRadius)) // Rounding on all 4 corners
                     .background(Brush.verticalGradient(palette)),
             ) {
@@ -98,17 +105,16 @@ fun PlatformMediaListCard(
                     tint = Color.White.copy(alpha = 0.9f),
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .size(34.dp),
+                        .size(37.dp),
                 )
             }
 
             // Content
-            Column(
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .padding(vertical = 12.dp, horizontal = 8.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(
@@ -135,35 +141,67 @@ fun PlatformMediaListCard(
                     }
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProgressActionsColumn(
+                    incrementValueLabel = primaryIncrementValueLabel,
+                    incrementLabel = primaryIncrementLabel,
+                    onIncrement = onIncrementPrimary,
+                    secondaryIncrementValueLabel = secondaryIncrementValueLabel,
+                    secondaryIncrementLabel = secondaryIncrementLabel,
+                    onIncrementSecondary = onIncrementSecondary,
+                    primaryEnabled = primaryIncrementEnabled,
+                    secondaryEnabled = secondaryIncrementEnabled,
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                )
+
+                Column(
+                    modifier = Modifier.align(Alignment.BottomStart),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    val statusLines = listOfNotNull(
+                        behindLabel,
+                        releaseLabel,
+                    ).ifEmpty { listOf(fallbackStatusLabel) }
+
+                    statusLines.forEach { line ->
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
                     ProgressRow(
-                        label = primaryProgressLabel,
                         ratio = primaryProgressRatio,
                         onIncrement = onIncrementPrimary,
                         incrementLabel = primaryIncrementLabel,
-                        isComplete = isComplete,
+                        incrementValueLabel = primaryIncrementValueLabel,
+                        secondaryIncrementLabel = secondaryIncrementLabel,
+                        secondaryIncrementValueLabel = secondaryIncrementValueLabel,
+                        onIncrementSecondary = onIncrementSecondary,
+                        primaryIncrementEnabled = primaryIncrementEnabled,
+                        secondaryIncrementEnabled = secondaryIncrementEnabled,
                         color = palette.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                        showActions = false,
                     )
 
                     if (secondaryProgressLabel != null && secondaryProgressRatio != null && onIncrementSecondary != null) {
                         ProgressRow(
-                            label = secondaryProgressLabel,
                             ratio = secondaryProgressRatio,
                             onIncrement = onIncrementSecondary,
                             incrementLabel = secondaryIncrementLabel,
-                            isComplete = isComplete,
+                            incrementValueLabel = null,
+                            secondaryIncrementLabel = null,
+                            secondaryIncrementValueLabel = null,
+                            onIncrementSecondary = null,
+                            primaryIncrementEnabled = secondaryIncrementEnabled,
+                            secondaryIncrementEnabled = false,
                             color = palette.getOrNull(1) ?: palette.firstOrNull() ?: MaterialTheme.colorScheme.secondary,
+                            showActions = false,
                         )
                     }
                 }
-
-                Text(
-                    text = statusLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
         }
     }
@@ -171,43 +209,121 @@ fun PlatformMediaListCard(
 
 @Composable
 private fun ProgressRow(
-    label: String,
     ratio: Float,
     onIncrement: () -> Unit,
     incrementLabel: String,
-    isComplete: Boolean,
+    incrementValueLabel: String?,
+    secondaryIncrementLabel: String?,
+    secondaryIncrementValueLabel: String?,
+    onIncrementSecondary: (() -> Unit)?,
+    primaryIncrementEnabled: Boolean,
+    secondaryIncrementEnabled: Boolean,
     color: Color,
+    showActions: Boolean = true,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
+            Column(
                 modifier = Modifier.weight(1f),
-            )
-            OutlinedButton(
-                onClick = onIncrement,
-                enabled = !isComplete,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(30.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(incrementLabel, style = MaterialTheme.typography.labelMedium)
+                LinearProgressIndicator(
+                    progress = { ratio },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = color,
+                    trackColor = color.copy(alpha = 0.15f),
+                )
+            }
+
+            if (showActions) {
+                Spacer(modifier = Modifier.width(10.dp))
+
+                ProgressActionsColumn(
+                    incrementValueLabel = incrementValueLabel,
+                    incrementLabel = incrementLabel,
+                    onIncrement = onIncrement,
+                    secondaryIncrementValueLabel = secondaryIncrementValueLabel,
+                    secondaryIncrementLabel = secondaryIncrementLabel,
+                    onIncrementSecondary = onIncrementSecondary,
+                    primaryEnabled = primaryIncrementEnabled,
+                    secondaryEnabled = secondaryIncrementEnabled,
+                )
             }
         }
+    }
+}
 
-        LinearProgressIndicator(
-            progress = { ratio },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.15f),
+@Composable
+private fun ProgressActionsColumn(
+    incrementValueLabel: String?,
+    incrementLabel: String,
+    onIncrement: () -> Unit,
+    secondaryIncrementValueLabel: String?,
+    secondaryIncrementLabel: String?,
+    onIncrementSecondary: (() -> Unit)?,
+    primaryEnabled: Boolean,
+    secondaryEnabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.End,
+    ) {
+        ProgressIncrementAction(
+            valueLabel = incrementValueLabel,
+        buttonLabel = incrementLabel,
+        onClick = onIncrement,
+        enabled = primaryEnabled,
+    )
+
+    if (secondaryIncrementLabel != null && onIncrementSecondary != null) {
+            ProgressIncrementAction(
+                valueLabel = secondaryIncrementValueLabel,
+            buttonLabel = secondaryIncrementLabel,
+            onClick = onIncrementSecondary,
+            enabled = secondaryEnabled,
         )
+    }
+}
+}
+
+@Composable
+private fun ProgressIncrementAction(
+    valueLabel: String?,
+    buttonLabel: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (valueLabel != null) {
+            Text(
+                text = valueLabel,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
+
+        OutlinedButton(
+            onClick = onClick,
+            enabled = enabled,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.height(30.dp),
+        ) {
+            Text(buttonLabel, style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 

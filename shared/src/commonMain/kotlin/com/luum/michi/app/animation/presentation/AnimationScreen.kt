@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.*
 
@@ -77,7 +78,7 @@ private data class AnimationListEntry(
     val progress: Int,
     val totalEpisodes: Int?,
     val score: String,
-    val nextEpisode: String?,
+    val nextEpisodeRelease: MediaReleaseDateTime?,
     val palette: List<Color>,
 )
 
@@ -90,7 +91,7 @@ private val InitialEntries = listOf(
         progress = 18,
         totalEpisodes = 28,
         score = "9.2",
-        nextEpisode = "Ep. 19 in 2d",
+        nextEpisodeRelease = MediaReleaseDateTime(day = 24, month = 5, year = 2026, hour = 18, minute = 30),
         palette = listOf(Color(0xFF0F766E), Color(0xFF99F6E4)),
     ),
     AnimationListEntry(
@@ -101,7 +102,7 @@ private val InitialEntries = listOf(
         progress = 11,
         totalEpisodes = 24,
         score = "8.4",
-        nextEpisode = "Ep. 12 tomorrow",
+        nextEpisodeRelease = MediaReleaseDateTime(day = 23, month = 5, year = 2026, hour = 21, minute = 0),
         palette = listOf(Color(0xFF854D0E), Color(0xFFFDE68A)),
     ),
     AnimationListEntry(
@@ -112,7 +113,7 @@ private val InitialEntries = listOf(
         progress = 7,
         totalEpisodes = 12,
         score = "8.0",
-        nextEpisode = "Ep. 8 in 5d",
+        nextEpisodeRelease = MediaReleaseDateTime(day = 27, month = 5, year = 2026, hour = 17, minute = 45),
         palette = listOf(Color(0xFF1E293B), Color(0xFF38BDF8)),
     ),
     AnimationListEntry(
@@ -123,7 +124,7 @@ private val InitialEntries = listOf(
         progress = 12,
         totalEpisodes = 12,
         score = "8.7",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF7C3AED), Color(0xFFC4B5FD)),
     ),
     AnimationListEntry(
@@ -134,7 +135,7 @@ private val InitialEntries = listOf(
         progress = 1,
         totalEpisodes = 1,
         score = "9.0",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF0F172A), Color(0xFF38BDF8)),
     ),
     AnimationListEntry(
@@ -145,7 +146,7 @@ private val InitialEntries = listOf(
         progress = 4,
         totalEpisodes = 4,
         score = "8.1",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF1F2937), Color(0xFFD1D5DB)),
     ),
     AnimationListEntry(
@@ -156,7 +157,7 @@ private val InitialEntries = listOf(
         progress = 10,
         totalEpisodes = 10,
         score = "8.8",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF713F12), Color(0xFFFDE68A)),
     ),
     AnimationListEntry(
@@ -167,7 +168,7 @@ private val InitialEntries = listOf(
         progress = 12,
         totalEpisodes = 12,
         score = "7.6",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF831843), Color(0xFFF9A8D4)),
     ),
     AnimationListEntry(
@@ -178,7 +179,7 @@ private val InitialEntries = listOf(
         progress = 1,
         totalEpisodes = 1,
         score = "8.5",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF164E63), Color(0xFF67E8F9)),
     ),
     AnimationListEntry(
@@ -189,7 +190,7 @@ private val InitialEntries = listOf(
         progress = 0,
         totalEpisodes = 13,
         score = "-",
-        nextEpisode = "Starts next season",
+        nextEpisodeRelease = MediaReleaseDateTime(day = 10, month = 7, year = 2026, hour = 20, minute = 0),
         palette = listOf(Color(0xFF991B1B), Color(0xFFFCA5A5)),
     ),
     AnimationListEntry(
@@ -200,7 +201,7 @@ private val InitialEntries = listOf(
         progress = 5,
         totalEpisodes = 12,
         score = "7.8",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF312E81), Color(0xFFA5B4FC)),
     ),
     AnimationListEntry(
@@ -211,7 +212,7 @@ private val InitialEntries = listOf(
         progress = 3,
         totalEpisodes = 12,
         score = "5.5",
-        nextEpisode = null,
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF3F3F46), Color(0xFFA1A1AA)),
     ),
     AnimationListEntry(
@@ -222,7 +223,7 @@ private val InitialEntries = listOf(
         progress = 45,
         totalEpisodes = 148,
         score = "9.5",
-        nextEpisode = "Rewatching",
+        nextEpisodeRelease = null,
         palette = listOf(Color(0xFF14532D), Color(0xFF4ADE80)),
     ),
 )
@@ -242,7 +243,7 @@ internal fun AnimationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (selectedSection == AnimationListSection.ALL) {
@@ -502,10 +503,15 @@ private fun AnimationListCard(
         score = entry.score,
         primaryProgressLabel = entry.progressLabel(),
         primaryProgressRatio = entry.progressRatio(),
+        primaryIncrementLabel = "+1 EP",
+        primaryIncrementValueLabel = entry.progressLabel(),
+        primaryIncrementEnabled = entry.canIncrement(),
         palette = entry.palette,
         icon = PlatformIcons.Animation,
-        isComplete = entry.totalEpisodes != null && entry.progress >= entry.totalEpisodes,
-        statusLabel = entry.nextEpisode ?: entry.status.label(LanguageProvider.strings),
+        isComplete = !entry.canIncrement(),
+        releaseLabel = entry.releaseLabel(LanguageProvider.strings),
+        behindLabel = entry.behindLabel(LanguageProvider.strings),
+        fallbackStatusLabel = entry.status.label(LanguageProvider.strings),
         onOpen = onOpen,
         onEdit = onEdit,
         onIncrementPrimary = onIncrementProgress,
@@ -514,12 +520,33 @@ private fun AnimationListCard(
 
 private fun AnimationListEntry.progressLabel(): String {
     val total = totalEpisodes?.toString() ?: "?"
-    return "$progress / $total eps"
+    return "$progress / $total"
 }
 
 private fun AnimationListEntry.progressRatio(): Float {
     val total = totalEpisodes ?: return 0f
     return if (total == 0) 0f else (progress.toFloat() / total).coerceIn(0f, 1f)
+}
+
+private fun AnimationListEntry.canIncrement(): Boolean {
+    val total = totalEpisodes
+    return total == null || progress < total
+}
+
+private fun AnimationListEntry.releaseLabel(strings: LanguageStrings): String? {
+    return nextEpisodeRelease?.let { release ->
+        strings.nextEpisodeReleaseLabel(episodeNumber = progress + 1, releaseDateTime = release)
+    }
+}
+
+private fun AnimationListEntry.behindLabel(strings: LanguageStrings): String? {
+    val total = totalEpisodes
+    val behind = if (total != null) total - progress else 0
+    return if (status == AnimationListSection.WATCHING && behind > 0) {
+        strings.episodesBehind(behind)
+    } else {
+        null
+    }
 }
 
 private fun AnimationListEntry.incremented(): AnimationListEntry {

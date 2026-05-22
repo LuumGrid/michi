@@ -1,19 +1,33 @@
 package com.luum.michi.app.core.language
 
+import com.luum.michi.app.core.model.MediaReleaseDateTime
+
 object SpanishLanguageStrings : LanguageStrings {
     override val languageLabel = "Idioma"
     override val logoutAction = "Cerrar sesion"
     override val notificationsAction = "Notificaciones"
-    override val tabHome = "Home"
-    override val tabAnimation = "Animations"
-    override val tabReading = "Readings"
-    override val tabAccount = "Account"
+    override val tabHome = "Inicio"
+    override val tabAnimation = "Animación"
+    override val tabReading = "Lectura"
+    override val tabAccount = "Cuenta"
     override val filterAction = "Filtros"
-    override val settingsAction = "Configuracion"
+    override val settingsAction = "Configuración"
     override val inUseLabel = "en uso"
     override val addAccountAction = "Agregar cuenta"
     override val discoveryTitle = "Descubrimiento"
     override val discoveryDescription = "Trending, temporadas y recomendaciones de AniList."
+    override val homeGreetingTitle = "Bienvenido de vuelta"
+    override val homeGreetingSubtitle = "Sigue lo que esta saliendo y encuentra lo que AniList esta comentando."
+    override val homeSearchPlaceholder = "Buscar en AniList"
+    override val homeSeasonalAction = "Temporada"
+    override val homeExploreAction = "Explorar"
+    override val homeReviewsAction = "Reviews"
+    override val homeCalendarAction = "Calendario"
+    override val homeReleasingTodayTitle = "Salen hoy"
+    override val homeTrendingAnimationTitle = "Animacion en tendencia"
+    override val homeTrendingReadingTitle = "Lectura en tendencia"
+    override val homeCommunityTitle = "Actividad de la comunidad"
+    override val homeCommunitySubtitle = "Publicaciones y actualizaciones recientes de AniList viviran aqui."
     override val searchTitle = "Buscar"
     override val searchDescription = "Busqueda de anime, manga, personajes, staff y estudios."
     override val libraryTitle = "Lista"
@@ -50,6 +64,22 @@ object SpanishLanguageStrings : LanguageStrings {
     override val removeAction = "Quitar"
     override val saveAction = "Guardar"
     override val entriesLabel = "entradas"
+    override fun episodesBehind(count: Int): String {
+        val unit = if (count == 1) "episodio" else "episodios"
+        val adjective = if (count == 1) "pendiente" else "pendientes"
+        return "$count $unit $adjective"
+    }
+    override fun chaptersBehind(count: Int): String {
+        val unit = if (count == 1) "capitulo" else "capitulos"
+        val adjective = if (count == 1) "pendiente" else "pendientes"
+        return "$count $unit $adjective"
+    }
+    override fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
+        return "Ep. $episodeNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
+    }
+    override fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
+        return "Cap. $chapterNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
+    }
     override val accountPostsLabel = "Publicaciones"
     override val accountFollowersLabel = "Seguidores"
     override val accountFollowingLabel = "Seguidos"
@@ -114,4 +144,19 @@ object SpanishLanguageStrings : LanguageStrings {
     override val settingsAboutTitle = "Acerca de Michi"
     override val settingsAboutSubtitle = "Politicas, version y terminos"
     override val backButton = "Volver"
+}
+
+private fun monthName(month: Int): String = when (month) {
+    1 -> "ene"
+    2 -> "feb"
+    3 -> "mar"
+    4 -> "abr"
+    5 -> "may"
+    6 -> "jun"
+    7 -> "jul"
+    8 -> "ago"
+    9 -> "sep"
+    10 -> "oct"
+    11 -> "nov"
+    else -> "dic"
 }

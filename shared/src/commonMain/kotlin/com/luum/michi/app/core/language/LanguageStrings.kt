@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.luum.michi.app.core.model.MediaReleaseDateTime
 
 interface LanguageStrings {
     val languageLabel: String
@@ -19,6 +20,18 @@ interface LanguageStrings {
     val addAccountAction: String
     val discoveryTitle: String
     val discoveryDescription: String
+    val homeGreetingTitle: String
+    val homeGreetingSubtitle: String
+    val homeSearchPlaceholder: String
+    val homeSeasonalAction: String
+    val homeExploreAction: String
+    val homeReviewsAction: String
+    val homeCalendarAction: String
+    val homeReleasingTodayTitle: String
+    val homeTrendingAnimationTitle: String
+    val homeTrendingReadingTitle: String
+    val homeCommunityTitle: String
+    val homeCommunitySubtitle: String
     val searchTitle: String
     val searchDescription: String
     val libraryTitle: String
@@ -55,6 +68,10 @@ interface LanguageStrings {
     val removeAction: String
     val saveAction: String
     val entriesLabel: String
+    fun episodesBehind(count: Int): String
+    fun chaptersBehind(count: Int): String
+    fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
+    fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     val accountPostsLabel: String
     val accountFollowersLabel: String
     val accountFollowingLabel: String

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.rememberPlatformLanguageSettingsLauncher
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformLanguageSwitch
 import com.luum.michi.app.core.platform.components.PlatformThemeSwitch
@@ -26,6 +27,7 @@ internal fun SettingsDetailContent(
     onToggleTheme: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
+    val openPlatformLanguageSettings = rememberPlatformLanguageSettingsLauncher()
 
     LazyColumn(
         modifier = Modifier
@@ -51,12 +53,16 @@ internal fun SettingsDetailContent(
                         subtitle = language.displayName,
                         icon = { PlatformIcons.Language },
                     ),
-                    onClick = { },
-                    trailingContent = {
-                        PlatformLanguageSwitch(
-                            selected = language,
-                            onSelect = onLanguageChange,
-                        )
+                    onClick = openPlatformLanguageSettings ?: { },
+                    trailingContent = if (openPlatformLanguageSettings == null) {
+                        {
+                            PlatformLanguageSwitch(
+                                selected = language,
+                                onSelect = onLanguageChange,
+                            )
+                        }
+                    } else {
+                        null
                     },
                 )
             }

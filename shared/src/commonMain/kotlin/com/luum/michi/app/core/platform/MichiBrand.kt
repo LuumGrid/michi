@@ -14,13 +14,13 @@ enum class MichiBrand(
     val readingLabel: String = "Readings",
 ) {
     ANIMATION(
-        appName = "Animations",
+        appName = MichiAppName,
         postsLabel = "Posts",
         animationLabel = "Anime",
         readingLabel = "Manga",
     ),
     READING(
-        appName = "Readings",
+        appName = MichiAppName,
         postsLabel = "Posts",
         animationLabel = "Anime",
         readingLabel = "Manga",

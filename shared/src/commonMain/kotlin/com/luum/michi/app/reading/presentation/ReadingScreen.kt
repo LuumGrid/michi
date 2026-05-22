@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.*
 
@@ -68,7 +69,7 @@ private data class ReadingListEntry(
     val volumesProgress: Int,
     val totalVolumes: Int?,
     val score: String,
-    val nextChapter: String?,
+    val nextChapterRelease: MediaReleaseDateTime?,
     val palette: List<Color>,
 )
 
@@ -83,7 +84,7 @@ private val InitialEntries = listOf(
         volumesProgress = 42,
         totalVolumes = null,
         score = "9.5",
-        nextChapter = "New chapter in 2w",
+        nextChapterRelease = MediaReleaseDateTime(day = 5, month = 6, year = 2026, hour = 0, minute = 0),
         palette = listOf(Color(0xFF1E293B), Color(0xFF64748B)),
     ),
     ReadingListEntry(
@@ -96,7 +97,7 @@ private val InitialEntries = listOf(
         volumesProgress = 18,
         totalVolumes = 18,
         score = "9.2",
-        nextChapter = null,
+        nextChapterRelease = null,
         palette = listOf(Color(0xFF450A0A), Color(0xFF991B1B)),
     ),
     ReadingListEntry(
@@ -109,7 +110,7 @@ private val InitialEntries = listOf(
         volumesProgress = 37,
         totalVolumes = 37,
         score = "9.3",
-        nextChapter = "On hiatus",
+        nextChapterRelease = null,
         palette = listOf(Color(0xFF064E3B), Color(0xFF059669)),
     ),
     ReadingListEntry(
@@ -122,7 +123,7 @@ private val InitialEntries = listOf(
         volumesProgress = 17,
         totalVolumes = null,
         score = "8.7",
-        nextChapter = "New chapter tomorrow",
+        nextChapterRelease = MediaReleaseDateTime(day = 23, month = 5, year = 2026, hour = 12, minute = 0),
         palette = listOf(Color(0xFF7C2D12), Color(0xFFEA580C)),
     ),
 )
@@ -142,7 +143,7 @@ internal fun ReadingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (selectedSection == ReadingListSection.ALL) {
@@ -374,16 +375,20 @@ private fun ReadingListCard(
         title = entry.title,
         subtitle = entry.format,
         score = entry.score,
-        primaryProgressLabel = entry.chaptersProgressLabel(),
+        primaryProgressLabel = entry.readingProgressLabel(),
         primaryProgressRatio = entry.chaptersProgressRatio(),
         primaryIncrementLabel = "+1 CH",
-        secondaryProgressLabel = entry.volumesProgressLabel(),
-        secondaryProgressRatio = entry.volumesProgressRatio(),
+        primaryIncrementValueLabel = entry.chaptersProgressLabel(),
+        primaryIncrementEnabled = entry.canIncrementChapters(),
         secondaryIncrementLabel = "+1 VO",
+        secondaryIncrementValueLabel = entry.volumesProgressLabel(),
+        secondaryIncrementEnabled = entry.canIncrementVolumes(),
         palette = entry.palette,
         icon = PlatformIcons.Reading,
-        isComplete = entry.isComplete(),
-        statusLabel = entry.nextChapter ?: entry.status.label(strings),
+        isComplete = !entry.canIncrementChapters(),
+        releaseLabel = entry.releaseLabel(strings),
+        behindLabel = entry.behindLabel(strings),
+        fallbackStatusLabel = entry.status.label(strings),
         onOpen = onOpen,
         onEdit = onEdit,
         onIncrementPrimary = onIncrementChapters,
@@ -428,12 +433,16 @@ private fun ReadingListSection.label(strings: LanguageStrings): String = when (t
 
 private fun ReadingListEntry.chaptersProgressLabel(): String {
     val total = totalChapters?.toString() ?: "?"
-    return "$chaptersProgress / $total chs"
+    return "$chaptersProgress / $total"
+}
+
+private fun ReadingListEntry.readingProgressLabel(): String {
+    return chaptersProgressLabel()
 }
 
 private fun ReadingListEntry.volumesProgressLabel(): String {
     val total = totalVolumes?.toString() ?: "?"
-    return "$volumesProgress / $total vol"
+    return "$volumesProgress / $total"
 }
 
 private fun ReadingListEntry.chaptersProgressRatio(): Float {
@@ -441,15 +450,35 @@ private fun ReadingListEntry.chaptersProgressRatio(): Float {
     return if (total == 0) 0f else (chaptersProgress.toFloat() / total).coerceIn(0f, 1f)
 }
 
+private fun ReadingListEntry.releaseLabel(strings: LanguageStrings): String? {
+    return nextChapterRelease?.let { release ->
+        strings.nextChapterReleaseLabel(chapterNumber = chaptersProgress + 1, releaseDateTime = release)
+    }
+}
+
+private fun ReadingListEntry.behindLabel(strings: LanguageStrings): String? {
+    val total = totalChapters
+    val behind = if (total != null) total - chaptersProgress else 0
+    return if (status == ReadingListSection.READING && behind > 0) {
+        strings.chaptersBehind(behind)
+    } else {
+        null
+    }
+}
+
 private fun ReadingListEntry.volumesProgressRatio(): Float {
     val total = totalVolumes ?: return 0f
     return if (total == 0) 0f else (volumesProgress.toFloat() / total).coerceIn(0f, 1f)
 }
 
-private fun ReadingListEntry.isComplete(): Boolean {
-    val chaptersDone = totalChapters != null && chaptersProgress >= totalChapters
-    val volumesDone = totalVolumes != null && volumesProgress >= totalVolumes
-    return chaptersDone || volumesDone
+private fun ReadingListEntry.canIncrementChapters(): Boolean {
+    val total = totalChapters
+    return total == null || chaptersProgress < total
+}
+
+private fun ReadingListEntry.canIncrementVolumes(): Boolean {
+    val total = totalVolumes
+    return total == null || volumesProgress < total
 }
 
 private fun ReadingListEntry.incrementedChapters(): ReadingListEntry {
@@ -462,6 +491,5 @@ private fun ReadingListEntry.incrementedChapters(): ReadingListEntry {
 private fun ReadingListEntry.incrementedVolumes(): ReadingListEntry {
     val total = totalVolumes
     val nextProgress = if (total == null) volumesProgress + 1 else minOf(volumesProgress + 1, total)
-    val nextStatus = if (total != null && nextProgress >= total) ReadingListSection.COMPLETED else status
-    return copy(volumesProgress = nextProgress, status = nextStatus)
+    return copy(volumesProgress = nextProgress)
 }

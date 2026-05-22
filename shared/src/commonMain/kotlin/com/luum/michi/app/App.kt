@@ -15,14 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.ProvideLanguageStrings
+import com.luum.michi.app.core.language.currentPlatformLanguageCode
 import com.luum.michi.app.shell.ShellScreen
 
 @Composable
 @Preview
-fun App() {
+fun App(
+    initialLanguage: AppLanguage = AppLanguage.fromCode(currentPlatformLanguageCode()),
+) {
     val systemDark = isSystemInDarkTheme()
     var isDarkMode by remember { mutableStateOf(systemDark) }
-    var language by remember { mutableStateOf(AppLanguage.default) }
+    var language by remember(initialLanguage) { mutableStateOf(initialLanguage) }
 
     MaterialTheme(
         colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme(),

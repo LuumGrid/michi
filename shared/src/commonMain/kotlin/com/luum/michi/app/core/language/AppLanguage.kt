@@ -5,9 +5,13 @@ data class AppLanguage(val code: String, val displayName: String) {
         val available: List<AppLanguage> = listOf(
             AppLanguage(code = "es", displayName = "Español"),
             AppLanguage(code = "en", displayName = "English"),
-            AppLanguage(code = "pt", displayName = "Português"),
-            AppLanguage(code = "fr", displayName = "Français"),
         )
         val default: AppLanguage = available.first()
+
+        fun fromCode(code: String?): AppLanguage {
+            return available.firstOrNull { language ->
+                language.code == code?.substringBefore("-")?.substringBefore("_")
+            } ?: default
+        }
     }
 }
