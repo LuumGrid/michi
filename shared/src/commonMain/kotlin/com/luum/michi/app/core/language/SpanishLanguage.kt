@@ -17,7 +17,7 @@ object SpanishLanguageStrings : LanguageStrings {
     override val discoveryTitle = "Descubrimiento"
     override val discoveryDescription = "Trending, temporadas y recomendaciones de AniList."
     override val homeGreetingTitle = "Bienvenido de vuelta"
-    override val homeGreetingSubtitle = "Sigue lo que esta saliendo y encuentra lo que AniList esta comentando."
+    override val homeGreetingSubtitle = "Sigue los estrenos y descubre de qué habla la comunidad de AniList."
     override val homeSearchPlaceholder = "Buscar en AniList"
     override val homeSeasonalAction = "Temporada"
     override val homeExploreAction = "Explorar"

@@ -16,11 +16,11 @@ import com.luum.michi.app.resources.close
 import com.luum.michi.app.resources.creator_tools
 import com.luum.michi.app.resources.download
 import com.luum.michi.app.resources.dynamic_feed
+import com.luum.michi.app.resources.explore
 import com.luum.michi.app.resources.favorite
 import com.luum.michi.app.resources.filter_list
 import com.luum.michi.app.resources.forum
 import com.luum.michi.app.resources.forward
-import com.luum.michi.app.resources.grid_layout_side
 import com.luum.michi.app.resources.heart_broken
 import com.luum.michi.app.resources.help_support
 import com.luum.michi.app.resources.history
@@ -39,6 +39,7 @@ import com.luum.michi.app.resources.perm_data_setting
 import com.luum.michi.app.resources.qr_code_scanner
 import com.luum.michi.app.resources.room_preferences
 import com.luum.michi.app.resources.search
+import com.luum.michi.app.resources.season_view
 import com.luum.michi.app.resources.settings
 import com.luum.michi.app.resources.settings_accessibility
 import com.luum.michi.app.resources.switch_account
@@ -69,7 +70,8 @@ object PlatformIcons {
     val Share: Painter @Composable get() = painterResource(Res.drawable.forward)
     val Download: Painter @Composable get() = painterResource(Res.drawable.download)
     val MoreVert: Painter @Composable get() = painterResource(Res.drawable.more_vert)
-    val SimilarGrid: Painter @Composable get() = painterResource(Res.drawable.grid_layout_side)
+    val Season: Painter @Composable get() = painterResource(Res.drawable.season_view)
+    val Explore: Painter @Composable get() = painterResource(Res.drawable.explore)
     val Add: Painter @Composable get() = painterResource(Res.drawable.add)
     val ChevronLeft: Painter @Composable get() = painterResource(Res.drawable.keyboard_arrow_left)
     val ChevronRight: Painter @Composable get() = painterResource(Res.drawable.keyboard_arrow_right)

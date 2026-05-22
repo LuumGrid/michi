@@ -1,13 +1,17 @@
 package com.luum.michi.app.shell
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,12 +20,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +66,51 @@ private enum class ShellAccountRoute {
     SHARE_PROFILE,
 }
 
+@Composable
+private fun ShellSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    placeholder: String,
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(18.dp),
+            )
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        decorationBox = { innerTextField ->
+            Box {
+                if (query.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                innerTextField()
+            }
+        },
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShellScreen(
@@ -72,6 +125,8 @@ fun ShellScreen(
     var selectedReadingSection by remember { mutableStateOf(ReadingListSection.ALL) }
     var accountRoute by remember { mutableStateOf(ShellAccountRoute.ACCOUNT) }
     var topBarBackHandler by remember { mutableStateOf<PlatformBackHandler?>(null) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     var currentProfile by remember {
         mutableStateOf(
             AccountProfileDraft(
@@ -102,10 +157,21 @@ fun ShellScreen(
             accountRoute = ShellAccountRoute.ACCOUNT
         }
     }
+    val isSearchTab = selectedTab == ShellBottomTab.HOME ||
+        selectedTab == ShellBottomTab.ANIMATION ||
+        selectedTab == ShellBottomTab.READING
+    val closeSearch = {
+        isSearchActive = false
+        searchQuery = ""
+    }
 
     PlatformSystemBackHandler(
         enabled = isAccountDetail,
         onBack = handleAccountBack,
+    )
+    PlatformSystemBackHandler(
+        enabled = isSearchTab && isSearchActive,
+        onBack = closeSearch,
     )
 
     Scaffold(
@@ -116,48 +182,79 @@ fun ShellScreen(
             ) {
                 PlatformTopBar(
                     title = {
-                        Text(
-                            text = when {
-                                selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
-                                selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
-                                selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
-                                selectedTab == ShellBottomTab.ACCOUNT -> "${currentProfile.displayName} | @${currentProfile.username}"
-                                else -> selectedTab.label(strings)
-                            },
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        if (isSearchTab && isSearchActive) {
+                            ShellSearchField(
+                                query = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                placeholder = strings.homeSearchPlaceholder,
+                            )
+                        } else {
+                            Text(
+                                text = when {
+                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
+                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
+                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
+                                    selectedTab == ShellBottomTab.ACCOUNT -> "${currentProfile.displayName} | @${currentProfile.username}"
+                                    else -> selectedTab.label(strings)
+                                },
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     },
                     navigationIcon = {
                         when (selectedTab) {
                             ShellBottomTab.HOME,
                             ShellBottomTab.ANIMATION,
                             ShellBottomTab.READING -> {
-                                IconButton(onClick = { /* TODO: filtros */ }) {
-                                    Icon(
-                                        painter = PlatformIcons.FilterList,
-                                        contentDescription = strings.filterAction,
-                                        modifier = Modifier.size(28.dp),
-                                    )
+                                if (isSearchActive) {
+                                    IconButton(onClick = closeSearch) {
+                                        Icon(
+                                            painter = PlatformIcons.ChevronLeft,
+                                            contentDescription = strings.backButton,
+                                            modifier = Modifier.size(28.dp),
+                                        )
+                                    }
+                                } else {
+                                    Row {
+                                        IconButton(onClick = { /* TODO: notificaciones */ }) {
+                                            Icon(
+                                                painter = PlatformIcons.Mood,
+                                                contentDescription = strings.notificationsAction,
+                                                modifier = Modifier.size(28.dp),
+                                            )
+                                        }
+                                        if (selectedTab == ShellBottomTab.ANIMATION || selectedTab == ShellBottomTab.READING) {
+                                            IconButton(onClick = { /* TODO: filtros */ }) {
+                                                Icon(
+                                                    painter = PlatformIcons.FilterList,
+                                                    contentDescription = strings.filterAction,
+                                                    modifier = Modifier.size(28.dp),
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
                             ShellBottomTab.ACCOUNT -> {
-                                IconButton(
-                                    onClick = {
-                                        if (isAccountDetail) {
-                                            handleAccountBack()
-                                        } else {
-                                            accountRoute = ShellAccountRoute.SETTINGS
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        painter = if (isAccountDetail) PlatformIcons.ArrowBack else PlatformIcons.Settings,
-                                        contentDescription = if (isAccountDetail) strings.tabAccount else strings.settingsAction,
-                                        modifier = Modifier.size(28.dp),
-                                    )
+                                if (isAccountDetail) {
+                                    IconButton(onClick = handleAccountBack) {
+                                        Icon(
+                                            painter = PlatformIcons.ArrowBack,
+                                            contentDescription = strings.tabAccount,
+                                            modifier = Modifier.size(28.dp),
+                                        )
+                                    }
+                                } else {
+                                    IconButton(onClick = { /* TODO: notificaciones */ }) {
+                                        Icon(
+                                            painter = PlatformIcons.Mood,
+                                            contentDescription = strings.notificationsAction,
+                                            modifier = Modifier.size(28.dp),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -167,21 +264,23 @@ fun ShellScreen(
                             ShellBottomTab.HOME,
                             ShellBottomTab.ANIMATION,
                             ShellBottomTab.READING -> {
-                                IconButton(onClick = { /* TODO: notificaciones */ }) {
-                                    Icon(
-                                        painter = PlatformIcons.Mood,
-                                        contentDescription = strings.notificationsAction,
-                                        modifier = Modifier.size(28.dp),
-                                    )
+                                if (!isSearchActive) {
+                                    IconButton(onClick = { isSearchActive = true }) {
+                                        Icon(
+                                            painter = PlatformIcons.Search,
+                                            contentDescription = strings.searchTitle,
+                                            modifier = Modifier.size(28.dp),
+                                        )
+                                    }
                                 }
                             }
 
                             ShellBottomTab.ACCOUNT -> {
                                 if (!isAccountDetail) {
-                                    IconButton(onClick = { /* TODO: notificaciones */ }) {
+                                    IconButton(onClick = { accountRoute = ShellAccountRoute.SETTINGS }) {
                                         Icon(
-                                            painter = PlatformIcons.Mood,
-                                            contentDescription = strings.notificationsAction,
+                                            painter = PlatformIcons.Settings,
+                                            contentDescription = strings.settingsAction,
                                             modifier = Modifier.size(28.dp),
                                         )
                                     }
@@ -236,6 +335,7 @@ fun ShellScreen(
                     selected = selectedTab,
                     onSelect = {
                         selectedTab = it
+                        closeSearch()
                         if (it != ShellBottomTab.ACCOUNT) {
                             accountRoute = ShellAccountRoute.ACCOUNT
                             topBarBackHandler = null

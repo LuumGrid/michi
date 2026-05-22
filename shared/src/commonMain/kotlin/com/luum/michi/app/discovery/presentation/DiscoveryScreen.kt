@@ -38,7 +38,6 @@ fun DiscoveryScreen() {
             PlatformHomeHeader(
                 title = strings.homeGreetingTitle,
                 subtitle = strings.homeGreetingSubtitle,
-                searchPlaceholder = strings.homeSearchPlaceholder,
             )
         }
         item {
@@ -74,8 +73,8 @@ fun DiscoveryScreen() {
 @Composable
 private fun homeShortcutItems(strings: LanguageStrings): List<PlatformHomeShortcut> {
     return listOf(
-        PlatformHomeShortcut(strings.homeSeasonalAction, PlatformIcons.Animation, MaterialTheme.colorScheme.primary),
-        PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.SimilarGrid, MaterialTheme.colorScheme.tertiary),
+        PlatformHomeShortcut(strings.homeSeasonalAction, PlatformIcons.Season, MaterialTheme.colorScheme.primary),
+        PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary),
         PlatformHomeShortcut(strings.homeReviewsAction, PlatformIcons.Comments, MaterialTheme.colorScheme.secondary),
         PlatformHomeShortcut(strings.homeCalendarAction, PlatformIcons.Calendar, MaterialTheme.colorScheme.error),
     )
