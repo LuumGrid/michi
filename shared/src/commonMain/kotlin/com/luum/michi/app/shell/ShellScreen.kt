@@ -1,115 +1,36 @@
 package com.luum.michi.app.shell
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.luum.michi.app.account.presentation.AccountEditProfileScreen
-import com.luum.michi.app.account.presentation.AccountProfileDraft
-import com.luum.michi.app.account.presentation.AccountScreen
-import com.luum.michi.app.account.presentation.AccountShareProfileScreen
-import com.luum.michi.app.animation.presentation.AnimationListSection
 import com.luum.michi.app.animation.presentation.AnimationScreen
-import com.luum.michi.app.animation.presentation.AnimationSectionPlatformChips
+import com.luum.michi.app.animation.presentation.components.AnimationSectionChips
+import com.luum.michi.app.animation.presentation.state.rememberAnimationListStateHolder
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.MichiAppName
-import com.luum.michi.app.core.platform.PlatformBackHandler
-import com.luum.michi.app.core.platform.MichiBrand
-import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
-import com.luum.michi.app.core.platform.components.PlatformTopBar
 import com.luum.michi.app.discovery.presentation.DiscoveryScreen
-import com.luum.michi.app.reading.presentation.ReadingListSection
 import com.luum.michi.app.reading.presentation.ReadingScreen
-import com.luum.michi.app.reading.presentation.ReadingSectionPlatformChips
-import com.luum.michi.app.settings.presentation.SettingsScreen
+import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
+import com.luum.michi.app.reading.presentation.state.rememberReadingListStateHolder
+import com.luum.michi.app.settings.presentation.state.rememberSettingsState
+import com.luum.michi.app.shell.components.ShellAccountRouter
 import com.luum.michi.app.shell.components.ShellBottomNavBar
 import com.luum.michi.app.shell.components.ShellBottomTab
+import com.luum.michi.app.shell.components.ShellTopBar
 import com.luum.michi.app.shell.components.label
-
-private enum class ShellAccountRoute {
-    ACCOUNT,
-    SETTINGS,
-    EDIT_PROFILE,
-    SHARE_PROFILE,
-}
-
-@Composable
-private fun ShellSearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    placeholder: String,
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester)
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = RoundedCornerShape(18.dp),
-            )
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-        ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        decorationBox = { innerTextField ->
-            Box {
-                if (query.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                innerTextField()
-            }
-        },
-    )
-}
+import com.luum.michi.app.shell.components.shellCollapsibleChipsModifier
+import com.luum.michi.app.shell.state.ShellAccountRoute
+import com.luum.michi.app.shell.state.rememberShellState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,227 +41,82 @@ fun ShellScreen(
     onToggleTheme: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
-    var selectedTab by remember { mutableStateOf(ShellBottomTab.HOME) }
-    var selectedAnimationSection by remember { mutableStateOf(AnimationListSection.ALL) }
-    var selectedReadingSection by remember { mutableStateOf(ReadingListSection.ALL) }
-    var accountRoute by remember { mutableStateOf(ShellAccountRoute.ACCOUNT) }
-    var topBarBackHandler by remember { mutableStateOf<PlatformBackHandler?>(null) }
-    var isSearchActive by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-    var currentProfile by remember {
-        mutableStateOf(
-            AccountProfileDraft(
-                username = "psyxho_skull",
-                displayName = MichiAppName,
-                avatarUrl = null,
-                bio = "Anime, manga y listas en Michi.",
-                email = "",
-            ),
-        )
-    }
-    val isAccountDetail = selectedTab == ShellBottomTab.ACCOUNT && accountRoute != ShellAccountRoute.ACCOUNT
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec = null,
-        flingAnimationSpec = null,
-    )
-    val chipsFractionState = remember {
+    val shellState = rememberShellState()
+    val animationState = rememberAnimationListStateHolder()
+    val readingState = rememberReadingListStateHolder()
+    val settingsState = rememberSettingsState()
+
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val chipsFraction by remember {
         derivedStateOf {
             val limit = scrollBehavior.state.heightOffsetLimit
             if (limit < 0f) (scrollBehavior.state.heightOffset / limit).coerceIn(0f, 1f) else 0f
         }
     }
-    val handleAccountBack: PlatformBackHandler = {
-        val handler = topBarBackHandler
-        if (handler != null) {
-            handler()
-        } else {
-            accountRoute = ShellAccountRoute.ACCOUNT
-        }
-    }
-    val isSearchTab = selectedTab == ShellBottomTab.HOME ||
-        selectedTab == ShellBottomTab.ANIMATION ||
-        selectedTab == ShellBottomTab.READING
-    val closeSearch = {
-        isSearchActive = false
-        searchQuery = ""
-    }
 
     PlatformSystemBackHandler(
-        enabled = isAccountDetail,
-        onBack = handleAccountBack,
+        enabled = shellState.isAccountDetail,
+        onBack = shellState::handleAccountBack,
     )
     PlatformSystemBackHandler(
-        enabled = isSearchTab && isSearchActive,
-        onBack = closeSearch,
+        enabled = shellState.isSearchTab && shellState.isSearchActive,
+        onBack = shellState::closeSearch,
     )
+
+    val titleText = when {
+        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+            shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
+        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+            shellState.accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
+        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+            shellState.accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
+        shellState.selectedTab == ShellBottomTab.ACCOUNT ->
+            "${shellState.currentProfile.displayName} | @${shellState.currentProfile.username}"
+        else -> shellState.selectedTab.label(strings)
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            Column(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-            ) {
-                PlatformTopBar(
-                    title = {
-                        if (isSearchTab && isSearchActive) {
-                            ShellSearchField(
-                                query = searchQuery,
-                                onQueryChange = { searchQuery = it },
-                                placeholder = strings.homeSearchPlaceholder,
-                            )
-                        } else {
-                            Text(
-                                text = when {
-                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
-                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
-                                    selectedTab == ShellBottomTab.ACCOUNT && accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
-                                    selectedTab == ShellBottomTab.ACCOUNT -> "${currentProfile.displayName} | @${currentProfile.username}"
-                                    else -> selectedTab.label(strings)
-                                },
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        when (selectedTab) {
-                            ShellBottomTab.HOME,
-                            ShellBottomTab.ANIMATION,
-                            ShellBottomTab.READING -> {
-                                if (isSearchActive) {
-                                    IconButton(onClick = closeSearch) {
-                                        Icon(
-                                            painter = PlatformIcons.ChevronLeft,
-                                            contentDescription = strings.backButton,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                } else {
-                                    Row {
-                                        IconButton(onClick = { /* TODO: notificaciones */ }) {
-                                            Icon(
-                                                painter = PlatformIcons.Mood,
-                                                contentDescription = strings.notificationsAction,
-                                                modifier = Modifier.size(28.dp),
-                                            )
-                                        }
-                                        if (selectedTab == ShellBottomTab.ANIMATION || selectedTab == ShellBottomTab.READING) {
-                                            IconButton(onClick = { /* TODO: filtros */ }) {
-                                                Icon(
-                                                    painter = PlatformIcons.FilterList,
-                                                    contentDescription = strings.filterAction,
-                                                    modifier = Modifier.size(28.dp),
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            ShellBottomTab.ACCOUNT -> {
-                                if (isAccountDetail) {
-                                    IconButton(onClick = handleAccountBack) {
-                                        Icon(
-                                            painter = PlatformIcons.ArrowBack,
-                                            contentDescription = strings.tabAccount,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                } else {
-                                    IconButton(onClick = { /* TODO: notificaciones */ }) {
-                                        Icon(
-                                            painter = PlatformIcons.Mood,
-                                            contentDescription = strings.notificationsAction,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    actions = {
-                        when (selectedTab) {
-                            ShellBottomTab.HOME,
-                            ShellBottomTab.ANIMATION,
-                            ShellBottomTab.READING -> {
-                                if (!isSearchActive) {
-                                    IconButton(onClick = { isSearchActive = true }) {
-                                        Icon(
-                                            painter = PlatformIcons.Search,
-                                            contentDescription = strings.searchTitle,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                }
-                            }
-
-                            ShellBottomTab.ACCOUNT -> {
-                                if (!isAccountDetail) {
-                                    IconButton(onClick = { accountRoute = ShellAccountRoute.SETTINGS }) {
-                                        Icon(
-                                            painter = PlatformIcons.Settings,
-                                            contentDescription = strings.settingsAction,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    scrollBehavior = scrollBehavior,
-                    windowInsets = WindowInsets.statusBars,
-                )
-
-                if (selectedTab == ShellBottomTab.ANIMATION) {
-                    AnimationSectionPlatformChips(
-                        selected = selectedAnimationSection,
-                        onSelect = { selectedAnimationSection = it },
-                        modifier = Modifier
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(constraints)
-                                val naturalH = placeable.height
-                                val fraction = chipsFractionState.value
-                                val visibleH = (naturalH * (1f - fraction)).toInt().coerceAtLeast(0)
-                                layout(placeable.width, visibleH) {
-                                    placeable.place(0, -(naturalH * fraction).toInt())
-                                }
-                            }
-                            .graphicsLayer { alpha = 1f - chipsFractionState.value },
-                    )
-                }
-
-                if (selectedTab == ShellBottomTab.READING) {
-                    ReadingSectionPlatformChips(
-                        selected = selectedReadingSection,
-                        onSelect = { selectedReadingSection = it },
-                        modifier = Modifier
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(constraints)
-                                val naturalH = placeable.height
-                                val fraction = chipsFractionState.value
-                                val visibleH = (naturalH * (1f - fraction)).toInt().coerceAtLeast(0)
-                                layout(placeable.width, visibleH) {
-                                    placeable.place(0, -(naturalH * fraction).toInt())
-                                }
-                            }
-                            .graphicsLayer { alpha = 1f - chipsFractionState.value },
-                    )
-                }
-            }
+            ShellTopBar(
+                selectedTab = shellState.selectedTab,
+                isAccountDetail = shellState.isAccountDetail,
+                isSearchActive = shellState.isSearchActive,
+                isSearchTab = shellState.isSearchTab,
+                searchQuery = shellState.searchQuery,
+                titleText = titleText,
+                scrollBehavior = scrollBehavior,
+                onOpenSearch = shellState::openSearch,
+                onCloseSearch = shellState::closeSearch,
+                onSearchQueryChange = { shellState.searchQuery = it },
+                onAccountBack = shellState::handleAccountBack,
+                onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
+                onNotificationsClick = { },
+                onFilterClick = { },
+                chips = {
+                    when (shellState.selectedTab) {
+                        ShellBottomTab.ANIMATION -> AnimationSectionChips(
+                            selected = shellState.selectedAnimationSection,
+                            onSelect = { shellState.selectedAnimationSection = it },
+                            countForSection = animationState::countInSection,
+                            modifier = shellCollapsibleChipsModifier(chipsFraction),
+                        )
+                        ShellBottomTab.READING -> ReadingSectionChips(
+                            selected = shellState.selectedReadingSection,
+                            onSelect = { shellState.selectedReadingSection = it },
+                            countForSection = readingState::countInSection,
+                            modifier = shellCollapsibleChipsModifier(chipsFraction),
+                        )
+                        else -> { }
+                    }
+                },
+            )
         },
         bottomBar = {
-            if (!isAccountDetail) {
+            if (!shellState.isAccountDetail) {
                 ShellBottomNavBar(
-                    selected = selectedTab,
-                    onSelect = {
-                        selectedTab = it
-                        closeSearch()
-                        if (it != ShellBottomTab.ACCOUNT) {
-                            accountRoute = ShellAccountRoute.ACCOUNT
-                            topBarBackHandler = null
-                        }
-                    },
+                    selected = shellState.selectedTab,
+                    onSelect = shellState::selectTab,
                 )
             }
         },
@@ -349,66 +125,36 @@ fun ShellScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = if (selectedTab == ShellBottomTab.ACCOUNT) 0.dp else contentPadding.calculateTopPadding(),
+                    top = contentPadding.calculateTopPadding(),
                     bottom = contentPadding.calculateBottomPadding(),
                 ),
         ) {
-            when (selectedTab) {
+            when (shellState.selectedTab) {
                 ShellBottomTab.HOME -> DiscoveryScreen()
                 ShellBottomTab.ANIMATION -> AnimationScreen(
-                    selectedSection = selectedAnimationSection,
+                    stateHolder = animationState,
+                    selectedSection = shellState.selectedAnimationSection,
                     scrollBehavior = scrollBehavior,
                 )
                 ShellBottomTab.READING -> ReadingScreen(
-                    selectedSection = selectedReadingSection,
+                    stateHolder = readingState,
+                    selectedSection = shellState.selectedReadingSection,
                     scrollBehavior = scrollBehavior,
                 )
-                ShellBottomTab.ACCOUNT -> {
-                    when (accountRoute) {
-                        ShellAccountRoute.ACCOUNT -> {
-                            AccountScreen(
-                                brand = MichiBrand.ANIMATION,
-                                username = currentProfile.username,
-                                displayName = currentProfile.displayName,
-                                userAvatarUrl = currentProfile.avatarUrl,
-                                userBio = currentProfile.bio,
-                                onEditProfileClick = { accountRoute = ShellAccountRoute.EDIT_PROFILE },
-                                onShareProfileClick = { accountRoute = ShellAccountRoute.SHARE_PROFILE },
-                            )
-                        }
-
-                        ShellAccountRoute.SETTINGS -> {
-                            SettingsScreen(
-                                language = language,
-                                onLanguageChange = onLanguageChange,
-                                isDarkMode = isDarkMode,
-                                onToggleTheme = onToggleTheme,
-                                onAddAccount = { },
-                                onLogout = { },
-                                onBackHandlerChange = { topBarBackHandler = it },
-                            )
-                        }
-
-                        ShellAccountRoute.EDIT_PROFILE -> {
-                            AccountEditProfileScreen(
-                                initialDraft = currentProfile,
-                                onSave = { draft ->
-                                    currentProfile = draft
-                                    accountRoute = ShellAccountRoute.ACCOUNT
-                                },
-                                onBackHandlerChange = { topBarBackHandler = it },
-                            )
-                        }
-
-                        ShellAccountRoute.SHARE_PROFILE -> {
-                            AccountShareProfileScreen(
-                                username = currentProfile.username,
-                                displayName = currentProfile.displayName,
-                                avatarUrl = currentProfile.avatarUrl,
-                            )
-                        }
-                    }
-                }
+                ShellBottomTab.ACCOUNT -> ShellAccountRouter(
+                    route = shellState.accountRoute,
+                    profile = shellState.currentProfile,
+                    settingsState = settingsState,
+                    language = language,
+                    isDarkMode = isDarkMode,
+                    onLanguageChange = onLanguageChange,
+                    onToggleTheme = onToggleTheme,
+                    onProfileChange = { shellState.currentProfile = it },
+                    onNavigate = { shellState.accountRoute = it },
+                    onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
+                    onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
+                    onBackHandlerChange = { shellState.topBarBackHandler = it },
+                )
             }
         }
     }

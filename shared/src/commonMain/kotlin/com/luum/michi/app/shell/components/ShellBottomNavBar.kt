@@ -28,15 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.MichiBrand
 import com.luum.michi.app.core.platform.PlatformIcons
 
-internal enum class ShellBottomTab(
-    val brand: MichiBrand? = null,
-) {
+internal enum class ShellBottomTab {
     HOME,
-    ANIMATION(MichiBrand.ANIMATION),
-    READING(MichiBrand.READING),
+    ANIMATION,
+    READING,
     ACCOUNT,
 }
 

@@ -12,11 +12,41 @@ internal data class SettingsGroup(
 
 internal enum class SettingsItemType {
     DEFAULT,
-    ADD_ACCOUNT,
-    ACCESSIBILITY,
+    THEME,
     LANGUAGE,
+    HOME_TAB,
+    TITLE_LANGUAGE,
+    ADULT_CONTENT,
+    SCORE_FORMAT,
+    LIST_SORT,
+    SPLIT_COMPLETED_ANIME,
+    SPLIT_COMPLETED_MANGA,
+    ADVANCED_SCORING,
+    NOTIFICATIONS,
+    MANAGE_ACCOUNT,
+    ADD_ACCOUNT,
     LOGOUT,
+    HELP,
+    ABOUT,
 }
+
+internal val SettingsItemType.isInlineToggle: Boolean
+    get() = when (this) {
+        SettingsItemType.ADULT_CONTENT,
+        SettingsItemType.SPLIT_COMPLETED_ANIME,
+        SettingsItemType.SPLIT_COMPLETED_MANGA,
+        SettingsItemType.ADVANCED_SCORING -> true
+        else -> false
+    }
+
+internal val SettingsItemType.isAction: Boolean
+    get() = when (this) {
+        SettingsItemType.ADD_ACCOUNT,
+        SettingsItemType.LOGOUT,
+        SettingsItemType.MANAGE_ACCOUNT,
+        SettingsItemType.HELP -> true
+        else -> false
+    }
 
 internal data class SettingsItem(
     val title: String,
@@ -25,59 +55,15 @@ internal data class SettingsItem(
     val type: SettingsItemType = SettingsItemType.DEFAULT,
 )
 
-internal fun settingsGroups(strings: LanguageStrings) = listOf(
+internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = listOf(
     SettingsGroup(
-        title = strings.settingsAccountSection,
+        title = strings.settingsAppSection,
         items = listOf(
             SettingsItem(
-                title = strings.logoutAction,
-                icon = { PlatformIcons.Logout },
-                type = SettingsItemType.LOGOUT,
-            ),
-            SettingsItem(
-                title = strings.addAccountAction,
-                icon = { PlatformIcons.SwitchAccount },
-                type = SettingsItemType.ADD_ACCOUNT,
-            ),
-            SettingsItem(
-                title = strings.settingsManageAccountTitle,
-                subtitle = strings.settingsManageAccountSubtitle,
-                icon = { PlatformIcons.ManageAccount },
-            ),
-            SettingsItem(
-                title = strings.settingsPrivacyTitle,
-                subtitle = strings.settingsPrivacySubtitle,
-                icon = { PlatformIcons.Privacy },
-            ),
-        ),
-    ),
-    SettingsGroup(
-        title = strings.settingsContentSection,
-        items = listOf(
-            SettingsItem(
-                title = strings.settingsContentPreferencesTitle,
-                subtitle = strings.settingsContentPreferencesSubtitle,
-                icon = { PlatformIcons.ContentPreferences },
-            ),
-            SettingsItem(
-                title = strings.settingsHistoryTitle,
-                subtitle = strings.settingsHistorySubtitle,
-                icon = { PlatformIcons.History },
-            ),
-            SettingsItem(
-                title = strings.settingsInteractionsTitle,
-                subtitle = strings.settingsInteractionsSubtitle,
-                icon = { PlatformIcons.UserActivity },
-            ),
-        ),
-    ),
-    SettingsGroup(
-        title = strings.settingsExperienceSection,
-        items = listOf(
-            SettingsItem(
-                title = strings.notificationsAction,
-                subtitle = strings.settingsNotificationsSubtitle,
-                icon = { PlatformIcons.Notifications },
+                title = strings.settingsThemeTitle,
+                subtitle = strings.settingsThemeSubtitle,
+                icon = { PlatformIcons.Accessibility },
+                type = SettingsItemType.THEME,
             ),
             SettingsItem(
                 title = strings.settingsLanguageTitle,
@@ -86,35 +72,111 @@ internal fun settingsGroups(strings: LanguageStrings) = listOf(
                 type = SettingsItemType.LANGUAGE,
             ),
             SettingsItem(
-                title = strings.settingsAccessibilityTitle,
-                subtitle = strings.settingsAccessibilitySubtitle,
-                icon = { PlatformIcons.Accessibility },
-                type = SettingsItemType.ACCESSIBILITY,
-            ),
-            SettingsItem(
-                title = strings.settingsDataPlaybackTitle,
-                subtitle = strings.settingsDataPlaybackSubtitle,
-                icon = { PlatformIcons.DataPlayback },
+                title = strings.settingsHomeTabTitle,
+                subtitle = strings.settingsHomeTabSubtitle,
+                icon = { PlatformIcons.Home },
+                type = SettingsItemType.HOME_TAB,
             ),
         ),
     ),
     SettingsGroup(
-        title = strings.settingsToolsSection,
+        title = strings.settingsAniListSection,
         items = listOf(
             SettingsItem(
-                title = strings.settingsCreatorToolsTitle,
-                subtitle = strings.settingsCreatorToolsSubtitle,
-                icon = { PlatformIcons.CreatorTools },
+                title = strings.settingsTitleLanguageTitle,
+                subtitle = strings.settingsTitleLanguageSubtitle,
+                icon = { PlatformIcons.Language },
+                type = SettingsItemType.TITLE_LANGUAGE,
             ),
+            SettingsItem(
+                title = strings.settingsAdultContentTitle,
+                subtitle = strings.settingsAdultContentSubtitle,
+                icon = { PlatformIcons.Privacy },
+                type = SettingsItemType.ADULT_CONTENT,
+            ),
+            SettingsItem(
+                title = strings.settingsScoreFormatTitle,
+                subtitle = strings.settingsScoreFormatSubtitle,
+                icon = { PlatformIcons.Like },
+                type = SettingsItemType.SCORE_FORMAT,
+            ),
+        ),
+    ),
+    SettingsGroup(
+        title = strings.settingsListsSection,
+        items = listOf(
+            SettingsItem(
+                title = strings.settingsListSortTitle,
+                subtitle = strings.settingsListSortSubtitle,
+                icon = { PlatformIcons.FilterList },
+                type = SettingsItemType.LIST_SORT,
+            ),
+            SettingsItem(
+                title = strings.settingsSplitCompletedAnimeTitle,
+                subtitle = strings.settingsSplitCompletedAnimeSubtitle,
+                icon = { PlatformIcons.Animation },
+                type = SettingsItemType.SPLIT_COMPLETED_ANIME,
+            ),
+            SettingsItem(
+                title = strings.settingsSplitCompletedMangaTitle,
+                subtitle = strings.settingsSplitCompletedMangaSubtitle,
+                icon = { PlatformIcons.Reading },
+                type = SettingsItemType.SPLIT_COMPLETED_MANGA,
+            ),
+            SettingsItem(
+                title = strings.settingsAdvancedScoringTitle,
+                subtitle = strings.settingsAdvancedScoringSubtitle,
+                icon = { PlatformIcons.ContentPreferences },
+                type = SettingsItemType.ADVANCED_SCORING,
+            ),
+        ),
+    ),
+    SettingsGroup(
+        title = strings.settingsNotificationsSection,
+        items = listOf(
+            SettingsItem(
+                title = strings.notificationsAction,
+                subtitle = strings.settingsNotificationsSubtitle,
+                icon = { PlatformIcons.Notifications },
+                type = SettingsItemType.NOTIFICATIONS,
+            ),
+        ),
+    ),
+    SettingsGroup(
+        title = strings.settingsAccountSection,
+        items = listOf(
+            SettingsItem(
+                title = strings.settingsManageAccountTitle,
+                subtitle = strings.settingsManageAccountSubtitle,
+                icon = { PlatformIcons.ManageAccount },
+                type = SettingsItemType.MANAGE_ACCOUNT,
+            ),
+            SettingsItem(
+                title = strings.addAccountAction,
+                icon = { PlatformIcons.SwitchAccount },
+                type = SettingsItemType.ADD_ACCOUNT,
+            ),
+            SettingsItem(
+                title = strings.logoutAction,
+                icon = { PlatformIcons.Logout },
+                type = SettingsItemType.LOGOUT,
+            ),
+        ),
+    ),
+    SettingsGroup(
+        title = strings.settingsAboutSection,
+        items = listOf(
             SettingsItem(
                 title = strings.settingsHelpTitle,
                 subtitle = strings.settingsHelpSubtitle,
                 icon = { PlatformIcons.HelpSupport },
+                type = SettingsItemType.HELP,
             ),
             SettingsItem(
                 title = strings.settingsAboutTitle,
                 subtitle = strings.settingsAboutSubtitle,
                 icon = { PlatformIcons.Information },
+                type = SettingsItemType.ABOUT,
             ),
         ),
     ),

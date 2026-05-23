@@ -1,1 +1,0 @@
-Reserved for app language models and localized string ownership.

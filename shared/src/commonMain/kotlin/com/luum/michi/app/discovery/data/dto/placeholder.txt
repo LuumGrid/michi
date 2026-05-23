@@ -1,1 +1,0 @@
-Reserved for Discovery AniList DTOs.

@@ -21,18 +21,25 @@ import com.luum.michi.app.core.platform.PlatformBackHandlerSetter
 import com.luum.michi.app.settings.presentation.components.SettingsDetailContent
 import com.luum.michi.app.settings.presentation.components.SettingsGroupHeader
 import com.luum.michi.app.settings.presentation.components.SettingsRow
+import com.luum.michi.app.settings.presentation.components.SettingsToggleRow
 import com.luum.michi.app.settings.presentation.model.SettingsItem
 import com.luum.michi.app.settings.presentation.model.SettingsItemType
+import com.luum.michi.app.settings.presentation.model.isAction
+import com.luum.michi.app.settings.presentation.model.isInlineToggle
 import com.luum.michi.app.settings.presentation.model.settingsGroups
+import com.luum.michi.app.settings.presentation.state.SettingsState
 
 @Composable
 internal fun SettingsScreen(
+    settingsState: SettingsState,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
     onToggleTheme: () -> Unit,
     onAddAccount: () -> Unit,
     onLogout: () -> Unit,
+    onManageAccount: () -> Unit,
+    onHelp: () -> Unit,
     onBackHandlerChange: PlatformBackHandlerSetter,
 ) {
     val strings = LanguageProvider.strings
@@ -54,6 +61,7 @@ internal fun SettingsScreen(
     if (detailItem != null) {
         SettingsDetailContent(
             item = detailItem,
+            settingsState = settingsState,
             language = language,
             onLanguageChange = onLanguageChange,
             isDarkMode = isDarkMode,
@@ -68,27 +76,74 @@ internal fun SettingsScreen(
             .background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(
             start = 16.dp,
-            top = 112.dp,
+            top = 16.dp,
             end = 16.dp,
             bottom = 24.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         groups.forEach { group ->
-            item(key = group.title) {
+            item(key = "header_${group.title}") {
                 SettingsGroupHeader(text = group.title)
             }
 
-            items(group.items, key = { it.title }) { item ->
-                SettingsRow(
+            items(group.items, key = { it.type.name }) { item ->
+                SettingsItemRow(
                     item = item,
-                    onClick = when (item.type) {
-                        SettingsItemType.ADD_ACCOUNT -> onAddAccount
-                        SettingsItemType.LOGOUT -> onLogout
-                        else -> ({ selectedItem = item })
-                    },
+                    settingsState = settingsState,
+                    onOpenDetail = { selectedItem = item },
+                    onAddAccount = onAddAccount,
+                    onLogout = onLogout,
+                    onManageAccount = onManageAccount,
+                    onHelp = onHelp,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsItemRow(
+    item: SettingsItem,
+    settingsState: SettingsState,
+    onOpenDetail: () -> Unit,
+    onAddAccount: () -> Unit,
+    onLogout: () -> Unit,
+    onManageAccount: () -> Unit,
+    onHelp: () -> Unit,
+) {
+    when {
+        item.type.isInlineToggle -> {
+            val checked = when (item.type) {
+                SettingsItemType.ADULT_CONTENT -> settingsState.displayAdultContent
+                SettingsItemType.SPLIT_COMPLETED_ANIME -> settingsState.splitCompletedAnime
+                SettingsItemType.SPLIT_COMPLETED_MANGA -> settingsState.splitCompletedManga
+                SettingsItemType.ADVANCED_SCORING -> settingsState.advancedScoring
+                else -> false
+            }
+            val onCheckedChange: (Boolean) -> Unit = { next ->
+                when (item.type) {
+                    SettingsItemType.ADULT_CONTENT -> settingsState.displayAdultContent = next
+                    SettingsItemType.SPLIT_COMPLETED_ANIME -> settingsState.splitCompletedAnime = next
+                    SettingsItemType.SPLIT_COMPLETED_MANGA -> settingsState.splitCompletedManga = next
+                    SettingsItemType.ADVANCED_SCORING -> settingsState.advancedScoring = next
+                    else -> Unit
+                }
+            }
+            SettingsToggleRow(item = item, checked = checked, onCheckedChange = onCheckedChange)
+        }
+
+        item.type.isAction -> {
+            val onClick = when (item.type) {
+                SettingsItemType.ADD_ACCOUNT -> onAddAccount
+                SettingsItemType.LOGOUT -> onLogout
+                SettingsItemType.MANAGE_ACCOUNT -> onManageAccount
+                SettingsItemType.HELP -> onHelp
+                else -> ({ })
+            }
+            SettingsRow(item = item, onClick = onClick)
+        }
+
+        else -> SettingsRow(item = item, onClick = onOpenDetail)
     }
 }

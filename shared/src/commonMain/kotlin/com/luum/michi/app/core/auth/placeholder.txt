@@ -1,1 +1,0 @@
-Reserved for OAuth session abstractions and token storage contracts.

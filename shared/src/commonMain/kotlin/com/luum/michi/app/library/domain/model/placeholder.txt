@@ -1,1 +1,0 @@
-Reserved for Library list status, progress, and scoring models.

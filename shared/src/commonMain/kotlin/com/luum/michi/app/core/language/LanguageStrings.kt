@@ -72,9 +72,17 @@ interface LanguageStrings {
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String
-    val accountPostsLabel: String
+    val accountAnimeLabel: String
+    val accountMangaLabel: String
     val accountFollowersLabel: String
     val accountFollowingLabel: String
+    val accountFavoriteAnimeTitle: String
+    val accountFavoriteMangaTitle: String
+    val accountFavoriteCharactersTitle: String
+    val accountFavoriteStaffTitle: String
+    val accountFavoriteStudiosTitle: String
+    val accountSeeMoreAction: String
+    fun accountJoinedLabel(month: Int, year: Int): String
     val accountEditProfileAction: String
     val accountShareProfileAction: String
     val accountDownloadProfileQrAction: String
@@ -101,40 +109,63 @@ interface LanguageStrings {
     val accountVisibilitySubtitle: String
     val accountEditAvatarUrlLabel: String
     val accountSaveProfileAction: String
+    val settingsAppSection: String
+    val settingsAniListSection: String
+    val settingsListsSection: String
+    val settingsNotificationsSection: String
     val settingsAccountSection: String
-    val settingsManageAccountTitle: String
-    val settingsManageAccountSubtitle: String
-    val settingsPrivacyTitle: String
-    val settingsPrivacySubtitle: String
-    val settingsSecurityTitle: String
-    val settingsSecuritySubtitle: String
-    val settingsContentSection: String
-    val settingsContentPreferencesTitle: String
-    val settingsContentPreferencesSubtitle: String
-    val settingsHistoryTitle: String
-    val settingsHistorySubtitle: String
-    val settingsInteractionsTitle: String
-    val settingsInteractionsSubtitle: String
-    val settingsExperienceSection: String
-    val settingsNotificationsSubtitle: String
+    val settingsAboutSection: String
+    val settingsThemeTitle: String
+    val settingsThemeSubtitle: String
+    val settingsThemeSystem: String
+    val settingsThemeLight: String
+    val settingsThemeDark: String
     val settingsLanguageTitle: String
     val settingsLanguageSubtitle: String
-    val settingsSubtitlesTitle: String
-    val settingsSubtitlesSubtitle: String
-    val settingsAccessibilityTitle: String
-    val settingsAccessibilitySubtitle: String
-    val settingsDarkModeTitle: String
-    val settingsDarkModeEnabledSubtitle: String
-    val settingsLightModeEnabledSubtitle: String
-    val settingsDataPlaybackTitle: String
-    val settingsDataPlaybackSubtitle: String
-    val settingsToolsSection: String
-    val settingsCreatorToolsTitle: String
-    val settingsCreatorToolsSubtitle: String
+    val settingsHomeTabTitle: String
+    val settingsHomeTabSubtitle: String
+    val settingsTitleLanguageTitle: String
+    val settingsTitleLanguageSubtitle: String
+    val settingsTitleLanguageRomaji: String
+    val settingsTitleLanguageEnglish: String
+    val settingsTitleLanguageNative: String
+    val settingsAdultContentTitle: String
+    val settingsAdultContentSubtitle: String
+    val settingsScoreFormatTitle: String
+    val settingsScoreFormatSubtitle: String
+    val settingsScoreFormatPoint100: String
+    val settingsScoreFormatPoint10Decimal: String
+    val settingsScoreFormatPoint10: String
+    val settingsScoreFormatPoint5Stars: String
+    val settingsScoreFormatPoint3Smileys: String
+    val settingsListSortTitle: String
+    val settingsListSortSubtitle: String
+    val settingsListSortByTitle: String
+    val settingsListSortByScore: String
+    val settingsListSortByUpdated: String
+    val settingsListSortByAdded: String
+    val settingsListSortByRelease: String
+    val settingsSplitCompletedAnimeTitle: String
+    val settingsSplitCompletedAnimeSubtitle: String
+    val settingsSplitCompletedMangaTitle: String
+    val settingsSplitCompletedMangaSubtitle: String
+    val settingsAdvancedScoringTitle: String
+    val settingsAdvancedScoringSubtitle: String
+    val settingsNotificationsSubtitle: String
+    val settingsNotifAiringTitle: String
+    val settingsNotifActivityTitle: String
+    val settingsNotifFollowingTitle: String
+    val settingsNotifForumTitle: String
+    val settingsNotifMessagesTitle: String
+    val settingsNotifMediaTitle: String
+    val settingsManageAccountTitle: String
+    val settingsManageAccountSubtitle: String
     val settingsHelpTitle: String
     val settingsHelpSubtitle: String
     val settingsAboutTitle: String
     val settingsAboutSubtitle: String
+    val settingsAboutVersionLabel: String
+    val settingsAboutCreditsLabel: String
     val backButton: String
 }
 
