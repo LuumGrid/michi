@@ -41,7 +41,7 @@ internal fun AccountHeader(
     bannerUrl: String?,
     userAvatarUrl: String?,
     userBio: String?,
-    joinedLabel: String,
+    joinedLabel: String?,
     onEditProfileClick: () -> Unit,
     onShareProfileClick: () -> Unit,
 ) {
@@ -81,11 +81,13 @@ internal fun AccountHeader(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Text(
-                text = joinedLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (!joinedLabel.isNullOrBlank()) {
+                Text(
+                    text = joinedLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             if (!userBio.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))

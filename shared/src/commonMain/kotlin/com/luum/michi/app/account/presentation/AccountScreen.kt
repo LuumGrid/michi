@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.components.AccountFavoriteMediaCard
@@ -16,9 +15,24 @@ import com.luum.michi.app.account.presentation.components.AccountFavoriteSection
 import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioCard
 import com.luum.michi.app.account.presentation.components.AccountHeader
 import com.luum.michi.app.account.presentation.components.AccountStatsRow
-import com.luum.michi.app.account.presentation.sample.AccountSampleFavorites
-import com.luum.michi.app.account.presentation.sample.AccountSampleStats
+import com.luum.michi.app.account.presentation.model.AccountFavorites
+import com.luum.michi.app.account.presentation.model.AccountStats
 import com.luum.michi.app.core.language.LanguageProvider
+
+private val EmptyAccountStats = AccountStats(
+    animeCount = 0,
+    mangaCount = 0,
+    followingCount = 0,
+    followersCount = 0,
+)
+
+private val EmptyAccountFavorites = AccountFavorites(
+    anime = emptyList(),
+    manga = emptyList(),
+    characters = emptyList(),
+    staff = emptyList(),
+    studios = emptyList(),
+)
 
 @Composable
 internal fun AccountScreen(
@@ -27,17 +41,15 @@ internal fun AccountScreen(
     bannerUrl: String?,
     userAvatarUrl: String?,
     userBio: String?,
-    joinedMonth: Int,
-    joinedYear: Int,
+    joinedLabel: String?,
+    stats: AccountStats = EmptyAccountStats,
+    favorites: AccountFavorites = EmptyAccountFavorites,
     onEditProfileClick: () -> Unit = {},
     onShareProfileClick: () -> Unit = {},
     onOpenAnimationList: () -> Unit = {},
     onOpenReadingList: () -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
-    val stats = remember { AccountSampleStats }
-    val favorites = remember { AccountSampleFavorites }
-    val joinedLabel = strings.accountJoinedLabel(joinedMonth, joinedYear)
 
     LazyColumn(
         modifier = Modifier

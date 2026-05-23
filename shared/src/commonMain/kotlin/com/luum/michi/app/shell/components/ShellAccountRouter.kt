@@ -5,8 +5,6 @@ import com.luum.michi.app.account.presentation.AccountEditProfileScreen
 import com.luum.michi.app.account.presentation.AccountScreen
 import com.luum.michi.app.account.presentation.AccountShareProfileScreen
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
-import com.luum.michi.app.account.presentation.sample.AccountSampleJoinedMonth
-import com.luum.michi.app.account.presentation.sample.AccountSampleJoinedYear
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.settings.presentation.SettingsScreen
@@ -26,6 +24,7 @@ internal fun ShellAccountRouter(
     onNavigate: (ShellAccountRoute) -> Unit,
     onOpenAnimationList: () -> Unit,
     onOpenReadingList: () -> Unit,
+    onLogout: () -> Unit,
     onBackHandlerChange: (PlatformBackHandler?) -> Unit,
 ) {
     when (route) {
@@ -36,8 +35,7 @@ internal fun ShellAccountRouter(
                 bannerUrl = profile.bannerUrl,
                 userAvatarUrl = profile.avatarUrl,
                 userBio = profile.bio,
-                joinedMonth = AccountSampleJoinedMonth,
-                joinedYear = AccountSampleJoinedYear,
+                joinedLabel = null,
                 onEditProfileClick = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
                 onShareProfileClick = { onNavigate(ShellAccountRoute.SHARE_PROFILE) },
                 onOpenAnimationList = onOpenAnimationList,
@@ -53,7 +51,7 @@ internal fun ShellAccountRouter(
                 isDarkMode = isDarkMode,
                 onToggleTheme = onToggleTheme,
                 onAddAccount = { },
-                onLogout = { },
+                onLogout = onLogout,
                 onManageAccount = { },
                 onHelp = { },
                 onBackHandlerChange = onBackHandlerChange,

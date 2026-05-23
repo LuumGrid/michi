@@ -9,9 +9,8 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.animation.presentation.model.AnimationListEntry
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.animation.presentation.model.incremented
-import com.luum.michi.app.animation.presentation.sample.AnimationSampleEntries
 
-internal class AnimationListStateHolder(initialEntries: List<AnimationListEntry>) {
+internal class AnimationListStateHolder(initialEntries: List<AnimationListEntry> = emptyList()) {
     private val backing = mutableStateListOf<AnimationListEntry>().apply { addAll(initialEntries) }
     private var editingState by mutableStateOf<AnimationListEntry?>(null)
 
@@ -41,4 +40,4 @@ internal class AnimationListStateHolder(initialEntries: List<AnimationListEntry>
 
 @Composable
 internal fun rememberAnimationListStateHolder(): AnimationListStateHolder =
-    remember { AnimationListStateHolder(AnimationSampleEntries) }
+    remember { AnimationListStateHolder() }

@@ -10,9 +10,8 @@ import com.luum.michi.app.reading.presentation.model.ReadingListEntry
 import com.luum.michi.app.reading.presentation.model.ReadingListSection
 import com.luum.michi.app.reading.presentation.model.incrementedChapters
 import com.luum.michi.app.reading.presentation.model.incrementedVolumes
-import com.luum.michi.app.reading.presentation.sample.ReadingSampleEntries
 
-internal class ReadingListStateHolder(initialEntries: List<ReadingListEntry>) {
+internal class ReadingListStateHolder(initialEntries: List<ReadingListEntry> = emptyList()) {
     private val backing = mutableStateListOf<ReadingListEntry>().apply { addAll(initialEntries) }
     private var editingState by mutableStateOf<ReadingListEntry?>(null)
 
@@ -47,4 +46,4 @@ internal class ReadingListStateHolder(initialEntries: List<ReadingListEntry>) {
 
 @Composable
 internal fun rememberReadingListStateHolder(): ReadingListStateHolder =
-    remember { ReadingListStateHolder(ReadingSampleEntries) }
+    remember { ReadingListStateHolder() }

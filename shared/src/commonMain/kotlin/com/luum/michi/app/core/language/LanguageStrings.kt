@@ -167,6 +167,11 @@ interface LanguageStrings {
     val settingsAboutVersionLabel: String
     val settingsAboutCreditsLabel: String
     val backButton: String
+    val authWelcomeTitle: String
+    val authWelcomeSubtitle: String
+    val authLoginAction: String
+    val authConfigurationMissing: String
+    val authLoadingLabel: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

@@ -18,6 +18,7 @@ import com.luum.michi.app.animation.presentation.state.rememberAnimationListStat
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
+import com.luum.michi.app.core.session.Viewer
 import com.luum.michi.app.discovery.presentation.DiscoveryScreen
 import com.luum.michi.app.reading.presentation.ReadingScreen
 import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
@@ -34,14 +35,16 @@ import com.luum.michi.app.shell.state.rememberShellState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShellScreen(
+internal fun ShellScreen(
+    viewer: Viewer,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
     onToggleTheme: () -> Unit,
+    onLogout: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
-    val shellState = rememberShellState()
+    val shellState = rememberShellState(viewer)
     val animationState = rememberAnimationListStateHolder()
     val readingState = rememberReadingListStateHolder()
     val settingsState = rememberSettingsState()
@@ -153,6 +156,7 @@ fun ShellScreen(
                     onNavigate = { shellState.accountRoute = it },
                     onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
                     onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
+                    onLogout = onLogout,
                     onBackHandlerChange = { shellState.topBarBackHandler = it },
                 )
             }

@@ -173,6 +173,11 @@ object EnglishLanguageStrings : LanguageStrings {
     override val settingsAboutVersionLabel = "Version"
     override val settingsAboutCreditsLabel = "Credits"
     override val backButton = "Back"
+    override val authWelcomeTitle = "Welcome to Michi"
+    override val authWelcomeSubtitle = "Your AniList client for anime, manga, lists, and favorites."
+    override val authLoginAction = "Log in with AniList"
+    override val authConfigurationMissing = "Missing anilistClientId in local.properties."
+    override val authLoadingLabel = "Loading..."
 }
 
 private fun monthName(month: Int): String = when (month) {

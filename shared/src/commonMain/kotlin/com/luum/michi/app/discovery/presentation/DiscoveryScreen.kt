@@ -13,16 +13,19 @@ import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformHomeCommunityCard
 import com.luum.michi.app.core.platform.components.PlatformHomeHeader
+import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
+import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
 import com.luum.michi.app.core.platform.components.PlatformHomeReleaseRail
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcut
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcutRow
-import com.luum.michi.app.discovery.presentation.sample.DiscoveryReleasingTodaySample
-import com.luum.michi.app.discovery.presentation.sample.DiscoveryTrendingAnimationSample
-import com.luum.michi.app.discovery.presentation.sample.DiscoveryTrendingReadingSample
 
 @Composable
-fun DiscoveryScreen() {
+fun DiscoveryScreen(
+    releasingToday: List<PlatformHomeReleaseItem> = emptyList(),
+    trendingAnimation: List<PlatformHomeMediaItem> = emptyList(),
+    trendingReading: List<PlatformHomeMediaItem> = emptyList(),
+) {
     val strings = LanguageProvider.strings
     val shortcuts = discoveryShortcuts(strings)
 
@@ -38,29 +41,39 @@ fun DiscoveryScreen() {
             )
         }
         item { PlatformHomeShortcutRow(items = shortcuts) }
-        item {
-            PlatformHomeReleaseRail(
-                title = strings.homeReleasingTodayTitle,
-                items = DiscoveryReleasingTodaySample,
-            )
+
+        if (releasingToday.isNotEmpty()) {
+            item {
+                PlatformHomeReleaseRail(
+                    title = strings.homeReleasingTodayTitle,
+                    items = releasingToday,
+                )
+            }
         }
+
         item {
             PlatformHomeCommunityCard(
                 title = strings.homeCommunityTitle,
                 subtitle = strings.homeCommunitySubtitle,
             )
         }
-        item {
-            PlatformHomeMediaRail(
-                title = strings.homeTrendingAnimationTitle,
-                items = DiscoveryTrendingAnimationSample,
-            )
+
+        if (trendingAnimation.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.homeTrendingAnimationTitle,
+                    items = trendingAnimation,
+                )
+            }
         }
-        item {
-            PlatformHomeMediaRail(
-                title = strings.homeTrendingReadingTitle,
-                items = DiscoveryTrendingReadingSample,
-            )
+
+        if (trendingReading.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.homeTrendingReadingTitle,
+                    items = trendingReading,
+                )
+            }
         }
     }
 }

@@ -1,25 +1,36 @@
 package com.luum.michi.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var dependencies: MichiDependencies
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        setContent {
-            App()
-        }
-    }
-}
+        dependencies = createMichiDependencies(this)
 
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
+        setContent {
+            App(dependencies = dependencies)
+        }
+
+        handleOAuthCallback(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleOAuthCallback(intent)
+    }
+
+    private fun handleOAuthCallback(intent: Intent?) {
+        val uri = intent?.dataString ?: return
+        dependencies.onOAuthCallback(uri)
+    }
 }
