@@ -74,7 +74,7 @@ internal fun ShellScreen(
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT ->
-            "${shellState.currentProfile.displayName} | @${shellState.currentProfile.username}"
+            shellState.currentProfile.username
         else -> shellState.selectedTab.label(strings)
     }
 

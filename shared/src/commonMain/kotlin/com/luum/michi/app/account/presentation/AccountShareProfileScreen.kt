@@ -48,7 +48,7 @@ internal fun AccountShareProfileScreen(
     val strings = LanguageProvider.strings
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
-    val profileUrl = remember(username) { "https://luum.lat/${username.toProfilePathSegment()}" }
+    val profileUrl = remember(username) { "https://anilist.co/user/${username.toProfilePathSegment()}" }
 
     Column(
         modifier = Modifier

@@ -71,16 +71,6 @@ internal fun AccountHeader(
                 .fillMaxWidth()
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp),
         ) {
-            Text(
-                text = "@$username",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
             if (!joinedLabel.isNullOrBlank()) {
                 Text(
                     text = joinedLabel,

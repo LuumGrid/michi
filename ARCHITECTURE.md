@@ -158,7 +158,7 @@ Both clients agree on the AniList domain shape (user profile has favorites, not 
 ## Account Profile Layout (AniList-aligned)
 
 - Banner (`AccountBanner`) with gradient fallback when `bannerUrl` is null. Avatar (96dp circle) overhangs the banner by 48dp.
-- Identity block: `@username`, display name, joined-date label (e.g. "Joined Mar 2024"), bio, and `Edit profile` / `Share profile` buttons.
+- Identity block: joined-date label (e.g. "Joined Mar 2024"), bio, and `Edit profile` / `Share profile` buttons.
 - Stats row (`AccountStatsRow`): 4 cells — anime count, manga count, following, followers — formatted via `Int.toCompactCountLabel()`.
 - Favorites rails (`AccountFavoriteSection`, generic over item type):
   - Favorite Animation → `AccountFavoriteMediaCard`
@@ -234,3 +234,4 @@ Related source-of-truth memory for the donor project:
 - `/home/psyxho_skull/.codex/memories/platform-app-architecture.md`
 
 Use Platform memory only for reusable architectural principles. Michi's current code and this document win over Platform-specific product details. For AniList UX/feature direction, the reference clients (AL-Chan, Otraku) take precedence over Platform conventions.
+conventions.
