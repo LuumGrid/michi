@@ -3,21 +3,22 @@ package com.luum.michi.app.shell.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,18 +49,26 @@ internal fun ShellBottomTab.label(strings: LanguageStrings): String = when (this
 internal fun ShellBottomNavBar(
     selected: ShellBottomTab,
     onSelect: (ShellBottomTab) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val strings = LanguageProvider.strings
 
-    Column {
-        HorizontalDivider(
-            thickness = 0.5.dp,
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(68.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+        border = BorderStroke(
+            width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant,
-        )
-        NavigationBar(
-            modifier = Modifier.height(65.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            windowInsets = WindowInsets(0),
+        ),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ShellBottomTab.entries.forEach { tab ->
                 val isSelected = selected == tab
@@ -97,11 +106,10 @@ internal fun ShellBottomNavBar(
                             indication = null,
                             onClick = { onSelect(tab) },
                         ),
-                    contentAlignment = Alignment.TopCenter,
+                    contentAlignment = Alignment.Center,
                 ) {
                     Box(
                         modifier = Modifier
-                            .padding(top = 6.dp)
                             .size(width = 64.dp, height = 32.dp)
                             .scale(pillScale)
                             .background(
@@ -118,9 +126,7 @@ internal fun ShellBottomNavBar(
                         },
                         contentDescription = tab.label(strings),
                         tint = iconColor,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .size(28.dp),
+                        modifier = Modifier.size(26.dp),
                     )
                 }
             }

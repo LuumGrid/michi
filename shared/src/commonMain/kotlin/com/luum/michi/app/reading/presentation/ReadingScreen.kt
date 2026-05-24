@@ -103,7 +103,7 @@ private fun ReadingContentList(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         if (selectedSection == ReadingListSection.ALL) {
