@@ -27,6 +27,7 @@ internal data class AnimationListEntry(
     val trending: Int = 0,
     val priority: Int = 0,
     val nextAiringAt: Long = 0L,
+    val nextEpisodeNumber: Int? = null,
 )
 
 internal fun AnimationListEntry.progressLabel(): String {
@@ -46,14 +47,24 @@ internal fun AnimationListEntry.canIncrement(): Boolean {
 
 internal fun AnimationListEntry.releaseLabel(strings: LanguageStrings): String? {
     return nextEpisodeRelease?.let { release ->
-        strings.nextEpisodeReleaseLabel(episodeNumber = progress + 1, releaseDateTime = release)
+        strings.nextEpisodeReleaseLabel(episodeNumber = nextEpisodeNumber ?: (progress + 1), releaseDateTime = release)
     }
 }
 
 internal fun AnimationListEntry.behindLabel(strings: LanguageStrings): String? {
-    val total = totalEpisodes
-    val behind = if (total != null) total - progress else 0
-    return if (status == AnimationListSection.WATCHING && behind > 0) {
+    if (status != AnimationListSection.WATCHING) return null
+
+    val nextEpisodeNum = nextEpisodeNumber
+    val behind = if (nextEpisodeNum != null) {
+        // Si está en emisión, los episodios ya emitidos son nextEpisodeNum - 1
+        (nextEpisodeNum - 1) - progress
+    } else {
+        // Si finalizó o no hay información de estreno, usamos el total de episodios
+        val total = totalEpisodes
+        if (total != null) total - progress else 0
+    }
+
+    return if (behind > 0) {
         strings.episodesBehind(behind)
     } else {
         null

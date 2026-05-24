@@ -30,6 +30,8 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!) {
         popularity
         title { romaji english native userPreferred }
         coverImage { extraLarge large medium color }
+        isFavourite
+        mediaListEntry { id score }
       }
     }
   }

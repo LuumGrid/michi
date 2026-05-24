@@ -145,6 +145,9 @@ object SpanishLanguageStrings : LanguageStrings {
     override fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
         return "Cap. $chapterNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
+    override fun nextVolumeReleaseLabel(volumeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
+        return "Vol. $volumeNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
+    }
     override val accountAnimeLabel = "Animacion"
     override val accountMangaLabel = "Lectura"
     override val accountFollowersLabel = "Seguidores"

@@ -9,6 +9,7 @@ import com.luum.michi.app.core.anilist.dto.MediaNextAiringEpisodeDto
 import com.luum.michi.app.core.anilist.dto.toComparableInt
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.hexToPalette
+import com.luum.michi.app.core.media.toLocalMediaReleaseDateTime
 
 internal fun MediaListEntryDto.toAnimationListEntry(index: Int = 0): AnimationListEntry {
     val section = mapAnimationStatus(status, media.format)
@@ -35,6 +36,7 @@ internal fun MediaListEntryDto.toAnimationListEntry(index: Int = 0): AnimationLi
         trending = media.trending ?: 0,
         priority = priority ?: 0,
         nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
+        nextEpisodeNumber = media.nextAiringEpisode?.episode,
     )
 }
 
@@ -79,22 +81,11 @@ private fun com.luum.michi.app.core.anilist.dto.MediaTitleDto?.bestTitle(): Stri
 
 private fun MediaNextAiringEpisodeDto?.toMediaReleaseDateTime(): MediaReleaseDateTime? {
     if (this == null) return null
-    return airingAt.toMediaReleaseDateTime()
+    return airingAt.toLocalMediaReleaseDateTime()
 }
 
-/**
- * Converts a UTC epoch-seconds timestamp into a `MediaReleaseDateTime`.
- * Uses the same Gregorian math as the birth-date util but localized inline
- * to avoid a `core/util` dependency cycle.
- */
 internal fun Long.toMediaReleaseDateTime(): MediaReleaseDateTime {
-    val secondsPerDay = 86_400L
-    val epochDay = if (this >= 0) this / secondsPerDay else (this - secondsPerDay + 1) / secondsPerDay
-    val secondsInDay = this - epochDay * secondsPerDay
-    val hour = (secondsInDay / 3600L).toInt()
-    val minute = ((secondsInDay % 3600L) / 60L).toInt()
-    val (year, month, day) = epochDayToGregorian(epochDay)
-    return MediaReleaseDateTime(day = day, month = month, year = year, hour = hour, minute = minute)
+    return this.toLocalMediaReleaseDateTime()
 }
 
 private fun epochDayToGregorian(epochDayInput: Long): Triple<Int, Int, Int> {

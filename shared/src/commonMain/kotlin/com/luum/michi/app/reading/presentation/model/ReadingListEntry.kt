@@ -58,7 +58,12 @@ internal fun ReadingListEntry.canIncrementVolumes(): Boolean {
 
 internal fun ReadingListEntry.releaseLabel(strings: LanguageStrings): String? {
     return nextChapterRelease?.let { release ->
-        strings.nextChapterReleaseLabel(chapterNumber = chaptersProgress + 1, releaseDateTime = release)
+        val isVolumeBased = format.contains("Novel", ignoreCase = true) || totalChapters == 0
+        if (isVolumeBased) {
+            strings.nextVolumeReleaseLabel(volumeNumber = volumesProgress + 1, releaseDateTime = release)
+        } else {
+            strings.nextChapterReleaseLabel(chapterNumber = chaptersProgress + 1, releaseDateTime = release)
+        }
     }
 }
 

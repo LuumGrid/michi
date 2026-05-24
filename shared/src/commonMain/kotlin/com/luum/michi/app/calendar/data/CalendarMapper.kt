@@ -4,6 +4,7 @@ import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.AiringSchedulePageDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.media.isoDayOfWeek
+import com.luum.michi.app.core.media.toLocalMediaReleaseDateTime
 import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
 import com.luum.michi.app.core.platform.hexToPalette
 
@@ -31,6 +32,7 @@ internal fun AiringSchedulePageDto.toCalendarFeed(nowEpoch: Long): CalendarFeed 
 
 private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem {
     val media = media!!
+    val hasUserScore = media.mediaListEntry?.score != null && media.mediaListEntry.score > 0
     return PlatformHomeReleaseItem(
         title = media.title.bestTitle(),
         release = "Ep $episode",
@@ -41,6 +43,8 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem {
         averageScore = media.averageScore,
         favourites = media.favourites,
         popularity = media.popularity,
+        isUserFavorited = media.isFavourite ?: false,
+        isUserRanked = hasUserScore,
     )
 }
 
@@ -50,8 +54,6 @@ private fun MediaTitleDto?.bestTitle(): String {
 }
 
 private fun formatAiringTime(airingAtEpoch: Long): String {
-    val secondsInDay = ((airingAtEpoch % SecondsPerDay) + SecondsPerDay) % SecondsPerDay
-    val hour = (secondsInDay / 3600L).toInt()
-    val minute = ((secondsInDay % 3600L) / 60L).toInt()
-    return "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+    val localDateTime = airingAtEpoch.toLocalMediaReleaseDateTime()
+    return "${localDateTime.hour.toString().padStart(2, '0')}:${localDateTime.minute.toString().padStart(2, '0')}"
 }

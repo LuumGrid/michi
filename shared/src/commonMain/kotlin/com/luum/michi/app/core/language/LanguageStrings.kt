@@ -137,6 +137,7 @@ interface LanguageStrings {
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String
+    fun nextVolumeReleaseLabel(volumeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     val accountAnimeLabel: String
     val accountMangaLabel: String
     val accountFollowersLabel: String

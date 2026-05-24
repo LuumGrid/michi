@@ -41,3 +41,19 @@ internal actual fun calendarPartsToMillis(parts: CalendarDateParts): Long {
     val date = utcCalendar.dateFromComponents(components) ?: return 0L
     return (date.timeIntervalSince1970 * 1000.0).toLong()
 }
+
+internal actual fun Long.toLocalMediaReleaseDateTime(): com.luum.michi.app.core.model.MediaReleaseDateTime {
+    val date = NSDate.dateWithTimeIntervalSince1970(this.toDouble())
+    val calendar = NSCalendar.currentCalendar
+    val components = calendar.components(
+        platform.Foundation.NSCalendarUnitYear or platform.Foundation.NSCalendarUnitMonth or platform.Foundation.NSCalendarUnitDay or platform.Foundation.NSCalendarUnitHour or platform.Foundation.NSCalendarUnitMinute,
+        fromDate = date
+    )
+    return com.luum.michi.app.core.model.MediaReleaseDateTime(
+        day = components.day.toInt(),
+        month = components.month.toInt(),
+        year = components.year.toInt(),
+        hour = components.hour.toInt(),
+        minute = components.minute.toInt()
+    )
+}
