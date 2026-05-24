@@ -44,7 +44,7 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 
 private val StandardCardHeight = 158.dp
-private val StandardCoverWidth = 93.dp
+private val StandardCoverWidth = PlatformCoverSize.RowPosterWidth
 private val ImageCornerRadius = 12.dp
 
 @Composable

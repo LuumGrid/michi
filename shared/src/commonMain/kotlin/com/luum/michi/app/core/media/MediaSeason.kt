@@ -18,6 +18,16 @@ internal fun seasonForMonth(month: Int): MediaSeason = when (month) {
     else -> MediaSeason.FALL
 }
 
+internal fun MediaSeason.startMonth(): Int = when (this) {
+    MediaSeason.WINTER -> 1
+    MediaSeason.SPRING -> 4
+    MediaSeason.SUMMER -> 7
+    MediaSeason.FALL -> 10
+}
+
+internal fun MediaSeasonYear.startEpochSeconds(): Long =
+    calendarPartsToMillis(CalendarDateParts(year, season.startMonth(), 1)) / 1000L
+
 internal expect fun currentSeasonAndYear(): MediaSeasonYear
 
 /**

@@ -44,11 +44,11 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformHomeMed
         meta = metaFor(this),
         colors = hexToPalette(coverImage?.color),
         id = id,
-        coverUrl = coverImage?.large ?: coverImage?.medium ?: coverImage?.extraLarge,
+        coverUrl = coverImage?.bestUrl,
         averageScore = averageScore,
         favourites = favourites,
         isUserFavorited = isFavourite == true,
-        isUserRanked = mediaListEntry != null && mediaListEntry.score > 0.0,
+        isUserRanked = mediaListEntry != null && (mediaListEntry.score ?: 0.0) > 0.0,
     )
 
 private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
@@ -59,11 +59,11 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
         time = formatAiringTime(airingAt),
         colors = hexToPalette(media.coverImage?.color),
         id = media.id,
-        coverUrl = media.coverImage?.large ?: media.coverImage?.medium ?: media.coverImage?.extraLarge,
+        coverUrl = media.coverImage?.bestUrl,
         averageScore = media.averageScore,
         favourites = media.favourites,
         isUserFavorited = media.isFavourite == true,
-        isUserRanked = media.mediaListEntry != null && media.mediaListEntry.score > 0.0,
+        isUserRanked = media.mediaListEntry != null && (media.mediaListEntry.score ?: 0.0) > 0.0,
     )
 }
 

@@ -54,6 +54,15 @@ data class PlatformHomeReleaseItem(
     val popularity: Int? = null,
     val isUserFavorited: Boolean = false,
     val isUserRanked: Boolean = false,
+    val userStatus: String? = null,
+    val streamingPlatforms: List<StreamingPlatform> = emptyList(),
+)
+
+data class StreamingPlatform(
+    val site: String,
+    val url: String,
+    val iconUrl: String? = null,
+    val color: String? = null,
 )
 
 data class PlatformHomeMediaItem(
@@ -198,61 +207,47 @@ fun PlatformHomeReleaseCard(
     } else {
         Modifier
     }
-    Surface(
+    val metaLine = listOf(item.release, item.time)
+        .filter { it.isNotBlank() }
+        .joinToString(" · ")
+    Column(
         modifier = Modifier
-            .width(172.dp)
+            .width(PlatformCoverSize.RailPosterWidth)
             .then(clickModifier),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        PlatformHomePoster(
+            colors = item.colors,
+            coverUrl = item.coverUrl,
+            contentDescription = item.title,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
         ) {
-            PlatformHomePoster(
-                colors = item.colors,
-                coverUrl = item.coverUrl,
-                contentDescription = item.title,
-                modifier = Modifier
-                    .width(54.dp)
-                    .aspectRatio(0.68f),
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = item.release,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = item.time,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                PlatformCommunityMetaRow(
-                    averageScore = item.averageScore,
-                    favourites = item.favourites,
-                    popularity = item.popularity,
-                    isUserRanked = item.isUserRanked,
-                    isUserFavorited = item.isUserFavorited,
-                )
+            if (item.averageScore != null) {
+                PlatformRatingBadge(averageScore = item.averageScore, isUserRanked = item.isUserRanked)
             }
+            if (item.favourites != null && item.favourites > 0) {
+                PlatformFavouritesBadge(favourites = item.favourites, isUserFavorited = item.isUserFavorited)
+            }
+        }
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            fontWeight = FontWeight.SemiBold,
+        )
+        if (metaLine.isNotBlank()) {
+            Text(
+                text = metaLine,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -347,7 +342,7 @@ fun PlatformHomeMediaCard(
     }
     Column(
         modifier = Modifier
-            .width(116.dp)
+            .width(PlatformCoverSize.RailPosterWidth)
             .then(clickModifier),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -357,7 +352,7 @@ fun PlatformHomeMediaCard(
             contentDescription = item.title,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.68f),
+                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
         ) {
             if (item.averageScore != null) {
                 PlatformRatingBadge(averageScore = item.averageScore, isUserRanked = item.isUserRanked)

@@ -47,6 +47,7 @@ interface LanguageStrings {
     val calendarTitle: String
     val calendarEmptyLabel: String
     val tomorrowLabel: String
+    fun calendarHeaderLabel(prefix: String, day: Int, month: Int, year: Int): String
     val dayMonday: String
     val dayTuesday: String
     val dayWednesday: String
@@ -71,16 +72,35 @@ interface LanguageStrings {
     val mediaRelationSpinOff: String
     val mediaRelationParent: String
     val mediaRelationAdaptation: String
+    val mediaRelationAlternative: String
+    val mediaRelationSource: String
+    val mediaRelationSummary: String
+    val mediaRelationCharacter: String
     val mediaRelationOther: String
-    val mediaDetailTabInfo: String
-    val mediaDetailTabStats: String
+    val mediaDetailTabOverview: String
+    val mediaDetailTabConnections: String
     val mediaDetailTabCharacters: String
     val mediaDetailTabStaff: String
+    val mediaDetailTabReviews: String
+    val mediaDetailTabThreads: String
+    val mediaDetailTabFollowing: String
+    val mediaDetailTabActivities: String
+    val mediaDetailTabRecommendations: String
+    val mediaDetailTabStats: String
     val mediaDetailCharacterRoleMain: String
     val mediaDetailCharacterRoleSupporting: String
     val mediaDetailCharacterRoleBackground: String
     val mediaDetailNoCharactersLabel: String
     val mediaDetailNoStaffLabel: String
+    val mediaDetailNoReviewsLabel: String
+    val mediaDetailNoThreadsLabel: String
+    val mediaDetailNoFollowingLabel: String
+    val mediaDetailNoActivitiesLabel: String
+    val mediaDetailNoRecommendationsLabel: String
+    val mediaDetailActivityGlobal: String
+    val mediaDetailActivityFollowing: String
+    val mediaDetailActivitySelf: String
+    val mediaDetailRecommendationReason: String
     val mediaDetailLoadMoreAction: String
     val mediaDetailVoiceLanguageLabel: String
     val mediaDetailScoreDistributionTitle: String

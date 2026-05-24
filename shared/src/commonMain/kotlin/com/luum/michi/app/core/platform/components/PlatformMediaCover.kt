@@ -27,6 +27,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.luum.michi.app.core.platform.PlatformIcons
 
+/**
+ * Canonical poster sizes across the app. Use these whenever rendering a media
+ * cover so rails/grids/rows stay visually aligned. Aspect ratio is 0.68 (AniList
+ * poster ratio); width drives height implicitly.
+ */
+object PlatformCoverSize {
+    /** Vertical poster in horizontal rails and 2-column grids (Home rails, Explore, Account favorites). */
+    val RailPosterWidth: Dp = 116.dp
+    /** Horizontal row card cover (Library, Calendar, Detail Connections). */
+    val RowPosterWidth: Dp = 93.dp
+    /** Aspect ratio used by every PlatformMediaCover. */
+    const val PosterAspectRatio: Float = 0.68f
+}
+
 @Composable
 fun PlatformMediaCover(
     coverUrl: String?,
@@ -38,10 +52,14 @@ fun PlatformMediaCover(
     fallbackIconSize: Dp = 32.dp,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
+    val finalPalette = if (palette.size >= 2) palette else listOf(
+        Color(0xFF312E81),
+        Color(0xFFEC4899),
+    )
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
-            .background(Brush.linearGradient(palette)),
+            .background(Brush.linearGradient(finalPalette)),
     ) {
         if (!coverUrl.isNullOrBlank()) {
             AsyncImage(

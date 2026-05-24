@@ -34,7 +34,7 @@ internal fun MediaDetailDto.toDomain(): MediaDetail = MediaDetail(
     id = id,
     type = parseType(type),
     title = title.bestTitle(),
-    coverUrl = coverImage?.extraLarge ?: coverImage?.large ?: coverImage?.medium,
+    coverUrl = coverImage?.bestUrl,
     bannerUrl = bannerImage,
     palette = hexToPalette(coverImage?.color),
     format = format?.toTitleCase(),
@@ -143,10 +143,14 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
     return MediaDetailRelation(
         mediaId = node.id,
         title = node.title.bestTitle(),
-        coverUrl = node.coverImage?.extraLarge ?: node.coverImage?.large ?: node.coverImage?.medium,
+        coverUrl = node.coverImage?.bestUrl,
         palette = hexToPalette(node.coverImage?.color),
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),
+        year = node.seasonYear ?: node.startDate?.year,
+        averageScore = node.averageScore?.takeIf { it > 0 },
+        favourites = node.favourites?.takeIf { it > 0 },
+        viewerStatus = node.mediaListEntry?.status,
     )
 }
 
@@ -157,20 +161,24 @@ private fun parseRelationKind(raw: String?): MediaRelationKind = when (raw) {
     "SPIN_OFF" -> MediaRelationKind.SPIN_OFF
     "PARENT" -> MediaRelationKind.PARENT
     "ADAPTATION" -> MediaRelationKind.ADAPTATION
+    "ALTERNATIVE" -> MediaRelationKind.ALTERNATIVE
+    "SOURCE" -> MediaRelationKind.SOURCE
+    "SUMMARY" -> MediaRelationKind.SUMMARY
+    "CHARACTER" -> MediaRelationKind.CHARACTER
     else -> MediaRelationKind.OTHER
 }
 
 private fun MediaViewerListEntryDto.toViewerEntry(): MediaDetailViewerEntry = MediaDetailViewerEntry(
     id = id,
     status = parseMediaListStatus(status),
-    progress = progress,
+    progress = progress ?: 0,
     progressVolumes = progressVolumes,
-    score = score.toFloat(),
+    score = (score ?: 0.0).toFloat(),
     notes = notes.orEmpty(),
-    repeat = repeat,
-    priority = priority,
-    isPrivate = isPrivate,
-    hiddenFromStatusLists = hiddenFromStatusLists,
+    repeat = repeat ?: 0,
+    priority = priority ?: 0,
+    isPrivate = isPrivate ?: false,
+    hiddenFromStatusLists = hiddenFromStatusLists ?: false,
     startedAtMillis = startedAt?.toMillisOrNull(),
     completedAtMillis = completedAt?.toMillisOrNull(),
 )

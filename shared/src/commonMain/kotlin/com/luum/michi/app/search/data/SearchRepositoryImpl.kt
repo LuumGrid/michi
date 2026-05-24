@@ -16,6 +16,7 @@ import kotlinx.serialization.json.JsonPrimitive
 private const val MediaSearchQuery = """
 query MediaSearch(${'$'}search: String, ${'$'}type: MediaType, ${'$'}page: Int!, ${'$'}perPage: Int!) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
+    pageInfo { hasNextPage }
     media(search: ${'$'}search, type: ${'$'}type, sort: SEARCH_MATCH, isAdult: false) {
       id
       type
@@ -49,7 +50,7 @@ internal class SearchRepositoryImpl(
         type: SearchType,
         page: Int,
         perPage: Int,
-    ): NetworkResult<List<SearchResult>> {
+    ): NetworkResult<SearchPage> {
         val variables = buildMap<String, JsonElement> {
             put("search", JsonPrimitive(query))
             type.toApiValue()?.let { put("type", JsonPrimitive(it)) }
@@ -65,7 +66,10 @@ internal class SearchRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromString(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            response.page?.media.orEmpty().map { it.toSearchResult() }
+            SearchPage(
+                results = response.page?.media.orEmpty().map { it.toSearchResult() },
+                hasNextPage = response.page?.pageInfo?.hasNextPage == true,
+            )
         }
     }
 }

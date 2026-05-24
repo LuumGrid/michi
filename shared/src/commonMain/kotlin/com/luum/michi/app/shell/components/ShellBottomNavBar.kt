@@ -56,7 +56,7 @@ internal fun ShellBottomNavBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(68.dp),
+            .height(64.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
         tonalElevation = 8.dp,

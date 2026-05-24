@@ -101,7 +101,7 @@ internal fun ShellScreen(
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
     val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
-    val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository)
+    val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository, viewerId = viewer.id)
     val searchState = rememberSearchStateHolder(searchRepository)
     val settingsState = rememberSettingsState()
     var showExploreFilters by remember { mutableStateOf(false) }

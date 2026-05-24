@@ -27,6 +27,19 @@ internal data class MediaDto(
     val mediaListEntry: MediaViewerListEntryDto? = null,
     val trending: Int? = null,
     val startDate: FuzzyDateDto? = null,
+    val externalLinks: List<MediaExternalLinkDto>? = null,
+)
+
+@Serializable
+internal data class MediaExternalLinkDto(
+    val id: Int? = null,
+    val site: String? = null,
+    val url: String? = null,
+    val type: String? = null,
+    val icon: String? = null,
+    val color: String? = null,
+    val language: String? = null,
+    val isDisabled: Boolean? = null,
 )
 
 @Serializable
@@ -43,7 +56,9 @@ internal data class MediaCoverImageDto(
     val large: String? = null,
     val medium: String? = null,
     val color: String? = null,
-)
+) {
+    val bestUrl: String? get() = extraLarge ?: large ?: medium
+}
 
 @Serializable
 internal data class MediaNextAiringEpisodeDto(

@@ -1,10 +1,12 @@
 package com.luum.michi.app.mediaDetail.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -21,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
@@ -29,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
@@ -56,23 +60,28 @@ import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.core.platform.components.PlatformChips
+import com.luum.michi.app.core.platform.components.PlatformCoverSize
+import com.luum.michi.app.core.platform.components.PlatformFavouritesBadge
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry
-import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterRole
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
-import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
-import com.luum.michi.app.mediaDetail.presentation.model.MediaScoreBucket
-import com.luum.michi.app.mediaDetail.presentation.model.MediaStaffEntry
-import com.luum.michi.app.mediaDetail.presentation.model.MediaStatsStatus
-import com.luum.michi.app.mediaDetail.presentation.model.MediaStatusBucket
+import com.luum.michi.app.core.platform.components.PlatformRatingBadge
+import com.luum.michi.app.mediaDetail.presentation.model.*
 import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
 
-private enum class DetailTab { INFO, STATS, CHARACTERS, STAFF }
+private enum class DetailTab {
+    OVERVIEW,
+    CONNECTIONS,
+    CHARACTERS,
+    STAFF,
+    REVIEWS,
+    THREADS,
+    FOLLOWING,
+    ACTIVITIES,
+    STATS,
+}
 
 private val VoiceLanguageOptions = listOf(
     "JAPANESE",
@@ -125,7 +134,7 @@ private fun MediaDetailContent(
     onEditClick: () -> Unit,
     onOpenRelation: (Int) -> Unit,
 ) {
-    var selectedTab by remember(detail.id) { mutableStateOf(DetailTab.INFO) }
+    var selectedTab by remember(detail.id) { mutableStateOf(DetailTab.OVERVIEW) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         MediaDetailHeader(detail = detail)
@@ -137,12 +146,16 @@ private fun MediaDetailContent(
         )
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedTab) {
-                DetailTab.INFO -> InfoTab(
+                DetailTab.OVERVIEW -> OverviewTab(
                     detail = detail,
                     strings = strings,
                     onOpenRelation = onOpenRelation,
                 )
-                DetailTab.STATS -> StatsTab(detail = detail, strings = strings)
+                DetailTab.CONNECTIONS -> ConnectionsTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                    onOpenRelation = onOpenRelation,
+                )
                 DetailTab.CHARACTERS -> CharactersTab(
                     stateHolder = stateHolder,
                     strings = strings,
@@ -151,9 +164,41 @@ private fun MediaDetailContent(
                     stateHolder = stateHolder,
                     strings = strings,
                 )
+                DetailTab.REVIEWS -> ReviewsTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
+                DetailTab.THREADS -> ThreadsTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
+                DetailTab.FOLLOWING -> FollowingTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
+                DetailTab.ACTIVITIES -> ActivitiesTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
+                DetailTab.STATS -> StatsTab(
+                    detail = detail,
+                    strings = strings,
+                )
             }
         }
     }
+}
+
+private fun DetailTab.label(strings: LanguageStrings): String = when (this) {
+    DetailTab.OVERVIEW -> strings.mediaDetailTabOverview
+    DetailTab.CONNECTIONS -> strings.mediaDetailTabConnections
+    DetailTab.CHARACTERS -> strings.mediaDetailTabCharacters
+    DetailTab.STAFF -> strings.mediaDetailTabStaff
+    DetailTab.REVIEWS -> strings.mediaDetailTabReviews
+    DetailTab.THREADS -> strings.mediaDetailTabThreads
+    DetailTab.FOLLOWING -> strings.mediaDetailTabFollowing
+    DetailTab.ACTIVITIES -> strings.mediaDetailTabActivities
+    DetailTab.STATS -> strings.mediaDetailTabStats
 }
 
 @Composable
@@ -162,27 +207,15 @@ private fun MediaDetailTabBar(
     onSelect: (DetailTab) -> Unit,
     strings: LanguageStrings,
 ) {
-    val tabs = listOf(
-        DetailTab.INFO to strings.mediaDetailTabInfo,
-        DetailTab.STATS to strings.mediaDetailTabStats,
-        DetailTab.CHARACTERS to strings.mediaDetailTabCharacters,
-        DetailTab.STAFF to strings.mediaDetailTabStaff,
+    val tabs = remember { DetailTab.entries }
+    PlatformChips(
+        items = tabs,
+        selectedItem = selected,
+        onSelect = onSelect,
+        label = { tab -> tab.label(strings) },
+        useSoftActiveColor = true,
+        modifier = Modifier.fillMaxWidth(),
     )
-    PrimaryTabRow(selectedTabIndex = tabs.indexOfFirst { it.first == selected }.coerceAtLeast(0)) {
-        tabs.forEach { (tab, label) ->
-            Tab(
-                selected = tab == selected,
-                onClick = { onSelect(tab) },
-                text = {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                },
-            )
-        }
-    }
 }
 
 @Composable
@@ -233,8 +266,8 @@ private fun MediaDetailHeader(detail: MediaDetail) {
                 palette = detail.palette,
                 contentDescription = detail.title,
                 modifier = Modifier
-                    .width(110.dp)
-                    .aspectRatio(0.68f),
+                    .width(PlatformCoverSize.RailPosterWidth)
+                    .aspectRatio(PlatformCoverSize.PosterAspectRatio),
                 fallbackIcon = PlatformIcons.Home,
                 fallbackIconSize = 34.dp,
             )
@@ -284,7 +317,7 @@ private fun MediaDetailHeader(detail: MediaDetail) {
 }
 
 @Composable
-private fun InfoTab(
+private fun OverviewTab(
     detail: MediaDetail,
     strings: LanguageStrings,
     onOpenRelation: (Int) -> Unit,
@@ -300,15 +333,6 @@ private fun InfoTab(
         }
         if (detail.descriptionPlain.isNotBlank()) {
             item { MediaDetailDescription(text = detail.descriptionPlain, strings = strings) }
-        }
-        if (detail.relations.isNotEmpty()) {
-            item {
-                MediaDetailRelationsRow(
-                    relations = detail.relations,
-                    strings = strings,
-                    onOpenRelation = onOpenRelation,
-                )
-            }
         }
         if (detail.studios.isNotEmpty()) {
             item { MediaDetailStudios(studios = detail.studios, strings = strings) }
@@ -476,7 +500,7 @@ private fun CharactersTab(
         }
         LazyVerticalGrid(
             state = gridState,
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(1),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 28.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -642,7 +666,7 @@ private fun StaffTab(
     }
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(1),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 28.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -796,64 +820,21 @@ private fun MediaDetailDescription(text: String, strings: LanguageStrings) {
 }
 
 @Composable
-private fun MediaDetailRelationsRow(
-    relations: List<MediaDetailRelation>,
-    strings: LanguageStrings,
-    onOpenRelation: (Int) -> Unit,
-) {
-    MediaDetailSection(title = strings.mediaDetailRelationsTitle) {
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items(items = relations, key = { it.mediaId }) { relation ->
-                MediaDetailRelationCard(
-                    relation = relation,
-                    strings = strings,
-                    onClick = { onOpenRelation(relation.mediaId) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun MediaDetailRelationCard(
     relation: MediaDetailRelation,
     strings: LanguageStrings,
     onClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .width(108.dp)
-            .clickable(onClick = onClick),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        PlatformMediaCover(
-            coverUrl = relation.coverUrl,
-            palette = relation.palette,
-            contentDescription = relation.title,
-            modifier = Modifier
-                .width(108.dp)
-                .aspectRatio(0.68f),
-        )
-        Text(
-            text = relationLabel(relation.kind, strings),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = relation.title,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    ConnectionRowCard(
+        coverUrl = relation.coverUrl,
+        palette = relation.palette,
+        title = relation.title,
+        averageScore = relation.averageScore,
+        favourites = relation.favourites,
+        topLine = relationLabel(relation.kind, strings),
+        metaParts = listOfNotNull(relation.format, relation.year?.toString()),
+        onClick = onClick,
+    )
 }
 
 private fun relationLabel(kind: MediaRelationKind, strings: LanguageStrings): String = when (kind) {
@@ -863,6 +844,10 @@ private fun relationLabel(kind: MediaRelationKind, strings: LanguageStrings): St
     MediaRelationKind.SPIN_OFF -> strings.mediaRelationSpinOff
     MediaRelationKind.PARENT -> strings.mediaRelationParent
     MediaRelationKind.ADAPTATION -> strings.mediaRelationAdaptation
+    MediaRelationKind.ALTERNATIVE -> strings.mediaRelationAlternative
+    MediaRelationKind.SOURCE -> strings.mediaRelationSource
+    MediaRelationKind.SUMMARY -> strings.mediaRelationSummary
+    MediaRelationKind.CHARACTER -> strings.mediaRelationCharacter
     MediaRelationKind.OTHER -> strings.mediaRelationOther
 }
 
@@ -892,5 +877,616 @@ private fun MediaDetailSection(
             fontWeight = FontWeight.Bold,
         )
         content()
+    }
+}
+
+@Composable
+private fun ReviewsTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    val reviews = stateHolder.reviews
+    LaunchedEffect(Unit) {
+        stateHolder.loadReviews()
+    }
+    if (reviews.isEmpty() && !stateHolder.isLoadingReviews) {
+        PlatformListMessage(
+            title = strings.mediaDetailNoReviewsLabel,
+            tone = PlatformListMessageTone.Neutral,
+        )
+        return
+    }
+
+    val gridState = rememberLazyGridState()
+    LaunchedEffect(gridState, stateHolder.reviewsHasNextPage) {
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        }.collect { last ->
+            if (last >= reviews.size - 4 && stateHolder.reviewsHasNextPage && !stateHolder.isLoadingReviews) {
+                stateHolder.loadMoreReviews()
+            }
+        }
+    }
+
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(1),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        gridItems(items = reviews, key = { it.id }) { entry ->
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (entry.reviewerImageUrl != null) {
+                                AsyncImage(
+                                    model = entry.reviewerImageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = entry.reviewerName.take(1).uppercase(),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Text(
+                                text = entry.reviewerName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                        ) {
+                            Text(
+                                text = entry.rating,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = entry.summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        if (stateHolder.isLoadingReviews) {
+            item { LoadingTile() }
+        }
+    }
+}
+
+@Composable
+private fun ThreadsTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    val threads = stateHolder.threads
+    LaunchedEffect(Unit) {
+        stateHolder.loadThreads()
+    }
+    if (threads.isEmpty() && !stateHolder.isLoadingThreads) {
+        PlatformListMessage(
+            title = strings.mediaDetailNoThreadsLabel,
+            tone = PlatformListMessageTone.Neutral,
+        )
+        return
+    }
+
+    val gridState = rememberLazyGridState()
+    LaunchedEffect(gridState, stateHolder.threadsHasNextPage) {
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        }.collect { last ->
+            if (last >= threads.size - 4 && stateHolder.threadsHasNextPage && !stateHolder.isLoadingThreads) {
+                stateHolder.loadMoreThreads()
+            }
+        }
+    }
+
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(1),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        gridItems(items = threads, key = { it.id }) { entry ->
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = entry.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "by ${entry.authorName}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${entry.replyCount} replies · ${entry.viewCount} views",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+        if (stateHolder.isLoadingThreads) {
+            item { LoadingTile() }
+        }
+    }
+}
+
+@Composable
+private fun FollowingTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    val entries = stateHolder.followingEntries
+    LaunchedEffect(Unit) {
+        stateHolder.loadFollowing()
+    }
+    if (entries.isEmpty() && !stateHolder.isLoadingFollowing) {
+        PlatformListMessage(
+            title = strings.mediaDetailNoFollowingLabel,
+            tone = PlatformListMessageTone.Neutral,
+        )
+        return
+    }
+
+    if (stateHolder.isLoadingFollowing && entries.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(items = entries, key = { it.id }) { entry ->
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (entry.userImageUrl != null) {
+                        AsyncImage(
+                            model = entry.userImageUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = entry.userName.take(1),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = entry.userName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = entry.progressLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (entry.scoreLabel != "Score: -") {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {
+                            Text(
+                                text = entry.scoreLabel,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivitiesTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    val activities = stateHolder.activities
+    val currentScope = stateHolder.activitiesScope
+    val scopes = remember { listOf("Global", "Following", "Self") }
+
+    LaunchedEffect(currentScope) {
+        if (activities.isEmpty()) {
+            stateHolder.loadMoreActivities(isFirstPage = true)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        PlatformChips(
+            items = scopes,
+            selectedItem = currentScope,
+            onSelect = { stateHolder.selectActivitiesScope(it) },
+            label = { scope ->
+                when (scope) {
+                    "Global" -> strings.mediaDetailActivityGlobal
+                    "Following" -> strings.mediaDetailActivityFollowing
+                    else -> strings.mediaDetailActivitySelf
+                }
+            },
+            useSoftActiveColor = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (activities.isEmpty() && !stateHolder.isLoadingActivities) {
+            PlatformListMessage(
+                title = strings.mediaDetailNoActivitiesLabel,
+                tone = PlatformListMessageTone.Neutral,
+            )
+            return@Column
+        }
+
+        val listState = rememberLazyListState()
+        LaunchedEffect(listState, stateHolder.activitiesHasNextPage) {
+            snapshotFlow {
+                listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            }.collect { last ->
+                if (last >= activities.size - 4 && stateHolder.activitiesHasNextPage && !stateHolder.isLoadingActivities) {
+                    stateHolder.loadMoreActivities()
+                }
+            }
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(items = activities, key = { it.id }) { entry ->
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (entry.userImageUrl != null) {
+                                AsyncImage(
+                                    model = entry.userImageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = entry.userName.take(1).uppercase(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Text(
+                                text = entry.userName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = entry.actionText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            text = stateHolder.detail?.title.orEmpty(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = entry.timeLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(
+                                    painter = PlatformIcons.Like,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "${entry.likesCount}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            if (stateHolder.isLoadingActivities) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConnectionsTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+    onOpenRelation: (Int) -> Unit,
+) {
+    var selectedScope by remember { mutableStateOf("Related") }
+    val scopes = remember { listOf("Related", "Recommendations") }
+
+    LaunchedEffect(selectedScope) {
+        if (selectedScope == "Recommendations") {
+            stateHolder.loadRecommendations()
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        PlatformChips(
+            items = scopes,
+            selectedItem = selectedScope,
+            onSelect = { selectedScope = it },
+            label = { scope ->
+                if (scope == "Related") strings.mediaDetailRelationsTitle else strings.mediaDetailTabRecommendations
+            },
+            useSoftActiveColor = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            if (selectedScope == "Related") {
+                val relations = stateHolder.detail?.relations.orEmpty()
+                if (relations.isEmpty()) {
+                    PlatformListMessage(
+                        title = strings.mediaDetailNoRecommendationsLabel,
+                        tone = PlatformListMessageTone.Neutral,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(items = relations, key = { it.mediaId }) { relation ->
+                            MediaDetailRelationCard(
+                                relation = relation,
+                                strings = strings,
+                                onClick = { onOpenRelation(relation.mediaId) },
+                            )
+                        }
+                    }
+                }
+            } else {
+                val recommendations = stateHolder.recommendations
+                if (recommendations.isEmpty() && !stateHolder.isLoadingRecommendations) {
+                    PlatformListMessage(
+                        title = strings.mediaDetailNoRecommendationsLabel,
+                        tone = PlatformListMessageTone.Neutral,
+                    )
+                } else if (stateHolder.isLoadingRecommendations && recommendations.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(items = recommendations, key = { it.id }) { entry ->
+                            MediaRecommendationCard(
+                                entry = entry,
+                                strings = strings,
+                                onClick = { onOpenRelation(entry.id) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaRecommendationCard(
+    entry: MediaRecommendationEntry,
+    strings: LanguageStrings,
+    onClick: () -> Unit,
+) {
+    val countLabel = when {
+        entry.episodesCount != null && entry.episodesCount > 0 -> "${entry.episodesCount} eps"
+        entry.chaptersCount != null && entry.chaptersCount > 0 -> "${entry.chaptersCount} ch"
+        entry.volumesCount != null && entry.volumesCount > 0 -> "${entry.volumesCount} vols"
+        else -> null
+    }
+    ConnectionRowCard(
+        coverUrl = entry.coverUrl,
+        palette = emptyList(),
+        title = entry.title,
+        averageScore = entry.averageScore,
+        favourites = entry.favouritesCount,
+        topLine = null,
+        metaParts = listOfNotNull(entry.format, entry.year?.toString(), countLabel),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun ConnectionRowCard(
+    coverUrl: String?,
+    palette: List<Color>,
+    title: String,
+    averageScore: Int?,
+    favourites: Int?,
+    topLine: String?,
+    metaParts: List<String>,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        PlatformMediaCover(
+            coverUrl = coverUrl,
+            palette = palette,
+            contentDescription = title,
+            modifier = Modifier
+                .width(PlatformCoverSize.RowPosterWidth)
+                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+        ) {
+            if (averageScore != null && averageScore > 0) {
+                PlatformRatingBadge(averageScore = averageScore)
+            }
+            if (favourites != null && favourites > 0) {
+                PlatformFavouritesBadge(favourites = favourites)
+            }
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (!topLine.isNullOrBlank()) {
+                Text(
+                    text = topLine,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (metaParts.isNotEmpty()) {
+                Text(
+                    text = metaParts.joinToString(" · "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }

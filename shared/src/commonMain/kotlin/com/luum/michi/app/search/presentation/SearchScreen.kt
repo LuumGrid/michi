@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -76,6 +78,9 @@ internal fun SearchScreen(
                 stateHolder.results.isEmpty() -> CenteredMessage(text = strings.searchNoResultsLabel)
                 else -> SearchResultsGrid(
                     results = stateHolder.results,
+                    hasNextPage = stateHolder.hasNextPage,
+                    isLoadingMore = stateHolder.isLoadingMore,
+                    onLoadMore = stateHolder::loadMore,
                     onOpenMedia = onOpenMedia,
                     onEditMedia = onEditMedia,
                 )
@@ -87,10 +92,24 @@ internal fun SearchScreen(
 @Composable
 private fun SearchResultsGrid(
     results: List<SearchResult>,
+    hasNextPage: Boolean,
+    isLoadingMore: Boolean,
+    onLoadMore: () -> Unit,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
 ) {
+    val gridState = rememberLazyGridState()
+    LaunchedEffect(gridState, hasNextPage) {
+        snapshotFlow {
+            gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        }.collect { last ->
+            if (last >= results.size - 4 && hasNextPage && !isLoadingMore) {
+                onLoadMore()
+            }
+        }
+    }
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 96.dp),
@@ -103,6 +122,14 @@ private fun SearchResultsGrid(
                 onClick = { onOpenMedia(result.id) },
                 onLongClick = { onEditMedia(result.id) },
             )
+        }
+        if (isLoadingMore) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            item { Box(modifier = Modifier.fillMaxWidth()) {} }
         }
     }
 }

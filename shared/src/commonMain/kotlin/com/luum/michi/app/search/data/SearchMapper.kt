@@ -10,13 +10,13 @@ internal fun MediaSearchItemDto.toSearchResult(): SearchResult {
         id = id,
         title = titleText,
         meta = buildMeta(),
-        coverUrl = coverImage?.extraLarge ?: coverImage?.large ?: coverImage?.medium,
+        coverUrl = coverImage?.bestUrl,
         palette = hexToPalette(coverImage?.color),
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,
         genres = genres.orEmpty(),
         isUserFavorited = isFavourite == true,
-        isUserRanked = mediaListEntry != null && mediaListEntry.score > 0.0,
+        isUserRanked = mediaListEntry != null && (mediaListEntry.score ?: 0.0) > 0.0,
     )
 }
 

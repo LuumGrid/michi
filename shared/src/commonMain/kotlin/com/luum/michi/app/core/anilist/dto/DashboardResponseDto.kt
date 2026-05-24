@@ -23,6 +23,7 @@ internal data class MediaPageDto(
 
 @Serializable
 internal data class AiringSchedulePageDto(
+    val pageInfo: MediaPageInfoDto? = null,
     val airingSchedules: List<AiringScheduleDto> = emptyList(),
 )
 

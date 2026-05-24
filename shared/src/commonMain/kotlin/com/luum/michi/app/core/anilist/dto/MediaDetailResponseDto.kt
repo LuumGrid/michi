@@ -147,26 +147,36 @@ internal data class MediaRelationEdgeDto(
 )
 
 @Serializable
+internal data class MediaRelationListEntryDto(
+    val status: String? = null,
+)
+
+@Serializable
 internal data class MediaRelationNodeDto(
     val id: Int,
     val type: String? = null,
     val format: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
+    val averageScore: Int? = null,
+    val favourites: Int? = null,
+    val seasonYear: Int? = null,
+    val startDate: FuzzyDateDto? = null,
+    val mediaListEntry: MediaRelationListEntryDto? = null,
 )
 
 @Serializable
 internal data class MediaViewerListEntryDto(
     val id: Int,
     val status: String? = null,
-    val progress: Int = 0,
+    val progress: Int? = null,
     val progressVolumes: Int? = null,
-    val score: Double = 0.0,
+    val score: Double? = null,
     val notes: String? = null,
-    val repeat: Int = 0,
-    val priority: Int = 0,
-    @SerialName("private") val isPrivate: Boolean = false,
-    val hiddenFromStatusLists: Boolean = false,
+    val repeat: Int? = null,
+    val priority: Int? = null,
+    @SerialName("private") val isPrivate: Boolean? = null,
+    val hiddenFromStatusLists: Boolean? = null,
     val startedAt: FuzzyDateDto? = null,
     val completedAt: FuzzyDateDto? = null,
 )

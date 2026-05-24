@@ -1,9 +1,7 @@
 package com.luum.michi.app.mediaDetail.data
 
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.mediaDetail.presentation.model.MediaCharactersPage
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
-import com.luum.michi.app.mediaDetail.presentation.model.MediaStaffPage
+import com.luum.michi.app.mediaDetail.presentation.model.*
 
 internal interface MediaDetailRepository {
     suspend fun loadDetail(
@@ -21,4 +19,29 @@ internal interface MediaDetailRepository {
         mediaId: Int,
         page: Int,
     ): NetworkResult<MediaStaffPage>
+
+    suspend fun loadReviewsPage(
+        mediaId: Int,
+        page: Int,
+    ): NetworkResult<MediaReviewsPage>
+
+    suspend fun loadThreadsPage(
+        mediaId: Int,
+        page: Int,
+    ): NetworkResult<MediaThreadsPage>
+
+    suspend fun loadFollowingEntries(
+        mediaId: Int,
+    ): NetworkResult<List<MediaFollowingEntry>>
+
+    suspend fun loadActivitiesPage(
+        mediaId: Int,
+        page: Int,
+        userId: Int? = null,
+        isFollowing: Boolean? = null,
+    ): NetworkResult<MediaActivitiesPage>
+
+    suspend fun loadRecommendations(
+        mediaId: Int,
+    ): NetworkResult<List<MediaRecommendationEntry>>
 }
