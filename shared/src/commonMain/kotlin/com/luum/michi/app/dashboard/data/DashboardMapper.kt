@@ -44,6 +44,9 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformHomeMed
         meta = metaFor(this),
         colors = hexToPalette(coverImage?.color),
         id = id,
+        coverUrl = coverImage?.large ?: coverImage?.medium ?: coverImage?.extraLarge,
+        averageScore = averageScore,
+        favourites = favourites,
     )
 
 private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
@@ -54,6 +57,9 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
         time = formatAiringTime(airingAt),
         colors = hexToPalette(media.coverImage?.color),
         id = media.id,
+        coverUrl = media.coverImage?.large ?: media.coverImage?.medium ?: media.coverImage?.extraLarge,
+        averageScore = media.averageScore,
+        favourites = media.favourites,
     )
 }
 

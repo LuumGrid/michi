@@ -62,6 +62,16 @@ interface LanguageStrings {
     val mediaDetailDescriptionTitle: String
     val mediaDetailGenresTitle: String
     val mediaDetailStudiosTitle: String
+    val mediaDetailRelationsTitle: String
+    val mediaDetailReadMoreAction: String
+    val mediaDetailReadLessAction: String
+    val mediaRelationSequel: String
+    val mediaRelationPrequel: String
+    val mediaRelationSideStory: String
+    val mediaRelationSpinOff: String
+    val mediaRelationParent: String
+    val mediaRelationAdaptation: String
+    val mediaRelationOther: String
     val mediaDetailFormatLabel: String
     val mediaDetailStatusLabel: String
     val mediaDetailEpisodesLabel: String
@@ -108,8 +118,16 @@ interface LanguageStrings {
     val notesLabel: String
     val startedLabel: String
     val completedLabel: String
+    val dateNotSetLabel: String
+    val datePickerOkAction: String
+    val datePickerCancelAction: String
+    val datePickerClearAction: String
     val todayLabel: String
     val repeatLabel: String
+    val totalRewatchesLabel: String
+    val totalRereadsLabel: String
+    val favouriteLabel: String
+    val priorityLabel: String
     val privateLabel: String
     val hiddenFromStatusListsLabel: String
     val removeAction: String

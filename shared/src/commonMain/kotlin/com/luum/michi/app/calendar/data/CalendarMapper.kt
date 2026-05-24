@@ -14,9 +14,8 @@ internal fun AiringSchedulePageDto.toCalendarFeed(nowEpoch: Long): CalendarFeed 
     val grouped = airingSchedules
         .filter { it.media != null }
         .groupBy { it.airingAt / SecondsPerDay }
-        .toSortedMap()
 
-    val days = grouped.entries.map { entry ->
+    val days = grouped.entries.sortedBy { it.key }.map { entry ->
         val dayBucket = entry.key
         val schedules = entry.value
         val firstEpoch = schedules.first().airingAt
@@ -38,6 +37,10 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem {
         time = formatAiringTime(airingAt),
         colors = hexToPalette(media.coverImage?.color),
         id = media.id,
+        coverUrl = media.coverImage?.large ?: media.coverImage?.medium ?: media.coverImage?.extraLarge,
+        averageScore = media.averageScore,
+        favourites = media.favourites,
+        popularity = media.popularity,
     )
 }
 

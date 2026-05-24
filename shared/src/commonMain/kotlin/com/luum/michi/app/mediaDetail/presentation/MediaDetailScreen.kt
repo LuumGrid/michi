@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,22 +12,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -36,10 +40,13 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformListLoading
+import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
+import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
 
 @Composable
@@ -47,6 +54,7 @@ internal fun MediaDetailScreen(
     mediaId: Int,
     stateHolder: MediaDetailStateHolder,
     onRequestEdit: (Int) -> Unit,
+    onOpenRelation: (Int) -> Unit,
 ) {
     val strings = LanguageProvider.strings
 
@@ -58,6 +66,7 @@ internal fun MediaDetailScreen(
             detail = detail,
             strings = strings,
             onEditClick = { onRequestEdit(mediaId) },
+            onOpenRelation = onOpenRelation,
         )
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
@@ -74,6 +83,7 @@ private fun MediaDetailContent(
     detail: MediaDetail,
     strings: LanguageStrings,
     onEditClick: () -> Unit,
+    onOpenRelation: (Int) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -88,6 +98,15 @@ private fun MediaDetailContent(
         }
         if (detail.descriptionPlain.isNotBlank()) {
             item { MediaDetailDescription(text = detail.descriptionPlain, strings = strings) }
+        }
+        if (detail.relations.isNotEmpty()) {
+            item {
+                MediaDetailRelationsRow(
+                    relations = detail.relations,
+                    strings = strings,
+                    onOpenRelation = onOpenRelation,
+                )
+            }
         }
         if (detail.studios.isNotEmpty()) {
             item { MediaDetailStudios(studios = detail.studios, strings = strings) }
@@ -138,21 +157,16 @@ private fun MediaDetailHeader(detail: MediaDetail) {
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
+            PlatformMediaCover(
+                coverUrl = detail.coverUrl,
+                palette = detail.palette,
+                contentDescription = detail.title,
                 modifier = Modifier
                     .width(110.dp)
-                    .aspectRatio(0.68f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.verticalGradient(detail.palette)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = PlatformIcons.Home,
-                    contentDescription = null,
-                    modifier = Modifier.size(34.dp),
-                    tint = Color.White.copy(alpha = 0.75f),
-                )
-            }
+                    .aspectRatio(0.68f),
+                fallbackIcon = PlatformIcons.Home,
+                fallbackIconSize = 34.dp,
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -281,14 +295,102 @@ private fun MediaDetailGenres(genres: List<String>, strings: LanguageStrings) {
 
 @Composable
 private fun MediaDetailDescription(text: String, strings: LanguageStrings) {
+    var expanded by remember(text) { mutableStateOf(false) }
+    val isLong = text.length > 280
     MediaDetailSection(title = strings.mediaDetailDescriptionTitle) {
-        Text(
-            text = text,
+        Column(
             modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = if (expanded || !isLong) Int.MAX_VALUE else 5,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (isLong) {
+                Text(
+                    text = if (expanded) strings.mediaDetailReadLessAction else strings.mediaDetailReadMoreAction,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { expanded = !expanded },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaDetailRelationsRow(
+    relations: List<MediaDetailRelation>,
+    strings: LanguageStrings,
+    onOpenRelation: (Int) -> Unit,
+) {
+    MediaDetailSection(title = strings.mediaDetailRelationsTitle) {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(items = relations, key = { it.mediaId }) { relation ->
+                MediaDetailRelationCard(
+                    relation = relation,
+                    strings = strings,
+                    onClick = { onOpenRelation(relation.mediaId) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaDetailRelationCard(
+    relation: MediaDetailRelation,
+    strings: LanguageStrings,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .width(108.dp)
+            .clickable(onClick = onClick),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        PlatformMediaCover(
+            coverUrl = relation.coverUrl,
+            palette = relation.palette,
+            contentDescription = relation.title,
+            modifier = Modifier
+                .width(108.dp)
+                .aspectRatio(0.68f),
+        )
+        Text(
+            text = relationLabel(relation.kind, strings),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = relation.title,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+private fun relationLabel(kind: MediaRelationKind, strings: LanguageStrings): String = when (kind) {
+    MediaRelationKind.SEQUEL -> strings.mediaRelationSequel
+    MediaRelationKind.PREQUEL -> strings.mediaRelationPrequel
+    MediaRelationKind.SIDE_STORY -> strings.mediaRelationSideStory
+    MediaRelationKind.SPIN_OFF -> strings.mediaRelationSpinOff
+    MediaRelationKind.PARENT -> strings.mediaRelationParent
+    MediaRelationKind.ADAPTATION -> strings.mediaRelationAdaptation
+    MediaRelationKind.OTHER -> strings.mediaRelationOther
 }
 
 @Composable

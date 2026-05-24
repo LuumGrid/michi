@@ -224,7 +224,7 @@ internal fun ExploreScreen(
                         }
                     )
                 else -> LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                    columns = GridCells.Fixed(2),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 96.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),

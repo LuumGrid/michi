@@ -37,6 +37,7 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformBooleanRow
 import com.luum.michi.app.core.platform.components.PlatformChips
+import com.luum.michi.app.core.platform.components.PlatformDatePickerField
 import com.luum.michi.app.core.platform.components.PlatformModalSheet
 import com.luum.michi.app.core.platform.components.PlatformScoreField
 import com.luum.michi.app.core.platform.components.PlatformStepperField
@@ -65,28 +66,34 @@ internal fun MediaDetailEditorSheet(
         onDismiss = onDismiss,
         maxHeightFraction = 0.86f,
     ) { sheetModifier ->
-        Box(modifier = sheetModifier.imePadding()) {
-            EditorHeader(title = strings.mediaDetailEditorTitleEdit)
+        Column(modifier = sheetModifier.imePadding()) {
+            EditorHeader(
+                title = strings.mediaDetailEditorTitleEdit,
+                isFavourite = state.isFavourite,
+                onToggleFavourite = state::toggleFavourite,
+            )
 
-            when {
-                state.isLoadingDetail -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator() }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when {
+                    state.isLoadingDetail -> Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
 
-                state.loadError != null -> Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = state.loadError ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                    )
+                    state.loadError != null -> Box(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = state.loadError ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    else -> EditorForm(state = state)
                 }
-
-                else -> EditorForm(state = state)
             }
 
             EditorActionBar(
@@ -95,29 +102,41 @@ internal fun MediaDetailEditorSheet(
                 error = state.error,
                 onCancel = onDismiss,
                 onSave = { state.save(onSaved) },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 @Composable
-private fun EditorHeader(title: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
+private fun EditorHeader(
+    title: String,
+    isFavourite: Boolean,
+    onToggleFavourite: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 14.dp, start = 8.dp, end = 8.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 6.dp, bottom = 14.dp),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
+        androidx.compose.material3.IconButton(
+            onClick = onToggleFavourite,
+            modifier = Modifier.align(Alignment.CenterEnd),
+        ) {
+            Icon(
+                painter = if (isFavourite) PlatformIcons.LikeFilled else PlatformIcons.Like,
+                contentDescription = null,
+                tint = if (isFavourite) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -130,8 +149,8 @@ private fun EditorForm(state: MediaEntryEditorState) {
         contentPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
-            top = 24.dp,
-            bottom = 120.dp,
+            top = 8.dp,
+            bottom = 16.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -197,10 +216,32 @@ private fun EditorForm(state: MediaEntryEditorState) {
         }
         item {
             PlatformStepperField(
-                label = strings.repeatLabel,
+                label = if (state.isManga) strings.totalRereadsLabel else strings.totalRewatchesLabel,
                 value = state.repeat.toString(),
                 onMinus = state::decrementRepeat,
                 onPlus = state::incrementRepeat,
+            )
+        }
+        item {
+            PlatformStepperField(
+                label = strings.priorityLabel + " (0–5)",
+                value = state.priority.toString(),
+                onMinus = state::decrementPriority,
+                onPlus = state::incrementPriority,
+            )
+        }
+        item {
+            PlatformDatePickerField(
+                label = strings.startedLabel,
+                valueMillis = state.startedAtMillis,
+                onValueChange = state::updateStartedAt,
+            )
+        }
+        item {
+            PlatformDatePickerField(
+                label = strings.completedLabel,
+                valueMillis = state.completedAtMillis,
+                onValueChange = state::updateCompletedAt,
             )
         }
         item {

@@ -31,6 +31,7 @@ internal fun AnimationListCard(
         primaryIncrementValueLabel = entry.progressLabel(),
         primaryIncrementEnabled = entry.canIncrement(),
         palette = entry.palette,
+        coverUrl = entry.coverUrl,
         icon = PlatformIcons.Animation,
         isComplete = !entry.canIncrement(),
         releaseLabel = entry.releaseLabel(strings),

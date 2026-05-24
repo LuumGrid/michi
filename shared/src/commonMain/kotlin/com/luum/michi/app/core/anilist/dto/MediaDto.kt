@@ -19,6 +19,9 @@ internal data class MediaDto(
     val coverImage: MediaCoverImageDto? = null,
     val bannerImage: String? = null,
     val averageScore: Int? = null,
+    val favourites: Int? = null,
+    val popularity: Int? = null,
+    val genres: List<String>? = null,
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,
 )
 

@@ -54,7 +54,29 @@ internal data class MediaDetailDto(
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,
     val countryOfOrigin: String? = null,
     val isAdult: Boolean? = null,
+    val isFavourite: Boolean? = null,
     val mediaListEntry: MediaViewerListEntryDto? = null,
+    val relations: MediaRelationConnectionDto? = null,
+)
+
+@Serializable
+internal data class MediaRelationConnectionDto(
+    val edges: List<MediaRelationEdgeDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaRelationEdgeDto(
+    val relationType: String? = null,
+    val node: MediaRelationNodeDto? = null,
+)
+
+@Serializable
+internal data class MediaRelationNodeDto(
+    val id: Int,
+    val type: String? = null,
+    val format: String? = null,
+    val title: MediaTitleDto? = null,
+    val coverImage: MediaCoverImageDto? = null,
 )
 
 @Serializable
@@ -66,7 +88,10 @@ internal data class MediaViewerListEntryDto(
     val score: Double = 0.0,
     val notes: String? = null,
     val repeat: Int = 0,
+    val priority: Int = 0,
     @SerialName("private") val isPrivate: Boolean = false,
     val hiddenFromStatusLists: Boolean = false,
+    val startedAt: FuzzyDateDto? = null,
+    val completedAt: FuzzyDateDto? = null,
 )
 

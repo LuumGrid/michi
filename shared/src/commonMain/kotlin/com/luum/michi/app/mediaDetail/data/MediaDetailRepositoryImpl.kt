@@ -39,7 +39,20 @@ query MediaDetail(${'$'}id: Int!) {
     nextAiringEpisode { episode airingAt timeUntilAiring }
     countryOfOrigin
     isAdult
-    mediaListEntry { id status progress progressVolumes score notes repeat private hiddenFromStatusLists }
+    isFavourite
+    mediaListEntry { id status progress progressVolumes score notes repeat priority private hiddenFromStatusLists startedAt { year month day } completedAt { year month day } }
+    relations {
+      edges {
+        relationType(version: 2)
+        node {
+          id
+          type
+          format
+          title { romaji english native userPreferred }
+          coverImage { extraLarge large medium color }
+        }
+      }
+    }
   }
 }
 """

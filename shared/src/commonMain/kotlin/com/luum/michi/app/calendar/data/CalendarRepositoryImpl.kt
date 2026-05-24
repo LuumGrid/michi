@@ -25,6 +25,9 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!) {
       media {
         id
         format
+        averageScore
+        favourites
+        popularity
         title { romaji english native userPreferred }
         coverImage { extraLarge large medium color }
       }

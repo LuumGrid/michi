@@ -40,9 +40,19 @@ internal class MediaEntryEditorState(
         private set
     var repeat by mutableStateOf(0)
         private set
+    var priority by mutableStateOf(0)
+        private set
     var isPrivate by mutableStateOf(false)
         private set
     var hiddenFromStatusLists by mutableStateOf(false)
+        private set
+    var startedAtMillis by mutableStateOf<Long?>(null)
+        private set
+    var completedAtMillis by mutableStateOf<Long?>(null)
+        private set
+    var isFavourite by mutableStateOf(false)
+        private set
+    var isTogglingFavourite by mutableStateOf(false)
         private set
 
     var isSaving by mutableStateOf(false)
@@ -66,6 +76,7 @@ internal class MediaEntryEditorState(
             when (val result = detailRepository.loadDetail(mediaId)) {
                 is NetworkResult.Success -> {
                     detail = result.value
+                    isFavourite = result.value.isFavourite
                     val existing = result.value.viewerEntry
                     if (existing != null) {
                         status = existing.status ?: MediaListStatus.CURRENT
@@ -74,8 +85,11 @@ internal class MediaEntryEditorState(
                         score = existing.score
                         notes = existing.notes
                         repeat = existing.repeat
+                        priority = existing.priority
                         isPrivate = existing.isPrivate
                         hiddenFromStatusLists = existing.hiddenFromStatusLists
+                        startedAtMillis = existing.startedAtMillis
+                        completedAtMillis = existing.completedAtMillis
                     } else {
                         status = MediaListStatus.PLANNING
                     }
@@ -108,8 +122,30 @@ internal class MediaEntryEditorState(
     fun incrementRepeat() { repeat++ }
     fun decrementRepeat() { if (repeat > 0) repeat-- }
 
+    fun incrementPriority() { if (priority < 5) priority++ }
+    fun decrementPriority() { if (priority > 0) priority-- }
+
     fun updatePrivate(value: Boolean) { isPrivate = value }
     fun updateHiddenFromStatusLists(value: Boolean) { hiddenFromStatusLists = value }
+    fun updateStartedAt(value: Long?) { startedAtMillis = value }
+    fun updateCompletedAt(value: Long?) { completedAtMillis = value }
+
+    fun toggleFavourite() {
+        if (isTogglingFavourite || isLoadingDetail) return
+        val previous = isFavourite
+        isFavourite = !previous
+        isTogglingFavourite = true
+        scope.launch {
+            when (val result = entryRepository.toggleFavourite(mediaId, isManga)) {
+                is NetworkResult.Success -> {}
+                is NetworkResult.Failure -> {
+                    isFavourite = previous
+                    error = result.error.toString()
+                }
+            }
+            isTogglingFavourite = false
+        }
+    }
 
     fun save(onSaved: () -> Unit) {
         if (isSaving || isLoadingDetail) return
@@ -124,8 +160,11 @@ internal class MediaEntryEditorState(
                 score = score,
                 notes = notes,
                 repeat = repeat,
+                priority = priority,
                 isPrivate = isPrivate,
                 hiddenFromStatusLists = hiddenFromStatusLists,
+                startedAtMillis = startedAtMillis,
+                completedAtMillis = completedAtMillis,
             )
             when (result) {
                 is NetworkResult.Success -> onSaved()

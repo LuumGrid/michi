@@ -2,12 +2,18 @@ package com.luum.michi.app.mediaDetail.data
 
 import com.luum.michi.app.core.anilist.dto.FuzzyDateDto
 import com.luum.michi.app.core.anilist.dto.MediaDetailDto
+import com.luum.michi.app.core.anilist.dto.MediaRelationEdgeDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.anilist.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.media.CalendarDateParts
+import com.luum.michi.app.core.media.calendarPartsToMillis
+import com.luum.michi.app.core.media.millisToCalendarParts
 import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
+import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailViewerEntry
+import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.presentation.model.parseMediaListStatus
 
 internal fun MediaDetailDto.toDomain(): MediaDetail = MediaDetail(
@@ -35,8 +41,34 @@ internal fun MediaDetailDto.toDomain(): MediaDetail = MediaDetail(
     favourites = favourites?.takeIf { it > 0 },
     descriptionPlain = description?.stripHtml().orEmpty(),
     isAdult = isAdult ?: false,
+    isFavourite = isFavourite ?: false,
     viewerEntry = mediaListEntry?.toViewerEntry(),
+    relations = relations?.edges
+        ?.mapNotNull { it.toRelation() }
+        .orEmpty(),
 )
+
+private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
+    val node = node ?: return null
+    return MediaDetailRelation(
+        mediaId = node.id,
+        title = node.title.bestTitle(),
+        coverUrl = node.coverImage?.extraLarge ?: node.coverImage?.large ?: node.coverImage?.medium,
+        palette = hexToPalette(node.coverImage?.color),
+        kind = parseRelationKind(relationType),
+        format = node.format?.toTitleCase(),
+    )
+}
+
+private fun parseRelationKind(raw: String?): MediaRelationKind = when (raw) {
+    "SEQUEL" -> MediaRelationKind.SEQUEL
+    "PREQUEL" -> MediaRelationKind.PREQUEL
+    "SIDE_STORY" -> MediaRelationKind.SIDE_STORY
+    "SPIN_OFF" -> MediaRelationKind.SPIN_OFF
+    "PARENT" -> MediaRelationKind.PARENT
+    "ADAPTATION" -> MediaRelationKind.ADAPTATION
+    else -> MediaRelationKind.OTHER
+}
 
 private fun MediaViewerListEntryDto.toViewerEntry(): MediaDetailViewerEntry = MediaDetailViewerEntry(
     id = id,
@@ -46,9 +78,19 @@ private fun MediaViewerListEntryDto.toViewerEntry(): MediaDetailViewerEntry = Me
     score = score.toFloat(),
     notes = notes.orEmpty(),
     repeat = repeat,
+    priority = priority,
     isPrivate = isPrivate,
     hiddenFromStatusLists = hiddenFromStatusLists,
+    startedAtMillis = startedAt?.toMillisOrNull(),
+    completedAtMillis = completedAt?.toMillisOrNull(),
 )
+
+private fun FuzzyDateDto.toMillisOrNull(): Long? {
+    val y = year ?: return null
+    val m = month ?: return null
+    val d = day ?: return null
+    return calendarPartsToMillis(CalendarDateParts(y, m, d))
+}
 
 private fun parseType(raw: String?): MediaDetailType = when (raw) {
     "ANIME" -> MediaDetailType.ANIME

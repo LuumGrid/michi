@@ -13,7 +13,12 @@ internal interface MediaListEntryRepository {
         score: Float,
         notes: String,
         repeat: Int,
+        priority: Int,
         isPrivate: Boolean,
         hiddenFromStatusLists: Boolean,
+        startedAtMillis: Long?,
+        completedAtMillis: Long?,
     ): NetworkResult<MediaDetailViewerEntry>
+
+    suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit>
 }

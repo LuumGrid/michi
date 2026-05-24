@@ -18,6 +18,7 @@ import com.luum.michi.app.resources.download
 import com.luum.michi.app.resources.dynamic_feed
 import com.luum.michi.app.resources.explore
 import com.luum.michi.app.resources.favorite
+import com.luum.michi.app.resources.favorite_filled
 import com.luum.michi.app.resources.filter_list
 import com.luum.michi.app.resources.forum
 import com.luum.michi.app.resources.forward
@@ -44,6 +45,7 @@ import com.luum.michi.app.resources.season_view
 import com.luum.michi.app.resources.settings
 import com.luum.michi.app.resources.settings_accessibility
 import com.luum.michi.app.resources.star
+import com.luum.michi.app.resources.star_filled
 import com.luum.michi.app.resources.switch_account
 import com.luum.michi.app.resources.user_activity
 import org.jetbrains.compose.resources.painterResource
@@ -67,6 +69,7 @@ object PlatformIcons {
 
     val SwitchAccount: Painter @Composable get() = painterResource(Res.drawable.switch_account)
     val Like: Painter @Composable get() = painterResource(Res.drawable.favorite)
+    val LikeFilled: Painter @Composable get() = painterResource(Res.drawable.favorite_filled)
     val DisLike: Painter @Composable get() = painterResource(Res.drawable.heart_broken)
     val Comments: Painter @Composable get() = painterResource(Res.drawable.forum)
     val Share: Painter @Composable get() = painterResource(Res.drawable.forward)
@@ -97,4 +100,5 @@ object PlatformIcons {
     val Information: Painter @Composable get() = painterResource(Res.drawable.info)
     val Groups: Painter @Composable get() = painterResource(Res.drawable.groups)
     val Star: Painter @Composable get() = painterResource(Res.drawable.star)
+    val StarFilled: Painter @Composable get() = painterResource(Res.drawable.star_filled)
 }

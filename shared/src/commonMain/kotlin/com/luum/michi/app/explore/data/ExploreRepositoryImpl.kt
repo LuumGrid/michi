@@ -48,6 +48,8 @@ query AnimeCatalog(
       chapters
       averageScore
       popularity
+      favourites
+      genres
       coverImage { extraLarge large medium color }
       season
       seasonYear
@@ -89,6 +91,8 @@ query MangaCatalog(
       chapters
       averageScore
       popularity
+      favourites
+      genres
       coverImage { extraLarge large medium color }
       season
       seasonYear

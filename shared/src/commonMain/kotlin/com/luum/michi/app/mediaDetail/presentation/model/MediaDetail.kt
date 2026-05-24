@@ -12,8 +12,11 @@ internal data class MediaDetailViewerEntry(
     val score: Float,
     val notes: String,
     val repeat: Int,
+    val priority: Int,
     val isPrivate: Boolean,
     val hiddenFromStatusLists: Boolean,
+    val startedAtMillis: Long?,
+    val completedAtMillis: Long?,
 )
 
 internal data class MediaDetail(
@@ -41,5 +44,20 @@ internal data class MediaDetail(
     val favourites: Int?,
     val descriptionPlain: String,
     val isAdult: Boolean,
+    val isFavourite: Boolean,
     val viewerEntry: MediaDetailViewerEntry?,
+    val relations: List<MediaDetailRelation>,
+)
+
+internal enum class MediaRelationKind {
+    SEQUEL, PREQUEL, SIDE_STORY, SPIN_OFF, PARENT, ADAPTATION, OTHER
+}
+
+internal data class MediaDetailRelation(
+    val mediaId: Int,
+    val title: String,
+    val coverUrl: String?,
+    val palette: List<Color>,
+    val kind: MediaRelationKind,
+    val format: String?,
 )

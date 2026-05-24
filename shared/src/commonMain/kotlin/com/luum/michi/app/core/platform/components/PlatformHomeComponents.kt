@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,11 +27,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.platform.PlatformIcons
 
@@ -47,6 +48,10 @@ data class PlatformHomeReleaseItem(
     val time: String,
     val colors: List<Color>,
     val id: Int? = null,
+    val coverUrl: String? = null,
+    val averageScore: Int? = null,
+    val favourites: Int? = null,
+    val popularity: Int? = null,
 )
 
 data class PlatformHomeMediaItem(
@@ -54,6 +59,9 @@ data class PlatformHomeMediaItem(
     val meta: String,
     val colors: List<Color>,
     val id: Int? = null,
+    val coverUrl: String? = null,
+    val averageScore: Int? = null,
+    val favourites: Int? = null,
 )
 
 @Composable
@@ -200,6 +208,8 @@ fun PlatformHomeReleaseCard(
         ) {
             PlatformHomePoster(
                 colors = item.colors,
+                coverUrl = item.coverUrl,
+                contentDescription = item.title,
                 modifier = Modifier
                     .width(54.dp)
                     .aspectRatio(0.68f),
@@ -230,6 +240,11 @@ fun PlatformHomeReleaseCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                )
+                PlatformCommunityMetaRow(
+                    averageScore = item.averageScore,
+                    favourites = item.favourites,
+                    popularity = item.popularity,
                 )
             }
         }
@@ -332,10 +347,19 @@ fun PlatformHomeMediaCard(
     ) {
         PlatformHomePoster(
             colors = item.colors,
+            coverUrl = item.coverUrl,
+            contentDescription = item.title,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(0.68f),
-        )
+        ) {
+            if (item.averageScore != null) {
+                PlatformRatingBadge(averageScore = item.averageScore)
+            }
+            if (item.favourites != null && item.favourites > 0) {
+                PlatformFavouritesBadge(favourites = item.favourites)
+            }
+        }
         Text(
             text = item.title,
             style = MaterialTheme.typography.labelLarge,
@@ -358,18 +382,20 @@ fun PlatformHomeMediaCard(
 fun PlatformHomePoster(
     colors: List<Color>,
     modifier: Modifier = Modifier,
+    coverUrl: String? = null,
+    contentDescription: String? = null,
+    cornerRadius: Dp = 8.dp,
+    fallbackIconSize: Dp = 28.dp,
+    overlay: @Composable BoxScope.() -> Unit = {},
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(Brush.linearGradient(colors)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = PlatformIcons.Home,
-            contentDescription = null,
-            modifier = Modifier.size(28.dp),
-            tint = Color.White.copy(alpha = 0.72f),
-        )
-    }
+    PlatformMediaCover(
+        coverUrl = coverUrl,
+        palette = colors,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        cornerRadius = cornerRadius,
+        fallbackIcon = PlatformIcons.Home,
+        fallbackIconSize = fallbackIconSize,
+        overlay = overlay,
+    )
 }

@@ -37,6 +37,7 @@ internal fun ReadingListCard(
         secondaryIncrementValueLabel = entry.volumesProgressLabel(),
         secondaryIncrementEnabled = entry.canIncrementVolumes(),
         palette = entry.palette,
+        coverUrl = entry.coverUrl,
         icon = PlatformIcons.Reading,
         isComplete = !entry.canIncrementChapters(),
         releaseLabel = entry.releaseLabel(strings),

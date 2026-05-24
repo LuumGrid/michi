@@ -355,6 +355,7 @@ internal fun ShellScreen(
                         mediaId = mediaId,
                         stateHolder = mediaDetailState,
                         onRequestEdit = shellState::openEditor,
+                        onOpenRelation = shellState::openMedia,
                     )
                 }
             }

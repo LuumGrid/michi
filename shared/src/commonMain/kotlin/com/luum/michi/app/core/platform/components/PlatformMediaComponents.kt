@@ -64,6 +64,7 @@ fun PlatformMediaListCard(
     onEdit: () -> Unit,
     onIncrementPrimary: () -> Unit,
     modifier: Modifier = Modifier,
+    coverUrl: String? = null,
     primaryIncrementLabel: String = "+1",
     primaryIncrementValueLabel: String? = null,
     primaryIncrementEnabled: Boolean = !isComplete,
@@ -90,24 +91,18 @@ fun PlatformMediaListCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            // Image / Placeholder (Full height with rounding)
-            Box(
+            PlatformMediaCover(
+                coverUrl = coverUrl,
+                palette = palette,
+                contentDescription = title,
                 modifier = Modifier
-                    .padding(8.dp) // Slight padding so corners are visible
+                    .padding(8.dp)
                     .fillMaxHeight()
-                    .width(StandardCoverWidth)
-                    .clip(RoundedCornerShape(ImageCornerRadius)) // Rounding on all 4 corners
-                    .background(Brush.verticalGradient(palette)),
-            ) {
-                Icon(
-                    painter = icon,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(37.dp),
-                )
-            }
+                    .width(StandardCoverWidth),
+                cornerRadius = ImageCornerRadius,
+                fallbackIcon = icon,
+                fallbackIconSize = 37.dp,
+            )
 
             // Content
             Box(
@@ -339,7 +334,7 @@ fun PlatformScorePill(score: String) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = PlatformIcons.Star,
+                painter = PlatformIcons.StarFilled,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.size(14.dp),

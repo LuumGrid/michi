@@ -91,7 +91,7 @@ private fun SearchResultsGrid(
     onEditMedia: (Int) -> Unit,
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+        columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 96.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
