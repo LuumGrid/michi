@@ -42,6 +42,11 @@ internal actual fun calendarPartsToMillis(parts: CalendarDateParts): Long {
     return (date.timeIntervalSince1970 * 1000.0).toLong()
 }
 
+internal actual fun localMidnightEpoch(epochSeconds: Long): Long {
+    val date = NSDate.dateWithTimeIntervalSince1970(epochSeconds.toDouble())
+    return NSCalendar.currentCalendar.startOfDayForDate(date).timeIntervalSince1970.toLong()
+}
+
 internal actual fun Long.toLocalMediaReleaseDateTime(): com.luum.michi.app.core.model.MediaReleaseDateTime {
     val date = NSDate.dateWithTimeIntervalSince1970(this.toDouble())
     val calendar = NSCalendar.currentCalendar

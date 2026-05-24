@@ -61,10 +61,10 @@ internal fun CalendarScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                items(items = day.items, key = { "${day.dayBucket}-${it.id}" }) { item ->
-                    val mediaId = item.id
+                items(items = day.items, key = { it.scheduleId }) { entry ->
+                    val mediaId = entry.item.id
                     CalendarItemRow(
-                        item = item,
+                        item = entry.item,
                         onClick = { if (mediaId != null) onOpenMedia(mediaId) },
                         onLongClick = { if (mediaId != null) onEditMedia(mediaId) },
                     )
@@ -74,10 +74,13 @@ internal fun CalendarScreen(
     }
 }
 
-private fun CalendarDay.label(strings: LanguageStrings): String = when {
-    offsetFromToday == 0 -> strings.todayLabel
-    offsetFromToday == 1 -> strings.tomorrowLabel
-    else -> dayOfWeekLabel(isoDayOfWeek, strings)
+private fun CalendarDay.label(strings: LanguageStrings): String {
+    val prefix = when {
+        offsetFromToday == 0 -> strings.todayLabel
+        offsetFromToday == 1 -> strings.tomorrowLabel
+        else -> dayOfWeekLabel(isoDayOfWeek, strings)
+    }
+    return strings.calendarHeaderLabel(prefix, day, month, year)
 }
 
 private fun dayOfWeekLabel(isoDayOfWeek: Int, strings: LanguageStrings): String = when (isoDayOfWeek) {

@@ -27,3 +27,10 @@ internal actual fun Long.toLocalMediaReleaseDateTime(): MediaReleaseDateTime {
         minute = zonedDateTime.minute
     )
 }
+
+internal actual fun localMidnightEpoch(epochSeconds: Long): Long =
+    Instant.ofEpochSecond(epochSeconds)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .atStartOfDay(ZoneId.systemDefault())
+        .toEpochSecond()

@@ -13,3 +13,5 @@ internal expect fun millisToCalendarParts(millis: Long): CalendarDateParts
 internal expect fun calendarPartsToMillis(parts: CalendarDateParts): Long
 
 internal expect fun Long.toLocalMediaReleaseDateTime(): MediaReleaseDateTime
+
+internal expect fun localMidnightEpoch(epochSeconds: Long): Long
