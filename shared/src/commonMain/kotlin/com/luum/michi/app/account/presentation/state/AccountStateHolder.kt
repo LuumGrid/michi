@@ -75,6 +75,6 @@ internal fun rememberAccountStateHolder(
 ): AccountStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        AccountStateHolder(statsRepository, favoritesRepository, scope).also { it.load(viewerId) }
+        AccountStateHolder(statsRepository, favoritesRepository, scope)
     }
 }

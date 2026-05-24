@@ -21,6 +21,7 @@ import com.luum.michi.app.resources.favorite
 import com.luum.michi.app.resources.filter_list
 import com.luum.michi.app.resources.forum
 import com.luum.michi.app.resources.forward
+import com.luum.michi.app.resources.groups
 import com.luum.michi.app.resources.heart_broken
 import com.luum.michi.app.resources.help_support
 import com.luum.michi.app.resources.history
@@ -42,6 +43,7 @@ import com.luum.michi.app.resources.search
 import com.luum.michi.app.resources.season_view
 import com.luum.michi.app.resources.settings
 import com.luum.michi.app.resources.settings_accessibility
+import com.luum.michi.app.resources.star
 import com.luum.michi.app.resources.switch_account
 import com.luum.michi.app.resources.user_activity
 import org.jetbrains.compose.resources.painterResource
@@ -93,4 +95,6 @@ object PlatformIcons {
     val CreatorTools: Painter @Composable get() = painterResource(Res.drawable.creator_tools)
     val HelpSupport: Painter @Composable get() = painterResource(Res.drawable.help_support)
     val Information: Painter @Composable get() = painterResource(Res.drawable.info)
+    val Groups: Painter @Composable get() = painterResource(Res.drawable.groups)
+    val Star: Painter @Composable get() = painterResource(Res.drawable.star)
 }

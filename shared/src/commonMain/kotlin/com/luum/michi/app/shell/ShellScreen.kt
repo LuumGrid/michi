@@ -29,9 +29,9 @@ import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.presentation.AnimationScreen
 import com.luum.michi.app.animation.presentation.components.AnimationSectionChips
 import com.luum.michi.app.animation.presentation.state.rememberAnimationListStateHolder
-import com.luum.michi.app.browse.data.BrowseRepository
-import com.luum.michi.app.browse.presentation.BrowseScreen
-import com.luum.michi.app.browse.presentation.state.rememberBrowseStateHolder
+import com.luum.michi.app.explore.data.ExploreRepository
+import com.luum.michi.app.explore.presentation.ExploreScreen
+import com.luum.michi.app.explore.presentation.state.rememberExploreStateHolder
 import com.luum.michi.app.calendar.data.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
 import com.luum.michi.app.calendar.presentation.state.rememberCalendarStateHolder
@@ -39,9 +39,9 @@ import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
 import com.luum.michi.app.core.session.Viewer
-import com.luum.michi.app.discovery.data.DiscoveryRepository
-import com.luum.michi.app.discovery.presentation.DiscoveryScreen
-import com.luum.michi.app.discovery.presentation.state.rememberDiscoveryStateHolder
+import com.luum.michi.app.dashboard.data.DashboardRepository
+import com.luum.michi.app.dashboard.presentation.DashboardScreen
+import com.luum.michi.app.dashboard.presentation.state.rememberDashboardStateHolder
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.presentation.MediaDetailScreen
@@ -73,8 +73,8 @@ internal fun ShellScreen(
     readingListRepository: ReadingListRepository,
     accountStatsRepository: AccountStatsRepository,
     accountFavoritesRepository: AccountFavoritesRepository,
-    discoveryRepository: DiscoveryRepository,
-    browseRepository: BrowseRepository,
+    dashboardRepository: DashboardRepository,
+    exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
@@ -94,12 +94,13 @@ internal fun ShellScreen(
         favoritesRepository = accountFavoritesRepository,
         viewerId = viewer.id,
     )
-    val discoveryState = rememberDiscoveryStateHolder(discoveryRepository)
-    val browseState = rememberBrowseStateHolder(browseRepository)
+    val dashboardState = rememberDashboardStateHolder(dashboardRepository)
+    val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository)
     val searchState = rememberSearchStateHolder(searchRepository)
     val settingsState = rememberSettingsState()
+    var showExploreFilters by remember { mutableStateOf(false) }
 
     val tabs = remember { ShellBottomTab.entries }
     val pagerState = rememberPagerState { tabs.size }
@@ -115,6 +116,27 @@ internal fun ShellScreen(
             } finally {
                 isProgrammaticScroll = false
             }
+        }
+    }
+
+    LaunchedEffect(shellState.selectedTab) {
+        when (shellState.selectedTab) {
+            ShellBottomTab.ANIMATION -> {
+                if (animationState.entries.isEmpty() && !animationState.isLoading) {
+                    animationState.load(viewer.id)
+                }
+            }
+            ShellBottomTab.READING -> {
+                if (readingState.entries.isEmpty() && !readingState.isLoading) {
+                    readingState.load(viewer.id)
+                }
+            }
+            ShellBottomTab.ACCOUNT -> {
+                if (accountState.stats.animeCount == 0 && !accountState.isLoading) {
+                    accountState.load(viewer.id)
+                }
+            }
+            else -> {}
         }
     }
 
@@ -144,28 +166,34 @@ internal fun ShellScreen(
         onBack = shellState::closeMedia,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && shellState.isBrowseOpen,
-        onBack = shellState::closeBrowse,
+        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && shellState.isExploreOpen,
+        onBack = {
+            if (showExploreFilters) {
+                showExploreFilters = false
+            } else {
+                shellState.closeExplore()
+            }
+        },
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isBrowseOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
             shellState.isCalendarOpen,
         onBack = shellState::closeCalendar,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isBrowseOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isBrowseOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && shellState.isSearchTab && shellState.isSearchActive,
         onBack = shellState::closeSearch,
     )
 
     val titleText = when {
         shellState.isMediaDetailOpen -> strings.mediaDetailTitle
-        shellState.isBrowseOpen -> strings.browseTitle
+        shellState.isExploreOpen -> strings.exploreTitle
         shellState.isCalendarOpen -> strings.calendarTitle
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
@@ -185,7 +213,7 @@ internal fun ShellScreen(
                 selectedTab = shellState.selectedTab,
                 isAccountDetail = shellState.isAccountDetail,
                 isMediaDetailOpen = shellState.isMediaDetailOpen,
-                isBrowseOpen = shellState.isBrowseOpen,
+                isExploreOpen = shellState.isExploreOpen,
                 isCalendarOpen = shellState.isCalendarOpen,
                 isSearchActive = shellState.isSearchActive,
                 isSearchTab = shellState.isSearchTab,
@@ -197,11 +225,22 @@ internal fun ShellScreen(
                 onSearchQueryChange = { shellState.searchQuery = it },
                 onAccountBack = shellState::handleAccountBack,
                 onMediaBack = shellState::closeMedia,
-                onBrowseBack = shellState::closeBrowse,
+                onExploreBack = {
+                    if (showExploreFilters) {
+                        showExploreFilters = false
+                    } else {
+                        shellState.closeExplore()
+                    }
+                },
                 onCalendarBack = shellState::closeCalendar,
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
                 onNotificationsClick = { },
                 onFilterClick = { },
+                exploreQuery = exploreState.query,
+                onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
+                showExploreFiltersToggle = !exploreState.isEntitySearch(),
+                isExploreFiltersOpen = showExploreFilters,
+                onToggleExploreFilters = { showExploreFilters = !showExploreFilters },
                 chips = {
                     when (shellState.selectedTab) {
                         ShellBottomTab.ANIMATION -> AnimationSectionChips(
@@ -244,11 +283,11 @@ internal fun ShellScreen(
                     userScrollEnabled = false,
                 ) { page ->
                     when (tabs[page]) {
-                        ShellBottomTab.HOME -> DiscoveryScreen(
-                            stateHolder = discoveryState,
+                        ShellBottomTab.HOME -> DashboardScreen(
+                            stateHolder = dashboardState,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
-                            onOpenBrowse = shellState::openBrowse,
+                            onOpenExplore = shellState::openExplore,
                             onOpenCalendar = shellState::openCalendar,
                         )
                         ShellBottomTab.ANIMATION -> AnimationScreen(
@@ -288,10 +327,12 @@ internal fun ShellScreen(
                 }
             }
 
-            if (shellState.isBrowseOpen) {
+            if (shellState.isExploreOpen) {
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    BrowseScreen(
-                        stateHolder = browseState,
+                    ExploreScreen(
+                        stateHolder = exploreState,
+                        showFilters = showExploreFilters,
+                        onShowFiltersChange = { showExploreFilters = it },
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -318,7 +359,7 @@ internal fun ShellScreen(
                 }
             }
 
-            if (!shellState.isAccountDetail && !shellState.isMediaDetailOpen && !shellState.isBrowseOpen && !shellState.isCalendarOpen) {
+            if (!shellState.isAccountDetail && !shellState.isMediaDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen) {
                 ShellBottomNavBar(
                     selected = shellState.selectedTab,
                     onSelect = shellState::selectTab,

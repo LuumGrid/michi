@@ -43,6 +43,6 @@ internal fun rememberCalendarStateHolder(
 ): CalendarStateHolder {
     val scope = rememberCoroutineScope()
     return remember(repository) {
-        CalendarStateHolder(repository, scope).also { it.load() }
+        CalendarStateHolder(repository, scope)
     }
 }

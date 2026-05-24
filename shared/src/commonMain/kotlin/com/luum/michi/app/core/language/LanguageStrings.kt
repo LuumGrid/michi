@@ -18,8 +18,8 @@ interface LanguageStrings {
     val settingsAction: String
     val inUseLabel: String
     val addAccountAction: String
-    val discoveryTitle: String
-    val discoveryDescription: String
+    val dashboardTitle: String
+    val dashboardDescription: String
     val homeGreetingTitle: String
     val homeGreetingSubtitle: String
     val homeSearchPlaceholder: String
@@ -37,13 +37,13 @@ interface LanguageStrings {
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
-    val browseTitle: String
-    val browsePopularThisSeasonTitle: String
-    val browseUpcomingNextSeasonTitle: String
-    val browseAllTimePopularAnimeTitle: String
-    val browseAllTimePopularMangaTitle: String
-    val browseTopAnimeTitle: String
-    val browseTopMangaTitle: String
+    val exploreTitle: String
+    val explorePopularThisSeasonTitle: String
+    val exploreUpcomingNextSeasonTitle: String
+    val exploreAllTimePopularAnimeTitle: String
+    val exploreAllTimePopularMangaTitle: String
+    val exploreTopAnimeTitle: String
+    val exploreTopMangaTitle: String
     val calendarTitle: String
     val calendarEmptyLabel: String
     val tomorrowLabel: String

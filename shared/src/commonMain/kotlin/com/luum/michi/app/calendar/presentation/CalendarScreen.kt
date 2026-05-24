@@ -30,6 +30,12 @@ internal fun CalendarScreen(
 ) {
     val strings = LanguageProvider.strings
 
+    androidx.compose.runtime.LaunchedEffect(stateHolder) {
+        if (stateHolder.days.isEmpty() && !stateHolder.isLoading) {
+            stateHolder.load()
+        }
+    }
+
     when {
         stateHolder.isLoading && stateHolder.days.isEmpty() -> PlatformListLoading(strings.listsLoadingLabel)
         stateHolder.error != null && stateHolder.days.isEmpty() -> PlatformListMessage(

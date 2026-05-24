@@ -9,4 +9,5 @@ internal data class SearchResult(
     val coverUrl: String?,
     val palette: List<Color>,
     val averageScore: Int?,
+    val popularity: Int? = null,
 )

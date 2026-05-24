@@ -27,7 +27,7 @@ internal fun ShellTopBar(
     selectedTab: ShellBottomTab,
     isAccountDetail: Boolean,
     isMediaDetailOpen: Boolean,
-    isBrowseOpen: Boolean,
+    isExploreOpen: Boolean,
     isCalendarOpen: Boolean,
     isSearchActive: Boolean,
     isSearchTab: Boolean,
@@ -39,19 +39,32 @@ internal fun ShellTopBar(
     onSearchQueryChange: (String) -> Unit,
     onAccountBack: () -> Unit,
     onMediaBack: () -> Unit,
-    onBrowseBack: () -> Unit,
+    onExploreBack: () -> Unit,
     onCalendarBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
     chips: @Composable () -> Unit = {},
+    exploreQuery: String = "",
+    onExploreQueryChange: (String) -> Unit = {},
+    showExploreFiltersToggle: Boolean = false,
+    isExploreFiltersOpen: Boolean = false,
+    onToggleExploreFilters: () -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
+    val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
 
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         PlatformTopBar(
             title = {
-                if (!isMediaDetailOpen && isSearchTab && isSearchActive) {
+                if (isExploreOpen) {
+                    ShellSearchField(
+                        query = exploreQuery,
+                        onQueryChange = onExploreQueryChange,
+                        placeholder = if (isSpanish) "Buscar catálogo..." else "Explore catalog...",
+                        autoFocus = false,
+                    )
+                } else if (!isMediaDetailOpen && isSearchTab && isSearchActive) {
                     ShellSearchField(
                         query = searchQuery,
                         onQueryChange = onSearchQueryChange,
@@ -75,8 +88,8 @@ internal fun ShellTopBar(
                             modifier = Modifier.size(28.dp),
                         )
                     }
-                } else if (isBrowseOpen) {
-                    IconButton(onClick = onBrowseBack) {
+                } else if (isExploreOpen) {
+                    IconButton(onClick = onExploreBack) {
                         Icon(
                             painter = PlatformIcons.ArrowBack,
                             contentDescription = strings.backButton,
@@ -104,7 +117,18 @@ internal fun ShellTopBar(
                 }
             },
             actions = {
-                if (!isMediaDetailOpen && !isBrowseOpen && !isCalendarOpen) {
+                if (isExploreOpen) {
+                    if (showExploreFiltersToggle) {
+                        IconButton(onClick = onToggleExploreFilters) {
+                            Icon(
+                                painter = PlatformIcons.FilterList,
+                                contentDescription = if (isSpanish) "Filtros" else "Filters",
+                                tint = if (isExploreFiltersOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+                    }
+                } else if (!isMediaDetailOpen && !isExploreOpen && !isCalendarOpen) {
                     ShellTopBarActions(
                         selectedTab = selectedTab,
                         isSearchActive = isSearchActive,
@@ -118,7 +142,7 @@ internal fun ShellTopBar(
             windowInsets = WindowInsets.statusBars,
         )
 
-        if (!isMediaDetailOpen && !isBrowseOpen && !isCalendarOpen) {
+        if (!isMediaDetailOpen && !isExploreOpen && !isCalendarOpen) {
             chips()
         }
     }

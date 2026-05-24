@@ -25,6 +25,7 @@ query MediaSearch(${'$'}search: String, ${'$'}type: MediaType, ${'$'}page: Int!,
       episodes
       chapters
       averageScore
+      popularity
       coverImage { extraLarge large medium color }
       season
       seasonYear

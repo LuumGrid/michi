@@ -26,6 +26,11 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.luum.michi.app.search.presentation.model.SearchResult
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import com.luum.michi.app.core.platform.PlatformIcons
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun SearchResultCard(
@@ -62,13 +67,58 @@ internal fun SearchResultCard(
                         .align(Alignment.TopEnd)
                         .padding(6.dp),
                 ) {
-                    Text(
-                        text = "${result.averageScore}%",
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = PlatformIcons.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "${result.averageScore}%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            if (result.popularity != null && result.popularity > 0) {
+                val popularityText = when {
+                    result.popularity >= 1000000 -> "${result.popularity / 1000000}.${(result.popularity % 1000000) / 100000}M"
+                    result.popularity >= 1000 -> "${result.popularity / 1000}.${(result.popularity % 1000) / 100}k"
+                    else -> result.popularity.toString()
+                }.replace(".0", "")
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.88f),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(6.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = PlatformIcons.Groups,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = popularityText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
         }

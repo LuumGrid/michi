@@ -26,6 +26,7 @@ internal data class MediaSearchItemDto(
     val episodes: Int? = null,
     val chapters: Int? = null,
     val averageScore: Int? = null,
+    val popularity: Int? = null,
     val coverImage: MediaCoverImageDto? = null,
     val season: String? = null,
     val seasonYear: Int? = null,

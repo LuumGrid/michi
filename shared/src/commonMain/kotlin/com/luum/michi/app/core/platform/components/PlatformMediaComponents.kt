@@ -339,7 +339,7 @@ fun PlatformScorePill(score: String) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = PlatformIcons.Like,
+                painter = PlatformIcons.Star,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.size(14.dp),

@@ -13,6 +13,7 @@ internal fun MediaSearchItemDto.toSearchResult(): SearchResult {
         coverUrl = coverImage?.extraLarge ?: coverImage?.large ?: coverImage?.medium,
         palette = hexToPalette(coverImage?.color),
         averageScore = averageScore?.takeIf { it > 0 },
+        popularity = popularity,
     )
 }
 

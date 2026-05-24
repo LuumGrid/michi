@@ -1,4 +1,4 @@
-package com.luum.michi.app.discovery.presentation
+package com.luum.michi.app.dashboard.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,18 +17,18 @@ import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
 import com.luum.michi.app.core.platform.components.PlatformHomeReleaseRail
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcut
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcutRow
-import com.luum.michi.app.discovery.presentation.state.DiscoveryStateHolder
+import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
 
 @Composable
-internal fun DiscoveryScreen(
-    stateHolder: DiscoveryStateHolder,
+internal fun DashboardScreen(
+    stateHolder: DashboardStateHolder,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
-    onOpenBrowse: () -> Unit,
+    onOpenExplore: () -> Unit,
     onOpenCalendar: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
-    val shortcuts = discoveryShortcuts(strings, onOpenBrowse, onOpenCalendar)
+    val shortcuts = dashboardShortcuts(strings, onOpenExplore, onOpenCalendar)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -82,17 +82,83 @@ internal fun DiscoveryScreen(
                 )
             }
         }
+
+        if (stateHolder.popularThisSeason.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.explorePopularThisSeasonTitle,
+                    items = stateHolder.popularThisSeason,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
+
+        if (stateHolder.upcomingNextSeason.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.exploreUpcomingNextSeasonTitle,
+                    items = stateHolder.upcomingNextSeason,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
+
+        if (stateHolder.allTimePopularAnime.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.exploreAllTimePopularAnimeTitle,
+                    items = stateHolder.allTimePopularAnime,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
+
+        if (stateHolder.allTimePopularManga.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.exploreAllTimePopularMangaTitle,
+                    items = stateHolder.allTimePopularManga,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
+
+        if (stateHolder.topAnime.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.exploreTopAnimeTitle,
+                    items = stateHolder.topAnime,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
+
+        if (stateHolder.topManga.isNotEmpty()) {
+            item {
+                PlatformHomeMediaRail(
+                    title = strings.exploreTopMangaTitle,
+                    items = stateHolder.topManga,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun discoveryShortcuts(
+private fun dashboardShortcuts(
     strings: LanguageStrings,
-    onOpenBrowse: () -> Unit,
+    onOpenExplore: () -> Unit,
     onOpenCalendar: () -> Unit,
 ): List<PlatformHomeShortcut> = listOf(
     PlatformHomeShortcut(strings.homeSeasonalAction, PlatformIcons.Season, MaterialTheme.colorScheme.primary),
-    PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary, onClick = onOpenBrowse),
+    PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary, onClick = onOpenExplore),
     PlatformHomeShortcut(strings.homeReviewsAction, PlatformIcons.Comments, MaterialTheme.colorScheme.secondary),
     PlatformHomeShortcut(strings.homeCalendarAction, PlatformIcons.Calendar, MaterialTheme.colorScheme.error, onClick = onOpenCalendar),
 )

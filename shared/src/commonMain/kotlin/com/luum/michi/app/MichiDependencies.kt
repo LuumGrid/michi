@@ -6,8 +6,8 @@ import com.luum.michi.app.account.data.AccountStatsRepository
 import com.luum.michi.app.account.data.AccountStatsRepositoryImpl
 import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.data.AnimationListRepositoryImpl
-import com.luum.michi.app.browse.data.BrowseRepository
-import com.luum.michi.app.browse.data.BrowseRepositoryImpl
+import com.luum.michi.app.explore.data.ExploreRepository
+import com.luum.michi.app.explore.data.ExploreRepositoryImpl
 import com.luum.michi.app.calendar.data.CalendarRepository
 import com.luum.michi.app.calendar.data.CalendarRepositoryImpl
 import com.luum.michi.app.core.auth.AniListOAuthLauncher
@@ -19,8 +19,8 @@ import com.luum.michi.app.core.network.createAniListHttpClient
 import com.luum.michi.app.core.session.AniListViewerRepository
 import com.luum.michi.app.core.session.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.SessionManager
-import com.luum.michi.app.discovery.data.DiscoveryRepository
-import com.luum.michi.app.discovery.data.DiscoveryRepositoryImpl
+import com.luum.michi.app.dashboard.data.DashboardRepository
+import com.luum.michi.app.dashboard.data.DashboardRepositoryImpl
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
@@ -69,11 +69,11 @@ class MichiDependencies internal constructor(
     internal val accountFavoritesRepository: AccountFavoritesRepository =
         AccountFavoritesRepositoryImpl(graphQLClient)
 
-    internal val discoveryRepository: DiscoveryRepository =
-        DiscoveryRepositoryImpl(graphQLClient)
+    internal val dashboardRepository: DashboardRepository =
+        DashboardRepositoryImpl(graphQLClient)
 
-    internal val browseRepository: BrowseRepository =
-        BrowseRepositoryImpl(graphQLClient)
+    internal val exploreRepository: ExploreRepository =
+        ExploreRepositoryImpl(graphQLClient)
 
     internal val calendarRepository: CalendarRepository =
         CalendarRepositoryImpl(graphQLClient)

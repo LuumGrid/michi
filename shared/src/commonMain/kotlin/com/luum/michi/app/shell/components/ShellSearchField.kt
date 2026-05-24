@@ -23,10 +23,15 @@ internal fun ShellSearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     placeholder: String,
+    autoFocus: Boolean = true,
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(Unit) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+        }
+    }
 
     BasicTextField(
         value = query,

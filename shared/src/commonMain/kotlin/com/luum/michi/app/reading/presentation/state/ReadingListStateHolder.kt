@@ -70,6 +70,6 @@ internal fun rememberReadingListStateHolder(
 ): ReadingListStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        ReadingListStateHolder(repository, scope).also { it.load(viewerId) }
+        ReadingListStateHolder(repository, scope)
     }
 }

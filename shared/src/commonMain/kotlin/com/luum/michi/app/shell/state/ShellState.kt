@@ -30,7 +30,7 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var currentProfile by mutableStateOf(initialProfile)
     var selectedMediaId by mutableStateOf<Int?>(null)
     var editorMediaId by mutableStateOf<Int?>(null)
-    var isBrowseOpen by mutableStateOf(false)
+    var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
 
     val isMediaDetailOpen: Boolean
@@ -81,12 +81,12 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
         editorMediaId = null
     }
 
-    fun openBrowse() {
-        isBrowseOpen = true
+    fun openExplore() {
+        isExploreOpen = true
     }
 
-    fun closeBrowse() {
-        isBrowseOpen = false
+    fun closeExplore() {
+        isExploreOpen = false
     }
 
     fun openCalendar() {

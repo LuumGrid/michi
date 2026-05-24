@@ -64,6 +64,6 @@ internal fun rememberAnimationListStateHolder(
 ): AnimationListStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        AnimationListStateHolder(repository, scope).also { it.load(viewerId) }
+        AnimationListStateHolder(repository, scope)
     }
 }
