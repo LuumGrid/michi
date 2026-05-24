@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
@@ -223,19 +226,39 @@ internal fun ExploreScreen(
                             "No catalog results found."
                         }
                     )
-                else -> LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 96.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    items(stateHolder.results, key = { "${it.id}_${stateHolder.category.name}" }) { result ->
-                        SearchResultCard(
-                            result = result,
-                            onClick = { onOpenMedia(result.id) },
-                            onLongClick = { onEditMedia(result.id) },
-                        )
+                else -> {
+                    val gridState = rememberLazyGridState()
+                    LaunchedEffect(gridState, stateHolder.hasNextPage) {
+                        snapshotFlow {
+                            gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        }.collect { last ->
+                            if (last >= stateHolder.results.size - 4 &&
+                                stateHolder.hasNextPage &&
+                                !stateHolder.isLoadingMore
+                            ) {
+                                stateHolder.loadMore()
+                            }
+                        }
+                    }
+                    LazyVerticalGrid(
+                        state = gridState,
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 96.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        items(stateHolder.results, key = { "${it.id}_${stateHolder.category.name}" }) { result ->
+                            SearchResultCard(
+                                result = result,
+                                onClick = { onOpenMedia(result.id) },
+                                onLongClick = { onEditMedia(result.id) },
+                            )
+                        }
+                        if (stateHolder.isLoadingMore) {
+                            item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+                            item { Box(modifier = Modifier.fillMaxWidth()) {} }
+                        }
                     }
                 }
             }

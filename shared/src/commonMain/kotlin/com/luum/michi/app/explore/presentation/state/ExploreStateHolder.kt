@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.explore.data.ExploreRepository
 import com.luum.michi.app.search.presentation.model.SearchResult
+import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -33,12 +34,17 @@ internal class ExploreStateHolder(
     var year by mutableStateOf<Int?>(null)
     var sort by mutableStateOf("POPULARITY_DESC")
 
-    private var resultsState by mutableStateOf<List<SearchResult>>(emptyList())
+    private val resultsBacking = mutableStateListOf<SearchResult>()
     private var loadingState by mutableStateOf(false)
+    private var loadingMoreState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
+    private var hasNextPageState by mutableStateOf(false)
+    private var currentPage by mutableStateOf(1)
 
-    val results: List<SearchResult> get() = resultsState
+    val results: List<SearchResult> get() = resultsBacking
     val isLoading: Boolean get() = loadingState
+    val isLoadingMore: Boolean get() = loadingMoreState
+    val hasNextPage: Boolean get() = hasNextPageState
     val error: String? get() = errorState
 
     private var searchJob: Job? = null
@@ -51,9 +57,6 @@ internal class ExploreStateHolder(
         newYear: Int? = year,
         newSort: String = sort,
     ) {
-        val queryChanged = newQuery != query
-        val categoryChanged = newCategory != category
-
         query = newQuery
         category = newCategory
         genre = newGenre
@@ -69,38 +72,77 @@ internal class ExploreStateHolder(
     }
 
     fun load() {
+        currentPage = 1
+        hasNextPageState = false
         loadingState = true
         errorState = null
         scope.launch {
-            val result = when (category) {
-                ExploreCategory.ANIMATION -> repository.searchCatalog(
-                    query = query.takeIf { it.isNotBlank() },
-                    genre = genre.takeIf { it != "All" && it != "Todos" },
-                    format = format.takeIf { it != "All" && it != "Todos" },
-                    year = year,
-                    sort = sort,
-                )
-                ExploreCategory.READING -> repository.searchManga(
-                    query = query.takeIf { it.isNotBlank() },
-                    genre = genre.takeIf { it != "All" && it != "Todos" },
-                    format = format.takeIf { it != "All" && it != "Todos" },
-                    year = year,
-                    sort = sort,
-                )
-                ExploreCategory.CHARACTERS -> repository.searchCharacters(query = query.takeIf { it.isNotBlank() })
-                ExploreCategory.STAFF -> repository.searchStaff(query = query.takeIf { it.isNotBlank() })
-                ExploreCategory.STUDIOS -> repository.searchStudios(query = query.takeIf { it.isNotBlank() })
-            }
-
+            val result = fetchPage(1)
             when (result) {
-                is NetworkResult.Success -> resultsState = result.value
+                is NetworkResult.Success -> {
+                    resultsBacking.clear()
+                    resultsBacking.addAll(result.value.results)
+                    hasNextPageState = result.value.hasNextPage
+                    currentPage = 1
+                }
                 is NetworkResult.Failure -> {
                     errorState = result.error.toString()
-                    resultsState = emptyList()
+                    resultsBacking.clear()
                 }
             }
             loadingState = false
         }
+    }
+
+    fun loadMore() {
+        if (loadingMoreState || !hasNextPageState) return
+        val nextPage = currentPage + 1
+        loadingMoreState = true
+        scope.launch {
+            val result = fetchPage(nextPage)
+            when (result) {
+                is NetworkResult.Success -> {
+                    resultsBacking.addAll(result.value.results)
+                    hasNextPageState = result.value.hasNextPage
+                    currentPage = nextPage
+                }
+                is NetworkResult.Failure -> {
+                    errorState = result.error.toString()
+                }
+            }
+            loadingMoreState = false
+        }
+    }
+
+    private suspend fun fetchPage(page: Int) = when (category) {
+        ExploreCategory.ANIMATION -> repository.searchCatalog(
+            query = query.takeIf { it.isNotBlank() },
+            genre = genre.takeIf { it != "All" && it != "Todos" },
+            format = format.takeIf { it != "All" && it != "Todos" },
+            year = year,
+            sort = sort,
+            page = page,
+        )
+        ExploreCategory.READING -> repository.searchManga(
+            query = query.takeIf { it.isNotBlank() },
+            genre = genre.takeIf { it != "All" && it != "Todos" },
+            format = format.takeIf { it != "All" && it != "Todos" },
+            year = year,
+            sort = sort,
+            page = page,
+        )
+        ExploreCategory.CHARACTERS -> repository.searchCharacters(
+            query = query.takeIf { it.isNotBlank() },
+            page = page,
+        )
+        ExploreCategory.STAFF -> repository.searchStaff(
+            query = query.takeIf { it.isNotBlank() },
+            page = page,
+        )
+        ExploreCategory.STUDIOS -> repository.searchStudios(
+            query = query.takeIf { it.isNotBlank() },
+            page = page,
+        )
     }
 
     fun isEntitySearch(): Boolean =

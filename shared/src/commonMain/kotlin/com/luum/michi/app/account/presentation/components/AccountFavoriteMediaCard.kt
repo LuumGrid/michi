@@ -3,7 +3,7 @@ package com.luum.michi.app.account.presentation.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.model.AccountFavoriteMedia
+import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -31,14 +32,14 @@ internal fun AccountFavoriteMediaCard(
     } else {
         Modifier
     }
-    Column(modifier = Modifier.width(108.dp).then(clickModifier)) {
+    Column(modifier = Modifier.width(PlatformCoverSize.RailPosterWidth).then(clickModifier)) {
         PlatformMediaCover(
             coverUrl = media.coverUrl,
             palette = media.palette,
             contentDescription = media.title,
             modifier = Modifier
-                .width(108.dp)
-                .height(154.dp),
+                .width(PlatformCoverSize.RailPosterWidth)
+                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
         )
         Text(
             text = media.title,

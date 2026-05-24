@@ -23,7 +23,7 @@ internal fun FavouritesDto.toDomain(): AccountFavorites = AccountFavorites(
 private fun MediaDto.toAccountFavoriteMedia(): AccountFavoriteMedia = AccountFavoriteMedia(
     id = id,
     title = title.bestTitle(),
-    coverUrl = coverImage?.extraLarge ?: coverImage?.large ?: coverImage?.medium,
+    coverUrl = coverImage?.bestUrl,
     palette = hexToPalette(coverImage?.color),
 )
 
@@ -44,7 +44,8 @@ private fun StaffDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountF
 private fun StudioDto.toAccountFavoriteStudio(): AccountFavoriteStudio = AccountFavoriteStudio(
     id = id,
     name = name,
-    palette = hexToPalette(null),
+    coverUrl = latestCoverImage?.bestUrl,
+    palette = hexToPalette(latestCoverImage?.color),
 )
 
 private fun MediaTitleDto?.bestTitle(): String {

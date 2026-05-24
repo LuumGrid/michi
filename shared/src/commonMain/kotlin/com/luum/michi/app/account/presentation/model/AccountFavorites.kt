@@ -19,6 +19,7 @@ internal data class AccountFavoritePerson(
 internal data class AccountFavoriteStudio(
     val id: Int,
     val name: String,
+    val coverUrl: String?,
     val palette: List<Color>,
 )
 

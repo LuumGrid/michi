@@ -1,7 +1,7 @@
 package com.luum.michi.app.explore.data
 
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.search.presentation.model.SearchResult
+import com.luum.michi.app.search.data.SearchPage
 
 internal interface ExploreRepository {
     suspend fun searchCatalog(
@@ -12,7 +12,7 @@ internal interface ExploreRepository {
         sort: String,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<List<SearchResult>>
+    ): NetworkResult<SearchPage>
 
     suspend fun searchManga(
         query: String?,
@@ -22,23 +22,23 @@ internal interface ExploreRepository {
         sort: String,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<List<SearchResult>>
+    ): NetworkResult<SearchPage>
 
     suspend fun searchCharacters(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<List<SearchResult>>
+    ): NetworkResult<SearchPage>
 
     suspend fun searchStaff(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<List<SearchResult>>
+    ): NetworkResult<SearchPage>
 
     suspend fun searchStudios(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<List<SearchResult>>
+    ): NetworkResult<SearchPage>
 }

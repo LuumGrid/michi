@@ -46,6 +46,9 @@ query UserFavourites(${'$'}userId: Int!) {
         nodes {
           id
           name
+          media(sort: [START_DATE_DESC], perPage: 10) {
+            nodes { status coverImage { extraLarge large medium color } }
+          }
         }
       }
     }
