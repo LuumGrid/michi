@@ -91,8 +91,8 @@ internal fun ShellScreen(
 ) {
     val strings = LanguageProvider.strings
     val shellState = rememberShellState(viewer)
-    val animationState = rememberAnimationListStateHolder(animationListRepository, viewer.id)
-    val readingState = rememberReadingListStateHolder(readingListRepository, viewer.id)
+    val animationState = rememberAnimationListStateHolder(animationListRepository, mediaListEntryRepository, viewer.id)
+    val readingState = rememberReadingListStateHolder(readingListRepository, mediaListEntryRepository, viewer.id)
     val accountState = rememberAccountStateHolder(
         statsRepository = accountStatsRepository,
         favoritesRepository = accountFavoritesRepository,

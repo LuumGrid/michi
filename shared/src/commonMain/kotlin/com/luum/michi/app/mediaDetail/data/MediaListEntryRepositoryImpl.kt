@@ -91,6 +91,11 @@ private data class ToggleFavouriteResponse(
     @SerialName("ToggleFavourite") val payload: JsonElement? = null,
 )
 
+@Serializable
+private data class SaveProgressResponse(
+    @SerialName("SaveMediaListEntry") val entry: JsonElement? = null,
+)
+
 internal class MediaListEntryRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : MediaListEntryRepository {
@@ -158,6 +163,48 @@ internal class MediaListEntryRepositoryImpl(
                 } ?: completedAtMillis,
             )
         }
+    }
+
+    override suspend fun saveProgress(
+        mediaId: Int,
+        progress: Int,
+        status: MediaListStatus?,
+        progressVolumes: Int?,
+    ): NetworkResult<Unit> {
+        val variables = buildMap<String, JsonElement> {
+            put("mediaId", JsonPrimitive(mediaId))
+            put("progress", JsonPrimitive(progress))
+            if (status != null) {
+                put("status", JsonPrimitive(status.toApiValue()))
+            }
+            if (progressVolumes != null) {
+                put("progressVolumes", JsonPrimitive(progressVolumes))
+            }
+        }
+        val request = AniListGraphQLRequest(
+            query = """
+                mutation SaveMediaListProgress(
+                  ${'$'}mediaId: Int!,
+                  ${'$'}progress: Int,
+                  ${'$'}progressVolumes: Int,
+                  ${'$'}status: MediaListStatus
+                ) {
+                  SaveMediaListEntry(
+                    mediaId: ${'$'}mediaId,
+                    progress: ${'$'}progress,
+                    progressVolumes: ${'$'}progressVolumes,
+                    status: ${'$'}status
+                  ) {
+                    id status progress progressVolumes
+                  }
+                }
+            """.trimIndent(),
+            variables = JsonObject(variables),
+            operationName = "SaveMediaListProgress",
+        )
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromString(SaveProgressResponse.serializer(), dataJson)
+        }.map { }
     }
 
     override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> {

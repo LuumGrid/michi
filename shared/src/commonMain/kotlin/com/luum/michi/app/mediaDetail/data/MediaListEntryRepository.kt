@@ -20,5 +20,12 @@ internal interface MediaListEntryRepository {
         completedAtMillis: Long?,
     ): NetworkResult<MediaDetailViewerEntry>
 
+    suspend fun saveProgress(
+        mediaId: Int,
+        progress: Int,
+        status: MediaListStatus? = null,
+        progressVolumes: Int? = null,
+    ): NetworkResult<Unit>
+
     suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit>
 }

@@ -57,6 +57,82 @@ internal data class MediaDetailDto(
     val isFavourite: Boolean? = null,
     val mediaListEntry: MediaViewerListEntryDto? = null,
     val relations: MediaRelationConnectionDto? = null,
+    val stats: MediaStatsDto? = null,
+    val characters: MediaCharacterConnectionDto? = null,
+    val staff: MediaStaffConnectionDto? = null,
+)
+
+@Serializable
+internal data class MediaStatsDto(
+    val scoreDistribution: List<ScoreDistributionBucketDto> = emptyList(),
+    val statusDistribution: List<StatusDistributionBucketDto> = emptyList(),
+)
+
+@Serializable
+internal data class ScoreDistributionBucketDto(
+    val score: Int = 0,
+    val amount: Int = 0,
+)
+
+@Serializable
+internal data class StatusDistributionBucketDto(
+    val status: String? = null,
+    val amount: Int = 0,
+)
+
+@Serializable
+internal data class MediaPageInfoDto(
+    val hasNextPage: Boolean = false,
+    val currentPage: Int = 1,
+)
+
+@Serializable
+internal data class MediaCharacterConnectionDto(
+    val pageInfo: MediaPageInfoDto? = null,
+    val edges: List<MediaCharacterEdgeDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaCharacterEdgeDto(
+    val id: Int? = null,
+    val role: String? = null,
+    val node: MediaCharacterNodeDto? = null,
+    val voiceActors: List<MediaVoiceActorDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaCharacterNodeDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
+)
+
+@Serializable
+internal data class MediaVoiceActorDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
+    val languageV2: String? = null,
+)
+
+@Serializable
+internal data class MediaStaffConnectionDto(
+    val pageInfo: MediaPageInfoDto? = null,
+    val edges: List<MediaStaffEdgeDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaStaffEdgeDto(
+    val id: Int? = null,
+    val role: String? = null,
+    val node: MediaStaffNodeDto? = null,
+)
+
+@Serializable
+internal data class MediaStaffNodeDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
 )
 
 @Serializable

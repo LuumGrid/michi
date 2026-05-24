@@ -72,6 +72,35 @@ interface LanguageStrings {
     val mediaRelationParent: String
     val mediaRelationAdaptation: String
     val mediaRelationOther: String
+    val mediaDetailTabInfo: String
+    val mediaDetailTabStats: String
+    val mediaDetailTabCharacters: String
+    val mediaDetailTabStaff: String
+    val mediaDetailCharacterRoleMain: String
+    val mediaDetailCharacterRoleSupporting: String
+    val mediaDetailCharacterRoleBackground: String
+    val mediaDetailNoCharactersLabel: String
+    val mediaDetailNoStaffLabel: String
+    val mediaDetailLoadMoreAction: String
+    val mediaDetailVoiceLanguageLabel: String
+    val mediaDetailScoreDistributionTitle: String
+    val mediaDetailStatusDistributionTitle: String
+    val mediaStatsStatusCurrent: String
+    val mediaStatsStatusPlanning: String
+    val mediaStatsStatusCompleted: String
+    val mediaStatsStatusDropped: String
+    val mediaStatsStatusPaused: String
+    val mediaStatsStatusRepeating: String
+    val voiceLanguageJapanese: String
+    val voiceLanguageEnglish: String
+    val voiceLanguageKorean: String
+    val voiceLanguageItalian: String
+    val voiceLanguageSpanish: String
+    val voiceLanguagePortuguese: String
+    val voiceLanguageFrench: String
+    val voiceLanguageGerman: String
+    val voiceLanguageHebrew: String
+    val voiceLanguageHungarian: String
     val mediaDetailFormatLabel: String
     val mediaDetailStatusLabel: String
     val mediaDetailEpisodesLabel: String

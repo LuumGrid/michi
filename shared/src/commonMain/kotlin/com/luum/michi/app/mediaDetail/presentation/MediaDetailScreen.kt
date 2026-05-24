@@ -12,30 +12,47 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
@@ -43,11 +60,32 @@ import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry
+import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
+import com.luum.michi.app.mediaDetail.presentation.model.MediaScoreBucket
+import com.luum.michi.app.mediaDetail.presentation.model.MediaStaffEntry
+import com.luum.michi.app.mediaDetail.presentation.model.MediaStatsStatus
+import com.luum.michi.app.mediaDetail.presentation.model.MediaStatusBucket
 import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
+
+private enum class DetailTab { INFO, STATS, CHARACTERS, STAFF }
+
+private val VoiceLanguageOptions = listOf(
+    "JAPANESE",
+    "ENGLISH",
+    "KOREAN",
+    "SPANISH",
+    "FRENCH",
+    "GERMAN",
+    "ITALIAN",
+    "PORTUGUESE",
+    "HEBREW",
+    "HUNGARIAN",
+)
 
 @Composable
 internal fun MediaDetailScreen(
@@ -64,6 +102,7 @@ internal fun MediaDetailScreen(
     when {
         detail != null && detail.id == mediaId -> MediaDetailContent(
             detail = detail,
+            stateHolder = stateHolder,
             strings = strings,
             onEditClick = { onRequestEdit(mediaId) },
             onOpenRelation = onOpenRelation,
@@ -81,35 +120,67 @@ internal fun MediaDetailScreen(
 @Composable
 private fun MediaDetailContent(
     detail: MediaDetail,
+    stateHolder: MediaDetailStateHolder,
     strings: LanguageStrings,
     onEditClick: () -> Unit,
     onOpenRelation: (Int) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        item { MediaDetailHeader(detail = detail) }
-        item { MediaDetailEntryAction(detail = detail, strings = strings, onClick = onEditClick) }
-        item { MediaDetailOverviewSection(detail = detail, strings = strings) }
-        if (detail.genres.isNotEmpty()) {
-            item { MediaDetailGenres(genres = detail.genres, strings = strings) }
-        }
-        if (detail.descriptionPlain.isNotBlank()) {
-            item { MediaDetailDescription(text = detail.descriptionPlain, strings = strings) }
-        }
-        if (detail.relations.isNotEmpty()) {
-            item {
-                MediaDetailRelationsRow(
-                    relations = detail.relations,
+    var selectedTab by remember(detail.id) { mutableStateOf(DetailTab.INFO) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        MediaDetailHeader(detail = detail)
+        MediaDetailEntryAction(detail = detail, strings = strings, onClick = onEditClick)
+        MediaDetailTabBar(
+            selected = selectedTab,
+            onSelect = { selectedTab = it },
+            strings = strings,
+        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (selectedTab) {
+                DetailTab.INFO -> InfoTab(
+                    detail = detail,
                     strings = strings,
                     onOpenRelation = onOpenRelation,
                 )
+                DetailTab.STATS -> StatsTab(detail = detail, strings = strings)
+                DetailTab.CHARACTERS -> CharactersTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
+                DetailTab.STAFF -> StaffTab(
+                    stateHolder = stateHolder,
+                    strings = strings,
+                )
             }
         }
-        if (detail.studios.isNotEmpty()) {
-            item { MediaDetailStudios(studios = detail.studios, strings = strings) }
+    }
+}
+
+@Composable
+private fun MediaDetailTabBar(
+    selected: DetailTab,
+    onSelect: (DetailTab) -> Unit,
+    strings: LanguageStrings,
+) {
+    val tabs = listOf(
+        DetailTab.INFO to strings.mediaDetailTabInfo,
+        DetailTab.STATS to strings.mediaDetailTabStats,
+        DetailTab.CHARACTERS to strings.mediaDetailTabCharacters,
+        DetailTab.STAFF to strings.mediaDetailTabStaff,
+    )
+    PrimaryTabRow(selectedTabIndex = tabs.indexOfFirst { it.first == selected }.coerceAtLeast(0)) {
+        tabs.forEach { (tab, label) ->
+            Tab(
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                text = {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                },
+            )
         }
     }
 }
@@ -126,7 +197,7 @@ private fun MediaDetailEntryAction(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(label, fontWeight = FontWeight.SemiBold)
     }
@@ -209,6 +280,408 @@ private fun MediaDetailHeader(detail: MediaDetail) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun InfoTab(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    onOpenRelation: (Int) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        item { MediaDetailOverviewSection(detail = detail, strings = strings) }
+        if (detail.genres.isNotEmpty()) {
+            item { MediaDetailGenres(genres = detail.genres, strings = strings) }
+        }
+        if (detail.descriptionPlain.isNotBlank()) {
+            item { MediaDetailDescription(text = detail.descriptionPlain, strings = strings) }
+        }
+        if (detail.relations.isNotEmpty()) {
+            item {
+                MediaDetailRelationsRow(
+                    relations = detail.relations,
+                    strings = strings,
+                    onOpenRelation = onOpenRelation,
+                )
+            }
+        }
+        if (detail.studios.isNotEmpty()) {
+            item { MediaDetailStudios(studios = detail.studios, strings = strings) }
+        }
+    }
+}
+
+@Composable
+private fun StatsTab(detail: MediaDetail, strings: LanguageStrings) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        if (detail.statusDistribution.isNotEmpty()) {
+            item {
+                MediaDetailSection(title = strings.mediaDetailStatusDistributionTitle) {
+                    StatusDistributionList(buckets = detail.statusDistribution, strings = strings)
+                }
+            }
+        }
+        if (detail.scoreDistribution.isNotEmpty()) {
+            item {
+                MediaDetailSection(title = strings.mediaDetailScoreDistributionTitle) {
+                    ScoreDistributionList(buckets = detail.scoreDistribution)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusDistributionList(
+    buckets: List<MediaStatusBucket>,
+    strings: LanguageStrings,
+) {
+    val total = buckets.sumOf { it.amount }.coerceAtLeast(1)
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        buckets.forEach { bucket ->
+            val pct = bucket.amount.toFloat() / total
+            DistributionBar(
+                label = statusLabel(bucket.status, strings),
+                value = bucket.amount.toString(),
+                fraction = pct,
+                color = statusColor(bucket.status),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScoreDistributionList(buckets: List<MediaScoreBucket>) {
+    val max = buckets.maxOfOrNull { it.amount }?.coerceAtLeast(1) ?: 1
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        buckets.forEach { bucket ->
+            val pct = bucket.amount.toFloat() / max
+            DistributionBar(
+                label = "${bucket.score}",
+                value = bucket.amount.toString(),
+                fraction = pct,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DistributionBar(
+    label: String,
+    value: String,
+    fraction: Float,
+    color: Color,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(color),
+            )
+        }
+    }
+}
+
+private fun statusLabel(status: MediaStatsStatus, strings: LanguageStrings): String = when (status) {
+    MediaStatsStatus.CURRENT -> strings.mediaStatsStatusCurrent
+    MediaStatsStatus.PLANNING -> strings.mediaStatsStatusPlanning
+    MediaStatsStatus.COMPLETED -> strings.mediaStatsStatusCompleted
+    MediaStatsStatus.DROPPED -> strings.mediaStatsStatusDropped
+    MediaStatsStatus.PAUSED -> strings.mediaStatsStatusPaused
+    MediaStatsStatus.REPEATING -> strings.mediaStatsStatusRepeating
+    MediaStatsStatus.OTHER -> ""
+}
+
+@Composable
+private fun statusColor(status: MediaStatsStatus): Color = when (status) {
+    MediaStatsStatus.CURRENT -> MaterialTheme.colorScheme.primary
+    MediaStatsStatus.PLANNING -> MaterialTheme.colorScheme.tertiary
+    MediaStatsStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
+    MediaStatsStatus.DROPPED -> MaterialTheme.colorScheme.error
+    MediaStatsStatus.PAUSED -> MaterialTheme.colorScheme.outline
+    MediaStatsStatus.REPEATING -> MaterialTheme.colorScheme.primary
+    MediaStatsStatus.OTHER -> MaterialTheme.colorScheme.outlineVariant
+}
+
+@Composable
+private fun CharactersTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        VoiceLanguageChipRow(
+            selected = stateHolder.voiceLanguage,
+            onSelect = stateHolder::selectVoiceLanguage,
+            strings = strings,
+        )
+        val characters = stateHolder.characters
+        if (characters.isEmpty() && !stateHolder.isLoadingCharacters) {
+            PlatformListMessage(
+                title = strings.mediaDetailNoCharactersLabel,
+                tone = PlatformListMessageTone.Neutral,
+            )
+            return@Column
+        }
+        val gridState = rememberLazyGridState()
+        LaunchedEffect(gridState, stateHolder.charactersHasNextPage) {
+            snapshotFlow {
+                val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                lastVisible
+            }.collect { last ->
+                if (last >= characters.size - 4 && stateHolder.charactersHasNextPage && !stateHolder.isLoadingCharacters) {
+                    stateHolder.loadMoreCharacters()
+                }
+            }
+        }
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 28.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            gridItems(items = characters, key = { it.edgeKey }) { entry ->
+                CharacterCard(entry = entry, strings = strings)
+            }
+            if (stateHolder.isLoadingCharacters) {
+                item { LoadingTile() }
+                item { LoadingTile() }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoiceLanguageChipRow(
+    selected: String,
+    onSelect: (String) -> Unit,
+    strings: LanguageStrings,
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(items = VoiceLanguageOptions, key = { it }) { lang ->
+            FilterChip(
+                selected = lang == selected,
+                onClick = { onSelect(lang) },
+                label = { Text(voiceLanguageLabel(lang, strings)) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            )
+        }
+    }
+}
+
+private fun voiceLanguageLabel(code: String, strings: LanguageStrings): String = when (code) {
+    "JAPANESE" -> strings.voiceLanguageJapanese
+    "ENGLISH" -> strings.voiceLanguageEnglish
+    "KOREAN" -> strings.voiceLanguageKorean
+    "ITALIAN" -> strings.voiceLanguageItalian
+    "SPANISH" -> strings.voiceLanguageSpanish
+    "PORTUGUESE" -> strings.voiceLanguagePortuguese
+    "FRENCH" -> strings.voiceLanguageFrench
+    "GERMAN" -> strings.voiceLanguageGerman
+    "HEBREW" -> strings.voiceLanguageHebrew
+    "HUNGARIAN" -> strings.voiceLanguageHungarian
+    else -> code
+}
+
+@Composable
+private fun CharacterCard(entry: MediaCharacterEntry, strings: LanguageStrings) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            PersonHalf(
+                imageUrl = entry.imageUrl,
+                name = entry.name,
+                subtitle = roleLabel(entry.role, strings),
+                modifier = Modifier.weight(1f),
+            )
+            entry.voiceActor?.let { va ->
+                PersonHalf(
+                    imageUrl = va.imageUrl,
+                    name = va.name,
+                    subtitle = va.language ?: "",
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonHalf(
+    imageUrl: String?,
+    name: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            if (!imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle.isNotBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+private fun roleLabel(role: MediaCharacterRole, strings: LanguageStrings): String = when (role) {
+    MediaCharacterRole.MAIN -> strings.mediaDetailCharacterRoleMain
+    MediaCharacterRole.SUPPORTING -> strings.mediaDetailCharacterRoleSupporting
+    MediaCharacterRole.BACKGROUND -> strings.mediaDetailCharacterRoleBackground
+    MediaCharacterRole.OTHER -> ""
+}
+
+@Composable
+private fun StaffTab(
+    stateHolder: MediaDetailStateHolder,
+    strings: LanguageStrings,
+) {
+    val staff = stateHolder.staff
+    if (staff.isEmpty() && !stateHolder.isLoadingStaff) {
+        PlatformListMessage(
+            title = strings.mediaDetailNoStaffLabel,
+            tone = PlatformListMessageTone.Neutral,
+        )
+        return
+    }
+    val gridState = rememberLazyGridState()
+    val nearEnd by remember {
+        derivedStateOf {
+            val last = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            last >= staff.size - 4
+        }
+    }
+    LaunchedEffect(nearEnd, stateHolder.staffHasNextPage) {
+        if (nearEnd && stateHolder.staffHasNextPage && !stateHolder.isLoadingStaff) {
+            stateHolder.loadMoreStaff()
+        }
+    }
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 28.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        gridItems(items = staff, key = { it.edgeKey }) { entry ->
+            StaffCard(entry = entry)
+        }
+        if (stateHolder.isLoadingStaff) {
+            item { LoadingTile() }
+            item { LoadingTile() }
+        }
+    }
+}
+
+@Composable
+private fun StaffCard(entry: MediaStaffEntry) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        PersonHalf(
+            imageUrl = entry.imageUrl,
+            name = entry.name,
+            subtitle = entry.role.orEmpty(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun LoadingTile() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(22.dp))
     }
 }
 

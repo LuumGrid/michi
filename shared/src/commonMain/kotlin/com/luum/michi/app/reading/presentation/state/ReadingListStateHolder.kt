@@ -18,9 +18,12 @@ import kotlinx.coroutines.launch
 
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
+import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
+import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
 
 internal class ReadingListStateHolder(
     private val repository: ReadingListRepository,
+    private val entryRepository: MediaListEntryRepository,
     private val scope: CoroutineScope,
 ) {
     private val backing = mutableStateListOf<ReadingListEntry>()
@@ -60,12 +63,48 @@ internal class ReadingListStateHolder(
 
     fun incrementChapters(entry: ReadingListEntry) {
         val index = backing.indexOfFirst { it.id == entry.id }
-        if (index != -1) backing[index] = backing[index].incrementedChapters()
+        if (index == -1) return
+
+        val originalEntry = backing[index]
+        val updatedEntry = originalEntry.incrementedChapters()
+        backing[index] = updatedEntry
+
+        scope.launch {
+            val result = entryRepository.saveProgress(
+                mediaId = entry.id,
+                progress = updatedEntry.chaptersProgress,
+                status = updatedEntry.status.toMediaListStatus(),
+            )
+            if (result is NetworkResult.Failure) {
+                val currentIndex = backing.indexOfFirst { it.id == entry.id }
+                if (currentIndex != -1) {
+                    backing[currentIndex] = originalEntry
+                }
+            }
+        }
     }
 
     fun incrementVolumes(entry: ReadingListEntry) {
         val index = backing.indexOfFirst { it.id == entry.id }
-        if (index != -1) backing[index] = backing[index].incrementedVolumes()
+        if (index == -1) return
+
+        val originalEntry = backing[index]
+        val updatedEntry = originalEntry.incrementedVolumes()
+        backing[index] = updatedEntry
+
+        scope.launch {
+            val result = entryRepository.saveProgress(
+                mediaId = entry.id,
+                progress = updatedEntry.chaptersProgress,
+                progressVolumes = updatedEntry.volumesProgress,
+            )
+            if (result is NetworkResult.Failure) {
+                val currentIndex = backing.indexOfFirst { it.id == entry.id }
+                if (currentIndex != -1) {
+                    backing[currentIndex] = originalEntry
+                }
+            }
+        }
     }
 
     fun entriesInSection(section: ReadingListSection): List<ReadingListEntry> {
@@ -102,10 +141,21 @@ internal class ReadingListStateHolder(
 @Composable
 internal fun rememberReadingListStateHolder(
     repository: ReadingListRepository,
+    entryRepository: MediaListEntryRepository,
     viewerId: Int,
 ): ReadingListStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        ReadingListStateHolder(repository, scope)
+        ReadingListStateHolder(repository, entryRepository, scope)
     }
+}
+
+private fun ReadingListSection.toMediaListStatus(): MediaListStatus = when (this) {
+    ReadingListSection.ALL -> MediaListStatus.CURRENT
+    ReadingListSection.READING -> MediaListStatus.CURRENT
+    ReadingListSection.COMPLETED -> MediaListStatus.COMPLETED
+    ReadingListSection.PAUSED -> MediaListStatus.PAUSED
+    ReadingListSection.DROPPED -> MediaListStatus.DROPPED
+    ReadingListSection.PLANNING -> MediaListStatus.PLANNING
+    ReadingListSection.REREADING -> MediaListStatus.REPEATING
 }

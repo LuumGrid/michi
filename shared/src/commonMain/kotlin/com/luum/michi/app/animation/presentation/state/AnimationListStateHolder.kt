@@ -17,9 +17,12 @@ import kotlinx.coroutines.launch
 
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
+import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
+import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
 
 internal class AnimationListStateHolder(
     private val repository: AnimationListRepository,
+    private val entryRepository: MediaListEntryRepository,
     private val scope: CoroutineScope,
 ) {
     private val backing = mutableStateListOf<AnimationListEntry>()
@@ -59,7 +62,25 @@ internal class AnimationListStateHolder(
 
     fun incrementProgress(entry: AnimationListEntry) {
         val index = backing.indexOfFirst { it.id == entry.id }
-        if (index != -1) backing[index] = backing[index].incremented()
+        if (index == -1) return
+
+        val originalEntry = backing[index]
+        val updatedEntry = originalEntry.incremented()
+        backing[index] = updatedEntry
+
+        scope.launch {
+            val result = entryRepository.saveProgress(
+                mediaId = entry.id,
+                progress = updatedEntry.progress,
+                status = updatedEntry.status.toMediaListStatus(),
+            )
+            if (result is NetworkResult.Failure) {
+                val currentIndex = backing.indexOfFirst { it.id == entry.id }
+                if (currentIndex != -1) {
+                    backing[currentIndex] = originalEntry
+                }
+            }
+        }
     }
 
     fun entriesInSection(section: AnimationListSection): List<AnimationListEntry> {
@@ -96,10 +117,26 @@ internal class AnimationListStateHolder(
 @Composable
 internal fun rememberAnimationListStateHolder(
     repository: AnimationListRepository,
+    entryRepository: MediaListEntryRepository,
     viewerId: Int,
 ): AnimationListStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        AnimationListStateHolder(repository, scope)
+        AnimationListStateHolder(repository, entryRepository, scope)
     }
+}
+
+private fun AnimationListSection.toMediaListStatus(): MediaListStatus = when (this) {
+    AnimationListSection.ALL -> MediaListStatus.CURRENT
+    AnimationListSection.WATCHING -> MediaListStatus.CURRENT
+    AnimationListSection.COMPLETED_TV,
+    AnimationListSection.COMPLETED_MOVIE,
+    AnimationListSection.COMPLETED_OVA,
+    AnimationListSection.COMPLETED_ONA,
+    AnimationListSection.COMPLETED_TV_SHORT,
+    AnimationListSection.COMPLETED_SPECIAL -> MediaListStatus.COMPLETED
+    AnimationListSection.PAUSED -> MediaListStatus.PAUSED
+    AnimationListSection.DROPPED -> MediaListStatus.DROPPED
+    AnimationListSection.PLANNING -> MediaListStatus.PLANNING
+    AnimationListSection.REWATCHING -> MediaListStatus.REPEATING
 }
