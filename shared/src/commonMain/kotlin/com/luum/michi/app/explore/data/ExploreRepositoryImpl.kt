@@ -55,6 +55,8 @@ query AnimeCatalog(
       seasonYear
       startDate { year month day }
       isAdult
+      isFavourite
+      mediaListEntry { id score }
     }
   }
 }
@@ -98,6 +100,8 @@ query MangaCatalog(
       seasonYear
       startDate { year month day }
       isAdult
+      isFavourite
+      mediaListEntry { id score }
     }
   }
 }

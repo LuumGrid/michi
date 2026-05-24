@@ -246,6 +246,36 @@ object EnglishLanguageStrings : LanguageStrings {
     override val listsLoadingLabel = "Loading your list..."
     override val listsEmptyLabel = "Your list is empty"
     override val listsErrorLabel = "Could not load your list"
+
+    // Filter Sheet & Sort/Order Labels
+    override val filterSheetTitle = "Sort & Order List"
+    override val filterPersistLabel = "Persist filter on app restart"
+    override val filterOrderDirectionTitle = "Order Direction"
+    override val filterSortCriterionTitle = "Sort Criterion"
+    override val filterResetAction = "Reset"
+    override val filterSaveAction = "Save"
+
+    override val sortFollowList = "Follow List Setting"
+    override val sortTitle = "Title"
+    override val sortScore = "Score"
+    override val sortProgress = "Progress"
+    override val sortProgressManga = "Chapters Progress (Law)"
+    override val sortLastUpdated = "Last updated"
+    override val sortLastAdded = "Last added"
+    override val sortStartDate = "Start Date"
+    override val sortCompletedDate = "Completed Date"
+    override val sortReleaseDate = "Release Date"
+    override val sortAverageScore = "Average Score"
+    override val sortPopularity = "Popularity"
+    override val sortFavorites = "Favorites"
+    override val sortTrending = "Trending"
+    override val sortPriority = "Priority"
+    override val sortNextAiring = "Next Airing"
+
+    override val orderAscending = "Ascending"
+    override val orderDescending = "Descending"
+
+    override val exploreSearchPlaceholder = "Explore catalog..."
 }
 
 private fun monthName(month: Int): String = when (month) {

@@ -24,6 +24,9 @@ query MediaListCollection(${'$'}userId: Int!) {
         progress
         notes
         updatedAt
+        priority
+        startedAt { year month day }
+        completedAt { year month day }
         private
         hiddenFromStatusLists
         media {
@@ -32,6 +35,10 @@ query MediaListCollection(${'$'}userId: Int!) {
           status
           episodes
           averageScore
+          popularity
+          favourites
+          trending
+          startDate { year month day }
           title { romaji english native userPreferred }
           coverImage { extraLarge large medium color }
           bannerImage
@@ -60,7 +67,7 @@ internal class AnimationListRepositoryImpl(
             response.collection.lists
                 .filter { !it.isCustomList }
                 .flatMap { it.entries }
-                .map { it.toAnimationListEntry() }
+                .mapIndexed { index, entry -> entry.toAnimationListEntry(index) }
         }
     }
 }

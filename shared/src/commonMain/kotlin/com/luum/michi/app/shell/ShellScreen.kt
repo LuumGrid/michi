@@ -57,6 +57,10 @@ import com.luum.michi.app.search.presentation.SearchScreen
 import com.luum.michi.app.search.presentation.state.rememberSearchStateHolder
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
+import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
+import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
+import com.luum.michi.app.core.platform.model.UserListSort
+import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.shell.components.ShellBottomNavBar
 import com.luum.michi.app.shell.components.ShellBottomTab
 import com.luum.michi.app.shell.components.ShellTopBar
@@ -101,6 +105,17 @@ internal fun ShellScreen(
     val searchState = rememberSearchStateHolder(searchRepository)
     val settingsState = rememberSettingsState()
     var showExploreFilters by remember { mutableStateOf(false) }
+    var showListFilterSheet by remember { mutableStateOf(false) }
+
+    val filterSettings = rememberPlatformFilterSettings()
+    LaunchedEffect(Unit) {
+        filterSettings.loadFilter()?.let { (sortName, orderName, persist) ->
+            val sort = UserListSort.values().firstOrNull { it.name == sortName } ?: UserListSort.FOLLOW_LIST
+            val order = UserListOrder.values().firstOrNull { it.name == orderName } ?: UserListOrder.DESCENDING
+            animationState.updateSort(sort, order, persist)
+            readingState.updateSort(sort, order, persist)
+        }
+    }
 
     val tabs = remember { ShellBottomTab.entries }
     val pagerState = rememberPagerState { tabs.size }
@@ -235,7 +250,7 @@ internal fun ShellScreen(
                 onCalendarBack = shellState::closeCalendar,
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
                 onNotificationsClick = { },
-                onFilterClick = { },
+                onFilterClick = { showListFilterSheet = true },
                 exploreQuery = exploreState.query,
                 onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
                 showExploreFiltersToggle = !exploreState.isEntitySearch(),
@@ -388,6 +403,30 @@ internal fun ShellScreen(
                         mediaDetailState.refresh()
                     }
                 },
+            )
+        }
+
+        if (showListFilterSheet) {
+            val tab = shellState.selectedTab
+            val sortOption = if (tab == ShellBottomTab.ANIMATION) animationState.currentSortOption else readingState.currentSortOption
+            val sortOrder = if (tab == ShellBottomTab.ANIMATION) animationState.currentSortOrder else readingState.currentSortOrder
+            val isPersisted = if (tab == ShellBottomTab.ANIMATION) animationState.isFilterPersisted else readingState.isFilterPersisted
+
+            PlatformListFilterSheet(
+                currentSort = sortOption,
+                currentOrder = sortOrder,
+                persist = isPersisted,
+                isManga = tab == ShellBottomTab.READING,
+                onDismiss = { showListFilterSheet = false },
+                onApply = { newSort, newOrder, newPersist ->
+                    if (tab == ShellBottomTab.ANIMATION) {
+                        animationState.updateSort(newSort, newOrder, newPersist)
+                    } else {
+                        readingState.updateSort(newSort, newOrder, newPersist)
+                    }
+                    filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
+                    showListFilterSheet = false
+                }
             )
         }
     }

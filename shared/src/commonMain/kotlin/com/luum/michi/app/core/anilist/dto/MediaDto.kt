@@ -23,6 +23,10 @@ internal data class MediaDto(
     val popularity: Int? = null,
     val genres: List<String>? = null,
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,
+    val isFavourite: Boolean? = null,
+    val mediaListEntry: MediaViewerListEntryDto? = null,
+    val trending: Int? = null,
+    val startDate: FuzzyDateDto? = null,
 )
 
 @Serializable

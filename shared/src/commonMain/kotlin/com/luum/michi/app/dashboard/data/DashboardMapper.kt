@@ -47,6 +47,8 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformHomeMed
         coverUrl = coverImage?.large ?: coverImage?.medium ?: coverImage?.extraLarge,
         averageScore = averageScore,
         favourites = favourites,
+        isUserFavorited = isFavourite == true,
+        isUserRanked = mediaListEntry != null && mediaListEntry.score > 0.0,
     )
 
 private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
@@ -60,6 +62,8 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
         coverUrl = media.coverImage?.large ?: media.coverImage?.medium ?: media.coverImage?.extraLarge,
         averageScore = media.averageScore,
         favourites = media.favourites,
+        isUserFavorited = media.isFavourite == true,
+        isUserRanked = media.mediaListEntry != null && media.mediaListEntry.score > 0.0,
     )
 }
 

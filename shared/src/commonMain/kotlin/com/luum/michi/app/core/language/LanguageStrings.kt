@@ -240,6 +240,36 @@ interface LanguageStrings {
     val listsLoadingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
+
+    // Filter Sheet & Sort/Order Labels
+    val filterSheetTitle: String
+    val filterPersistLabel: String
+    val filterOrderDirectionTitle: String
+    val filterSortCriterionTitle: String
+    val filterResetAction: String
+    val filterSaveAction: String
+
+    val sortFollowList: String
+    val sortTitle: String
+    val sortScore: String
+    val sortProgress: String
+    val sortProgressManga: String
+    val sortLastUpdated: String
+    val sortLastAdded: String
+    val sortStartDate: String
+    val sortCompletedDate: String
+    val sortReleaseDate: String
+    val sortAverageScore: String
+    val sortPopularity: String
+    val sortFavorites: String
+    val sortTrending: String
+    val sortPriority: String
+    val sortNextAiring: String
+
+    val orderAscending: String
+    val orderDescending: String
+
+    val exploreSearchPlaceholder: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

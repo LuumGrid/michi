@@ -324,6 +324,7 @@ private fun ProgressIncrementAction(
 
 @Composable
 fun PlatformScorePill(score: String) {
+    val hasUserScore = score != "-" && score != "0" && score.isNotBlank()
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
@@ -334,7 +335,7 @@ fun PlatformScorePill(score: String) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = PlatformIcons.StarFilled,
+                painter = if (hasUserScore) PlatformIcons.StarFilled else PlatformIcons.Star,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.size(14.dp),

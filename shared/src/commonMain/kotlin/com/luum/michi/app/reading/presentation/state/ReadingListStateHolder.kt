@@ -16,6 +16,9 @@ import com.luum.michi.app.reading.presentation.model.incrementedVolumes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+import com.luum.michi.app.core.platform.model.UserListSort
+import com.luum.michi.app.core.platform.model.UserListOrder
+
 internal class ReadingListStateHolder(
     private val repository: ReadingListRepository,
     private val scope: CoroutineScope,
@@ -24,9 +27,19 @@ internal class ReadingListStateHolder(
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
 
+    var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
+    var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
+    var isFilterPersisted by mutableStateOf(false)
+
     val entries: List<ReadingListEntry> get() = backing
     val isLoading: Boolean get() = loadingState
     val error: String? get() = errorState
+
+    fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
+        currentSortOption = option
+        currentSortOrder = order
+        isFilterPersisted = persist
+    }
 
     fun load(userId: Int) {
         scope.launch {
@@ -55,8 +68,31 @@ internal class ReadingListStateHolder(
         if (index != -1) backing[index] = backing[index].incrementedVolumes()
     }
 
-    fun entriesInSection(section: ReadingListSection): List<ReadingListEntry> =
-        backing.filter { it.status == section }
+    fun entriesInSection(section: ReadingListSection): List<ReadingListEntry> {
+        val filtered = backing.filter { it.status == section }
+        val sorted = when (currentSortOption) {
+            UserListSort.FOLLOW_LIST -> filtered.sortedBy { it.originalIndex }
+            UserListSort.TITLE -> filtered.sortedBy { it.title }
+            UserListSort.SCORE -> filtered.sortedBy { it.scoreDouble }
+            UserListSort.PROGRESS -> filtered.sortedBy { it.chaptersProgress } // Strictly by chapter!
+            UserListSort.LAST_UPDATED -> filtered.sortedBy { it.updatedAt }
+            UserListSort.LAST_ADDED -> filtered.sortedBy { it.id }
+            UserListSort.START_DATE -> filtered.sortedBy { it.startedAtInt }
+            UserListSort.COMPLETED_DATE -> filtered.sortedBy { it.completedAtInt }
+            UserListSort.RELEASE_DATE -> filtered.sortedBy { it.releaseDateInt }
+            UserListSort.AVERAGE_SCORE -> filtered.sortedBy { it.averageScore }
+            UserListSort.POPULARITY -> filtered.sortedBy { it.popularity }
+            UserListSort.FAVORITES -> filtered.sortedBy { it.favouritesCount }
+            UserListSort.TRENDING -> filtered.sortedBy { it.trending }
+            UserListSort.PRIORITY -> filtered.sortedBy { it.priority }
+            UserListSort.NEXT_AIRING -> filtered.sortedBy { it.nextAiringAt }
+        }
+        return if (currentSortOrder == UserListOrder.DESCENDING) {
+            sorted.reversed()
+        } else {
+            sorted
+        }
+    }
 
     fun countInSection(section: ReadingListSection): Int =
         if (section == ReadingListSection.ALL) backing.size

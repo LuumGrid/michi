@@ -33,6 +33,8 @@ query MediaSearch(${'$'}search: String, ${'$'}type: MediaType, ${'$'}page: Int!,
       seasonYear
       startDate { year month day }
       isAdult
+      isFavourite
+      mediaListEntry { id score }
     }
   }
 }

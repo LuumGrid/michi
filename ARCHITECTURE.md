@@ -28,8 +28,13 @@ Project path: `/home/psyxho_skull/AndroidStudioProjects/luum/Michi`
 - `shell` is a slim orchestrator. It creates feature state holders and composes `ShellTopBar`, `ShellBottomNavBar`, and `ShellAccountRouter`. Shell-scoped state lives in `shell/state/ShellState.kt`.
 - Bottom tabs currently are `HOME`, `ANIMATION`, `READING`, and `ACCOUNT`.
 - `SETTINGS` is not a bottom tab. It is opened inside the account route.
-- `DiscoveryScreen` is the Home/Discovery surface, adapted from AL-Chan's Home structure at a component level. Sample data is extracted to `discovery/presentation/sample/DiscoverySampleData.kt`.
-- `AnimationScreen` and `ReadingScreen` are prototype list/edit surfaces backed by `AnimationListStateHolder` / `ReadingListStateHolder` (mutable state list + editing slot) with sample entries. Screens split into `Screen` (wires the holder) and `Content` (stateless).
+- `DashboardScreen` (Home) has been consolidated to query AniList's 9 landing sections (trending anime/manga, releasing schedules, seasonal popular, upcoming next season, all-time popular anime/manga, top anime/manga) in a single, unified GraphQL round-trip query (`DashboardQuery` inside `DashboardRepositoryImpl.kt`), massively reducing API latency and network traffic.
+- `AnimationScreen` and `ReadingScreen` are list/edit surfaces backed by `AnimationListStateHolder` / `ReadingListStateHolder` plus dynamic AniList integration.
+- `ExploreScreen` is a fully interactive Catalog Browser supporting 5 navigation categories: `ANIMATION`, `READING`, `CHARACTERS`, `STAFF`, and `STUDIOS`. Changing tabs to non-media entities automatically collapses advanced filters. Blank search queries fallback to the most favorited entities of that category. Manga publishes range-based year filtering via fuzzy date constraints (`startDate_greater` / `startDate_lesser`) to bypass AniList's Manga season limitations.
+- **Lazy Loading Network Strategy (HTTP 429 Prevention)**: To prevent strict AniList rate limits and unexpected logouts, state holders (Explore, Calendar, Animation, Reading, Account) do NOT load automatically inside constructor remember blocks. Instead:
+  * Animation list, Reading list, and Account profile stats are loaded deferredly via a central `LaunchedEffect(shellState.selectedTab)` inside `ShellScreen.kt` only when the user selects their respective bottom tabs.
+  * Explore and Calendar load on demand via screen-level `LaunchedEffect`s when composed.
+  * `ExploreStateHolder.kt` debounces ALL search and filter changes by 300ms to prevent duplicate rapid requests when clicking chips.
 - `account` was originally copied/adapted from Platform and has been redesigned for AniList alignment. It now owns: profile (header + stats + favorites rails), edit profile (form), and share profile (QR card). The Platform-style POSTS tab and gradient post grid have been removed.
 - `settings` has been redesigned for AniList alignment. Legacy Platform groups (Creator tools, Subtitles, Data/Playback, Interactions, Accessibility section) have been removed and replaced with: App, AniList, Lists, Notifications, Account, About. `SettingsState` (plain class in `settings/presentation/state/`) holds all settings values and is created by `ShellScreen` via `rememberSettingsState()`. Inline toggles use `SettingsToggleRow`; pickers use `SettingsRadioPicker<T>`. Enum options live in `settings/presentation/model/SettingsOptions.kt`.
 - `SearchScreen`, `LibraryScreen`, and `MediaScreen` are still placeholder-level surfaces.
@@ -145,14 +150,16 @@ Both clients agree on the AniList domain shape (user profile has favorites, not 
 
 - `ShellScreen` is the app-level orchestrator, closest equivalent to AL-Chan's `MainFragment`. It creates feature state holders, derives the topbar title, and routes the content area.
 - `shell/state/ShellState.kt` holds: selected tab, selected animation/reading sections, account route, top-bar back handler, search active/query, and the current account profile draft.
-- `shell` owns topbar search state for Home, Animation, and Reading via `ShellTopBar`. Home, Animation, and Reading share a topbar search interaction:
+- `shell` owns topbar search state for Home, Animation, Reading, and the **Explore** screen via `ShellTopBar`. 
   - normal state shows topbar actions.
   - active search replaces the title area with an inline search field (`ShellSearchField`).
   - active search uses a left ChevronLeft/back affordance and system back closes search.
+  - **Explore Topbar Search & Filters**: When Explore is open, `ShellTopBar` renders `ShellSearchField` with `autoFocus = false` (to allow keyboard-free passive browsing) and provides a `FilterList` action button on the right to toggle advanced filters.
+  - **Progressive Back Navigation**: Inside `ShellScreen.kt`, pressing system back or clicking the back arrow on the topbar when Explore is open first collapses the advanced filters panel if it is expanded, rather than closing the Explore overlay immediately.
 - `shell` owns account subroutes via `ShellAccountRouter`. Account main shows notification/settings actions; account detail routes show a back affordance and hide bottom navigation.
 - Notifications and filter handlers are hoisted as parameters of `ShellTopBar` (`onNotificationsClick`, `onFilterClick`). They are currently passed as no-op lambdas from `ShellScreen`; wire them when the relevant features exist.
 - Reusable Home/Discovery UI pieces belong in `core.platform.components`, currently in `PlatformHomeComponents`.
-- `DiscoveryScreen` should remain mostly an assembler for Home sections and sample data.
+- `DiscoveryScreen` has been replaced/redesigned as `DashboardScreen.kt`, which consolidates the 9 Home landing sections in a single optimized network round-trip.
 - Home should not own an embedded search row while search is a shell-level topbar behavior.
 
 ## Account Profile Layout (AniList-aligned)

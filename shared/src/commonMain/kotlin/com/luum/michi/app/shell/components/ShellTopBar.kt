@@ -52,8 +52,7 @@ internal fun ShellTopBar(
     onToggleExploreFilters: () -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
-    val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
-
+ 
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         PlatformTopBar(
             title = {
@@ -61,7 +60,7 @@ internal fun ShellTopBar(
                     ShellSearchField(
                         query = exploreQuery,
                         onQueryChange = onExploreQueryChange,
-                        placeholder = if (isSpanish) "Buscar catálogo..." else "Explore catalog...",
+                        placeholder = strings.exploreSearchPlaceholder,
                         autoFocus = false,
                     )
                 } else if (!isMediaDetailOpen && isSearchTab && isSearchActive) {
@@ -122,7 +121,7 @@ internal fun ShellTopBar(
                         IconButton(onClick = onToggleExploreFilters) {
                             Icon(
                                 painter = PlatformIcons.FilterList,
-                                contentDescription = if (isSpanish) "Filtros" else "Filters",
+                                contentDescription = strings.filterAction,
                                 tint = if (isExploreFiltersOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(28.dp),
                             )

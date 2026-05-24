@@ -15,6 +15,8 @@ internal fun MediaSearchItemDto.toSearchResult(): SearchResult {
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,
         genres = genres.orEmpty(),
+        isUserFavorited = isFavourite == true,
+        isUserRanked = mediaListEntry != null && mediaListEntry.score > 0.0,
     )
 }
 

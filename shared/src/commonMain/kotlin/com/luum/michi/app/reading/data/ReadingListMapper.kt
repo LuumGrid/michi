@@ -5,12 +5,13 @@ import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.MediaNextAiringEpisodeDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
+import com.luum.michi.app.core.anilist.dto.toComparableInt
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.reading.presentation.model.ReadingListEntry
 import com.luum.michi.app.reading.presentation.model.ReadingListSection
 
-internal fun MediaListEntryDto.toReadingListEntry(): ReadingListEntry {
+internal fun MediaListEntryDto.toReadingListEntry(index: Int = 0): ReadingListEntry {
     return ReadingListEntry(
         id = media.id,
         title = media.title.bestTitle(),
@@ -24,6 +25,18 @@ internal fun MediaListEntryDto.toReadingListEntry(): ReadingListEntry {
         nextChapterRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
         palette = hexToPalette(media.coverImage?.color),
         coverUrl = media.coverImage?.extraLarge ?: media.coverImage?.large,
+        originalIndex = index,
+        scoreDouble = score,
+        updatedAt = updatedAt ?: 0L,
+        startedAtInt = startedAt.toComparableInt(),
+        completedAtInt = completedAt.toComparableInt(),
+        releaseDateInt = media.startDate.toComparableInt(),
+        averageScore = media.averageScore ?: 0,
+        popularity = media.popularity ?: 0,
+        favouritesCount = media.favourites ?: 0,
+        trending = media.trending ?: 0,
+        priority = priority ?: 0,
+        nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
     )
 }
 

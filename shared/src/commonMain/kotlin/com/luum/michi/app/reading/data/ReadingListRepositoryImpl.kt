@@ -25,6 +25,9 @@ query MediaListCollection(${'$'}userId: Int!) {
         progressVolumes
         notes
         updatedAt
+        priority
+        startedAt { year month day }
+        completedAt { year month day }
         private
         hiddenFromStatusLists
         media {
@@ -34,6 +37,10 @@ query MediaListCollection(${'$'}userId: Int!) {
           chapters
           volumes
           averageScore
+          popularity
+          favourites
+          trending
+          startDate { year month day }
           title { romaji english native userPreferred }
           coverImage { extraLarge large medium color }
           bannerImage
@@ -62,7 +69,7 @@ internal class ReadingListRepositoryImpl(
             response.collection.lists
                 .filter { !it.isCustomList }
                 .flatMap { it.entries }
-                .map { it.toReadingListEntry() }
+                .mapIndexed { index, entry -> entry.toReadingListEntry(index) }
         }
     }
 }

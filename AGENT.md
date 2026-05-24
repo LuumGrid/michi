@@ -59,8 +59,13 @@ Do not recreate `profile`. Do not introduce Platform concepts such as `feed`, `h
 - Bottom tabs are `HOME`, `ANIMATION`, `READING`, and `ACCOUNT`.
 - `SETTINGS` is an account subroute, not a bottom tab.
 - `library` exists as scaffold debt and is not currently a bottom-tab destination.
-- `AnimationScreen` and `ReadingScreen` are prototype list/edit surfaces backed by `AnimationListStateHolder` and `ReadingListStateHolder` plus sample entries; screens are split as `Screen` (wires the holder) and `Content` (stateless).
-- `DiscoveryScreen` is the Home/Discovery surface, an assembler over `core.platform.components.PlatformHomeComponents`. Sample home data lives in `discovery/presentation/sample/DiscoverySampleData.kt`.
+- `DashboardScreen` (Home) has been consolidated to query AniList's 9 landing sections (trending, releasing, seasons, all-time popular, top media) in a single, unified GraphQL round-trip query (`DashboardQuery` inside `DashboardRepositoryImpl.kt`), massively reducing API latency and request count at startup.
+- `AnimationScreen` and `ReadingScreen` are list/edit surfaces backed by `AnimationListStateHolder` and `ReadingListStateHolder` plus dynamic AniList integration.
+- `ExploreScreen` is a fully interactive Catalog Browser supporting 5 navigation categories: `ANIMATION`, `READING`, `CHARACTERS`, `STAFF`, and `STUDIOS`. Changing tabs to non-media entities automatically collapses advanced filters. Blank search queries fallback to the most favorited entities of that category. Manga publishes range-based year filtering via fuzzy date constraints (`startDate_greater` / `startDate_lesser`) to bypass AniList's Manga season limitations.
+- **Lazy Loading Network Strategy (HTTP 429 Prevention)**: To prevent strict AniList rate limits and unexpected logouts, state holders (Explore, Calendar, Animation, Reading, Account) do NOT load automatically inside constructor remember blocks. Instead:
+  * Animation list, Reading list, and Account profile stats are loaded deferredly via a central `LaunchedEffect(shellState.selectedTab)` inside `ShellScreen.kt` only when the user selects their respective bottom tabs.
+  * Explore and Calendar load on demand via screen-level `LaunchedEffect`s when composed.
+  * `ExploreStateHolder.kt` debounces ALL search and filter changes by 300ms to prevent duplicate rapid requests when clicking chips.
 - `AccountScreen` is AniList-aligned: banner + avatar + identity + stats row (anime / manga / following / followers) + favorites rails (anime, manga, characters, staff, studios). There is **no** posts grid; the Platform-style `AccountTab.POSTS` was removed.
 - `AccountEditProfileScreen` and `AccountShareProfileScreen` are decomposed into `account/presentation/{components,model,sample,util}/`; the QR algorithm lives in `account/presentation/util/AccountQrMatrix.kt`.
 - `SettingsScreen` is AniList-aligned with 6 groups: **App** (theme, language, default tab), **AniList** (title language, 18+ content, score format), **Lists** (sort, split completed, advanced scoring), **Notifications** (6 toggle types), **Account** (manage, add, logout), **About** (help, about). Legacy Platform groups (Creator tools, Subtitles, Data/Playback, Interactions, Accessibility section) have been removed. `SettingsState` holds all settings values; `ShellScreen` creates it via `rememberSettingsState()`. Pickers use `SettingsRadioPicker<T>`; inline toggles use `SettingsToggleRow`; `SettingsDetailContent` dispatches by `SettingsItemType`.
@@ -79,13 +84,17 @@ Do not recreate `profile`. Do not introduce Platform concepts such as `feed`, `h
 - `ShellScreen` is a slim orchestrator; topbar logic lives in `shell/components/ShellTopBar.kt`, search field in `ShellSearchField.kt`, collapsing chips behavior in `ShellCollapsibleChips.kt`, and account routing in `ShellAccountRouter.kt`. State lives in `shell/state/ShellState.kt`.
 - Topbar behavior:
   - Home left: Notifications. Home right: Search.
-  - Animation/Reading left: Notifications + Filter. Animation/Reading right: Search.
   - Active search replaces the title with an inline search field and changes the left icon to ChevronLeft.
+  - Explore search and filters are hosted directly in `ShellTopBar` when the Explore overlay is open. The topbar search field has `autoFocus = false` to allow passive browsing without pop-up keyboard intrusions.
+  - **Progressive Back Navigation**: Inside `ShellScreen.kt`, pressing system back or clicking the back arrow on the topbar when Explore is open first collapses the advanced filters panel if it is expanded, rather than closing the Explore overlay immediately.
   - Account main left: Notifications. Account main right: Settings.
   - Account detail routes use Back on the left and hide bottom navigation.
 - Home has no banner/avatar and no embedded search row. Search belongs in the topbar.
 - Reusable Home pieces live in `core.platform.components.PlatformHomeComponents`; keep `DiscoveryScreen` as an assembler.
-- Animation/Reading list cards use `PlatformMediaListCard`. Section chips (`AnimationSectionChips`, `ReadingSectionChips`) take a `countForSection` lambda fed by the feature state holder, so counts react to mutations.
+- **Card Insignias & Icons**:
+  * `SearchResultCard.kt` displays average rating in the top-right corner using the `PlatformIcons.Star` (star.xml) icon.
+  * It displays popularity (members count) in the bottom-left corner (`Alignment.BottomStart`) using `PlatformIcons.Groups` (groups.xml) with a compact custom k/M formatter (e.g. `125.4k` / `1.2M`).
+  * Personal Animation and Reading list cards render ratings with `PlatformScorePill` (defined in `PlatformMediaComponents.kt`), which has been updated to use `PlatformIcons.Star`, keeping heart icons (`PlatformIcons.Like`) reserved solely for user favorites.
 - Reading has chapter progress only, but keeps separate `+1 CH` and `+1 VO` buttons because manga can have chapters and volumes.
 - Animation increment button text is `+1 EP`.
 - Keep counters numeric-only next to their corresponding buttons, styled with stronger weight.

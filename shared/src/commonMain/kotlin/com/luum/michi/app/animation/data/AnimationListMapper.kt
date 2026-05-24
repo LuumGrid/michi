@@ -6,10 +6,11 @@ import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.MediaNextAiringEpisodeDto
+import com.luum.michi.app.core.anilist.dto.toComparableInt
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.hexToPalette
 
-internal fun MediaListEntryDto.toAnimationListEntry(): AnimationListEntry {
+internal fun MediaListEntryDto.toAnimationListEntry(index: Int = 0): AnimationListEntry {
     val section = mapAnimationStatus(status, media.format)
     return AnimationListEntry(
         id = media.id,
@@ -22,6 +23,18 @@ internal fun MediaListEntryDto.toAnimationListEntry(): AnimationListEntry {
         nextEpisodeRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
         palette = hexToPalette(media.coverImage?.color),
         coverUrl = media.coverImage?.extraLarge ?: media.coverImage?.large,
+        originalIndex = index,
+        scoreDouble = score,
+        updatedAt = updatedAt ?: 0L,
+        startedAtInt = startedAt.toComparableInt(),
+        completedAtInt = completedAt.toComparableInt(),
+        releaseDateInt = media.startDate.toComparableInt(),
+        averageScore = media.averageScore ?: 0,
+        popularity = media.popularity ?: 0,
+        favouritesCount = media.favourites ?: 0,
+        trending = media.trending ?: 0,
+        priority = priority ?: 0,
+        nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
     )
 }
 

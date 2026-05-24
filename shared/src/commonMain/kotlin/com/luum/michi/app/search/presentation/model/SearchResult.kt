@@ -11,4 +11,6 @@ internal data class SearchResult(
     val averageScore: Int?,
     val favourites: Int? = null,
     val genres: List<String> = emptyList(),
+    val isUserFavorited: Boolean = false,
+    val isUserRanked: Boolean = false,
 )

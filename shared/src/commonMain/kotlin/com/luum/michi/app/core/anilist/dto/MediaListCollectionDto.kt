@@ -37,6 +37,7 @@ internal data class MediaListEntryDto(
     val updatedAt: Long? = null,
     val startedAt: FuzzyDateDto? = null,
     val completedAt: FuzzyDateDto? = null,
+    val priority: Int? = null,
     @SerialName("private")
     val isPrivate: Boolean = false,
     val hiddenFromStatusLists: Boolean = false,
@@ -49,3 +50,11 @@ internal data class FuzzyDateDto(
     val month: Int? = null,
     val day: Int? = null,
 )
+
+internal fun FuzzyDateDto?.toComparableInt(): Int {
+    if (this == null) return 0
+    val y = year ?: 0
+    val m = month ?: 0
+    val d = day ?: 0
+    return y * 10000 + m * 100 + d
+}

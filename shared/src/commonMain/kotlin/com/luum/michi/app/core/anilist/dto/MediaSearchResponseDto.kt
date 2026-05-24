@@ -34,4 +34,6 @@ internal data class MediaSearchItemDto(
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
     val isAdult: Boolean? = null,
+    val isFavourite: Boolean? = null,
+    val mediaListEntry: MediaViewerListEntryDto? = null,
 )

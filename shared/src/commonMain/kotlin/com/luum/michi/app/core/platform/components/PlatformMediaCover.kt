@@ -67,6 +67,7 @@ fun PlatformMediaCover(
 @Composable
 fun BoxScope.PlatformRatingBadge(
     averageScore: Int,
+    isUserRanked: Boolean = false,
     alignment: Alignment = Alignment.TopEnd,
     padding: Dp = 6.dp,
 ) {
@@ -83,7 +84,7 @@ fun BoxScope.PlatformRatingBadge(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = PlatformIcons.StarFilled,
+                painter = if (isUserRanked) PlatformIcons.StarFilled else PlatformIcons.Star,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(12.dp),
@@ -101,6 +102,7 @@ fun BoxScope.PlatformRatingBadge(
 @Composable
 fun BoxScope.PlatformFavouritesBadge(
     favourites: Int,
+    isUserFavorited: Boolean = false,
     alignment: Alignment = Alignment.BottomStart,
     padding: Dp = 6.dp,
 ) {
@@ -118,7 +120,7 @@ fun BoxScope.PlatformFavouritesBadge(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = PlatformIcons.LikeFilled,
+                painter = if (isUserFavorited) PlatformIcons.LikeFilled else PlatformIcons.Like,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier.size(12.dp),
@@ -138,6 +140,8 @@ fun PlatformCommunityMetaRow(
     averageScore: Int?,
     favourites: Int?,
     popularity: Int? = null,
+    isUserRanked: Boolean = false,
+    isUserFavorited: Boolean = false,
 ) {
     val hasScore = averageScore != null && averageScore > 0
     val hasFavs = favourites != null && favourites > 0
@@ -149,14 +153,14 @@ fun PlatformCommunityMetaRow(
     ) {
         if (hasScore) {
             MetaChip(
-                icon = PlatformIcons.StarFilled,
+                icon = if (isUserRanked) PlatformIcons.StarFilled else PlatformIcons.Star,
                 tint = MaterialTheme.colorScheme.primary,
                 text = "$averageScore%",
             )
         }
         if (hasFavs) {
             MetaChip(
-                icon = PlatformIcons.LikeFilled,
+                icon = if (isUserFavorited) PlatformIcons.LikeFilled else PlatformIcons.Like,
                 tint = MaterialTheme.colorScheme.secondary,
                 text = formatCompactCount(favourites),
             )

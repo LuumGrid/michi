@@ -24,14 +24,14 @@ query Dashboard(
 ) {
   trendingAnime: Page(perPage: 20) {
     media(sort: TRENDING_DESC, type: ANIME) {
-      id format episodes averageScore favourites
+      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   trendingManga: Page(perPage: 20) {
     media(sort: TRENDING_DESC, type: MANGA) {
-      id format chapters averageScore favourites
+      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
@@ -40,7 +40,7 @@ query Dashboard(
     airingSchedules(airingAt_greater: ${'$'}from, airingAt_lesser: ${'$'}to, sort: TIME) {
       id airingAt episode
       media {
-        id format averageScore favourites
+        id format averageScore favourites isFavourite mediaListEntry { id score }
         title { romaji english native userPreferred }
         coverImage { extraLarge large medium color }
       }
@@ -48,42 +48,42 @@ query Dashboard(
   }
   popularThisSeason: Page(perPage: 20) {
     media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC) {
-      id format episodes averageScore favourites
+      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   upcomingNextSeason: Page(perPage: 20) {
     media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC) {
-      id format episodes averageScore favourites
+      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   allTimePopularAnime: Page(perPage: 20) {
     media(type: ANIME, sort: POPULARITY_DESC) {
-      id format episodes averageScore favourites
+      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   allTimePopularManga: Page(perPage: 20) {
     media(type: MANGA, sort: POPULARITY_DESC) {
-      id format chapters averageScore favourites
+      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   topAnime: Page(perPage: 20) {
     media(type: ANIME, sort: SCORE_DESC) {
-      id format episodes averageScore favourites
+      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   topManga: Page(perPage: 20) {
     media(type: MANGA, sort: SCORE_DESC) {
-      id format chapters averageScore favourites
+      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }

@@ -248,6 +248,36 @@ object SpanishLanguageStrings : LanguageStrings {
     override val listsLoadingLabel = "Cargando tu lista..."
     override val listsEmptyLabel = "Tu lista esta vacia"
     override val listsErrorLabel = "No se pudo cargar tu lista"
+
+    // Filter Sheet & Sort/Order Labels
+    override val filterSheetTitle = "Ordenar y Filtrar"
+    override val filterPersistLabel = "Mantener filtro al reiniciar"
+    override val filterOrderDirectionTitle = "Dirección del Orden"
+    override val filterSortCriterionTitle = "Criterio de Ordenamiento"
+    override val filterResetAction = "Restablecer"
+    override val filterSaveAction = "Guardar"
+
+    override val sortFollowList = "Predeterminado"
+    override val sortTitle = "Título"
+    override val sortScore = "Calificación Personal"
+    override val sortProgress = "Progreso"
+    override val sortProgressManga = "Progreso por Capítulo (Ley)"
+    override val sortLastUpdated = "Última Actualización"
+    override val sortLastAdded = "Último Agregado"
+    override val sortStartDate = "Fecha de Inicio"
+    override val sortCompletedDate = "Fecha de Finalización"
+    override val sortReleaseDate = "Fecha de Estreno"
+    override val sortAverageScore = "Calificación Promedio"
+    override val sortPopularity = "Popularidad"
+    override val sortFavorites = "Favoritos"
+    override val sortTrending = "Tendencias"
+    override val sortPriority = "Prioridad"
+    override val sortNextAiring = "Próxima Emisión"
+
+    override val orderAscending = "Ascendente"
+    override val orderDescending = "Descendente"
+
+    override val exploreSearchPlaceholder = "Buscar catálogo..."
 }
 
 private fun monthName(month: Int): String = when (month) {

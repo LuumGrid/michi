@@ -72,6 +72,8 @@ internal fun CalendarItemRow(
                     averageScore = item.averageScore,
                     favourites = item.favourites,
                     popularity = item.popularity,
+                    isUserRanked = item.isUserRanked,
+                    isUserFavorited = item.isUserFavorited,
                 )
             }
             Text(

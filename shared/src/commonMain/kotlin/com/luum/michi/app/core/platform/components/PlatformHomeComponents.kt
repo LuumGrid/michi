@@ -52,6 +52,8 @@ data class PlatformHomeReleaseItem(
     val averageScore: Int? = null,
     val favourites: Int? = null,
     val popularity: Int? = null,
+    val isUserFavorited: Boolean = false,
+    val isUserRanked: Boolean = false,
 )
 
 data class PlatformHomeMediaItem(
@@ -62,6 +64,8 @@ data class PlatformHomeMediaItem(
     val coverUrl: String? = null,
     val averageScore: Int? = null,
     val favourites: Int? = null,
+    val isUserFavorited: Boolean = false,
+    val isUserRanked: Boolean = false,
 )
 
 @Composable
@@ -245,6 +249,8 @@ fun PlatformHomeReleaseCard(
                     averageScore = item.averageScore,
                     favourites = item.favourites,
                     popularity = item.popularity,
+                    isUserRanked = item.isUserRanked,
+                    isUserFavorited = item.isUserFavorited,
                 )
             }
         }
@@ -354,10 +360,10 @@ fun PlatformHomeMediaCard(
                 .aspectRatio(0.68f),
         ) {
             if (item.averageScore != null) {
-                PlatformRatingBadge(averageScore = item.averageScore)
+                PlatformRatingBadge(averageScore = item.averageScore, isUserRanked = item.isUserRanked)
             }
             if (item.favourites != null && item.favourites > 0) {
-                PlatformFavouritesBadge(favourites = item.favourites)
+                PlatformFavouritesBadge(favourites = item.favourites, isUserFavorited = item.isUserFavorited)
             }
         }
         Text(

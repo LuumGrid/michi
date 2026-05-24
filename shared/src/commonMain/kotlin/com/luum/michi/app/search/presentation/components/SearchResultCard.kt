@@ -44,10 +44,10 @@ internal fun SearchResultCard(
                 .aspectRatio(0.68f),
         ) {
             if (result.averageScore != null) {
-                PlatformRatingBadge(averageScore = result.averageScore)
+                PlatformRatingBadge(averageScore = result.averageScore, isUserRanked = result.isUserRanked)
             }
             if (result.favourites != null && result.favourites > 0) {
-                PlatformFavouritesBadge(favourites = result.favourites)
+                PlatformFavouritesBadge(favourites = result.favourites, isUserFavorited = result.isUserFavorited)
             }
         }
         Text(
