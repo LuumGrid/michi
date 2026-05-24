@@ -48,6 +48,8 @@ internal fun AccountScreen(
     onShareProfileClick: () -> Unit = {},
     onOpenAnimationList: () -> Unit = {},
     onOpenReadingList: () -> Unit = {},
+    onOpenMedia: (Int) -> Unit = {},
+    onEditMedia: (Int) -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
 
@@ -85,7 +87,13 @@ internal fun AccountScreen(
                 items = favorites.anime,
                 onSeeMore = onOpenAnimationList,
                 itemKey = { it.id },
-            ) { AccountFavoriteMediaCard(media = it) }
+            ) {
+                AccountFavoriteMediaCard(
+                    media = it,
+                    onClick = { onOpenMedia(it.id) },
+                    onLongClick = { onEditMedia(it.id) },
+                )
+            }
         }
 
         item {
@@ -94,7 +102,13 @@ internal fun AccountScreen(
                 items = favorites.manga,
                 onSeeMore = onOpenReadingList,
                 itemKey = { it.id },
-            ) { AccountFavoriteMediaCard(media = it) }
+            ) {
+                AccountFavoriteMediaCard(
+                    media = it,
+                    onClick = { onOpenMedia(it.id) },
+                    onLongClick = { onEditMedia(it.id) },
+                )
+            }
         }
 
         item {

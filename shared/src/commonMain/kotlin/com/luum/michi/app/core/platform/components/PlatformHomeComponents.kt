@@ -1,6 +1,9 @@
 package com.luum.michi.app.core.platform.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +38,7 @@ data class PlatformHomeShortcut(
     val label: String,
     val icon: Painter,
     val color: Color,
+    val onClick: (() -> Unit)? = null,
 )
 
 data class PlatformHomeReleaseItem(
@@ -42,12 +46,14 @@ data class PlatformHomeReleaseItem(
     val release: String,
     val time: String,
     val colors: List<Color>,
+    val id: Int? = null,
 )
 
 data class PlatformHomeMediaItem(
     val title: String,
     val meta: String,
     val colors: List<Color>,
+    val id: Int? = null,
 )
 
 @Composable
@@ -89,8 +95,13 @@ fun PlatformHomeShortcutRow(items: List<PlatformHomeShortcut>) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         items.forEach { item ->
+            val columnModifier = if (item.onClick != null) {
+                Modifier.weight(1f).clickable(onClick = item.onClick)
+            } else {
+                Modifier.weight(1f)
+            }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = columnModifier,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -141,6 +152,8 @@ fun PlatformHomeSection(
 fun PlatformHomeReleaseRail(
     title: String,
     items: List<PlatformHomeReleaseItem>,
+    onItemClick: ((Int) -> Unit)? = null,
+    onItemLongClick: ((Int) -> Unit)? = null,
 ) {
     PlatformHomeSection(title = title) {
         LazyRow(
@@ -148,16 +161,35 @@ fun PlatformHomeReleaseRail(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(items) { item ->
-                PlatformHomeReleaseCard(item = item)
+                PlatformHomeReleaseCard(
+                    item = item,
+                    onClick = onItemClick,
+                    onLongClick = onItemLongClick,
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlatformHomeReleaseCard(item: PlatformHomeReleaseItem) {
+fun PlatformHomeReleaseCard(
+    item: PlatformHomeReleaseItem,
+    onClick: ((Int) -> Unit)? = null,
+    onLongClick: ((Int) -> Unit)? = null,
+) {
+    val clickModifier = if (item.id != null && (onClick != null || onLongClick != null)) {
+        Modifier.combinedClickable(
+            onClick = { onClick?.invoke(item.id) },
+            onLongClick = onLongClick?.let { handler -> { handler(item.id) } },
+        )
+    } else {
+        Modifier
+    }
     Surface(
-        modifier = Modifier.width(172.dp),
+        modifier = Modifier
+            .width(172.dp)
+            .then(clickModifier),
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
@@ -258,6 +290,8 @@ fun PlatformHomeCommunityCard(
 fun PlatformHomeMediaRail(
     title: String,
     items: List<PlatformHomeMediaItem>,
+    onItemClick: ((Int) -> Unit)? = null,
+    onItemLongClick: ((Int) -> Unit)? = null,
 ) {
     PlatformHomeSection(title = title) {
         LazyRow(
@@ -265,16 +299,35 @@ fun PlatformHomeMediaRail(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(items) { item ->
-                PlatformHomeMediaCard(item = item)
+                PlatformHomeMediaCard(
+                    item = item,
+                    onClick = onItemClick,
+                    onLongClick = onItemLongClick,
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlatformHomeMediaCard(item: PlatformHomeMediaItem) {
+fun PlatformHomeMediaCard(
+    item: PlatformHomeMediaItem,
+    onClick: ((Int) -> Unit)? = null,
+    onLongClick: ((Int) -> Unit)? = null,
+) {
+    val clickModifier = if (item.id != null && (onClick != null || onLongClick != null)) {
+        Modifier.combinedClickable(
+            onClick = { onClick?.invoke(item.id) },
+            onLongClick = onLongClick?.let { handler -> { handler(item.id) } },
+        )
+    } else {
+        Modifier
+    }
     Column(
-        modifier = Modifier.width(116.dp),
+        modifier = Modifier
+            .width(116.dp)
+            .then(clickModifier),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         PlatformHomePoster(

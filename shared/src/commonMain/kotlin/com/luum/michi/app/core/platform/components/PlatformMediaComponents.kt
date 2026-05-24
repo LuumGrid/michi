@@ -404,20 +404,20 @@ fun PlatformStepperField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(58.dp),
+                .height(56.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(onClick = onMinus, modifier = Modifier.weight(1f)) {
-                Text("−", style = MaterialTheme.typography.headlineSmall)
+                Text("−", style = MaterialTheme.typography.titleLarge)
             }
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
             )
             TextButton(onClick = onPlus, modifier = Modifier.weight(1f)) {
-                Text("+", style = MaterialTheme.typography.headlineSmall)
+                Text("+", style = MaterialTheme.typography.titleLarge)
             }
         }
     }
@@ -435,8 +435,8 @@ fun PlatformScoreField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(74.dp)
-                .padding(horizontal = 16.dp),
+                .height(64.dp)
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Slider(
@@ -445,10 +445,11 @@ fun PlatformScoreField(
                 valueRange = 0f..10f,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(modifier = Modifier.width(18.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = (kotlin.math.round(score * 10f) / 10f).toString(),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
             )
         }
     }
@@ -464,8 +465,8 @@ fun PlatformDateField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(58.dp)
-                .padding(horizontal = 18.dp),
+                .height(56.dp)
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -477,7 +478,7 @@ fun PlatformDateField(
                 painter = PlatformIcons.Close,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -491,12 +492,15 @@ fun PlatformBooleanRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
         Checkbox(
@@ -512,18 +516,21 @@ fun PlatformOutlinedFieldFrame(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 16.dp),
-            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 4.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(12.dp),
             color = Color.Transparent,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             content()
         }

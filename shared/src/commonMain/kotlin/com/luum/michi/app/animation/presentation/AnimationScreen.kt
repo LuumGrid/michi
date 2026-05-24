@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.animation.presentation.components.AnimationEditSheet
 import com.luum.michi.app.animation.presentation.components.AnimationListCard
 import com.luum.michi.app.animation.presentation.model.AnimationListEntry
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
@@ -28,14 +27,15 @@ internal fun AnimationScreen(
     stateHolder: AnimationListStateHolder,
     selectedSection: AnimationListSection,
     scrollBehavior: TopAppBarScrollBehavior,
+    onOpenMedia: (Int) -> Unit,
+    onEditMedia: (Int) -> Unit,
 ) {
     AnimationContent(
         entriesInSection = stateHolder::entriesInSection,
         selectedSection = selectedSection,
-        editingEntry = stateHolder.editingEntry,
-        onStartEditing = stateHolder::startEditing,
-        onStopEditing = stateHolder::stopEditing,
         onIncrementProgress = stateHolder::incrementProgress,
+        onOpenMedia = onOpenMedia,
+        onEditMedia = onEditMedia,
         scrollBehavior = scrollBehavior,
     )
 }
@@ -45,10 +45,9 @@ internal fun AnimationScreen(
 private fun AnimationContent(
     entriesInSection: (AnimationListSection) -> List<AnimationListEntry>,
     selectedSection: AnimationListSection,
-    editingEntry: AnimationListEntry?,
-    onStartEditing: (AnimationListEntry) -> Unit,
-    onStopEditing: () -> Unit,
     onIncrementProgress: (AnimationListEntry) -> Unit,
+    onOpenMedia: (Int) -> Unit,
+    onEditMedia: (Int) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     val strings = LanguageProvider.strings
@@ -77,8 +76,8 @@ private fun AnimationContent(
                         ) { entry ->
                             AnimationListCard(
                                 entry = entry,
-                                onOpen = {},
-                                onEdit = { onStartEditing(entry) },
+                                onOpen = { onOpenMedia(entry.id) },
+                                onEdit = { onEditMedia(entry.id) },
                                 onIncrementProgress = { onIncrementProgress(entry) },
                             )
                         }
@@ -98,16 +97,12 @@ private fun AnimationContent(
                 ) { entry ->
                     AnimationListCard(
                         entry = entry,
-                        onOpen = {},
-                        onEdit = { onStartEditing(entry) },
+                        onOpen = { onOpenMedia(entry.id) },
+                        onEdit = { onEditMedia(entry.id) },
                         onIncrementProgress = { onIncrementProgress(entry) },
                     )
                 }
             }
-        }
-
-        editingEntry?.let { entry ->
-            AnimationEditSheet(entry = entry, onDismiss = onStopEditing)
         }
     }
 }

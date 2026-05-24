@@ -56,6 +56,16 @@ fun App(
                     )
                     is SessionState.Authenticated -> ShellScreen(
                         viewer = state.viewer,
+                        animationListRepository = dependencies.animationListRepository,
+                        readingListRepository = dependencies.readingListRepository,
+                        accountStatsRepository = dependencies.accountStatsRepository,
+                        accountFavoritesRepository = dependencies.accountFavoritesRepository,
+                        discoveryRepository = dependencies.discoveryRepository,
+                        browseRepository = dependencies.browseRepository,
+                        calendarRepository = dependencies.calendarRepository,
+                        mediaDetailRepository = dependencies.mediaDetailRepository,
+                        mediaListEntryRepository = dependencies.mediaListEntryRepository,
+                        searchRepository = dependencies.searchRepository,
                         language = language,
                         onLanguageChange = { language = it },
                         isDarkMode = isDarkMode,

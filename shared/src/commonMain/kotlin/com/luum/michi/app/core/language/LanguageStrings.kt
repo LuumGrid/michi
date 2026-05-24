@@ -34,10 +34,57 @@ interface LanguageStrings {
     val homeCommunitySubtitle: String
     val searchTitle: String
     val searchDescription: String
+    val searchTypeAll: String
+    val searchEmptyQueryHint: String
+    val searchNoResultsLabel: String
+    val browseTitle: String
+    val browsePopularThisSeasonTitle: String
+    val browseUpcomingNextSeasonTitle: String
+    val browseAllTimePopularAnimeTitle: String
+    val browseAllTimePopularMangaTitle: String
+    val browseTopAnimeTitle: String
+    val browseTopMangaTitle: String
+    val calendarTitle: String
+    val calendarEmptyLabel: String
+    val tomorrowLabel: String
+    val dayMonday: String
+    val dayTuesday: String
+    val dayWednesday: String
+    val dayThursday: String
+    val dayFriday: String
+    val daySaturday: String
+    val daySunday: String
     val libraryTitle: String
     val libraryDescription: String
     val mediaDetailTitle: String
     val mediaDetailDescription: String
+    val mediaDetailOverviewTitle: String
+    val mediaDetailDescriptionTitle: String
+    val mediaDetailGenresTitle: String
+    val mediaDetailStudiosTitle: String
+    val mediaDetailFormatLabel: String
+    val mediaDetailStatusLabel: String
+    val mediaDetailEpisodesLabel: String
+    val mediaDetailChaptersLabel: String
+    val mediaDetailVolumesLabel: String
+    val mediaDetailDurationLabel: String
+    val mediaDetailAverageScoreLabel: String
+    val mediaDetailMeanScoreLabel: String
+    val mediaDetailPopularityLabel: String
+    val mediaDetailFavoritesLabel: String
+    val mediaDetailSourceLabel: String
+    val mediaDetailSeasonLabel: String
+    val mediaDetailStartedLabel: String
+    val mediaDetailEndedLabel: String
+    val mediaDetailLoadingLabel: String
+    val mediaDetailErrorLabel: String
+    val mediaDetailAddToListAction: String
+    val mediaDetailEditEntryAction: String
+    val mediaDetailEditorTitleNew: String
+    val mediaDetailEditorTitleEdit: String
+    val mediaDetailEditorSavingLabel: String
+    val mediaDetailEditorSaveErrorLabel: String
+    val mediaDetailEditorCancelAction: String
     val sectionAll: String
     val sectionWatching: String
     val sectionReading: String
@@ -172,6 +219,9 @@ interface LanguageStrings {
     val authLoginAction: String
     val authConfigurationMissing: String
     val authLoadingLabel: String
+    val listsLoadingLabel: String
+    val listsEmptyLabel: String
+    val listsErrorLabel: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

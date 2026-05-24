@@ -1,6 +1,8 @@
 package com.luum.michi.app.account.presentation.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +23,22 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.luum.michi.app.account.presentation.model.AccountFavoriteMedia
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun AccountFavoriteMediaCard(media: AccountFavoriteMedia) {
-    Column(modifier = Modifier.width(108.dp)) {
+internal fun AccountFavoriteMediaCard(
+    media: AccountFavoriteMedia,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+) {
+    val clickModifier = if (onClick != null || onLongClick != null) {
+        Modifier.combinedClickable(
+            onClick = { onClick?.invoke() },
+            onLongClick = onLongClick,
+        )
+    } else {
+        Modifier
+    }
+    Column(modifier = Modifier.width(108.dp).then(clickModifier)) {
         Box(
             modifier = Modifier
                 .width(108.dp)

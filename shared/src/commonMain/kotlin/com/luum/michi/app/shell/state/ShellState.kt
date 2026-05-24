@@ -28,6 +28,16 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var isSearchActive by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
     var currentProfile by mutableStateOf(initialProfile)
+    var selectedMediaId by mutableStateOf<Int?>(null)
+    var editorMediaId by mutableStateOf<Int?>(null)
+    var isBrowseOpen by mutableStateOf(false)
+    var isCalendarOpen by mutableStateOf(false)
+
+    val isMediaDetailOpen: Boolean
+        get() = selectedMediaId != null
+
+    val isEditorOpen: Boolean
+        get() = editorMediaId != null
 
     val isAccountDetail: Boolean
         get() = selectedTab == ShellBottomTab.ACCOUNT && accountRoute != ShellAccountRoute.ACCOUNT
@@ -53,6 +63,38 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
             accountRoute = ShellAccountRoute.ACCOUNT
             topBarBackHandler = null
         }
+    }
+
+    fun openMedia(id: Int) {
+        selectedMediaId = id
+    }
+
+    fun closeMedia() {
+        selectedMediaId = null
+    }
+
+    fun openEditor(id: Int) {
+        editorMediaId = id
+    }
+
+    fun closeEditor() {
+        editorMediaId = null
+    }
+
+    fun openBrowse() {
+        isBrowseOpen = true
+    }
+
+    fun closeBrowse() {
+        isBrowseOpen = false
+    }
+
+    fun openCalendar() {
+        isCalendarOpen = true
+    }
+
+    fun closeCalendar() {
+        isCalendarOpen = false
     }
 
     fun handleAccountBack() {

@@ -26,6 +26,9 @@ import com.luum.michi.app.core.platform.components.PlatformTopBar
 internal fun ShellTopBar(
     selectedTab: ShellBottomTab,
     isAccountDetail: Boolean,
+    isMediaDetailOpen: Boolean,
+    isBrowseOpen: Boolean,
+    isCalendarOpen: Boolean,
     isSearchActive: Boolean,
     isSearchTab: Boolean,
     searchQuery: String,
@@ -35,6 +38,9 @@ internal fun ShellTopBar(
     onCloseSearch: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onAccountBack: () -> Unit,
+    onMediaBack: () -> Unit,
+    onBrowseBack: () -> Unit,
+    onCalendarBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
@@ -45,7 +51,7 @@ internal fun ShellTopBar(
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         PlatformTopBar(
             title = {
-                if (isSearchTab && isSearchActive) {
+                if (!isMediaDetailOpen && isSearchTab && isSearchActive) {
                     ShellSearchField(
                         query = searchQuery,
                         onQueryChange = onSearchQueryChange,
@@ -61,30 +67,60 @@ internal fun ShellTopBar(
                 }
             },
             navigationIcon = {
-                ShellTopBarNavigationIcon(
-                    selectedTab = selectedTab,
-                    isSearchActive = isSearchActive,
-                    isAccountDetail = isAccountDetail,
-                    onCloseSearch = onCloseSearch,
-                    onAccountBack = onAccountBack,
-                    onNotificationsClick = onNotificationsClick,
-                    onFilterClick = onFilterClick,
-                )
+                if (isMediaDetailOpen) {
+                    IconButton(onClick = onMediaBack) {
+                        Icon(
+                            painter = PlatformIcons.ArrowBack,
+                            contentDescription = strings.backButton,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                } else if (isBrowseOpen) {
+                    IconButton(onClick = onBrowseBack) {
+                        Icon(
+                            painter = PlatformIcons.ArrowBack,
+                            contentDescription = strings.backButton,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                } else if (isCalendarOpen) {
+                    IconButton(onClick = onCalendarBack) {
+                        Icon(
+                            painter = PlatformIcons.ArrowBack,
+                            contentDescription = strings.backButton,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                } else {
+                    ShellTopBarNavigationIcon(
+                        selectedTab = selectedTab,
+                        isSearchActive = isSearchActive,
+                        isAccountDetail = isAccountDetail,
+                        onCloseSearch = onCloseSearch,
+                        onAccountBack = onAccountBack,
+                        onNotificationsClick = onNotificationsClick,
+                        onFilterClick = onFilterClick,
+                    )
+                }
             },
             actions = {
-                ShellTopBarActions(
-                    selectedTab = selectedTab,
-                    isSearchActive = isSearchActive,
-                    isAccountDetail = isAccountDetail,
-                    onOpenSearch = onOpenSearch,
-                    onOpenSettings = onOpenSettings,
-                )
+                if (!isMediaDetailOpen && !isBrowseOpen && !isCalendarOpen) {
+                    ShellTopBarActions(
+                        selectedTab = selectedTab,
+                        isSearchActive = isSearchActive,
+                        isAccountDetail = isAccountDetail,
+                        onOpenSearch = onOpenSearch,
+                        onOpenSettings = onOpenSettings,
+                    )
+                }
             },
             scrollBehavior = scrollBehavior,
             windowInsets = WindowInsets.statusBars,
         )
 
-        chips()
+        if (!isMediaDetailOpen && !isBrowseOpen && !isCalendarOpen) {
+            chips()
+        }
     }
 }
 

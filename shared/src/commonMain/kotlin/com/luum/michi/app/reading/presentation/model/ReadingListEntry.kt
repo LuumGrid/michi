@@ -16,6 +16,7 @@ internal data class ReadingListEntry(
     val score: String,
     val nextChapterRelease: MediaReleaseDateTime?,
     val palette: List<Color>,
+    val coverUrl: String? = null,
 )
 
 internal fun ReadingListEntry.chaptersProgressLabel(): String {

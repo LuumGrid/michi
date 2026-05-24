@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import com.luum.michi.app.account.presentation.AccountEditProfileScreen
 import com.luum.michi.app.account.presentation.AccountScreen
 import com.luum.michi.app.account.presentation.AccountShareProfileScreen
+import com.luum.michi.app.account.presentation.model.AccountFavorites
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
+import com.luum.michi.app.account.presentation.model.AccountStats
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.settings.presentation.SettingsScreen
@@ -16,6 +18,8 @@ internal fun ShellAccountRouter(
     route: ShellAccountRoute,
     profile: AccountProfileDraft,
     settingsState: SettingsState,
+    accountStats: AccountStats,
+    accountFavorites: AccountFavorites,
     language: AppLanguage,
     isDarkMode: Boolean,
     onLanguageChange: (AppLanguage) -> Unit,
@@ -24,6 +28,8 @@ internal fun ShellAccountRouter(
     onNavigate: (ShellAccountRoute) -> Unit,
     onOpenAnimationList: () -> Unit,
     onOpenReadingList: () -> Unit,
+    onOpenMedia: (Int) -> Unit,
+    onEditMedia: (Int) -> Unit,
     onLogout: () -> Unit,
     onBackHandlerChange: (PlatformBackHandler?) -> Unit,
 ) {
@@ -36,10 +42,14 @@ internal fun ShellAccountRouter(
                 userAvatarUrl = profile.avatarUrl,
                 userBio = profile.bio,
                 joinedLabel = null,
+                stats = accountStats,
+                favorites = accountFavorites,
                 onEditProfileClick = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
                 onShareProfileClick = { onNavigate(ShellAccountRoute.SHARE_PROFILE) },
                 onOpenAnimationList = onOpenAnimationList,
                 onOpenReadingList = onOpenReadingList,
+                onOpenMedia = onOpenMedia,
+                onEditMedia = onEditMedia,
             )
         }
 

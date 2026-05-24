@@ -5,24 +5,43 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.presentation.model.AnimationListEntry
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.animation.presentation.model.incremented
+import com.luum.michi.app.core.network.NetworkResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-internal class AnimationListStateHolder(initialEntries: List<AnimationListEntry> = emptyList()) {
-    private val backing = mutableStateListOf<AnimationListEntry>().apply { addAll(initialEntries) }
-    private var editingState by mutableStateOf<AnimationListEntry?>(null)
+internal class AnimationListStateHolder(
+    private val repository: AnimationListRepository,
+    private val scope: CoroutineScope,
+) {
+    private val backing = mutableStateListOf<AnimationListEntry>()
+    private var loadingState by mutableStateOf(false)
+    private var errorState by mutableStateOf<String?>(null)
 
     val entries: List<AnimationListEntry> get() = backing
-    val editingEntry: AnimationListEntry? get() = editingState
+    val isLoading: Boolean get() = loadingState
+    val error: String? get() = errorState
 
-    fun startEditing(entry: AnimationListEntry) {
-        editingState = entry
-    }
-
-    fun stopEditing() {
-        editingState = null
+    fun load(userId: Int) {
+        scope.launch {
+            loadingState = true
+            errorState = null
+            when (val result = repository.loadList(userId)) {
+                is NetworkResult.Success -> {
+                    backing.clear()
+                    backing.addAll(result.value)
+                }
+                is NetworkResult.Failure -> {
+                    errorState = result.error.toString()
+                }
+            }
+            loadingState = false
+        }
     }
 
     fun incrementProgress(entry: AnimationListEntry) {
@@ -39,5 +58,12 @@ internal class AnimationListStateHolder(initialEntries: List<AnimationListEntry>
 }
 
 @Composable
-internal fun rememberAnimationListStateHolder(): AnimationListStateHolder =
-    remember { AnimationListStateHolder() }
+internal fun rememberAnimationListStateHolder(
+    repository: AnimationListRepository,
+    viewerId: Int,
+): AnimationListStateHolder {
+    val scope = rememberCoroutineScope()
+    return remember(viewerId) {
+        AnimationListStateHolder(repository, scope).also { it.load(viewerId) }
+    }
+}

@@ -14,6 +14,7 @@ internal data class AnimationListEntry(
     val score: String,
     val nextEpisodeRelease: MediaReleaseDateTime?,
     val palette: List<Color>,
+    val coverUrl: String? = null,
 )
 
 internal fun AnimationListEntry.progressLabel(): String {

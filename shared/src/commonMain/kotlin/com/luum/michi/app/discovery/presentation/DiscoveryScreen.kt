@@ -13,21 +13,22 @@ import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformHomeCommunityCard
 import com.luum.michi.app.core.platform.components.PlatformHomeHeader
-import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
 import com.luum.michi.app.core.platform.components.PlatformHomeReleaseRail
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcut
 import com.luum.michi.app.core.platform.components.PlatformHomeShortcutRow
+import com.luum.michi.app.discovery.presentation.state.DiscoveryStateHolder
 
 @Composable
-fun DiscoveryScreen(
-    releasingToday: List<PlatformHomeReleaseItem> = emptyList(),
-    trendingAnimation: List<PlatformHomeMediaItem> = emptyList(),
-    trendingReading: List<PlatformHomeMediaItem> = emptyList(),
+internal fun DiscoveryScreen(
+    stateHolder: DiscoveryStateHolder,
+    onOpenMedia: (Int) -> Unit,
+    onEditMedia: (Int) -> Unit,
+    onOpenBrowse: () -> Unit,
+    onOpenCalendar: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
-    val shortcuts = discoveryShortcuts(strings)
+    val shortcuts = discoveryShortcuts(strings, onOpenBrowse, onOpenCalendar)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -42,11 +43,13 @@ fun DiscoveryScreen(
         }
         item { PlatformHomeShortcutRow(items = shortcuts) }
 
-        if (releasingToday.isNotEmpty()) {
+        if (stateHolder.releasingToday.isNotEmpty()) {
             item {
                 PlatformHomeReleaseRail(
                     title = strings.homeReleasingTodayTitle,
-                    items = releasingToday,
+                    items = stateHolder.releasingToday,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
                 )
             }
         }
@@ -58,20 +61,24 @@ fun DiscoveryScreen(
             )
         }
 
-        if (trendingAnimation.isNotEmpty()) {
+        if (stateHolder.trendingAnimation.isNotEmpty()) {
             item {
                 PlatformHomeMediaRail(
                     title = strings.homeTrendingAnimationTitle,
-                    items = trendingAnimation,
+                    items = stateHolder.trendingAnimation,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
                 )
             }
         }
 
-        if (trendingReading.isNotEmpty()) {
+        if (stateHolder.trendingReading.isNotEmpty()) {
             item {
                 PlatformHomeMediaRail(
                     title = strings.homeTrendingReadingTitle,
-                    items = trendingReading,
+                    items = stateHolder.trendingReading,
+                    onItemClick = onOpenMedia,
+                    onItemLongClick = onEditMedia,
                 )
             }
         }
@@ -79,9 +86,13 @@ fun DiscoveryScreen(
 }
 
 @Composable
-private fun discoveryShortcuts(strings: LanguageStrings): List<PlatformHomeShortcut> = listOf(
+private fun discoveryShortcuts(
+    strings: LanguageStrings,
+    onOpenBrowse: () -> Unit,
+    onOpenCalendar: () -> Unit,
+): List<PlatformHomeShortcut> = listOf(
     PlatformHomeShortcut(strings.homeSeasonalAction, PlatformIcons.Season, MaterialTheme.colorScheme.primary),
-    PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary),
+    PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary, onClick = onOpenBrowse),
     PlatformHomeShortcut(strings.homeReviewsAction, PlatformIcons.Comments, MaterialTheme.colorScheme.secondary),
-    PlatformHomeShortcut(strings.homeCalendarAction, PlatformIcons.Calendar, MaterialTheme.colorScheme.error),
+    PlatformHomeShortcut(strings.homeCalendarAction, PlatformIcons.Calendar, MaterialTheme.colorScheme.error, onClick = onOpenCalendar),
 )
