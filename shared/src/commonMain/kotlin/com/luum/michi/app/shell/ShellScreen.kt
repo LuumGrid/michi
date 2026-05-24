@@ -241,7 +241,7 @@ internal fun ShellScreen(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
                     beyondViewportPageCount = 1,
-                    userScrollEnabled = true,
+                    userScrollEnabled = false,
                 ) { page ->
                     when (tabs[page]) {
                         ShellBottomTab.HOME -> DiscoveryScreen(
