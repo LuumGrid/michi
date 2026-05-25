@@ -257,20 +257,22 @@ internal fun ShellScreen(
                 isExploreFiltersOpen = showExploreFilters,
                 onToggleExploreFilters = { showExploreFilters = !showExploreFilters },
                 chips = {
-                    when (shellState.selectedTab) {
-                        ShellBottomTab.ANIMATION -> AnimationSectionChips(
-                            selected = shellState.selectedAnimationSection,
-                            onSelect = { shellState.selectedAnimationSection = it },
-                            countForSection = animationState::countInSection,
-                            modifier = shellCollapsibleChipsModifier(chipsFraction),
-                        )
-                        ShellBottomTab.READING -> ReadingSectionChips(
-                            selected = shellState.selectedReadingSection,
-                            onSelect = { shellState.selectedReadingSection = it },
-                            countForSection = readingState::countInSection,
-                            modifier = shellCollapsibleChipsModifier(chipsFraction),
-                        )
-                        else -> { }
+                    if (!shellState.isSearchActive) {
+                        when (shellState.selectedTab) {
+                            ShellBottomTab.ANIMATION -> AnimationSectionChips(
+                                selected = shellState.selectedAnimationSection,
+                                onSelect = { shellState.selectedAnimationSection = it },
+                                countForSection = animationState::countInSection,
+                                modifier = shellCollapsibleChipsModifier(chipsFraction),
+                            )
+                            ShellBottomTab.READING -> ReadingSectionChips(
+                                selected = shellState.selectedReadingSection,
+                                onSelect = { shellState.selectedReadingSection = it },
+                                countForSection = readingState::countInSection,
+                                modifier = shellCollapsibleChipsModifier(chipsFraction),
+                            )
+                            else -> { }
+                        }
                     }
                 },
             )
@@ -283,7 +285,7 @@ internal fun ShellScreen(
                     top = contentPadding.calculateTopPadding(),
                 ),
         ) {
-            if (shellState.isSearchActive && shellState.isSearchTab) {
+            if (shellState.isSearchActive && shellState.selectedTab == ShellBottomTab.HOME) {
                 SearchScreen(
                     query = shellState.searchQuery,
                     stateHolder = searchState,
@@ -308,16 +310,26 @@ internal fun ShellScreen(
                         ShellBottomTab.ANIMATION -> AnimationScreen(
                             stateHolder = animationState,
                             selectedSection = shellState.selectedAnimationSection,
+                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
                             scrollBehavior = scrollBehavior,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
+                            onCompletionReached = { id, progress ->
+                                shellState.openEditorForCompletion(id, progress)
+                            },
+                            onSearchGlobally = shellState::searchGlobally,
                         )
                         ShellBottomTab.READING -> ReadingScreen(
                             stateHolder = readingState,
                             selectedSection = shellState.selectedReadingSection,
+                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
                             scrollBehavior = scrollBehavior,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
+                            onCompletionReached = { id, progress ->
+                                shellState.openEditorForCompletion(id, progress)
+                            },
+                            onSearchGlobally = shellState::searchGlobally,
                         )
                         ShellBottomTab.ACCOUNT -> ShellAccountRouter(
                             route = shellState.accountRoute,
@@ -391,6 +403,8 @@ internal fun ShellScreen(
                 mediaId = editorMediaId,
                 entryRepository = mediaListEntryRepository,
                 detailRepository = mediaDetailRepository,
+                initialStatusOverride = shellState.editorInitialStatus,
+                initialProgressOverride = shellState.editorInitialProgress,
             )
             MediaDetailEditorSheet(
                 state = editorState,

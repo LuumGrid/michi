@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,6 +42,8 @@ fun PlatformListMessage(
     title: String,
     subtitle: String? = null,
     tone: PlatformListMessageTone = PlatformListMessageTone.Neutral,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     val color = when (tone) {
         PlatformListMessageTone.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -68,6 +71,12 @@ fun PlatformListMessage(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+        }
+        if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onAction) {
+                Text(text = actionLabel)
+            }
         }
     }
 }

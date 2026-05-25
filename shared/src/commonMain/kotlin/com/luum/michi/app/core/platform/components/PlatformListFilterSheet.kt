@@ -28,9 +28,9 @@ internal fun PlatformListFilterSheet(
 ) {
     val strings = LanguageProvider.strings
 
-    var selectedSort by remember { mutableStateOf(currentSort) }
-    var selectedOrder by remember { mutableStateOf(currentOrder) }
-    var persistFilter by remember { mutableStateOf(persist) }
+    var selectedSort by remember(currentSort) { mutableStateOf(currentSort) }
+    var selectedOrder by remember(currentOrder) { mutableStateOf(currentOrder) }
+    var persistFilter by remember(persist) { mutableStateOf(persist) }
 
     PlatformModalSheet(
         onDismiss = onDismiss,

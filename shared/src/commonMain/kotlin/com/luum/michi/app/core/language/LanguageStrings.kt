@@ -37,6 +37,7 @@ interface LanguageStrings {
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
+    val searchGloballyAction: String
     val exploreTitle: String
     val explorePopularThisSeasonTitle: String
     val exploreUpcomingNextSeasonTitle: String

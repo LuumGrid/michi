@@ -9,6 +9,7 @@ import com.luum.michi.app.account.presentation.model.AccountProfileDraft
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.core.session.Viewer
+import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
 import com.luum.michi.app.reading.presentation.model.ReadingListSection
 import com.luum.michi.app.shell.components.ShellBottomTab
 
@@ -30,6 +31,8 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var currentProfile by mutableStateOf(initialProfile)
     var selectedMediaId by mutableStateOf<Int?>(null)
     var editorMediaId by mutableStateOf<Int?>(null)
+    var editorInitialStatus by mutableStateOf<MediaListStatus?>(null)
+    var editorInitialProgress by mutableStateOf<Int?>(null)
     var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
 
@@ -65,6 +68,12 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
         }
     }
 
+    fun searchGlobally() {
+        selectedTab = ShellBottomTab.HOME
+        accountRoute = ShellAccountRoute.ACCOUNT
+        topBarBackHandler = null
+    }
+
     fun openMedia(id: Int) {
         selectedMediaId = id
     }
@@ -75,10 +84,20 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
 
     fun openEditor(id: Int) {
         editorMediaId = id
+        editorInitialStatus = null
+        editorInitialProgress = null
+    }
+
+    fun openEditorForCompletion(id: Int, progress: Int) {
+        editorMediaId = id
+        editorInitialStatus = MediaListStatus.COMPLETED
+        editorInitialProgress = progress
     }
 
     fun closeEditor() {
         editorMediaId = null
+        editorInitialStatus = null
+        editorInitialProgress = null
     }
 
     fun openExplore() {

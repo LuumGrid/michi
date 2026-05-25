@@ -20,6 +20,8 @@ internal class MediaEntryEditorState(
     private val detailRepository: MediaDetailRepository,
     private val scope: CoroutineScope,
     val mediaId: Int,
+    private val initialStatusOverride: MediaListStatus? = null,
+    private val initialProgressOverride: Int? = null,
 ) {
     var detail by mutableStateOf<MediaDetail?>(null)
         private set
@@ -79,8 +81,8 @@ internal class MediaEntryEditorState(
                     isFavourite = result.value.isFavourite
                     val existing = result.value.viewerEntry
                     if (existing != null) {
-                        status = existing.status ?: MediaListStatus.CURRENT
-                        progress = existing.progress
+                        status = initialStatusOverride ?: (existing.status ?: MediaListStatus.CURRENT)
+                        progress = initialProgressOverride ?: existing.progress
                         progressVolumes = existing.progressVolumes ?: 0
                         score = existing.score
                         notes = existing.notes
@@ -91,7 +93,8 @@ internal class MediaEntryEditorState(
                         startedAtMillis = existing.startedAtMillis
                         completedAtMillis = existing.completedAtMillis
                     } else {
-                        status = MediaListStatus.PLANNING
+                        status = initialStatusOverride ?: MediaListStatus.PLANNING
+                        progress = initialProgressOverride ?: 0
                     }
                 }
                 is NetworkResult.Failure -> loadError = result.error.toString()
@@ -180,6 +183,8 @@ internal fun rememberMediaEntryEditorState(
     mediaId: Int,
     entryRepository: MediaListEntryRepository,
     detailRepository: MediaDetailRepository,
+    initialStatusOverride: MediaListStatus? = null,
+    initialProgressOverride: Int? = null,
 ): MediaEntryEditorState {
     val scope = rememberCoroutineScope()
     return remember(mediaId) {
@@ -188,6 +193,8 @@ internal fun rememberMediaEntryEditorState(
             detailRepository = detailRepository,
             scope = scope,
             mediaId = mediaId,
+            initialStatusOverride = initialStatusOverride,
+            initialProgressOverride = initialProgressOverride,
         )
     }
 }

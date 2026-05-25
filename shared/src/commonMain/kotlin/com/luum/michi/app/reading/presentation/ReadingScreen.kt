@@ -30,20 +30,26 @@ import com.luum.michi.app.reading.presentation.state.ReadingListStateHolder
 internal fun ReadingScreen(
     stateHolder: ReadingListStateHolder,
     selectedSection: ReadingListSection = ReadingListSection.ALL,
+    searchQuery: String = "",
     scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
+    onCompletionReached: (id: Int, totalProgress: Int) -> Unit,
+    onSearchGlobally: () -> Unit = {},
 ) {
     ReadingContent(
         entriesInSection = stateHolder::entriesInSection,
         totalEntries = stateHolder.entries.size,
         selectedSection = selectedSection,
+        searchQuery = searchQuery,
         isLoading = stateHolder.isLoading,
         error = stateHolder.error,
         onIncrementChapters = stateHolder::incrementChapters,
         onIncrementVolumes = stateHolder::incrementVolumes,
         onOpenMedia = onOpenMedia,
         onEditMedia = onEditMedia,
+        onCompletionReached = onCompletionReached,
+        onSearchGlobally = onSearchGlobally,
         scrollBehavior = scrollBehavior,
     )
 }
@@ -54,12 +60,15 @@ private fun ReadingContent(
     entriesInSection: (ReadingListSection) -> List<ReadingListEntry>,
     totalEntries: Int,
     selectedSection: ReadingListSection,
+    searchQuery: String,
     isLoading: Boolean,
     error: String?,
     onIncrementChapters: (ReadingListEntry) -> Unit,
     onIncrementVolumes: (ReadingListEntry) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
+    onCompletionReached: (id: Int, totalProgress: Int) -> Unit,
+    onSearchGlobally: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     val strings = LanguageProvider.strings
@@ -76,11 +85,14 @@ private fun ReadingContent(
             else -> ReadingContentList(
                 entriesInSection = entriesInSection,
                 selectedSection = selectedSection,
+                searchQuery = searchQuery,
                 scrollBehavior = scrollBehavior,
                 onIncrementChapters = onIncrementChapters,
                 onIncrementVolumes = onIncrementVolumes,
                 onOpenMedia = onOpenMedia,
                 onEditMedia = onEditMedia,
+                onCompletionReached = onCompletionReached,
+                onSearchGlobally = onSearchGlobally,
             )
         }
     }
@@ -91,13 +103,49 @@ private fun ReadingContent(
 private fun ReadingContentList(
     entriesInSection: (ReadingListSection) -> List<ReadingListEntry>,
     selectedSection: ReadingListSection,
+    searchQuery: String,
     scrollBehavior: TopAppBarScrollBehavior,
     onIncrementChapters: (ReadingListEntry) -> Unit,
     onIncrementVolumes: (ReadingListEntry) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
+    onCompletionReached: (id: Int, totalProgress: Int) -> Unit,
+    onSearchGlobally: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
+    val query = searchQuery.trim()
+    val isSearching = query.isNotEmpty()
+    val showHeaders = isSearching || selectedSection == ReadingListSection.ALL
+
+    val handleIncrement: (ReadingListEntry) -> Unit = { entry ->
+        val total = entry.totalChapters
+        if (total != null && entry.chaptersProgress + 1 >= total) {
+            onCompletionReached(entry.id, total)
+        } else {
+            onIncrementChapters(entry)
+        }
+    }
+
+    val visibleSections: List<Pair<ReadingListSection, List<ReadingListEntry>>> =
+        if (isSearching || selectedSection == ReadingListSection.ALL) {
+            ReadingStatusSections.mapNotNull { section ->
+                val entries = entriesInSection(section).let { list ->
+                    if (isSearching) list.filter { it.title.contains(query, ignoreCase = true) } else list
+                }
+                if (entries.isEmpty()) null else section to entries
+            }
+        } else {
+            listOf(selectedSection to entriesInSection(selectedSection))
+        }
+
+    if (isSearching && visibleSections.isEmpty()) {
+        PlatformListMessage(
+            title = strings.searchNoResultsLabel,
+            actionLabel = strings.searchGloballyAction,
+            onAction = onSearchGlobally,
+        )
+        return
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -106,32 +154,15 @@ private fun ReadingContentList(
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        if (selectedSection == ReadingListSection.ALL) {
-            ReadingStatusSections.forEach { section ->
-                val sectionEntries = entriesInSection(section)
-                if (sectionEntries.isNotEmpty()) {
-                    item {
-                        PlatformSectionHeader(
-                            title = section.label(strings),
-                            count = sectionEntries.size,
-                        )
-                    }
-                    items(
-                        items = sectionEntries,
-                        key = ReadingListEntry::id,
-                    ) { entry ->
-                        ReadingListCard(
-                            entry = entry,
-                            onOpen = { onOpenMedia(entry.id) },
-                            onEdit = { onEditMedia(entry.id) },
-                            onIncrementChapters = { onIncrementChapters(entry) },
-                            onIncrementVolumes = { onIncrementVolumes(entry) },
-                        )
-                    }
+        visibleSections.forEach { (section, sectionEntries) ->
+            if (showHeaders) {
+                item {
+                    PlatformSectionHeader(
+                        title = section.label(strings),
+                        count = sectionEntries.size,
+                    )
                 }
             }
-        } else {
-            val sectionEntries = entriesInSection(selectedSection)
             items(
                 items = sectionEntries,
                 key = ReadingListEntry::id,
@@ -140,7 +171,7 @@ private fun ReadingContentList(
                     entry = entry,
                     onOpen = { onOpenMedia(entry.id) },
                     onEdit = { onEditMedia(entry.id) },
-                    onIncrementChapters = { onIncrementChapters(entry) },
+                    onIncrementChapters = { handleIncrement(entry) },
                     onIncrementVolumes = { onIncrementVolumes(entry) },
                 )
             }
