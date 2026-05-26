@@ -13,6 +13,42 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/**
+ * Tiny LRU cache that evicts the least-recently-used entry when [maxSize] is exceeded.
+ * Insertion-order eviction is used as a simple approximation of LRU (sufficient for 5 entries).
+ * Uses a plain [LinkedHashMap] in insertion order (no access-order flag for KMP compat).
+ */
+private class LruCache<K, V>(private val maxSize: Int) {
+    // Access order is not available in Kotlin/Native LinkedHashMap; use insertion-order
+    // and treat "put" as a touch (remove + re-insert) to approximate LRU.
+    private val map = LinkedHashMap<K, V>()
+
+    fun get(key: K): V? = map[key]
+
+    fun put(key: K, value: V) {
+        // Re-insert to move to "most recently used" position (insertion order approximation)
+        map.remove(key)
+        map[key] = value
+        if (map.size > maxSize) {
+            val oldestKey = map.keys.first()
+            map.remove(oldestKey)
+        }
+    }
+
+    fun remove(key: K) { map.remove(key) }
+}
+
+/** Snapshot of MediaDetail content that can be restored without a network call. */
+private data class MediaDetailSnapshot(
+    val detail: MediaDetail,
+    val characters: List<MediaCharacterEntry>,
+    val charactersHasNextPage: Boolean,
+    val charactersCurrentPage: Int,
+    val staff: List<MediaStaffEntry>,
+    val staffHasNextPage: Boolean,
+    val staffCurrentPage: Int,
+)
+
 internal class MediaDetailStateHolder(
     private val repository: MediaDetailRepository,
     private val scope: CoroutineScope,
@@ -23,6 +59,9 @@ internal class MediaDetailStateHolder(
     private var errorState by mutableStateOf<String?>(null)
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
+
+    /** LRU cache of up to 5 recently-visited detail pages. */
+    private val detailCache = LruCache<Int, MediaDetailSnapshot>(maxSize = 5)
 
     var voiceLanguage by mutableStateOf("JAPANESE")
         private set
@@ -90,6 +129,31 @@ internal class MediaDetailStateHolder(
 
     fun load(mediaId: Int) {
         if (currentMediaId == mediaId && (detailState != null || loadingState)) return
+
+        // Restore from LRU cache if available (avoids a full network round-trip).
+        val cached = detailCache.get(mediaId)
+        if (cached != null) {
+            currentMediaId = mediaId
+            currentJob?.cancel()
+            detailState = cached.detail
+            characters = cached.characters
+            charactersHasNextPage = cached.charactersHasNextPage
+            charactersCurrentPage = cached.charactersCurrentPage
+            staff = cached.staff
+            staffHasNextPage = cached.staffHasNextPage
+            staffCurrentPage = cached.staffCurrentPage
+            errorState = null
+            loadingState = false
+            // Reset per-visit transient state
+            reviews = emptyList(); reviewsHasNextPage = false; reviewsCurrentPage = 1
+            threads = emptyList(); threadsHasNextPage = false; threadsCurrentPage = 1
+            followingEntries = emptyList()
+            activities = emptyList(); activitiesHasNextPage = false; activitiesCurrentPage = 1
+            activitiesScope = "Global"
+            recommendations = emptyList()
+            return
+        }
+
         currentMediaId = mediaId
         currentJob?.cancel()
         detailState = null
@@ -125,6 +189,19 @@ internal class MediaDetailStateHolder(
                     staff = result.value.staff.items
                     staffHasNextPage = result.value.staff.hasNextPage
                     staffCurrentPage = result.value.staff.currentPage
+                    // Store in LRU cache for fast back-navigation
+                    detailCache.put(
+                        mediaId,
+                        MediaDetailSnapshot(
+                            detail = result.value,
+                            characters = characters,
+                            charactersHasNextPage = charactersHasNextPage,
+                            charactersCurrentPage = charactersCurrentPage,
+                            staff = staff,
+                            staffHasNextPage = staffHasNextPage,
+                            staffCurrentPage = staffCurrentPage,
+                        ),
+                    )
                 }
                 is NetworkResult.Failure -> errorState = result.error.toString()
             }
@@ -134,6 +211,8 @@ internal class MediaDetailStateHolder(
 
     fun refresh() {
         val id = currentMediaId ?: return
+        // Invalidate cached entry so next load() re-fetches from network.
+        detailCache.remove(id)
         currentJob?.cancel()
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, voiceLanguage)) {
@@ -145,6 +224,18 @@ internal class MediaDetailStateHolder(
                     staff = result.value.staff.items
                     staffHasNextPage = result.value.staff.hasNextPage
                     staffCurrentPage = result.value.staff.currentPage
+                    detailCache.put(
+                        id,
+                        MediaDetailSnapshot(
+                            detail = result.value,
+                            characters = characters,
+                            charactersHasNextPage = charactersHasNextPage,
+                            charactersCurrentPage = charactersCurrentPage,
+                            staff = staff,
+                            staffHasNextPage = staffHasNextPage,
+                            staffCurrentPage = staffCurrentPage,
+                        ),
+                    )
                 }
                 is NetworkResult.Failure -> errorState = result.error.toString()
             }

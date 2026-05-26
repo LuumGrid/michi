@@ -22,8 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.account.data.AccountFavoritesRepository
-import com.luum.michi.app.account.data.AccountStatsRepository
+import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.presentation.state.rememberAccountStateHolder
 import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.presentation.AnimationScreen
@@ -75,8 +74,7 @@ internal fun ShellScreen(
     viewer: Viewer,
     animationListRepository: AnimationListRepository,
     readingListRepository: ReadingListRepository,
-    accountStatsRepository: AccountStatsRepository,
-    accountFavoritesRepository: AccountFavoritesRepository,
+    accountRepository: AccountRepository,
     dashboardRepository: DashboardRepository,
     exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
@@ -94,8 +92,7 @@ internal fun ShellScreen(
     val animationState = rememberAnimationListStateHolder(animationListRepository, mediaListEntryRepository, viewer.id)
     val readingState = rememberReadingListStateHolder(readingListRepository, mediaListEntryRepository, viewer.id)
     val accountState = rememberAccountStateHolder(
-        statsRepository = accountStatsRepository,
-        favoritesRepository = accountFavoritesRepository,
+        repository = accountRepository,
         viewerId = viewer.id,
     )
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
@@ -411,8 +408,14 @@ internal fun ShellScreen(
                 onDismiss = shellState::closeEditor,
                 onSaved = {
                     shellState.closeEditor()
-                    animationState.load(viewer.id)
-                    readingState.load(viewer.id)
+                    // Only reload the list type that was actually edited to avoid
+                    // firing 2 heavy queries when only 1 was needed.
+                    // forceRefresh = true bypasses the TTL cache to reflect the edit.
+                    if (editorState.isManga) {
+                        readingState.load(viewer.id, forceRefresh = true)
+                    } else {
+                        animationState.load(viewer.id, forceRefresh = true)
+                    }
                     if (shellState.selectedMediaId == editorMediaId) {
                         mediaDetailState.refresh()
                     }

@@ -10,7 +10,7 @@ internal fun MediaSearchItemDto.toSearchResult(): SearchResult {
         id = id,
         title = titleText,
         meta = buildMeta(),
-        coverUrl = coverImage?.bestUrl,
+        coverUrl = coverImage?.thumbnailUrl,
         palette = hexToPalette(coverImage?.color),
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,

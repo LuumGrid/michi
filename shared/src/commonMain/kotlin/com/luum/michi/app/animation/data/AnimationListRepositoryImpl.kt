@@ -40,8 +40,7 @@ query MediaListCollection(${'$'}userId: Int!) {
           trending
           startDate { year month day }
           title { romaji english native userPreferred }
-          coverImage { extraLarge large medium color }
-          bannerImage
+          coverImage { large medium color }
           nextAiringEpisode { episode airingAt timeUntilAiring }
         }
       }

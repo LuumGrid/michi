@@ -1,9 +1,7 @@
 package com.luum.michi.app
 
-import com.luum.michi.app.account.data.AccountFavoritesRepository
-import com.luum.michi.app.account.data.AccountFavoritesRepositoryImpl
-import com.luum.michi.app.account.data.AccountStatsRepository
-import com.luum.michi.app.account.data.AccountStatsRepositoryImpl
+import com.luum.michi.app.account.data.AccountRepository
+import com.luum.michi.app.account.data.AccountRepositoryImpl
 import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.data.AnimationListRepositoryImpl
 import com.luum.michi.app.explore.data.ExploreRepository
@@ -63,11 +61,8 @@ class MichiDependencies internal constructor(
     internal val readingListRepository: ReadingListRepository =
         ReadingListRepositoryImpl(graphQLClient)
 
-    internal val accountStatsRepository: AccountStatsRepository =
-        AccountStatsRepositoryImpl(graphQLClient)
-
-    internal val accountFavoritesRepository: AccountFavoritesRepository =
-        AccountFavoritesRepositoryImpl(graphQLClient)
+    internal val accountRepository: AccountRepository =
+        AccountRepositoryImpl(graphQLClient)
 
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)

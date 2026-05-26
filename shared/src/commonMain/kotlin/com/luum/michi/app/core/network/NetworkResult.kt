@@ -11,6 +11,8 @@ internal sealed class NetworkError {
     data class Unauthorized(val body: String?) : NetworkError()
     data class GraphQL(val messages: List<String>) : NetworkError()
     data class Unknown(val cause: Throwable?) : NetworkError()
+    /** Returned when all retry attempts after a 429 are exhausted. */
+    data class RateLimited(val retryAfterSeconds: Int?) : NetworkError()
 }
 
 internal inline fun <T, R> NetworkResult<T>.map(transform: (T) -> R): NetworkResult<R> = when (this) {

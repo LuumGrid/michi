@@ -361,7 +361,7 @@ private fun StudioDto.toSearchResult(): SearchResult = SearchResult(
     id = id,
     title = name,
     meta = "Studio",
-    coverUrl = latestCoverImage?.bestUrl,
+    coverUrl = latestCoverImage?.thumbnailUrl,
     palette = hexToPalette(latestCoverImage?.color),
     averageScore = null
 )

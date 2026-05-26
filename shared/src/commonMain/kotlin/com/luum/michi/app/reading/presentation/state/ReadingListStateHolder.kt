@@ -20,6 +20,8 @@ import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
 internal class ReadingListStateHolder(
     private val repository: ReadingListRepository,
@@ -29,6 +31,9 @@ internal class ReadingListStateHolder(
     private val backing = mutableStateListOf<ReadingListEntry>()
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
+    private val timeMark = TimeSource.Monotonic
+    private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
+    private var lastUserId: Int? = null
 
     var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
@@ -44,7 +49,11 @@ internal class ReadingListStateHolder(
         isFilterPersisted = persist
     }
 
-    fun load(userId: Int) {
+    fun load(userId: Int, forceRefresh: Boolean = false) {
+        val mark = lastLoaded
+        if (!forceRefresh && lastUserId == userId && mark != null
+            && mark.elapsedNow() < CACHE_TTL && backing.isNotEmpty()
+        ) return
         scope.launch {
             loadingState = true
             errorState = null
@@ -52,6 +61,8 @@ internal class ReadingListStateHolder(
                 is NetworkResult.Success -> {
                     backing.clear()
                     backing.addAll(result.value)
+                    lastLoaded = timeMark.markNow()
+                    lastUserId = userId
                 }
                 is NetworkResult.Failure -> {
                     errorState = result.error.toString()
@@ -59,6 +70,10 @@ internal class ReadingListStateHolder(
             }
             loadingState = false
         }
+    }
+
+    companion object {
+        private val CACHE_TTL = 5.minutes
     }
 
     fun incrementChapters(entry: ReadingListEntry) {

@@ -6,13 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.data.AccountFavoritesRepository
-import com.luum.michi.app.account.data.AccountStatsRepository
+import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.presentation.model.AccountFavorites
 import com.luum.michi.app.account.presentation.model.AccountStats
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
 private val EmptyStats = AccountStats(
     animeCount = 0,
@@ -30,51 +31,55 @@ private val EmptyFavorites = AccountFavorites(
 )
 
 internal class AccountStateHolder(
-    private val statsRepository: AccountStatsRepository,
-    private val favoritesRepository: AccountFavoritesRepository,
+    private val repository: AccountRepository,
     private val scope: CoroutineScope,
 ) {
     private var statsState by mutableStateOf(EmptyStats)
     private var favoritesState by mutableStateOf(EmptyFavorites)
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
+    private val timeMark = TimeSource.Monotonic
+    private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
+    private var lastUserId: Int? = null
 
     val stats: AccountStats get() = statsState
     val favorites: AccountFavorites get() = favoritesState
     val isLoading: Boolean get() = loadingState
     val error: String? get() = errorState
 
-    fun load(userId: Int) {
+    fun load(userId: Int, forceRefresh: Boolean = false) {
+        val mark = lastLoaded
+        if (!forceRefresh && lastUserId == userId && mark != null
+            && mark.elapsedNow() < CACHE_TTL && statsState != EmptyStats
+        ) return
         loadingState = true
         errorState = null
-
         scope.launch {
-            when (val result = statsRepository.loadStats(userId)) {
-                is NetworkResult.Success -> statsState = result.value
+            when (val result = repository.loadAccount(userId)) {
+                is NetworkResult.Success -> {
+                    statsState = result.value.stats
+                    favoritesState = result.value.favorites
+                    lastLoaded = timeMark.markNow()
+                    lastUserId = userId
+                }
                 is NetworkResult.Failure -> errorState = result.error.toString()
             }
             loadingState = false
         }
+    }
 
-        scope.launch {
-            when (val result = favoritesRepository.loadFavorites(userId)) {
-                is NetworkResult.Success -> favoritesState = result.value
-                is NetworkResult.Failure -> {
-                    if (errorState == null) errorState = result.error.toString()
-                }
-            }
-        }
+    companion object {
+        private val CACHE_TTL = 5.minutes
     }
 }
 
 @Composable
 internal fun rememberAccountStateHolder(
-    statsRepository: AccountStatsRepository,
-    favoritesRepository: AccountFavoritesRepository,
+    repository: AccountRepository,
     viewerId: Int,
 ): AccountStateHolder {
     val scope = rememberCoroutineScope()
     return remember(viewerId) {
-        AccountStateHolder(statsRepository, favoritesRepository, scope)
+        AccountStateHolder(repository, scope)
     }
 }

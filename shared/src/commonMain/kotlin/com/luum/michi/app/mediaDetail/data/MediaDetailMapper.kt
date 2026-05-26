@@ -143,7 +143,7 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
     return MediaDetailRelation(
         mediaId = node.id,
         title = node.title.bestTitle(),
-        coverUrl = node.coverImage?.bestUrl,
+        coverUrl = node.coverImage?.thumbnailUrl,
         palette = hexToPalette(node.coverImage?.color),
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),

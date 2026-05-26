@@ -57,7 +57,13 @@ internal data class MediaCoverImageDto(
     val medium: String? = null,
     val color: String? = null,
 ) {
+    /** Full-resolution cover. Use only for the hero image in MediaDetail. */
     val bestUrl: String? get() = extraLarge ?: large ?: medium
+
+    /** Smaller cover for thumbnails in rails, grids, and lists.
+     *  Prefers `large` (roughly 230px) over `extraLarge` (460px) to reduce
+     *  payload in layouts where the image is displayed small. */
+    val thumbnailUrl: String? get() = large ?: medium ?: extraLarge
 }
 
 @Serializable

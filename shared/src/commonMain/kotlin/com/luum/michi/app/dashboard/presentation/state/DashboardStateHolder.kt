@@ -13,6 +13,8 @@ import com.luum.michi.app.dashboard.data.DashboardFeed
 import com.luum.michi.app.dashboard.data.DashboardRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
 private val EmptyFeed = DashboardFeed(
     releasingToday = emptyList(),
@@ -33,6 +35,8 @@ internal class DashboardStateHolder(
     private var feedState by mutableStateOf(EmptyFeed)
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
+    private val timeMark = TimeSource.Monotonic
+    private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
 
     val releasingToday: List<PlatformHomeReleaseItem> get() = feedState.releasingToday
     val trendingAnimation: List<PlatformHomeMediaItem> get() = feedState.trendingAnimation
@@ -46,16 +50,26 @@ internal class DashboardStateHolder(
     val isLoading: Boolean get() = loadingState
     val error: String? get() = errorState
 
-    fun load() {
+    /** Load feed, skipping the network call if data was fetched within the TTL. */
+    fun load(forceRefresh: Boolean = false) {
+        val mark = lastLoaded
+        if (!forceRefresh && mark != null && mark.elapsedNow() < CACHE_TTL && feedState != EmptyFeed) return
         loadingState = true
         errorState = null
         scope.launch {
             when (val result = repository.loadFeed()) {
-                is NetworkResult.Success -> feedState = result.value
+                is NetworkResult.Success -> {
+                    feedState = result.value
+                    lastLoaded = timeMark.markNow()
+                }
                 is NetworkResult.Failure -> errorState = result.error.toString()
             }
             loadingState = false
         }
+    }
+
+    companion object {
+        private val CACHE_TTL = 5.minutes
     }
 }
 
@@ -65,6 +79,6 @@ internal fun rememberDashboardStateHolder(
 ): DashboardStateHolder {
     val scope = rememberCoroutineScope()
     return remember(repository) {
-        DashboardStateHolder(repository, scope).also { it.load() }
+        DashboardStateHolder(repository, scope).also { it.load(forceRefresh = false) }
     }
 }

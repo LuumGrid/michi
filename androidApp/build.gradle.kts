@@ -18,6 +18,10 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    // Coil: needed by MichiApplication to configure the singleton ImageLoader
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }
 
 android {
