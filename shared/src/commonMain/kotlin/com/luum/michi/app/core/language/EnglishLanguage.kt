@@ -9,6 +9,7 @@ object EnglishLanguageStrings : LanguageStrings {
     override val tabHome = "Home"
     override val tabAnimation = "Animation"
     override val tabReading = "Reading"
+    override val tabFeed = "Feed"
     override val tabAccount = "Account"
     override val filterAction = "Filters"
     override val settingsAction = "Settings"
@@ -330,6 +331,13 @@ object EnglishLanguageStrings : LanguageStrings {
     override val orderDescending = "Descending"
 
     override val exploreSearchPlaceholder = "Explore catalog..."
+    override val forumAction = "Forums"
+    override val feedFilterTitle = "Filter feed"
+    override val feedFilterStatuses = "Statuses"
+    override val feedFilterAnimationProgress = "Animation progress"
+    override val feedFilterReadingProgress = "Reading progress"
+    override val feedFilterMessages = "Messages"
+    override val feedFilterMyActivities = "My activities"
 }
 
 private fun monthName(month: Int): String = when (month) {

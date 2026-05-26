@@ -44,6 +44,7 @@ internal fun ShellTopBar(
     onOpenSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
+    onForumClick: () -> Unit,
     chips: @Composable () -> Unit = {},
     exploreQuery: String = "",
     onExploreQueryChange: (String) -> Unit = {},
@@ -134,6 +135,7 @@ internal fun ShellTopBar(
                         isAccountDetail = isAccountDetail,
                         onOpenSearch = onOpenSearch,
                         onOpenSettings = onOpenSettings,
+                        onForumClick = onForumClick,
                     )
                 }
             },
@@ -175,7 +177,7 @@ private fun ShellTopBarNavigationIcon(
                 Row {
                     IconButton(onClick = onNotificationsClick) {
                         Icon(
-                            painter = PlatformIcons.Mood,
+                            painter = PlatformIcons.Notifications,
                             contentDescription = strings.notificationsAction,
                             modifier = Modifier.size(28.dp),
                         )
@@ -193,6 +195,25 @@ private fun ShellTopBarNavigationIcon(
             }
         }
 
+        ShellBottomTab.FEED -> {
+            Row {
+                IconButton(onClick = onNotificationsClick) {
+                    Icon(
+                        painter = PlatformIcons.Notifications,
+                        contentDescription = strings.notificationsAction,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+                IconButton(onClick = onFilterClick) {
+                    Icon(
+                        painter = PlatformIcons.FilterList,
+                        contentDescription = strings.filterAction,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+            }
+        }
+
         ShellBottomTab.ACCOUNT -> {
             if (isAccountDetail) {
                 IconButton(onClick = onAccountBack) {
@@ -205,7 +226,7 @@ private fun ShellTopBarNavigationIcon(
             } else {
                 IconButton(onClick = onNotificationsClick) {
                     Icon(
-                        painter = PlatformIcons.Mood,
+                        painter = PlatformIcons.Notifications,
                         contentDescription = strings.notificationsAction,
                         modifier = Modifier.size(28.dp),
                     )
@@ -222,6 +243,7 @@ private fun ShellTopBarActions(
     isAccountDetail: Boolean,
     onOpenSearch: () -> Unit,
     onOpenSettings: () -> Unit,
+    onForumClick: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
 
@@ -237,6 +259,16 @@ private fun ShellTopBarActions(
                         modifier = Modifier.size(28.dp),
                     )
                 }
+            }
+        }
+
+        ShellBottomTab.FEED -> {
+            IconButton(onClick = onForumClick) {
+                Icon(
+                    painter = PlatformIcons.Forum,
+                    contentDescription = strings.forumAction,
+                    modifier = Modifier.size(28.dp),
+                )
             }
         }
 

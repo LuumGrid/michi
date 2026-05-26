@@ -34,6 +34,7 @@ internal class DashboardStateHolder(
 ) {
     private var feedState by mutableStateOf(EmptyFeed)
     private var loadingState by mutableStateOf(false)
+    private var refreshingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
@@ -48,23 +49,33 @@ internal class DashboardStateHolder(
     val topAnime: List<PlatformHomeMediaItem> get() = feedState.topAnime
     val topManga: List<PlatformHomeMediaItem> get() = feedState.topManga
     val isLoading: Boolean get() = loadingState
+    val isRefreshing: Boolean get() = refreshingState
     val error: String? get() = errorState
 
     /** Load feed, skipping the network call if data was fetched within the TTL. */
     fun load(forceRefresh: Boolean = false) {
         val mark = lastLoaded
         if (!forceRefresh && mark != null && mark.elapsedNow() < CACHE_TTL && feedState != EmptyFeed) return
-        loadingState = true
+        val isRefresh = forceRefresh && feedState != EmptyFeed
+        if (isRefresh) {
+            refreshingState = true
+        } else {
+            loadingState = true
+        }
         errorState = null
         scope.launch {
-            when (val result = repository.loadFeed()) {
-                is NetworkResult.Success -> {
-                    feedState = result.value
-                    lastLoaded = timeMark.markNow()
+            try {
+                when (val result = repository.loadFeed()) {
+                    is NetworkResult.Success -> {
+                        feedState = result.value
+                        lastLoaded = timeMark.markNow()
+                    }
+                    is NetworkResult.Failure -> errorState = result.error.toString()
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+            } finally {
+                loadingState = false
+                refreshingState = false
             }
-            loadingState = false
         }
     }
 

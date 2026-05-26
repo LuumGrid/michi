@@ -23,6 +23,8 @@ import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
+import com.luum.michi.app.feed.data.FeedRepository
+import com.luum.michi.app.feed.data.FeedRepositoryImpl
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.data.ReadingListRepositoryImpl
 import com.luum.michi.app.search.data.SearchRepository
@@ -81,6 +83,9 @@ class MichiDependencies internal constructor(
 
     internal val searchRepository: SearchRepository =
         SearchRepositoryImpl(graphQLClient)
+
+    internal val feedRepository: FeedRepository =
+        FeedRepositoryImpl(graphQLClient)
 
     internal val sessionManager: SessionManager =
         SessionManager(tokenStorage, viewerRepository)

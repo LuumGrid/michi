@@ -1,19 +1,47 @@
+# IntelliJ IDEA / Android Studio module files (machine-specific configuration)
 *.iml
+
+# Kotlin compiler cache and temporary build directories
 .kotlin
+
+# Gradle configuration cache and build tool files
 .gradle
+
+# General build output folders
 **/build/
+
+# Xcode user-specific data (states, selected schemes, etc.)
 xcuserdata
+
+# Keep build directories inside 'src' tracked if any exist
 !src/**/build/
+
+# Local SDK paths and local machine properties (Android Studio)
 local.properties
+
+# IntelliJ/Android Studio project-specific settings folder
 .idea
+
+# macOS system metadata files
 .DS_Store
+
+# Android Studio performance analyzer captures
 captures
+
+# Android C/C++ build systems output directories
 .externalNativeBuild
 .cxx
+
+# --- Xcode Project Configurations ---
+# Ignore all files inside Xcode projects by default...
 *.xcodeproj/*
+# ...but keep the main project structure and configuration files tracked
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
+# Ignore workspace-specific settings that shouldn't be shared
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# Node modules that shouldn't be shared
 node_modules/

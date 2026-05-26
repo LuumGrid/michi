@@ -47,6 +47,9 @@ import com.luum.michi.app.mediaDetail.presentation.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.presentation.components.MediaDetailEditorSheet
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaEntryEditorState
+import com.luum.michi.app.feed.data.FeedRepository
+import com.luum.michi.app.feed.presentation.FeedScreen
+import com.luum.michi.app.feed.presentation.state.rememberFeedStateHolder
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.presentation.ReadingScreen
 import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
@@ -60,6 +63,7 @@ import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
 import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
+import com.luum.michi.app.feed.presentation.components.FeedFilterSheet
 import com.luum.michi.app.shell.components.ShellBottomNavBar
 import com.luum.michi.app.shell.components.ShellBottomTab
 import com.luum.michi.app.shell.components.ShellTopBar
@@ -81,6 +85,7 @@ internal fun ShellScreen(
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     searchRepository: SearchRepository,
+    feedRepository: FeedRepository,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
@@ -100,9 +105,11 @@ internal fun ShellScreen(
     val calendarState = rememberCalendarStateHolder(calendarRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository, viewerId = viewer.id)
     val searchState = rememberSearchStateHolder(searchRepository)
+    val feedState = rememberFeedStateHolder(feedRepository, viewer.id)
     val settingsState = rememberSettingsState()
     var showExploreFilters by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
+    var showFeedFilterSheet by remember { mutableStateOf(false) }
 
     val filterSettings = rememberPlatformFilterSettings()
     LaunchedEffect(Unit) {
@@ -146,6 +153,11 @@ internal fun ShellScreen(
             ShellBottomTab.ACCOUNT -> {
                 if (accountState.stats.animeCount == 0 && !accountState.isLoading) {
                     accountState.load(viewer.id)
+                }
+            }
+            ShellBottomTab.FEED -> {
+                if (feedState.activities.isEmpty() && !feedState.isLoading) {
+                    feedState.load()
                 }
             }
             else -> {}
@@ -247,7 +259,14 @@ internal fun ShellScreen(
                 onCalendarBack = shellState::closeCalendar,
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
                 onNotificationsClick = { },
-                onFilterClick = { showListFilterSheet = true },
+                onFilterClick = {
+                    if (shellState.selectedTab == ShellBottomTab.FEED) {
+                        showFeedFilterSheet = true
+                    } else {
+                        showListFilterSheet = true
+                    }
+                },
+                onForumClick = { },
                 exploreQuery = exploreState.query,
                 onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
                 showExploreFiltersToggle = !exploreState.isEntitySearch(),
@@ -315,6 +334,7 @@ internal fun ShellScreen(
                                 shellState.openEditorForCompletion(id, progress)
                             },
                             onSearchGlobally = shellState::searchGlobally,
+                            onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
                         )
                         ShellBottomTab.READING -> ReadingScreen(
                             stateHolder = readingState,
@@ -327,6 +347,11 @@ internal fun ShellScreen(
                                 shellState.openEditorForCompletion(id, progress)
                             },
                             onSearchGlobally = shellState::searchGlobally,
+                            onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
+                        )
+                        ShellBottomTab.FEED -> FeedScreen(
+                            stateHolder = feedState,
+                            onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
                         )
                         ShellBottomTab.ACCOUNT -> ShellAccountRouter(
                             route = shellState.accountRoute,
@@ -334,6 +359,8 @@ internal fun ShellScreen(
                             settingsState = settingsState,
                             accountStats = accountState.stats,
                             accountFavorites = accountState.favorites,
+                            accountIsRefreshing = accountState.isRefreshing,
+                            onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
                             language = language,
                             isDarkMode = isDarkMode,
                             onLanguageChange = onLanguageChange,
@@ -444,6 +471,17 @@ internal fun ShellScreen(
                     filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
                     showListFilterSheet = false
                 }
+            )
+        }
+
+        if (showFeedFilterSheet) {
+            FeedFilterSheet(
+                current = feedState.activityFilter,
+                onDismiss = { showFeedFilterSheet = false },
+                onApply = { newFilter ->
+                    feedState.applyActivityFilter(newFilter)
+                    showFeedFilterSheet = false
+                },
             )
         }
     }

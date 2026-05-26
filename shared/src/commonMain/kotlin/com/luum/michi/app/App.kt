@@ -65,6 +65,7 @@ fun App(
                         mediaDetailRepository = dependencies.mediaDetailRepository,
                         mediaListEntryRepository = dependencies.mediaListEntryRepository,
                         searchRepository = dependencies.searchRepository,
+                        feedRepository = dependencies.feedRepository,
                         language = language,
                         onLanguageChange = { language = it },
                         isDarkMode = isDarkMode,

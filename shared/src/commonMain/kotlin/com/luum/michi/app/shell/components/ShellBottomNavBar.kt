@@ -32,9 +32,10 @@ import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.PlatformIcons
 
 internal enum class ShellBottomTab {
-    HOME,
     ANIMATION,
     READING,
+    HOME,
+    FEED,
     ACCOUNT,
 }
 
@@ -42,6 +43,7 @@ internal fun ShellBottomTab.label(strings: LanguageStrings): String = when (this
     ShellBottomTab.HOME -> strings.tabHome
     ShellBottomTab.ANIMATION -> strings.tabAnimation
     ShellBottomTab.READING -> strings.tabReading
+    ShellBottomTab.FEED -> strings.tabFeed
     ShellBottomTab.ACCOUNT -> strings.tabAccount
 }
 
@@ -122,6 +124,7 @@ internal fun ShellBottomNavBar(
                             ShellBottomTab.HOME -> PlatformIcons.Home
                             ShellBottomTab.ANIMATION -> PlatformIcons.Animation
                             ShellBottomTab.READING -> PlatformIcons.Reading
+                            ShellBottomTab.FEED -> PlatformIcons.Feed
                             ShellBottomTab.ACCOUNT -> PlatformIcons.Account
                         },
                         contentDescription = tab.label(strings),

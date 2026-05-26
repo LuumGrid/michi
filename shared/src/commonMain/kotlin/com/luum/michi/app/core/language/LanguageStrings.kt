@@ -13,6 +13,7 @@ interface LanguageStrings {
     val tabHome: String
     val tabAnimation: String
     val tabReading: String
+    val tabFeed: String
     val tabAccount: String
     val filterAction: String
     val settingsAction: String
@@ -321,6 +322,13 @@ interface LanguageStrings {
     val orderDescending: String
 
     val exploreSearchPlaceholder: String
+    val forumAction: String
+    val feedFilterTitle: String
+    val feedFilterStatuses: String
+    val feedFilterAnimationProgress: String
+    val feedFilterReadingProgress: String
+    val feedFilterMessages: String
+    val feedFilterMyActivities: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

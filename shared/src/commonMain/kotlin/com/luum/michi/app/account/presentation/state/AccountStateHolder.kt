@@ -37,6 +37,7 @@ internal class AccountStateHolder(
     private var statsState by mutableStateOf(EmptyStats)
     private var favoritesState by mutableStateOf(EmptyFavorites)
     private var loadingState by mutableStateOf(false)
+    private var refreshingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
@@ -45,6 +46,7 @@ internal class AccountStateHolder(
     val stats: AccountStats get() = statsState
     val favorites: AccountFavorites get() = favoritesState
     val isLoading: Boolean get() = loadingState
+    val isRefreshing: Boolean get() = refreshingState
     val error: String? get() = errorState
 
     fun load(userId: Int, forceRefresh: Boolean = false) {
@@ -52,19 +54,24 @@ internal class AccountStateHolder(
         if (!forceRefresh && lastUserId == userId && mark != null
             && mark.elapsedNow() < CACHE_TTL && statsState != EmptyStats
         ) return
-        loadingState = true
+        val isRefresh = forceRefresh && statsState != EmptyStats
+        if (isRefresh) refreshingState = true else loadingState = true
         errorState = null
         scope.launch {
-            when (val result = repository.loadAccount(userId)) {
-                is NetworkResult.Success -> {
-                    statsState = result.value.stats
-                    favoritesState = result.value.favorites
-                    lastLoaded = timeMark.markNow()
-                    lastUserId = userId
+            try {
+                when (val result = repository.loadAccount(userId)) {
+                    is NetworkResult.Success -> {
+                        statsState = result.value.stats
+                        favoritesState = result.value.favorites
+                        lastLoaded = timeMark.markNow()
+                        lastUserId = userId
+                    }
+                    is NetworkResult.Failure -> errorState = result.error.toString()
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+            } finally {
+                loadingState = false
+                refreshingState = false
             }
-            loadingState = false
         }
     }
 

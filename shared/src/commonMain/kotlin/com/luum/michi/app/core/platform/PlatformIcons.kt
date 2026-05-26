@@ -11,7 +11,6 @@ import com.luum.michi.app.resources.arrow_back
 import com.luum.michi.app.resources.auto_awesome_mosaic
 import com.luum.michi.app.resources.auto_stories
 import com.luum.michi.app.resources.calendar_month
-import com.luum.michi.app.resources.chats
 import com.luum.michi.app.resources.close
 import com.luum.michi.app.resources.creator_tools
 import com.luum.michi.app.resources.download
@@ -23,6 +22,7 @@ import com.luum.michi.app.resources.filter_list
 import com.luum.michi.app.resources.forum
 import com.luum.michi.app.resources.forward
 import com.luum.michi.app.resources.groups
+import com.luum.michi.app.resources.reply
 import com.luum.michi.app.resources.heart_broken
 import com.luum.michi.app.resources.help_support
 import com.luum.michi.app.resources.history
@@ -51,14 +51,14 @@ import com.luum.michi.app.resources.user_activity
 import org.jetbrains.compose.resources.painterResource
 
 object PlatformIcons {
-    val Home: Painter @Composable get() = painterResource(Res.drawable.auto_awesome_mosaic)
-    val Create: Painter @Composable get() = painterResource(Res.drawable.add)
-    val Inbox: Painter @Composable get() = painterResource(Res.drawable.chats)
-    val Search: Painter @Composable get() = painterResource(Res.drawable.search)
-    val Account: Painter @Composable get() = painterResource(Res.drawable.account_circle)
-
+    //Navbar
     val Animation: Painter @Composable get() = painterResource(Res.drawable.animated_images)
     val Reading: Painter @Composable get() = painterResource(Res.drawable.auto_stories)
+    val Home: Painter @Composable get() = painterResource(Res.drawable.auto_awesome_mosaic)
+    val Feed: Painter @Composable get() = painterResource(Res.drawable.user_activity)
+    val Account: Painter @Composable get() = painterResource(Res.drawable.account_circle)
+
+    val Search: Painter @Composable get() = painterResource(Res.drawable.search)
     val FilterList: Painter @Composable get() = painterResource(Res.drawable.filter_list)
     val Mood: Painter @Composable get() = painterResource(Res.drawable.mood)
     val Settings: Painter @Composable get() = painterResource(Res.drawable.settings)
@@ -71,7 +71,8 @@ object PlatformIcons {
     val Like: Painter @Composable get() = painterResource(Res.drawable.favorite)
     val LikeFilled: Painter @Composable get() = painterResource(Res.drawable.favorite_filled)
     val DisLike: Painter @Composable get() = painterResource(Res.drawable.heart_broken)
-    val Comments: Painter @Composable get() = painterResource(Res.drawable.forum)
+    val Comments: Painter @Composable get() = painterResource(Res.drawable.reply)
+    val Forum: Painter @Composable get() = painterResource(Res.drawable.forum)
     val Share: Painter @Composable get() = painterResource(Res.drawable.forward)
     val Download: Painter @Composable get() = painterResource(Res.drawable.download)
     val MoreVert: Painter @Composable get() = painterResource(Res.drawable.more_vert)
@@ -82,9 +83,6 @@ object PlatformIcons {
     val ChevronRight: Painter @Composable get() = painterResource(Res.drawable.keyboard_arrow_right)
     val Calendar: Painter @Composable get() = painterResource(Res.drawable.calendar_month)
     val QrScanner: Painter @Composable get() = painterResource(Res.drawable.qr_code_scanner)
-
-    val Posts: Painter @Composable get() = painterResource(Res.drawable.dynamic_feed)
-
     val Logout: Painter @Composable get() = painterResource(Res.drawable.logout)
     val ManageAccount: Painter @Composable get() = painterResource(Res.drawable.admin_panel_settings)
     val Privacy: Painter @Composable get() = painterResource(Res.drawable.lock)

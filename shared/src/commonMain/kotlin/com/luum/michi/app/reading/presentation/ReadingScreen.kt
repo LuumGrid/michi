@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -36,22 +39,29 @@ internal fun ReadingScreen(
     onEditMedia: (Int) -> Unit,
     onCompletionReached: (id: Int, totalProgress: Int) -> Unit,
     onSearchGlobally: () -> Unit = {},
+    onRefresh: () -> Unit,
 ) {
-    ReadingContent(
-        entriesInSection = stateHolder::entriesInSection,
-        totalEntries = stateHolder.entries.size,
-        selectedSection = selectedSection,
-        searchQuery = searchQuery,
-        isLoading = stateHolder.isLoading,
-        error = stateHolder.error,
-        onIncrementChapters = stateHolder::incrementChapters,
-        onIncrementVolumes = stateHolder::incrementVolumes,
-        onOpenMedia = onOpenMedia,
-        onEditMedia = onEditMedia,
-        onCompletionReached = onCompletionReached,
-        onSearchGlobally = onSearchGlobally,
-        scrollBehavior = scrollBehavior,
-    )
+    PullToRefreshBox(
+        isRefreshing = stateHolder.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        ReadingContent(
+            entriesInSection = stateHolder::entriesInSection,
+            totalEntries = stateHolder.entries.size,
+            selectedSection = selectedSection,
+            searchQuery = searchQuery,
+            isLoading = stateHolder.isLoading,
+            error = stateHolder.error,
+            onIncrementChapters = stateHolder::incrementChapters,
+            onIncrementVolumes = stateHolder::incrementVolumes,
+            onOpenMedia = onOpenMedia,
+            onEditMedia = onEditMedia,
+            onCompletionReached = onCompletionReached,
+            onSearchGlobally = onSearchGlobally,
+            scrollBehavior = scrollBehavior,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,7 +157,14 @@ private fun ReadingContentList(
         return
     }
 
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(selectedSection) {
+        listState.scrollToItem(0)
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),

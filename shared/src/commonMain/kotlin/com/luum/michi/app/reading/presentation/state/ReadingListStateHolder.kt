@@ -30,6 +30,7 @@ internal class ReadingListStateHolder(
 ) {
     private val backing = mutableStateListOf<ReadingListEntry>()
     private var loadingState by mutableStateOf(false)
+    private var refreshingState by mutableStateOf(false)
     private var errorState by mutableStateOf<String?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
@@ -41,6 +42,7 @@ internal class ReadingListStateHolder(
 
     val entries: List<ReadingListEntry> get() = backing
     val isLoading: Boolean get() = loadingState
+    val isRefreshing: Boolean get() = refreshingState
     val error: String? get() = errorState
 
     fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
@@ -54,21 +56,26 @@ internal class ReadingListStateHolder(
         if (!forceRefresh && lastUserId == userId && mark != null
             && mark.elapsedNow() < CACHE_TTL && backing.isNotEmpty()
         ) return
+        val isRefresh = forceRefresh && backing.isNotEmpty()
         scope.launch {
-            loadingState = true
+            if (isRefresh) refreshingState = true else loadingState = true
             errorState = null
-            when (val result = repository.loadList(userId)) {
-                is NetworkResult.Success -> {
-                    backing.clear()
-                    backing.addAll(result.value)
-                    lastLoaded = timeMark.markNow()
-                    lastUserId = userId
+            try {
+                when (val result = repository.loadList(userId)) {
+                    is NetworkResult.Success -> {
+                        backing.clear()
+                        backing.addAll(result.value)
+                        lastLoaded = timeMark.markNow()
+                        lastUserId = userId
+                    }
+                    is NetworkResult.Failure -> {
+                        errorState = result.error.toString()
+                    }
                 }
-                is NetworkResult.Failure -> {
-                    errorState = result.error.toString()
-                }
+            } finally {
+                loadingState = false
+                refreshingState = false
             }
-            loadingState = false
         }
     }
 
