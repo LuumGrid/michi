@@ -1,10 +1,10 @@
 package com.luum.michi.app.shell
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Box
@@ -121,22 +121,7 @@ internal fun ShellScreen(
         }
     }
 
-    val tabs = remember { ShellBottomTab.entries }
-    val pagerState = rememberPagerState { tabs.size }
-    val scope = rememberCoroutineScope()
-    var isProgrammaticScroll by remember { mutableStateOf(false) }
-
-    LaunchedEffect(shellState.selectedTab) {
-        val targetPage = tabs.indexOf(shellState.selectedTab)
-        if (pagerState.currentPage != targetPage) {
-            isProgrammaticScroll = true
-            try {
-                pagerState.animateScrollToPage(targetPage)
-            } finally {
-                isProgrammaticScroll = false
-            }
-        }
-    }
+    val tabStateHolder = rememberSaveableStateHolder()
 
     LaunchedEffect(shellState.selectedTab) {
         when (shellState.selectedTab) {
@@ -161,15 +146,6 @@ internal fun ShellScreen(
                 }
             }
             else -> {}
-        }
-    }
-
-    LaunchedEffect(pagerState.currentPage) {
-        if (!isProgrammaticScroll) {
-            val targetTab = tabs[pagerState.currentPage]
-            if (shellState.selectedTab != targetTab) {
-                shellState.selectTab(targetTab)
-            }
         }
     }
 
@@ -309,71 +285,73 @@ internal fun ShellScreen(
                     onEditMedia = shellState::openEditor,
                 )
             } else {
-                HorizontalPager(
-                    state = pagerState,
+                Crossfade(
+                    targetState = shellState.selectedTab,
+                    animationSpec = tween(durationMillis = 220),
                     modifier = Modifier.fillMaxSize(),
-                    beyondViewportPageCount = 1,
-                    userScrollEnabled = false,
-                ) { page ->
-                    when (tabs[page]) {
-                        ShellBottomTab.HOME -> DashboardScreen(
-                            stateHolder = dashboardState,
-                            onOpenMedia = shellState::openMedia,
-                            onEditMedia = shellState::openEditor,
-                            onOpenExplore = shellState::openExplore,
-                            onOpenCalendar = shellState::openCalendar,
-                        )
-                        ShellBottomTab.ANIMATION -> AnimationScreen(
-                            stateHolder = animationState,
-                            selectedSection = shellState.selectedAnimationSection,
-                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                            scrollBehavior = scrollBehavior,
-                            onOpenMedia = shellState::openMedia,
-                            onEditMedia = shellState::openEditor,
-                            onCompletionReached = { id, progress ->
-                                shellState.openEditorForCompletion(id, progress)
-                            },
-                            onSearchGlobally = shellState::searchGlobally,
-                            onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
-                        )
-                        ShellBottomTab.READING -> ReadingScreen(
-                            stateHolder = readingState,
-                            selectedSection = shellState.selectedReadingSection,
-                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                            scrollBehavior = scrollBehavior,
-                            onOpenMedia = shellState::openMedia,
-                            onEditMedia = shellState::openEditor,
-                            onCompletionReached = { id, progress ->
-                                shellState.openEditorForCompletion(id, progress)
-                            },
-                            onSearchGlobally = shellState::searchGlobally,
-                            onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
-                        )
-                        ShellBottomTab.FEED -> FeedScreen(
-                            stateHolder = feedState,
-                            onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
-                        )
-                        ShellBottomTab.ACCOUNT -> ShellAccountRouter(
-                            route = shellState.accountRoute,
-                            profile = shellState.currentProfile,
-                            settingsState = settingsState,
-                            accountStats = accountState.stats,
-                            accountFavorites = accountState.favorites,
-                            accountIsRefreshing = accountState.isRefreshing,
-                            onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
-                            language = language,
-                            isDarkMode = isDarkMode,
-                            onLanguageChange = onLanguageChange,
-                            onToggleTheme = onToggleTheme,
-                            onProfileChange = { shellState.currentProfile = it },
-                            onNavigate = { shellState.accountRoute = it },
-                            onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
-                            onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
-                            onOpenMedia = shellState::openMedia,
-                            onEditMedia = shellState::openEditor,
-                            onLogout = onLogout,
-                            onBackHandlerChange = { shellState.topBarBackHandler = it },
-                        )
+                    label = "tabCrossfade",
+                ) { tab ->
+                    tabStateHolder.SaveableStateProvider(tab) {
+                        when (tab) {
+                            ShellBottomTab.HOME -> DashboardScreen(
+                                stateHolder = dashboardState,
+                                onOpenMedia = shellState::openMedia,
+                                onEditMedia = shellState::openEditor,
+                                onOpenExplore = shellState::openExplore,
+                                onOpenCalendar = shellState::openCalendar,
+                            )
+                            ShellBottomTab.ANIMATION -> AnimationScreen(
+                                stateHolder = animationState,
+                                selectedSection = shellState.selectedAnimationSection,
+                                searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
+                                scrollBehavior = scrollBehavior,
+                                onOpenMedia = shellState::openMedia,
+                                onEditMedia = shellState::openEditor,
+                                onCompletionReached = { id, progress ->
+                                    shellState.openEditorForCompletion(id, progress)
+                                },
+                                onSearchGlobally = shellState::searchGlobally,
+                                onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
+                            )
+                            ShellBottomTab.READING -> ReadingScreen(
+                                stateHolder = readingState,
+                                selectedSection = shellState.selectedReadingSection,
+                                searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
+                                scrollBehavior = scrollBehavior,
+                                onOpenMedia = shellState::openMedia,
+                                onEditMedia = shellState::openEditor,
+                                onCompletionReached = { id, progress ->
+                                    shellState.openEditorForCompletion(id, progress)
+                                },
+                                onSearchGlobally = shellState::searchGlobally,
+                                onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
+                            )
+                            ShellBottomTab.FEED -> FeedScreen(
+                                stateHolder = feedState,
+                                onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
+                            )
+                            ShellBottomTab.ACCOUNT -> ShellAccountRouter(
+                                route = shellState.accountRoute,
+                                profile = shellState.currentProfile,
+                                settingsState = settingsState,
+                                accountStats = accountState.stats,
+                                accountFavorites = accountState.favorites,
+                                accountIsRefreshing = accountState.isRefreshing,
+                                onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
+                                language = language,
+                                isDarkMode = isDarkMode,
+                                onLanguageChange = onLanguageChange,
+                                onToggleTheme = onToggleTheme,
+                                onProfileChange = { shellState.currentProfile = it },
+                                onNavigate = { shellState.accountRoute = it },
+                                onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
+                                onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
+                                onOpenMedia = shellState::openMedia,
+                                onEditMedia = shellState::openEditor,
+                                onLogout = onLogout,
+                                onBackHandlerChange = { shellState.topBarBackHandler = it },
+                            )
+                        }
                     }
                 }
             }
@@ -417,7 +395,7 @@ internal fun ShellScreen(
                     onSelect = shellState::selectTab,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
                 )
             }
         }

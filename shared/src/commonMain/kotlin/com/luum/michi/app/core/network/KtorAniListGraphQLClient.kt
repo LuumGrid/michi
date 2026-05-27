@@ -12,12 +12,13 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Real Ktor-backed implementation of [AniListGraphQLClient]. Authenticates each
  * request with the current token (when present) via a Bearer header.
  *
- * The `parseData` lambda receives the raw `data` JSON string from the response
+ * The `parseData` lambda receives the raw `data` JSON element from the response
  * envelope and is expected to deserialize it into the typed payload.
  *
  * On HTTP 429 (rate-limited), the client reads the `Retry-After` header and
@@ -28,6 +29,7 @@ internal class KtorAniListGraphQLClient(
     private val httpClient: HttpClient,
     private val tokenProvider: suspend () -> AniListToken?,
     private val json: Json = AniListJson,
+    private val rateLimiter: AniListRateLimiter = AniListRateLimiter(),
 ) : AniListGraphQLClient {
 
     private companion object {
@@ -37,7 +39,7 @@ internal class KtorAniListGraphQLClient(
 
     override suspend fun <T> execute(
         request: AniListGraphQLRequest,
-        parseData: (String) -> T,
+        parseData: (JsonElement) -> T,
     ): NetworkResult<T> {
         return try {
             executeWithRetry(request, parseData, retriesLeft = MAX_RATE_LIMIT_RETRIES)
@@ -50,16 +52,21 @@ internal class KtorAniListGraphQLClient(
 
     private suspend fun <T> executeWithRetry(
         request: AniListGraphQLRequest,
-        parseData: (String) -> T,
+        parseData: (JsonElement) -> T,
         retriesLeft: Int,
     ): NetworkResult<T> {
         val token = tokenProvider()
-        val response = httpClient.post(AniListEndpoints.GraphQL) {
-            headers {
-                token?.let { append("Authorization", it.authorizationHeaderValue) }
+
+        // The permit is held only for the round-trip and released in withPermit's finally,
+        // even on cancellation. Body reading happens after the permit is released.
+        val response = rateLimiter.withPermit {
+            httpClient.post(AniListEndpoints.GraphQL) {
+                headers {
+                    token?.let { append("Authorization", it.authorizationHeaderValue) }
+                }
+                contentType(ContentType.Application.Json)
+                setBody(request)
             }
-            contentType(ContentType.Application.Json)
-            setBody(request)
         }
 
         val body = response.bodyAsText()
@@ -70,6 +77,8 @@ internal class KtorAniListGraphQLClient(
                 429 -> {
                     val retryAfterSeconds = response.headers["Retry-After"]?.toLongOrNull()
                         ?: DEFAULT_RETRY_AFTER_SECONDS
+                    // Inform the limiter so concurrent callers also pause.
+                    rateLimiter.onRateLimited(retryAfterSeconds)
                     if (retriesLeft > 0) {
                         delay(retryAfterSeconds * 1_000L)
                         executeWithRetry(request, parseData, retriesLeft - 1)
@@ -80,6 +89,11 @@ internal class KtorAniListGraphQLClient(
                 else -> NetworkResult.Failure(NetworkError.Http(response.status.value, body))
             }
         }
+
+        // Update proactive backoff from server headers on every successful response.
+        val remaining = response.headers["X-RateLimit-Remaining"]?.toIntOrNull()
+        val resetEpoch = response.headers["X-RateLimit-Reset"]?.toLongOrNull()
+        rateLimiter.onResponseHeaders(remaining, resetEpoch)
 
         val envelope = json.decodeFromString(AniListGraphQLEnvelope.serializer(), body)
 
@@ -94,6 +108,6 @@ internal class KtorAniListGraphQLClient(
                 NetworkError.GraphQL(listOf("Empty data field in GraphQL response")),
             )
 
-        return NetworkResult.Success(parseData(data.toString()))
+        return NetworkResult.Success(parseData(data))
     }
 }

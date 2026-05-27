@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val SaveMediaListEntryMutation = """
 mutation SaveMediaListEntry(
@@ -135,7 +136,7 @@ internal class MediaListEntryRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(SaveMediaListEntryResponse.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(SaveMediaListEntryResponse.serializer(), dataJson)
         }.map { response ->
             val entry = response.entry
             MediaDetailViewerEntry(
@@ -203,7 +204,7 @@ internal class MediaListEntryRepositoryImpl(
             operationName = "SaveMediaListProgress",
         )
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(SaveProgressResponse.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(SaveProgressResponse.serializer(), dataJson)
         }.map { }
     }
 
@@ -218,7 +219,7 @@ internal class MediaListEntryRepositoryImpl(
             operationName = "ToggleFavourite",
         )
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(ToggleFavouriteResponse.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(ToggleFavouriteResponse.serializer(), dataJson)
         }.map { }
     }
 }

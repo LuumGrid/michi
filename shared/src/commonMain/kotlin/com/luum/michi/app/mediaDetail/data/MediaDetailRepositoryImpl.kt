@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val CharactersPerPage = 12
 private const val StaffPerPage = 12
@@ -435,7 +436,7 @@ internal class MediaDetailRepositoryImpl(
         )
 
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaDetailResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaDetailResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {
@@ -470,7 +471,7 @@ internal class MediaDetailRepositoryImpl(
         )
 
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaCharactersPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaCharactersPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> NetworkResult.Success(
@@ -496,7 +497,7 @@ internal class MediaDetailRepositoryImpl(
         )
 
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaStaffPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaStaffPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> NetworkResult.Success(
@@ -521,7 +522,7 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaReviewsPage",
         )
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaReviewsPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaReviewsPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {
@@ -563,7 +564,7 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaThreadsPage",
         )
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaThreadsPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaThreadsPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {
@@ -604,7 +605,7 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaFollowingPage",
         )
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaFollowingPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaFollowingPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {
@@ -652,7 +653,7 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaActivitiesPage",
         )
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaActivitiesPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaActivitiesPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {
@@ -715,7 +716,7 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaRecommendationsPage",
         )
         val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaRecommendationsPageResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaRecommendationsPageResponseDto.serializer(), dataJson)
         }
         return when (result) {
             is NetworkResult.Success -> {

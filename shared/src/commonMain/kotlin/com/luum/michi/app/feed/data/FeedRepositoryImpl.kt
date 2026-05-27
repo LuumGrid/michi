@@ -8,6 +8,7 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import com.luum.michi.app.feed.presentation.model.FeedActivity
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
@@ -60,7 +61,7 @@ internal class FeedRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(FeedActivitiesResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(FeedActivitiesResponseDto.serializer(), dataJson)
         }.map { response -> response.toFeedPage() }
     }
 }

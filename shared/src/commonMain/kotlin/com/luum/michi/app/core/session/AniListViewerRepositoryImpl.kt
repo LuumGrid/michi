@@ -5,6 +5,7 @@ import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val ViewerQuery = """
 query Viewer {
@@ -34,7 +35,7 @@ internal class AniListViewerRepositoryImpl(
             operationName = "Viewer",
         )
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(ViewerResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(ViewerResponseDto.serializer(), dataJson)
         }.map { it.viewer.toDomain() }
     }
 }

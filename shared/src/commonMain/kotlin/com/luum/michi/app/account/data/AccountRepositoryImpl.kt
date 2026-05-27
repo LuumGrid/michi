@@ -10,6 +10,7 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val UserAccountQuery = """
 query UserAccount(${'$'}userId: Int!) {
@@ -81,7 +82,7 @@ internal class AccountRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(UserAccountResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(UserAccountResponseDto.serializer(), dataJson)
         }.map { response ->
             val stats = AccountStats(
                 animeCount = response.user?.statistics?.anime?.count ?: 0,

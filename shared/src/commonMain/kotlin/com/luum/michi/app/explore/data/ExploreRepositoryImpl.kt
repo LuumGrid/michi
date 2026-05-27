@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val AnimeCatalogQuery = """
 query AnimeCatalog(
@@ -190,7 +191,7 @@ internal class ExploreRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.media.orEmpty().map { it.toSearchResult() },
@@ -236,7 +237,7 @@ internal class ExploreRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.media.orEmpty().map { it.toSearchResult() },
@@ -267,7 +268,7 @@ internal class ExploreRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(CharacterSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(CharacterSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.characters.orEmpty().map { it.toSearchResult() },
@@ -298,7 +299,7 @@ internal class ExploreRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(StaffSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(StaffSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.staff.orEmpty().map { it.toSearchResult() },
@@ -329,7 +330,7 @@ internal class ExploreRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(StudioSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(StudioSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.studios.orEmpty().map { it.toSearchResult() },

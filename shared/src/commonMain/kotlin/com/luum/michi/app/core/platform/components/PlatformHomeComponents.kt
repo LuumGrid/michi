@@ -1,5 +1,6 @@
 package com.luum.michi.app.core.platform.components
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ data class PlatformHomeShortcut(
     val onClick: (() -> Unit)? = null,
 )
 
+@Immutable
 data class PlatformHomeReleaseItem(
     val title: String,
     val release: String,
@@ -58,6 +61,7 @@ data class PlatformHomeReleaseItem(
     val streamingPlatforms: List<StreamingPlatform> = emptyList(),
 )
 
+@Immutable
 data class StreamingPlatform(
     val site: String,
     val url: String,
@@ -65,6 +69,7 @@ data class StreamingPlatform(
     val color: String? = null,
 )
 
+@Immutable
 data class PlatformHomeMediaItem(
     val title: String,
     val meta: String,
@@ -181,7 +186,7 @@ fun PlatformHomeReleaseRail(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(items) { item ->
+            itemsIndexed(items, key = { index, item -> "$index-${item.id}" }) { _, item ->
                 PlatformHomeReleaseCard(
                     item = item,
                     onClick = onItemClick,
@@ -314,7 +319,7 @@ fun PlatformHomeMediaRail(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(items) { item ->
+            itemsIndexed(items, key = { index, item -> "$index-${item.id}" }) { _, item ->
                 PlatformHomeMediaCard(
                     item = item,
                     onClick = onItemClick,

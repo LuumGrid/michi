@@ -12,6 +12,9 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -83,17 +86,20 @@ private fun AnimationContent(
         }
     }
 
-    val visibleSections: List<Pair<AnimationListSection, List<AnimationListEntry>>> =
-        if (isSearching || selectedSection == AnimationListSection.ALL) {
-            AnimationStatusSections.mapNotNull { section ->
-                val entries = entriesInSection(section).let { list ->
-                    if (isSearching) list.filter { it.title.contains(query, ignoreCase = true) } else list
+    val visibleSections by remember(selectedSection, query) {
+        derivedStateOf {
+            if (isSearching || selectedSection == AnimationListSection.ALL) {
+                AnimationStatusSections.mapNotNull { section ->
+                    val entries = entriesInSection(section).let { list ->
+                        if (isSearching) list.filter { it.title.contains(query, ignoreCase = true) } else list
+                    }
+                    if (entries.isEmpty()) null else section to entries
                 }
-                if (entries.isEmpty()) null else section to entries
+            } else {
+                listOf(selectedSection to entriesInSection(selectedSection))
             }
-        } else {
-            listOf(selectedSection to entriesInSection(selectedSection))
         }
+    }
 
     val listState = rememberLazyListState()
 

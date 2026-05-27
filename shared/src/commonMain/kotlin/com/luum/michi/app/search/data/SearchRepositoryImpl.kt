@@ -12,6 +12,7 @@ import com.luum.michi.app.search.presentation.model.toApiValue
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val MediaSearchQuery = """
 query MediaSearch(${'$'}search: String, ${'$'}type: MediaType, ${'$'}page: Int!, ${'$'}perPage: Int!) {
@@ -64,7 +65,7 @@ internal class SearchRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaSearchResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             SearchPage(
                 results = response.page?.media.orEmpty().map { it.toSearchResult() },

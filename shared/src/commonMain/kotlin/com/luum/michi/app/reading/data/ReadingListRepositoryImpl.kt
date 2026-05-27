@@ -9,6 +9,7 @@ import com.luum.michi.app.core.network.map
 import com.luum.michi.app.reading.presentation.model.ReadingListEntry
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val MangaListQuery = """
 query MediaListCollection(${'$'}userId: Int!) {
@@ -63,7 +64,7 @@ internal class ReadingListRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaListCollectionResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaListCollectionResponseDto.serializer(), dataJson)
         }.map { response ->
             response.collection.lists
                 .filter { !it.isCustomList }

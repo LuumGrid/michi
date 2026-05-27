@@ -1,9 +1,11 @@
 package com.luum.michi.app.reading.presentation.model
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 
+@Immutable
 internal data class ReadingListEntry(
     val id: Int,
     val title: String,

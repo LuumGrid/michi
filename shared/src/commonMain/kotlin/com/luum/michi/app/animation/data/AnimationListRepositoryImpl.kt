@@ -9,6 +9,7 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val AnimeListQuery = """
 query MediaListCollection(${'$'}userId: Int!) {
@@ -61,7 +62,7 @@ internal class AnimationListRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(MediaListCollectionResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(MediaListCollectionResponseDto.serializer(), dataJson)
         }.map { response ->
             response.collection.lists
                 .filter { !it.isCustomList }

@@ -16,6 +16,7 @@ import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val CalendarQuery = """
 query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {
@@ -84,7 +85,7 @@ internal class CalendarRepositoryImpl(
                 operationName = "Calendar",
             )
             val result = graphQLClient.execute(request) { dataJson ->
-                AniListJson.decodeFromString(CalendarResponseDto.serializer(), dataJson)
+                AniListJson.decodeFromJsonElement(CalendarResponseDto.serializer(), dataJson)
             }
             when (result) {
                 is NetworkResult.Success -> {

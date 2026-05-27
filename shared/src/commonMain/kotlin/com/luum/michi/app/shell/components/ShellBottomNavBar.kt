@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -58,7 +61,7 @@ internal fun ShellBottomNavBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp),
+            .height(68.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
         tonalElevation = 8.dp,
@@ -72,7 +75,9 @@ internal fun ShellBottomNavBar(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ShellBottomTab.entries.forEach { tab ->
+            ShellBottomTab.entries.forEachIndexed { index, tab ->
+                val isFirst = index == 0
+                val isLast = index == ShellBottomTab.entries.lastIndex
                 val isSelected = selected == tab
                 val interactionSource = remember { MutableInteractionSource() }
                 val pillColor by animateColorAsState(
@@ -98,7 +103,6 @@ internal fun ShellBottomNavBar(
                     animationSpec = tween(250),
                     label = "navIconColor",
                 )
-
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -107,16 +111,23 @@ internal fun ShellBottomNavBar(
                             interactionSource = interactionSource,
                             indication = null,
                             onClick = { onSelect(tab) },
+                        )
+                        .padding(
+                            start = if (isFirst) 4.dp else 0.dp,
+                            end = if (isLast) 4.dp else 0.dp,
+                            top = 4.dp,
+                            bottom = 4.dp,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(width = 64.dp, height = 32.dp)
+                            .fillMaxWidth()
+                            .fillMaxHeight()
                             .scale(pillScale)
                             .background(
                                 color = pillColor,
-                                shape = RoundedCornerShape(16.dp),
+                                shape = CircleShape,
                             ),
                     )
                     Icon(
@@ -127,9 +138,20 @@ internal fun ShellBottomNavBar(
                             ShellBottomTab.FEED -> PlatformIcons.Feed
                             ShellBottomTab.ACCOUNT -> PlatformIcons.Account
                         },
-                        contentDescription = tab.label(strings),
+                        contentDescription = null,
                         tint = iconColor,
-                        modifier = Modifier.size(26.dp),
+                        modifier = Modifier
+                            .size(28.dp)
+                            .offset(y = (-8).dp),
+                    )
+                    Text(
+                        text = tab.label(strings),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = iconColor,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 12.dp),
                     )
                 }
             }

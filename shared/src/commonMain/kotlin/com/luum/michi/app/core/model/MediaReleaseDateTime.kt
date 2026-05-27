@@ -1,5 +1,8 @@
 package com.luum.michi.app.core.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class MediaReleaseDateTime(
     val day: Int,
     val month: Int,

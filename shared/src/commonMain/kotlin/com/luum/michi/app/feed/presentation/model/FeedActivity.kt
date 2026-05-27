@@ -1,5 +1,7 @@
 package com.luum.michi.app.feed.presentation.model
 
+import androidx.compose.runtime.Immutable
+
 internal sealed interface FeedActivity {
     val id: Int
     val userId: Int
@@ -10,6 +12,7 @@ internal sealed interface FeedActivity {
     val replyCount: Int
     val siteUrl: String?
 
+    @Immutable
     data class MediaList(
         override val id: Int,
         override val userId: Int,
@@ -26,6 +29,7 @@ internal sealed interface FeedActivity {
         val statusText: String,
     ) : FeedActivity
 
+    @Immutable
     data class Text(
         override val id: Int,
         override val userId: Int,
@@ -38,6 +42,7 @@ internal sealed interface FeedActivity {
         val text: String,
     ) : FeedActivity
 
+    @Immutable
     data class Message(
         override val id: Int,
         override val userId: Int,

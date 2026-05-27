@@ -26,12 +26,13 @@ internal val AniListJson: Json = Json {
  */
 internal fun createAniListHttpClient(
     engine: HttpClientEngine = createAniListHttpClientEngine(),
+    logLevel: LogLevel = LogLevel.NONE,
 ): HttpClient = HttpClient(engine) {
     install(ContentNegotiation) {
         json(AniListJson)
     }
     install(Logging) {
-        level = LogLevel.INFO
+        level = logLevel
     }
     defaultRequest {
         header("Accept", "application/json")

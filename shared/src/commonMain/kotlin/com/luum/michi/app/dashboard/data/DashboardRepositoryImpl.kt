@@ -12,6 +12,7 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val DashboardQuery = """
 query Dashboard(
@@ -119,7 +120,7 @@ internal class DashboardRepositoryImpl(
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromString(DashboardResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(DashboardResponseDto.serializer(), dataJson)
         }.map { it.toDashboardFeed() }
     }
 }
