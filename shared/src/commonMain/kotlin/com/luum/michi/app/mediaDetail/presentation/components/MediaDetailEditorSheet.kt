@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformBooleanRow
@@ -305,10 +306,8 @@ private fun EditorActionBar(
                 OutlinedButton(
                     onClick = onCancel,
                     enabled = !isSaving,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -316,22 +315,18 @@ private fun EditorActionBar(
                 ) {
                     Text(
                         text = strings.mediaDetailEditorCancelAction,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
                     )
                 }
                 Button(
                     onClick = onSave,
                     enabled = enabled && !isSaving,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
+                    modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(24.dp),
                 ) {
                     Text(
                         text = if (isSaving) strings.mediaDetailEditorSavingLabel else strings.saveAction,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                 }
             }
