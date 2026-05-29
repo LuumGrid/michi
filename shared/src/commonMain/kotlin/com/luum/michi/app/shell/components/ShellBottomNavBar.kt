@@ -151,7 +151,7 @@ internal fun ShellBottomNavBar(
                         maxLines = 1,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp),
+                            .padding(bottom = 6.dp),
                     )
                 }
             }
