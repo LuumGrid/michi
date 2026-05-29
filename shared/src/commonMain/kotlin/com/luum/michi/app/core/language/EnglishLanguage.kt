@@ -27,8 +27,6 @@ object EnglishLanguageStrings : LanguageStrings {
     override val homeReleasingTodayTitle = "Releasing today"
     override val homeTrendingAnimationTitle = "Trending animation"
     override val homeTrendingReadingTitle = "Trending reading"
-    override val homeCommunityTitle = "Community activity"
-    override val homeCommunitySubtitle = "Recent posts and updates from AniList will live here."
     override val searchTitle = "Search"
     override val searchDescription = "Search anime, manga, characters, staff, and studios."
     override val searchTypeAll = "All"

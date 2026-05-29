@@ -63,13 +63,6 @@ internal fun DashboardScreen(
             }
         }
 
-        item {
-            PlatformHomeCommunityCard(
-                title = strings.homeCommunityTitle,
-                subtitle = strings.homeCommunitySubtitle,
-            )
-        }
-
         if (stateHolder.trendingAnimation.isNotEmpty()) {
             item {
                 PlatformHomeMediaRail(

@@ -31,8 +31,6 @@ interface LanguageStrings {
     val homeReleasingTodayTitle: String
     val homeTrendingAnimationTitle: String
     val homeTrendingReadingTitle: String
-    val homeCommunityTitle: String
-    val homeCommunitySubtitle: String
     val searchTitle: String
     val searchDescription: String
     val searchTypeAll: String
