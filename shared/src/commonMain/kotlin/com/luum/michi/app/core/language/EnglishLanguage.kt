@@ -141,6 +141,10 @@ object EnglishLanguageStrings : LanguageStrings {
     override val mediaDetailEditorSavingLabel = "Saving..."
     override val mediaDetailEditorSaveErrorLabel = "Couldn't save"
     override val mediaDetailEditorCancelAction = "Cancel"
+    override val mediaDetailEditorDeleteAction = "Remove from list"
+    override val deleteEntryConfirmTitle = "Remove from your lists?"
+    override val deleteEntryConfirmMessage = "This entry will be deleted from your lists."
+    override val confirmDeleteAction = "Remove"
     override val sectionAll = "All"
     override val sectionWatching = "Watching"
     override val sectionReading = "Reading"
@@ -336,6 +340,42 @@ object EnglishLanguageStrings : LanguageStrings {
     override val feedFilterReadingProgress = "Reading progress"
     override val feedFilterMessages = "Messages"
     override val feedFilterMyActivities = "My activities"
+
+    // Studio detail
+    override val studioDetailTitle = "Studio"
+    override val studioAnimationLabel = "Animation studio"
+    override val studioNoMediaLabel = "No works"
+    override val sortByPopularity = "Popularity"
+    override val sortByNewest = "Newest"
+    override val sortByOldest = "Oldest"
+    override val sortByFavourites = "Favorites"
+    override val sortByScore = "Score"
+
+    // Character detail
+    override val characterDetailTitle = "Character"
+    override val characterTabOverview = "Overview"
+    override val characterTabMedia = "Appearances"
+    override val characterNoMediaLabel = "No appearances"
+    override val showSpoilersAction = "Show spoilers"
+    override val hideSpoilersAction = "Hide spoilers"
+    override val alternativeNamesLabel = "Alternative names"
+    override val infoGenderLabel = "Gender"
+    override val infoAgeLabel = "Age"
+    override val infoBirthdayLabel = "Birthday"
+    override val infoBloodTypeLabel = "Blood type"
+
+    // Staff detail
+    override val staffDetailTitle = "Staff"
+    override val staffTabOverview = "Overview"
+    override val staffTabMedia = "Roles"
+    override val staffTabCharacters = "Characters"
+    override val infoDeathLabel = "Death"
+    override val infoYearsActiveLabel = "Years active"
+    override val infoHometownLabel = "Hometown"
+    override val infoOccupationsLabel = "Occupations"
+    override val staffNoMediaLabel = "No roles"
+    override val staffNoCharactersLabel = "No characters"
+    override val yearsActivePresent = "present"
 }
 
 private fun monthName(month: Int): String = when (month) {

@@ -1,22 +1,21 @@
 package com.luum.michi.app.mediaDetail.presentation.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -28,15 +27,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
@@ -58,6 +57,8 @@ internal val VoiceLanguageOptions = listOf(
 internal fun CharactersTab(
     stateHolder: MediaDetailStateHolder,
     strings: LanguageStrings,
+    onOpenCharacter: (Int) -> Unit = {},
+    onOpenStaff: (Int) -> Unit = {},
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         VoiceLanguageChipRow(
@@ -93,7 +94,12 @@ internal fun CharactersTab(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             gridItems(items = characters, key = { it.edgeKey }) { entry ->
-                CharacterCard(entry = entry, strings = strings)
+                CharacterCard(
+                    entry = entry,
+                    strings = strings,
+                    onOpenCharacter = onOpenCharacter,
+                    onOpenStaff = onOpenStaff,
+                )
             }
             if (stateHolder.isLoadingCharacters) {
                 item { LoadingTile() }
@@ -142,24 +148,36 @@ internal fun voiceLanguageLabel(code: String, strings: LanguageStrings): String 
 }
 
 @Composable
-internal fun CharacterCard(entry: MediaCharacterEntry, strings: LanguageStrings) {
+internal fun CharacterCard(
+    entry: MediaCharacterEntry,
+    strings: LanguageStrings,
+    onOpenCharacter: (Int) -> Unit = {},
+    onOpenStaff: (Int) -> Unit = {},
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
             PersonHalf(
                 imageUrl = entry.imageUrl,
                 name = entry.name,
                 subtitle = roleLabel(entry.role, strings),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onOpenCharacter(entry.characterId) },
             )
             entry.voiceActor?.let { va ->
                 PersonHalf(
                     imageUrl = va.imageUrl,
                     name = va.name,
                     subtitle = va.language ?: "",
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onOpenStaff(va.id) },
                 )
             }
         }
@@ -175,31 +193,25 @@ internal fun PersonHalf(
 ) {
     Row(
         modifier = modifier.padding(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
+        PlatformMediaCover(
+            coverUrl = imageUrl,
+            palette = emptyList(),
+            contentDescription = name,
+            fallbackIcon = PlatformIcons.Account,
             modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            if (!imageUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
+                .width(PlatformCoverSize.RowPosterWidth)
+                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+        )
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = name,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,

@@ -59,6 +59,8 @@ internal class MediaEntryEditorState(
 
     var isSaving by mutableStateOf(false)
         private set
+    var isDeleting by mutableStateOf(false)
+        private set
     var error by mutableStateOf<String?>(null)
         private set
 
@@ -174,6 +176,21 @@ internal class MediaEntryEditorState(
                 is NetworkResult.Failure -> error = result.error.toString()
             }
             isSaving = false
+        }
+    }
+
+    fun delete(onDeleted: () -> Unit) {
+        if (isDeleting || isSaving || isLoadingDetail) return
+        val entryId = detail?.viewerEntry?.id
+        if (entryId == null || entryId == 0) return
+        isDeleting = true
+        error = null
+        scope.launch {
+            when (val result = entryRepository.deleteEntry(entryId)) {
+                is NetworkResult.Success -> onDeleted()
+                is NetworkResult.Failure -> error = result.error.toString()
+            }
+            isDeleting = false
         }
     }
 }

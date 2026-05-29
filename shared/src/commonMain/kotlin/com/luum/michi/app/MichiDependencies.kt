@@ -25,6 +25,12 @@ import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
 import com.luum.michi.app.feed.data.FeedRepository
 import com.luum.michi.app.feed.data.FeedRepositoryImpl
+import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
+import com.luum.michi.app.characterDetail.data.CharacterDetailRepositoryImpl
+import com.luum.michi.app.staffDetail.data.StaffDetailRepository
+import com.luum.michi.app.staffDetail.data.StaffDetailRepositoryImpl
+import com.luum.michi.app.studioDetail.data.StudioDetailRepository
+import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.data.ReadingListRepositoryImpl
 import com.luum.michi.app.search.data.SearchRepository
@@ -86,6 +92,15 @@ class MichiDependencies internal constructor(
 
     internal val feedRepository: FeedRepository =
         FeedRepositoryImpl(graphQLClient)
+
+    internal val studioDetailRepository: StudioDetailRepository =
+        StudioDetailRepositoryImpl(graphQLClient)
+
+    internal val characterDetailRepository: CharacterDetailRepository =
+        CharacterDetailRepositoryImpl(graphQLClient)
+
+    internal val staffDetailRepository: StaffDetailRepository =
+        StaffDetailRepositoryImpl(graphQLClient)
 
     internal val sessionManager: SessionManager =
         SessionManager(tokenStorage, viewerRepository)

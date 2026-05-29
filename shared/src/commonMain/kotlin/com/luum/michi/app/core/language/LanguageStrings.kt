@@ -144,6 +144,10 @@ interface LanguageStrings {
     val mediaDetailEditorSavingLabel: String
     val mediaDetailEditorSaveErrorLabel: String
     val mediaDetailEditorCancelAction: String
+    val mediaDetailEditorDeleteAction: String
+    val deleteEntryConfirmTitle: String
+    val deleteEntryConfirmMessage: String
+    val confirmDeleteAction: String
     val sectionAll: String
     val sectionWatching: String
     val sectionReading: String
@@ -327,6 +331,42 @@ interface LanguageStrings {
     val feedFilterReadingProgress: String
     val feedFilterMessages: String
     val feedFilterMyActivities: String
+
+    // Studio detail
+    val studioDetailTitle: String
+    val studioAnimationLabel: String
+    val studioNoMediaLabel: String
+    val sortByPopularity: String
+    val sortByNewest: String
+    val sortByOldest: String
+    val sortByFavourites: String
+    val sortByScore: String
+
+    // Character detail
+    val characterDetailTitle: String
+    val characterTabOverview: String
+    val characterTabMedia: String
+    val characterNoMediaLabel: String
+    val showSpoilersAction: String
+    val hideSpoilersAction: String
+    val alternativeNamesLabel: String
+    val infoGenderLabel: String
+    val infoAgeLabel: String
+    val infoBirthdayLabel: String
+    val infoBloodTypeLabel: String
+
+    // Staff detail
+    val staffDetailTitle: String
+    val staffTabOverview: String
+    val staffTabMedia: String
+    val staffTabCharacters: String
+    val infoDeathLabel: String
+    val infoYearsActiveLabel: String
+    val infoHometownLabel: String
+    val infoOccupationsLabel: String
+    val staffNoMediaLabel: String
+    val staffNoCharactersLabel: String
+    val yearsActivePresent: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

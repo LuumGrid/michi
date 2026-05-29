@@ -47,6 +47,15 @@ import com.luum.michi.app.mediaDetail.presentation.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.presentation.components.MediaDetailEditorSheet
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaEntryEditorState
+import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
+import com.luum.michi.app.characterDetail.presentation.CharacterDetailScreen
+import com.luum.michi.app.characterDetail.presentation.state.rememberCharacterDetailStateHolder
+import com.luum.michi.app.staffDetail.data.StaffDetailRepository
+import com.luum.michi.app.staffDetail.presentation.StaffDetailScreen
+import com.luum.michi.app.staffDetail.presentation.state.rememberStaffDetailStateHolder
+import com.luum.michi.app.studioDetail.data.StudioDetailRepository
+import com.luum.michi.app.studioDetail.presentation.StudioDetailScreen
+import com.luum.michi.app.studioDetail.presentation.state.rememberStudioDetailStateHolder
 import com.luum.michi.app.feed.data.FeedRepository
 import com.luum.michi.app.feed.presentation.FeedScreen
 import com.luum.michi.app.feed.presentation.state.rememberFeedStateHolder
@@ -69,6 +78,7 @@ import com.luum.michi.app.shell.components.ShellBottomTab
 import com.luum.michi.app.shell.components.ShellTopBar
 import com.luum.michi.app.shell.components.label
 import com.luum.michi.app.shell.components.shellCollapsibleChipsModifier
+import com.luum.michi.app.shell.state.DetailDestination
 import com.luum.michi.app.shell.state.ShellAccountRoute
 import com.luum.michi.app.shell.state.rememberShellState
 
@@ -86,6 +96,9 @@ internal fun ShellScreen(
     mediaListEntryRepository: MediaListEntryRepository,
     searchRepository: SearchRepository,
     feedRepository: FeedRepository,
+    studioDetailRepository: StudioDetailRepository,
+    characterDetailRepository: CharacterDetailRepository,
+    staffDetailRepository: StaffDetailRepository,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
@@ -104,6 +117,9 @@ internal fun ShellScreen(
     val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository, viewerId = viewer.id)
+    val studioDetailState = rememberStudioDetailStateHolder(studioDetailRepository, viewerId = viewer.id)
+    val characterDetailState = rememberCharacterDetailStateHolder(characterDetailRepository, viewerId = viewer.id)
+    val staffDetailState = rememberStaffDetailStateHolder(staffDetailRepository, viewerId = viewer.id)
     val searchState = rememberSearchStateHolder(searchRepository)
     val feedState = rememberFeedStateHolder(feedRepository, viewer.id)
     val settingsState = rememberSettingsState()
@@ -122,6 +138,7 @@ internal fun ShellScreen(
     }
 
     val tabStateHolder = rememberSaveableStateHolder()
+    val detailStateHolder = rememberSaveableStateHolder()
 
     LaunchedEffect(shellState.selectedTab) {
         when (shellState.selectedTab) {
@@ -162,11 +179,11 @@ internal fun ShellScreen(
         onBack = shellState::closeEditor,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && shellState.isMediaDetailOpen,
-        onBack = shellState::closeMedia,
+        enabled = !shellState.isEditorOpen && shellState.isDetailOpen,
+        onBack = shellState::closeDetail,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && shellState.isExploreOpen,
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isExploreOpen,
         onBack = {
             if (showExploreFilters) {
                 showExploreFilters = false
@@ -176,23 +193,26 @@ internal fun ShellScreen(
         },
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             shellState.isCalendarOpen,
         onBack = shellState::closeCalendar,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isMediaDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && shellState.isSearchTab && shellState.isSearchActive,
         onBack = shellState::closeSearch,
     )
 
     val titleText = when {
-        shellState.isMediaDetailOpen -> strings.mediaDetailTitle
+        shellState.currentDetail is DetailDestination.Character -> strings.characterDetailTitle
+        shellState.currentDetail is DetailDestination.Studio -> strings.studioDetailTitle
+        shellState.currentDetail is DetailDestination.Staff -> strings.staffDetailTitle
+        shellState.isDetailOpen -> strings.mediaDetailTitle
         shellState.isExploreOpen -> strings.exploreTitle
         shellState.isCalendarOpen -> strings.calendarTitle
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
@@ -212,7 +232,7 @@ internal fun ShellScreen(
             ShellTopBar(
                 selectedTab = shellState.selectedTab,
                 isAccountDetail = shellState.isAccountDetail,
-                isMediaDetailOpen = shellState.isMediaDetailOpen,
+                isDetailOpen = shellState.isDetailOpen,
                 isExploreOpen = shellState.isExploreOpen,
                 isCalendarOpen = shellState.isCalendarOpen,
                 isSearchActive = shellState.isSearchActive,
@@ -224,7 +244,7 @@ internal fun ShellScreen(
                 onCloseSearch = shellState::closeSearch,
                 onSearchQueryChange = { shellState.searchQuery = it },
                 onAccountBack = shellState::handleAccountBack,
-                onMediaBack = shellState::closeMedia,
+                onMediaBack = shellState::closeDetail,
                 onExploreBack = {
                     if (showExploreFilters) {
                         showExploreFilters = false
@@ -378,18 +398,53 @@ internal fun ShellScreen(
                 }
             }
 
-            shellState.selectedMediaId?.let { mediaId ->
-                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    MediaDetailScreen(
-                        mediaId = mediaId,
-                        stateHolder = mediaDetailState,
-                        onRequestEdit = shellState::openEditor,
-                        onOpenRelation = shellState::openMedia,
-                    )
+            when (val dest = shellState.currentDetail) {
+                is DetailDestination.Media -> detailStateHolder.SaveableStateProvider("media-${dest.id}") {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        MediaDetailScreen(
+                            mediaId = dest.id,
+                            stateHolder = mediaDetailState,
+                            onRequestEdit = shellState::openEditor,
+                            onOpenRelation = shellState::openMedia,
+                            onOpenStudio = shellState::openStudio,
+                            onOpenCharacter = shellState::openCharacter,
+                            onOpenStaff = shellState::openStaff,
+                        )
+                    }
                 }
+                is DetailDestination.Studio -> detailStateHolder.SaveableStateProvider("studio-${dest.id}") {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        StudioDetailScreen(
+                            id = dest.id,
+                            stateHolder = studioDetailState,
+                            onOpenMedia = shellState::openMedia,
+                        )
+                    }
+                }
+                is DetailDestination.Character -> detailStateHolder.SaveableStateProvider("character-${dest.id}") {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        CharacterDetailScreen(
+                            id = dest.id,
+                            stateHolder = characterDetailState,
+                            onOpenMedia = shellState::openMedia,
+                            onOpenStaff = shellState::openStaff,
+                        )
+                    }
+                }
+                is DetailDestination.Staff -> detailStateHolder.SaveableStateProvider("staff-${dest.id}") {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        StaffDetailScreen(
+                            id = dest.id,
+                            stateHolder = staffDetailState,
+                            onOpenMedia = shellState::openMedia,
+                            onOpenCharacter = shellState::openCharacter,
+                        )
+                    }
+                }
+                else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isMediaDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen) {
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen) {
                 ShellBottomNavBar(
                     selected = shellState.selectedTab,
                     onSelect = shellState::selectTab,
@@ -416,6 +471,17 @@ internal fun ShellScreen(
                     // Only reload the list type that was actually edited to avoid
                     // firing 2 heavy queries when only 1 was needed.
                     // forceRefresh = true bypasses the TTL cache to reflect the edit.
+                    if (editorState.isManga) {
+                        readingState.load(viewer.id, forceRefresh = true)
+                    } else {
+                        animationState.load(viewer.id, forceRefresh = true)
+                    }
+                    if (shellState.selectedMediaId == editorMediaId) {
+                        mediaDetailState.refresh()
+                    }
+                },
+                onDeleted = {
+                    shellState.closeEditor()
                     if (editorState.isManga) {
                         readingState.load(viewer.id, forceRefresh = true)
                     } else {

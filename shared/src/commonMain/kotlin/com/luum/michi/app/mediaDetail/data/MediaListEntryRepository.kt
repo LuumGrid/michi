@@ -28,4 +28,6 @@ internal interface MediaListEntryRepository {
     ): NetworkResult<Unit>
 
     suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit>
+
+    suspend fun deleteEntry(entryId: Int): NetworkResult<Unit>
 }

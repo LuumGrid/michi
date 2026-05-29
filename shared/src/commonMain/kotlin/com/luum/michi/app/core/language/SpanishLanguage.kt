@@ -141,6 +141,10 @@ object SpanishLanguageStrings : LanguageStrings {
     override val mediaDetailEditorSavingLabel = "Guardando..."
     override val mediaDetailEditorSaveErrorLabel = "No se pudo guardar"
     override val mediaDetailEditorCancelAction = "Cancelar"
+    override val mediaDetailEditorDeleteAction = "Eliminar de la lista"
+    override val deleteEntryConfirmTitle = "¿Eliminar de tus listas?"
+    override val deleteEntryConfirmMessage = "Esta entrada se eliminará de tus listas."
+    override val confirmDeleteAction = "Eliminar"
     override val sectionAll = "Todo"
     override val sectionWatching = "Viendo"
     override val sectionReading = "Leyendo"
@@ -338,6 +342,42 @@ object SpanishLanguageStrings : LanguageStrings {
     override val feedFilterReadingProgress = "Progreso de lectura"
     override val feedFilterMessages = "Mensajes"
     override val feedFilterMyActivities = "Mis actividades"
+
+    // Studio detail
+    override val studioDetailTitle = "Estudio"
+    override val studioAnimationLabel = "Estudio de animación"
+    override val studioNoMediaLabel = "Sin obras"
+    override val sortByPopularity = "Popularidad"
+    override val sortByNewest = "Más reciente"
+    override val sortByOldest = "Más antiguo"
+    override val sortByFavourites = "Favoritos"
+    override val sortByScore = "Puntuación"
+
+    // Character detail
+    override val characterDetailTitle = "Personaje"
+    override val characterTabOverview = "Resumen"
+    override val characterTabMedia = "Apariciones"
+    override val characterNoMediaLabel = "Sin apariciones"
+    override val showSpoilersAction = "Mostrar spoilers"
+    override val hideSpoilersAction = "Ocultar spoilers"
+    override val alternativeNamesLabel = "Nombres alternativos"
+    override val infoGenderLabel = "Género"
+    override val infoAgeLabel = "Edad"
+    override val infoBirthdayLabel = "Cumpleaños"
+    override val infoBloodTypeLabel = "Tipo de sangre"
+
+    // Staff detail
+    override val staffDetailTitle = "Staff"
+    override val staffTabOverview = "Resumen"
+    override val staffTabMedia = "Obras"
+    override val staffTabCharacters = "Personajes"
+    override val infoDeathLabel = "Fallecimiento"
+    override val infoYearsActiveLabel = "Años activo"
+    override val infoHometownLabel = "Ciudad natal"
+    override val infoOccupationsLabel = "Ocupaciones"
+    override val staffNoMediaLabel = "Sin obras"
+    override val staffNoCharactersLabel = "Sin personajes"
+    override val yearsActivePresent = "presente"
 }
 
 private fun monthName(month: Int): String = when (month) {

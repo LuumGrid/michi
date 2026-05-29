@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,22 +21,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 
 @Composable
-internal fun MediaDetailHeader(detail: MediaDetail) {
+internal fun MediaDetailHeader(
+    detail: MediaDetail,
+    onCoverClick: () -> Unit = {},
+    onBannerClick: () -> Unit = {},
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
-            .background(Brush.verticalGradient(detail.palette)),
+            .height(220.dp),
     ) {
+        // Layer 1: background — banner image or palette gradient fallback
+        if (!detail.bannerUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = detail.bannerUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { onBannerClick() },
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(detail.palette)),
+            )
+        }
+
+        // Layer 2: dark scrim for text legibility
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -46,6 +71,8 @@ internal fun MediaDetailHeader(detail: MediaDetail) {
                     ),
                 ),
         )
+
+        // Layer 3: content row
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -59,7 +86,8 @@ internal fun MediaDetailHeader(detail: MediaDetail) {
                 contentDescription = detail.title,
                 modifier = Modifier
                     .width(PlatformCoverSize.RailPosterWidth)
-                    .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+                    .aspectRatio(PlatformCoverSize.PosterAspectRatio)
+                    .clickable { onCoverClick() },
                 fallbackIcon = PlatformIcons.Home,
                 fallbackIconSize = 34.dp,
             )

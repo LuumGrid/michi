@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,8 +65,34 @@ internal fun MediaDetailEditorSheet(
     state: MediaEntryEditorState,
     onDismiss: () -> Unit,
     onSaved: () -> Unit,
+    onDeleted: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(strings.deleteEntryConfirmTitle) },
+            text = { Text(strings.deleteEntryConfirmMessage) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    state.delete(onDeleted)
+                }) {
+                    Text(
+                        text = strings.confirmDeleteAction,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(strings.mediaDetailEditorCancelAction)
+                }
+            },
+        )
+    }
 
     PlatformModalSheet(
         onDismiss = onDismiss,
@@ -99,9 +130,12 @@ internal fun MediaDetailEditorSheet(
 
             EditorActionBar(
                 isSaving = state.isSaving,
+                isDeleting = state.isDeleting,
+                isExisting = state.isExisting,
                 enabled = !state.isLoadingDetail && state.loadError == null,
                 error = state.error,
                 onCancel = onDismiss,
+                onRequestDelete = { showDeleteConfirm = true },
                 onSave = { state.save(onSaved) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -265,9 +299,12 @@ private fun EditorForm(state: MediaEntryEditorState) {
 @Composable
 private fun EditorActionBar(
     isSaving: Boolean,
+    isDeleting: Boolean,
+    isExisting: Boolean,
     enabled: Boolean,
     error: String?,
     onCancel: () -> Unit,
+    onRequestDelete: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -303,30 +340,51 @@ private fun EditorActionBar(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) {
-                    Text(
-                        text = strings.mediaDetailEditorCancelAction,
-                        maxLines = 1
-                    )
+                if (isExisting) {
+                    OutlinedButton(
+                        onClick = onRequestDelete,
+                        enabled = !isSaving && !isDeleting,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(20.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.error,
+                        ),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text(
+                            text = strings.mediaDetailEditorDeleteAction,
+                            maxLines = 1,
+                        )
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onCancel,
+                        enabled = !isSaving && !isDeleting,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(20.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    ) {
+                        Text(
+                            text = strings.mediaDetailEditorCancelAction,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 Button(
                     onClick = onSave,
-                    enabled = enabled && !isSaving,
+                    enabled = enabled && !isSaving && !isDeleting,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(24.dp),
                 ) {
                     Text(
                         text = if (isSaving) strings.mediaDetailEditorSavingLabel else strings.saveAction,
-                        maxLines = 1
+                        maxLines = 1,
                     )
                 }
             }

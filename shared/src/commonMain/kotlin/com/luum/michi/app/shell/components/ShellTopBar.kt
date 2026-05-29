@@ -26,7 +26,7 @@ import com.luum.michi.app.core.platform.components.PlatformTopBar
 internal fun ShellTopBar(
     selectedTab: ShellBottomTab,
     isAccountDetail: Boolean,
-    isMediaDetailOpen: Boolean,
+    isDetailOpen: Boolean,
     isExploreOpen: Boolean,
     isCalendarOpen: Boolean,
     isSearchActive: Boolean,
@@ -64,7 +64,7 @@ internal fun ShellTopBar(
                         placeholder = strings.exploreSearchPlaceholder,
                         autoFocus = false,
                     )
-                } else if (!isMediaDetailOpen && isSearchTab && isSearchActive) {
+                } else if (!isDetailOpen && isSearchTab && isSearchActive) {
                     ShellSearchField(
                         query = searchQuery,
                         onQueryChange = onSearchQueryChange,
@@ -80,7 +80,7 @@ internal fun ShellTopBar(
                 }
             },
             navigationIcon = {
-                if (isMediaDetailOpen) {
+                if (isDetailOpen) {
                     IconButton(onClick = onMediaBack) {
                         Icon(
                             painter = PlatformIcons.ArrowBack,
@@ -128,7 +128,7 @@ internal fun ShellTopBar(
                             )
                         }
                     }
-                } else if (!isMediaDetailOpen && !isExploreOpen && !isCalendarOpen) {
+                } else if (!isDetailOpen && !isExploreOpen && !isCalendarOpen) {
                     ShellTopBarActions(
                         selectedTab = selectedTab,
                         isSearchActive = isSearchActive,
@@ -143,7 +143,7 @@ internal fun ShellTopBar(
             windowInsets = WindowInsets.statusBars,
         )
 
-        if (!isMediaDetailOpen && !isExploreOpen && !isCalendarOpen) {
+        if (!isDetailOpen && !isExploreOpen && !isCalendarOpen) {
             chips()
         }
     }

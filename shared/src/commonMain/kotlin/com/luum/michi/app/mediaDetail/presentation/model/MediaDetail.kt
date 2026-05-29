@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 
+internal data class StudioRef(val id: Int, val name: String)
+
 internal data class MediaDetailViewerEntry(
     val id: Int,
     val status: MediaListStatus?,
@@ -33,7 +35,7 @@ internal data class MediaDetail(
     val volumes: Int?,
     val duration: Int?,
     val genres: List<String>,
-    val studios: List<String>,
+    val studios: List<StudioRef>,
     val source: String?,
     val season: String?,
     val startedLabel: String?,

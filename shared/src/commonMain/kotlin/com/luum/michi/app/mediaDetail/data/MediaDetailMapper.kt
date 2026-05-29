@@ -14,10 +14,12 @@ import com.luum.michi.app.core.media.CalendarDateParts
 import com.luum.michi.app.core.media.calendarPartsToMillis
 import com.luum.michi.app.core.media.millisToCalendarParts
 import com.luum.michi.app.core.platform.hexToPalette
+import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
+import com.luum.michi.app.mediaDetail.presentation.model.StudioRef
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailViewerEntry
@@ -44,7 +46,7 @@ internal fun MediaDetailDto.toDomain(): MediaDetail = MediaDetail(
     volumes = volumes?.takeIf { it > 0 },
     duration = duration?.takeIf { it > 0 },
     genres = genres,
-    studios = studios?.nodes?.map { it.name }.orEmpty(),
+    studios = studios?.nodes?.map { StudioRef(it.id, it.name) }.orEmpty(),
     source = source?.toTitleCase(),
     season = formatSeason(season, seasonYear),
     startedLabel = startDate?.format(),
@@ -235,29 +237,3 @@ private fun monthName(month: Int): String = when (month) {
     else -> ""
 }
 
-private val HtmlTagRegex = Regex("<[^>]+>")
-private val HtmlEntities = mapOf(
-    "&amp;" to "&",
-    "&lt;" to "<",
-    "&gt;" to ">",
-    "&quot;" to "\"",
-    "&#39;" to "'",
-    "&apos;" to "'",
-    "&nbsp;" to " ",
-    "&mdash;" to "—",
-    "&ndash;" to "–",
-    "&hellip;" to "…",
-)
-private val NumericEntityRegex = Regex("&#(\\d+);")
-
-private fun String.stripHtml(): String {
-    val withBreaks = replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
-    var result = HtmlTagRegex.replace(withBreaks, "")
-    HtmlEntities.forEach { (entity, char) -> result = result.replace(entity, char) }
-    result = NumericEntityRegex.replace(result) { match ->
-        match.groupValues[1].toIntOrNull()?.toChar()?.toString() ?: match.value
-    }
-    return result
-        .replace(Regex("\n{3,}"), "\n\n")
-        .trim()
-}

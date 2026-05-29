@@ -2,6 +2,7 @@ package com.luum.michi.app.shell.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,15 +30,17 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var isSearchActive by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
     var currentProfile by mutableStateOf(initialProfile)
-    var selectedMediaId by mutableStateOf<Int?>(null)
+    private val detailStack = mutableStateListOf<DetailDestination>()
     var editorMediaId by mutableStateOf<Int?>(null)
     var editorInitialStatus by mutableStateOf<MediaListStatus?>(null)
     var editorInitialProgress by mutableStateOf<Int?>(null)
     var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
 
-    val isMediaDetailOpen: Boolean
-        get() = selectedMediaId != null
+    val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
+    val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
+    // Compat: muchos sitios comparan con el id de la obra abierta
+    val selectedMediaId: Int? get() = (currentDetail as? DetailDestination.Media)?.id
 
     val isEditorOpen: Boolean
         get() = editorMediaId != null
@@ -74,13 +77,15 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
         topBarBackHandler = null
     }
 
-    fun openMedia(id: Int) {
-        selectedMediaId = id
+    private fun push(dest: DetailDestination) {
+        if (detailStack.lastOrNull() != dest) detailStack.add(dest)
     }
 
-    fun closeMedia() {
-        selectedMediaId = null
-    }
+    fun openMedia(id: Int) = push(DetailDestination.Media(id))
+    fun openCharacter(id: Int) = push(DetailDestination.Character(id))
+    fun openStaff(id: Int) = push(DetailDestination.Staff(id))
+    fun openStudio(id: Int) = push(DetailDestination.Studio(id))
+    fun closeDetail() { if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex) }
 
     fun openEditor(id: Int) {
         editorMediaId = id

@@ -28,12 +28,14 @@ import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
+import com.luum.michi.app.mediaDetail.presentation.model.StudioRef
 
 @Composable
 internal fun OverviewTab(
     detail: MediaDetail,
     strings: LanguageStrings,
     onOpenRelation: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -48,7 +50,13 @@ internal fun OverviewTab(
             item { MediaDetailDescription(text = detail.descriptionPlain, strings = strings) }
         }
         if (detail.studios.isNotEmpty()) {
-            item { MediaDetailStudios(studios = detail.studios, strings = strings) }
+            item {
+                MediaDetailStudios(
+                    studios = detail.studios,
+                    strings = strings,
+                    onOpenStudio = onOpenStudio,
+                )
+            }
         }
     }
 }
@@ -196,14 +204,35 @@ internal fun relationLabel(kind: MediaRelationKind, strings: LanguageStrings): S
 }
 
 @Composable
-internal fun MediaDetailStudios(studios: List<String>, strings: LanguageStrings) {
+internal fun MediaDetailStudios(
+    studios: List<StudioRef>,
+    strings: LanguageStrings,
+    onOpenStudio: (Int) -> Unit = {},
+) {
     MediaDetailSection(title = strings.mediaDetailStudiosTitle) {
-        Text(
-            text = studios.joinToString(" · "),
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            studios.forEachIndexed { index, studio ->
+                Text(
+                    text = studio.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { onOpenStudio(studio.id) },
+                )
+                if (index < studios.lastIndex) {
+                    Text(
+                        text = " · ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
     }
 }
 

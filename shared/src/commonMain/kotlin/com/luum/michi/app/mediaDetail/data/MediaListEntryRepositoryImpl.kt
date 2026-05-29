@@ -97,6 +97,17 @@ private data class SaveProgressResponse(
     @SerialName("SaveMediaListEntry") val entry: JsonElement? = null,
 )
 
+private const val DeleteMediaListEntryMutation = """
+mutation DeleteMediaListEntry(${'$'}id: Int!) {
+  DeleteMediaListEntry(id: ${'$'}id) { deleted }
+}
+"""
+
+@Serializable
+private data class DeleteMediaListEntryResponse(
+    @SerialName("DeleteMediaListEntry") val payload: JsonElement? = null,
+)
+
 internal class MediaListEntryRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : MediaListEntryRepository {
@@ -220,6 +231,20 @@ internal class MediaListEntryRepositoryImpl(
         )
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(ToggleFavouriteResponse.serializer(), dataJson)
+        }.map { }
+    }
+
+    override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> {
+        val variables = buildMap<String, JsonElement> {
+            put("id", JsonPrimitive(entryId))
+        }
+        val request = AniListGraphQLRequest(
+            query = DeleteMediaListEntryMutation,
+            variables = JsonObject(variables),
+            operationName = "DeleteMediaListEntry",
+        )
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(DeleteMediaListEntryResponse.serializer(), dataJson)
         }.map { }
     }
 }

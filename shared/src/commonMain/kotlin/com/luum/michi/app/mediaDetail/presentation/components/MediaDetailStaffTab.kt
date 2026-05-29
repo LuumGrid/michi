@@ -3,14 +3,10 @@ package com.luum.michi.app.mediaDetail.presentation.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -28,6 +24,7 @@ import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
 internal fun StaffTab(
     stateHolder: MediaDetailStateHolder,
     strings: LanguageStrings,
+    onOpenStaff: (Int) -> Unit = {},
 ) {
     val staff = stateHolder.staff
     if (staff.isEmpty() && !stateHolder.isLoadingStaff) {
@@ -58,7 +55,7 @@ internal fun StaffTab(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         gridItems(items = staff, key = { it.edgeKey }) { entry ->
-            StaffCard(entry = entry)
+            StaffCard(entry = entry, onOpenStaff = onOpenStaff)
         }
         if (stateHolder.isLoadingStaff) {
             item { LoadingTile() }
@@ -68,16 +65,18 @@ internal fun StaffTab(
 }
 
 @Composable
-internal fun StaffCard(entry: MediaStaffEntry) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        PersonHalf(
-            imageUrl = entry.imageUrl,
-            name = entry.name,
-            subtitle = entry.role.orEmpty(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+internal fun StaffCard(
+    entry: MediaStaffEntry,
+    onOpenStaff: (Int) -> Unit = {},
+) {
+    ConnectionRowCard(
+        coverUrl = entry.imageUrl,
+        palette = emptyList(),
+        title = entry.name,
+        averageScore = null,
+        favourites = null,
+        topLine = entry.role,
+        metaParts = emptyList(),
+        onClick = { onOpenStaff(entry.staffId) },
+    )
 }

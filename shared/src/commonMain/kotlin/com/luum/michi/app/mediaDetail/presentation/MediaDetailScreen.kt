@@ -1,5 +1,8 @@
 package com.luum.michi.app.mediaDetail.presentation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +15,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.components.PlatformChips
@@ -53,6 +63,9 @@ internal fun MediaDetailScreen(
     stateHolder: MediaDetailStateHolder,
     onRequestEdit: (Int) -> Unit,
     onOpenRelation: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit = {},
+    onOpenCharacter: (Int) -> Unit = {},
+    onOpenStaff: (Int) -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
 
@@ -66,6 +79,9 @@ internal fun MediaDetailScreen(
             strings = strings,
             onEditClick = { onRequestEdit(mediaId) },
             onOpenRelation = onOpenRelation,
+            onOpenStudio = onOpenStudio,
+            onOpenCharacter = onOpenCharacter,
+            onOpenStaff = onOpenStaff,
         )
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
@@ -84,15 +100,26 @@ private fun MediaDetailContent(
     strings: LanguageStrings,
     onEditClick: () -> Unit,
     onOpenRelation: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit = {},
+    onOpenCharacter: (Int) -> Unit = {},
+    onOpenStaff: (Int) -> Unit = {},
 ) {
-    var selectedTab by remember(detail.id) { mutableStateOf(DetailTab.OVERVIEW) }
+    val tabs = remember { DetailTab.entries }
+    var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
+    val selectedTab = tabs[selectedTabIndex.coerceIn(0, tabs.lastIndex)]
+    var showCoverViewer by remember { mutableStateOf(false) }
+    var showBannerViewer by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        MediaDetailHeader(detail = detail)
+        MediaDetailHeader(
+            detail = detail,
+            onCoverClick = { showCoverViewer = true },
+            onBannerClick = { showBannerViewer = true },
+        )
         MediaDetailEntryAction(detail = detail, strings = strings, onClick = onEditClick)
         MediaDetailTabBar(
             selected = selectedTab,
-            onSelect = { selectedTab = it },
+            onSelect = { selectedTabIndex = tabs.indexOf(it) },
             strings = strings,
         )
         Box(modifier = Modifier.fillMaxSize()) {
@@ -101,6 +128,7 @@ private fun MediaDetailContent(
                     detail = detail,
                     strings = strings,
                     onOpenRelation = onOpenRelation,
+                    onOpenStudio = onOpenStudio,
                 )
                 DetailTab.CONNECTIONS -> ConnectionsTab(
                     stateHolder = stateHolder,
@@ -110,10 +138,13 @@ private fun MediaDetailContent(
                 DetailTab.CHARACTERS -> CharactersTab(
                     stateHolder = stateHolder,
                     strings = strings,
+                    onOpenCharacter = onOpenCharacter,
+                    onOpenStaff = onOpenStaff,
                 )
                 DetailTab.STAFF -> StaffTab(
                     stateHolder = stateHolder,
                     strings = strings,
+                    onOpenStaff = onOpenStaff,
                 )
                 DetailTab.REVIEWS -> ReviewsTab(
                     stateHolder = stateHolder,
@@ -137,6 +168,22 @@ private fun MediaDetailContent(
                 )
             }
         }
+    }
+
+    if (showCoverViewer && !detail.coverUrl.isNullOrBlank()) {
+        FullscreenImageOverlay(
+            imageUrl = detail.coverUrl!!,
+            contentDescription = detail.title,
+            onDismiss = { showCoverViewer = false },
+        )
+    }
+
+    if (showBannerViewer && !detail.bannerUrl.isNullOrBlank()) {
+        FullscreenImageOverlay(
+            imageUrl = detail.bannerUrl!!,
+            contentDescription = detail.title,
+            onDismiss = { showBannerViewer = false },
+        )
     }
 }
 
@@ -184,5 +231,41 @@ private fun MediaDetailEntryAction(
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(label, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun FullscreenImageOverlay(
+    imageUrl: String,
+    contentDescription: String?,
+    onDismiss: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) { onDismiss() },
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    ) { },
+            )
+        }
     }
 }
