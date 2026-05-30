@@ -17,13 +17,8 @@ object EnglishLanguageStrings : LanguageStrings {
     override val addAccountAction = "Add account"
     override val dashboardTitle = "Dashboard"
     override val dashboardDescription = "Trending, seasons, and AniList recommendations."
-    override val homeGreetingTitle = "Welcome back"
-    override val homeGreetingSubtitle = "Track what is airing and see what the AniList community is talking about."
     override val homeSearchPlaceholder = "Search AniList"
     override val homeSeasonalAction = "Seasonal"
-    override val homeExploreAction = "Explore"
-    override val homeReviewsAction = "Reviews"
-    override val homeCalendarAction = "Calendar"
     override val homeReleasingTodayTitle = "Releasing today"
     override val homeTrendingAnimationTitle = "Trending animation"
     override val homeTrendingReadingTitle = "Trending reading"
@@ -340,6 +335,9 @@ object EnglishLanguageStrings : LanguageStrings {
     override val feedFilterReadingProgress = "Reading progress"
     override val feedFilterMessages = "Messages"
     override val feedFilterMyActivities = "My activities"
+    override val feedSectionActivity = "Activity"
+    override val feedSectionReviews = "Reviews"
+    override val feedReviewOf = "Review of"
 
     // Studio detail
     override val studioDetailTitle = "Studio"
@@ -376,6 +374,7 @@ object EnglishLanguageStrings : LanguageStrings {
     override val staffNoMediaLabel = "No roles"
     override val staffNoCharactersLabel = "No characters"
     override val yearsActivePresent = "present"
+    override val seeAllAction = "See all"
 }
 
 private fun monthName(month: Int): String = when (month) {

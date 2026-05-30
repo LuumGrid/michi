@@ -30,15 +30,21 @@ import com.luum.michi.app.animation.presentation.components.AnimationSectionChip
 import com.luum.michi.app.animation.presentation.state.rememberAnimationListStateHolder
 import com.luum.michi.app.explore.data.ExploreRepository
 import com.luum.michi.app.explore.presentation.ExploreScreen
+import com.luum.michi.app.explore.presentation.state.ExploreCategory
 import com.luum.michi.app.explore.presentation.state.rememberExploreStateHolder
 import com.luum.michi.app.calendar.data.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
 import com.luum.michi.app.calendar.presentation.state.rememberCalendarStateHolder
 import com.luum.michi.app.core.language.AppLanguage
+import com.luum.michi.app.core.media.currentSeasonAndYear
+import com.luum.michi.app.core.media.next
+import com.luum.michi.app.seasonal.presentation.SeasonalScreen
+import com.luum.michi.app.seasonal.presentation.state.rememberSeasonalStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
 import com.luum.michi.app.core.session.Viewer
 import com.luum.michi.app.dashboard.data.DashboardRepository
+import com.luum.michi.app.dashboard.presentation.DashboardRail
 import com.luum.michi.app.dashboard.presentation.DashboardScreen
 import com.luum.michi.app.dashboard.presentation.state.rememberDashboardStateHolder
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
@@ -63,9 +69,6 @@ import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.presentation.ReadingScreen
 import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
 import com.luum.michi.app.reading.presentation.state.rememberReadingListStateHolder
-import com.luum.michi.app.search.data.SearchRepository
-import com.luum.michi.app.search.presentation.SearchScreen
-import com.luum.michi.app.search.presentation.state.rememberSearchStateHolder
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
 import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
@@ -94,7 +97,6 @@ internal fun ShellScreen(
     calendarRepository: CalendarRepository,
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
-    searchRepository: SearchRepository,
     feedRepository: FeedRepository,
     studioDetailRepository: StudioDetailRepository,
     characterDetailRepository: CharacterDetailRepository,
@@ -116,16 +118,30 @@ internal fun ShellScreen(
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
     val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
+    val seasonalState = rememberSeasonalStateHolder(exploreRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository, viewerId = viewer.id)
     val studioDetailState = rememberStudioDetailStateHolder(studioDetailRepository, viewerId = viewer.id)
     val characterDetailState = rememberCharacterDetailStateHolder(characterDetailRepository, viewerId = viewer.id)
     val staffDetailState = rememberStaffDetailStateHolder(staffDetailRepository, viewerId = viewer.id)
-    val searchState = rememberSearchStateHolder(searchRepository)
     val feedState = rememberFeedStateHolder(feedRepository, viewer.id)
     val settingsState = rememberSettingsState()
-    var showExploreFilters by remember { mutableStateOf(false) }
+    var showDiscoverSort by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
     var showFeedFilterSheet by remember { mutableStateOf(false) }
+
+    // Abre la superficie unificada de Explore con un preset de categoría + orden,
+    // limpiando los demás filtros para que el rail "Ver todo" muestre exactamente esa lista.
+    val openExploreWith: (ExploreCategory, String) -> Unit = { category, sort ->
+        exploreState.updateFilters(
+            newQuery = "",
+            newCategory = category,
+            newGenre = "All",
+            newFormat = "All",
+            newYear = null,
+            newSort = sort,
+        )
+        shellState.openExplore()
+    }
 
     val filterSettings = rememberPlatformFilterSettings()
     LaunchedEffect(Unit) {
@@ -185,8 +201,8 @@ internal fun ShellScreen(
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isExploreOpen,
         onBack = {
-            if (showExploreFilters) {
-                showExploreFilters = false
+            if (showDiscoverSort) {
+                showDiscoverSort = false
             } else {
                 shellState.closeExplore()
             }
@@ -199,12 +215,23 @@ internal fun ShellScreen(
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && shellState.isAccountDetail,
+            !shellState.isCalendarOpen && shellState.isSeasonalOpen,
+        onBack = {
+            if (showDiscoverSort) {
+                showDiscoverSort = false
+            } else {
+                shellState.closeSeasonal()
+            }
+        },
+    )
+    PlatformSystemBackHandler(
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && shellState.isSearchTab && shellState.isSearchActive,
+            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isSearchTab && shellState.isSearchActive,
         onBack = shellState::closeSearch,
     )
 
@@ -215,6 +242,7 @@ internal fun ShellScreen(
         shellState.isDetailOpen -> strings.mediaDetailTitle
         shellState.isExploreOpen -> strings.exploreTitle
         shellState.isCalendarOpen -> strings.calendarTitle
+        shellState.isSeasonalOpen -> strings.homeSeasonalAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
@@ -235,24 +263,33 @@ internal fun ShellScreen(
                 isDetailOpen = shellState.isDetailOpen,
                 isExploreOpen = shellState.isExploreOpen,
                 isCalendarOpen = shellState.isCalendarOpen,
+                isSeasonalOpen = shellState.isSeasonalOpen,
                 isSearchActive = shellState.isSearchActive,
                 isSearchTab = shellState.isSearchTab,
                 searchQuery = shellState.searchQuery,
                 titleText = titleText,
                 scrollBehavior = scrollBehavior,
                 onOpenSearch = shellState::openSearch,
+                onOpenExplore = shellState::openExplore,
                 onCloseSearch = shellState::closeSearch,
                 onSearchQueryChange = { shellState.searchQuery = it },
                 onAccountBack = shellState::handleAccountBack,
                 onMediaBack = shellState::closeDetail,
                 onExploreBack = {
-                    if (showExploreFilters) {
-                        showExploreFilters = false
+                    if (showDiscoverSort) {
+                        showDiscoverSort = false
                     } else {
                         shellState.closeExplore()
                     }
                 },
                 onCalendarBack = shellState::closeCalendar,
+                onSeasonalBack = {
+                    if (showDiscoverSort) {
+                        showDiscoverSort = false
+                    } else {
+                        shellState.closeSeasonal()
+                    }
+                },
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
                 onNotificationsClick = { },
                 onFilterClick = {
@@ -263,11 +300,9 @@ internal fun ShellScreen(
                     }
                 },
                 onForumClick = { },
+                onOpenDiscoverSort = { showDiscoverSort = true },
                 exploreQuery = exploreState.query,
                 onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
-                showExploreFiltersToggle = !exploreState.isEntitySearch(),
-                isExploreFiltersOpen = showExploreFilters,
-                onToggleExploreFilters = { showExploreFilters = !showExploreFilters },
                 chips = {
                     if (!shellState.isSearchActive) {
                         when (shellState.selectedTab) {
@@ -297,81 +332,95 @@ internal fun ShellScreen(
                     top = contentPadding.calculateTopPadding(),
                 ),
         ) {
-            if (shellState.isSearchActive && shellState.selectedTab == ShellBottomTab.HOME) {
-                SearchScreen(
-                    query = shellState.searchQuery,
-                    stateHolder = searchState,
-                    onOpenMedia = shellState::openMedia,
-                    onEditMedia = shellState::openEditor,
-                )
-            } else {
-                Crossfade(
-                    targetState = shellState.selectedTab,
-                    animationSpec = tween(durationMillis = 220),
-                    modifier = Modifier.fillMaxSize(),
-                    label = "tabCrossfade",
-                ) { tab ->
-                    tabStateHolder.SaveableStateProvider(tab) {
-                        when (tab) {
-                            ShellBottomTab.HOME -> DashboardScreen(
-                                stateHolder = dashboardState,
-                                onOpenMedia = shellState::openMedia,
-                                onEditMedia = shellState::openEditor,
-                                onOpenExplore = shellState::openExplore,
-                                onOpenCalendar = shellState::openCalendar,
-                            )
-                            ShellBottomTab.ANIMATION -> AnimationScreen(
-                                stateHolder = animationState,
-                                selectedSection = shellState.selectedAnimationSection,
-                                searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                                scrollBehavior = scrollBehavior,
-                                onOpenMedia = shellState::openMedia,
-                                onEditMedia = shellState::openEditor,
-                                onCompletionReached = { id, progress ->
-                                    shellState.openEditorForCompletion(id, progress)
-                                },
-                                onSearchGlobally = shellState::searchGlobally,
-                                onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
-                            )
-                            ShellBottomTab.READING -> ReadingScreen(
-                                stateHolder = readingState,
-                                selectedSection = shellState.selectedReadingSection,
-                                searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                                scrollBehavior = scrollBehavior,
-                                onOpenMedia = shellState::openMedia,
-                                onEditMedia = shellState::openEditor,
-                                onCompletionReached = { id, progress ->
-                                    shellState.openEditorForCompletion(id, progress)
-                                },
-                                onSearchGlobally = shellState::searchGlobally,
-                                onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
-                            )
-                            ShellBottomTab.FEED -> FeedScreen(
-                                stateHolder = feedState,
-                                onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
-                            )
-                            ShellBottomTab.ACCOUNT -> ShellAccountRouter(
-                                route = shellState.accountRoute,
-                                profile = shellState.currentProfile,
-                                settingsState = settingsState,
-                                accountStats = accountState.stats,
-                                accountFavorites = accountState.favorites,
-                                accountIsRefreshing = accountState.isRefreshing,
-                                onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
-                                language = language,
-                                isDarkMode = isDarkMode,
-                                onLanguageChange = onLanguageChange,
-                                onToggleTheme = onToggleTheme,
-                                onProfileChange = { shellState.currentProfile = it },
-                                onNavigate = { shellState.accountRoute = it },
-                                onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
-                                onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
-                                onOpenMedia = shellState::openMedia,
-                                onEditMedia = shellState::openEditor,
-                                onLogout = onLogout,
-                                onBackHandlerChange = { shellState.topBarBackHandler = it },
-                            )
-                        }
+            Crossfade(
+                targetState = shellState.selectedTab,
+                animationSpec = tween(durationMillis = 220),
+                modifier = Modifier.fillMaxSize(),
+                label = "tabCrossfade",
+            ) { tab ->
+                tabStateHolder.SaveableStateProvider(tab) {
+                    when (tab) {
+                        ShellBottomTab.HOME -> DashboardScreen(
+                            stateHolder = dashboardState,
+                            onOpenMedia = shellState::openMedia,
+                            onEditMedia = shellState::openEditor,
+                            onSeeAll = { rail ->
+                                when (rail) {
+                                    DashboardRail.RELEASING_TODAY -> shellState.openCalendar()
+                                    DashboardRail.POPULAR_THIS_SEASON -> {
+                                        seasonalState.setSeasonYear(currentSeasonAndYear())
+                                        shellState.openSeasonal()
+                                    }
+                                    DashboardRail.UPCOMING_NEXT_SEASON -> {
+                                        seasonalState.setSeasonYear(currentSeasonAndYear().next())
+                                        shellState.openSeasonal()
+                                    }
+                                    DashboardRail.TRENDING_ANIME ->
+                                        openExploreWith(ExploreCategory.ANIMATION, "TRENDING_DESC")
+                                    DashboardRail.TRENDING_MANGA ->
+                                        openExploreWith(ExploreCategory.READING, "TRENDING_DESC")
+                                    DashboardRail.ALL_TIME_POPULAR_ANIME ->
+                                        openExploreWith(ExploreCategory.ANIMATION, "POPULARITY_DESC")
+                                    DashboardRail.ALL_TIME_POPULAR_MANGA ->
+                                        openExploreWith(ExploreCategory.READING, "POPULARITY_DESC")
+                                    DashboardRail.TOP_ANIME ->
+                                        openExploreWith(ExploreCategory.ANIMATION, "SCORE_DESC")
+                                    DashboardRail.TOP_MANGA ->
+                                        openExploreWith(ExploreCategory.READING, "SCORE_DESC")
+                                }
+                            },
+                        )
+                        ShellBottomTab.ANIMATION -> AnimationScreen(
+                            stateHolder = animationState,
+                            selectedSection = shellState.selectedAnimationSection,
+                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
+                            scrollBehavior = scrollBehavior,
+                            onOpenMedia = shellState::openMedia,
+                            onEditMedia = shellState::openEditor,
+                            onCompletionReached = { id, progress ->
+                                shellState.openEditorForCompletion(id, progress)
+                            },
+                            onSearchGlobally = shellState::searchGlobally,
+                            onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
+                        )
+                        ShellBottomTab.READING -> ReadingScreen(
+                            stateHolder = readingState,
+                            selectedSection = shellState.selectedReadingSection,
+                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
+                            scrollBehavior = scrollBehavior,
+                            onOpenMedia = shellState::openMedia,
+                            onEditMedia = shellState::openEditor,
+                            onCompletionReached = { id, progress ->
+                                shellState.openEditorForCompletion(id, progress)
+                            },
+                            onSearchGlobally = shellState::searchGlobally,
+                            onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
+                        )
+                        ShellBottomTab.FEED -> FeedScreen(
+                            stateHolder = feedState,
+                            onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
+                        )
+                        ShellBottomTab.ACCOUNT -> ShellAccountRouter(
+                            route = shellState.accountRoute,
+                            profile = shellState.currentProfile,
+                            settingsState = settingsState,
+                            accountStats = accountState.stats,
+                            accountFavorites = accountState.favorites,
+                            accountIsRefreshing = accountState.isRefreshing,
+                            onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
+                            language = language,
+                            isDarkMode = isDarkMode,
+                            onLanguageChange = onLanguageChange,
+                            onToggleTheme = onToggleTheme,
+                            onProfileChange = { shellState.currentProfile = it },
+                            onNavigate = { shellState.accountRoute = it },
+                            onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
+                            onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
+                            onOpenMedia = shellState::openMedia,
+                            onEditMedia = shellState::openEditor,
+                            onLogout = onLogout,
+                            onBackHandlerChange = { shellState.topBarBackHandler = it },
+                        )
                     }
                 }
             }
@@ -380,8 +429,8 @@ internal fun ShellScreen(
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     ExploreScreen(
                         stateHolder = exploreState,
-                        showFilters = showExploreFilters,
-                        onShowFiltersChange = { showExploreFilters = it },
+                        showSortSheet = showDiscoverSort,
+                        onDismissSortSheet = { showDiscoverSort = false },
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -392,6 +441,18 @@ internal fun ShellScreen(
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     CalendarScreen(
                         stateHolder = calendarState,
+                        onOpenMedia = shellState::openMedia,
+                        onEditMedia = shellState::openEditor,
+                    )
+                }
+            }
+
+            if (shellState.isSeasonalOpen) {
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    SeasonalScreen(
+                        stateHolder = seasonalState,
+                        showSortSheet = showDiscoverSort,
+                        onDismissSortSheet = { showDiscoverSort = false },
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -444,7 +505,7 @@ internal fun ShellScreen(
                 else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen) {
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen) {
                 ShellBottomNavBar(
                     selected = shellState.selectedTab,
                     onSelect = shellState::selectTab,

@@ -28,7 +28,9 @@ import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
 import com.luum.michi.app.feed.data.FeedFilter
+import com.luum.michi.app.feed.data.FeedSection
 import com.luum.michi.app.feed.presentation.components.FeedActivityCard
+import com.luum.michi.app.feed.presentation.components.ReviewCard
 import com.luum.michi.app.feed.presentation.state.FeedStateHolder
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,18 +41,31 @@ internal fun FeedScreen(
 ) {
     val strings = LanguageProvider.strings
     val nowEpochSeconds = remember { currentEpochSeconds() }
-    val listState = rememberLazyListState()
+    val activityListState = rememberLazyListState()
+    val reviewsListState = rememberLazyListState()
 
-    val nearEnd by remember {
+    val activityNearEnd by remember {
         derivedStateOf {
-            val info = listState.layoutInfo
+            val info = activityListState.layoutInfo
             val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: 0
             lastVisible >= info.totalItemsCount - 4
         }
     }
 
-    LaunchedEffect(nearEnd) {
-        if (nearEnd) stateHolder.loadMore()
+    val reviewsNearEnd by remember {
+        derivedStateOf {
+            val info = reviewsListState.layoutInfo
+            val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= info.totalItemsCount - 4
+        }
+    }
+
+    LaunchedEffect(activityNearEnd) {
+        if (activityNearEnd) stateHolder.loadMore()
+    }
+
+    LaunchedEffect(reviewsNearEnd) {
+        if (reviewsNearEnd) stateHolder.loadMoreReviews()
     }
 
     LaunchedEffect(Unit) {
@@ -58,67 +73,149 @@ internal fun FeedScreen(
     }
 
     LaunchedEffect(stateHolder.filter) {
-        listState.scrollToItem(0)
+        activityListState.scrollToItem(0)
+    }
+
+    LaunchedEffect(stateHolder.section) {
+        if (stateHolder.section == FeedSection.REVIEWS && stateHolder.reviews.isEmpty()) {
+            stateHolder.loadReviews()
+        }
     }
 
     PullToRefreshBox(
-        isRefreshing = stateHolder.isRefreshing,
-        onRefresh = { stateHolder.load(forceRefresh = true) },
+        isRefreshing = if (stateHolder.section == FeedSection.ACTIVITY) {
+            stateHolder.isRefreshing
+        } else {
+            stateHolder.isLoadingReviews
+        },
+        onRefresh = {
+            if (stateHolder.section == FeedSection.ACTIVITY) {
+                stateHolder.load(forceRefresh = true)
+            } else {
+                stateHolder.loadReviews(forceRefresh = true)
+            }
+        },
         modifier = Modifier.fillMaxSize(),
     ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        PlatformChips(
-            items = FeedFilter.entries,
-            selectedItem = stateHolder.filter,
-            onSelect = stateHolder::selectFilter,
-            label = { filter ->
-                when (filter) {
-                    FeedFilter.FOLLOWING -> strings.mediaDetailActivityFollowing
-                    FeedFilter.GLOBAL -> strings.mediaDetailActivityGlobal
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        when {
-            stateHolder.isLoading -> PlatformListLoading(label = strings.listsLoadingLabel)
-            stateHolder.error != null -> PlatformListMessage(
-                title = strings.listsErrorLabel,
-                tone = PlatformListMessageTone.Error,
-                actionLabel = strings.mediaDetailLoadMoreAction,
-                onAction = { stateHolder.load(forceRefresh = true) },
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top section selector
+            PlatformChips(
+                items = FeedSection.entries,
+                selectedItem = stateHolder.section,
+                onSelect = stateHolder::selectSection,
+                label = { sec ->
+                    when (sec) {
+                        FeedSection.ACTIVITY -> strings.feedSectionActivity
+                        FeedSection.REVIEWS -> strings.feedSectionReviews
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
-            stateHolder.activities.isEmpty() -> PlatformListMessage(title = strings.listsEmptyLabel)
-            else -> LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(
-                    items = stateHolder.activities,
-                    key = { it.id },
-                ) { activity ->
-                    FeedActivityCard(
-                        activity = activity,
-                        nowEpochSeconds = nowEpochSeconds,
-                        onMediaClick = onMediaClick,
+
+            when (stateHolder.section) {
+                FeedSection.ACTIVITY -> {
+                    // Activity filter chips
+                    PlatformChips(
+                        items = FeedFilter.entries,
+                        selectedItem = stateHolder.filter,
+                        onSelect = stateHolder::selectFilter,
+                        label = { filter ->
+                            when (filter) {
+                                FeedFilter.FOLLOWING -> strings.mediaDetailActivityFollowing
+                                FeedFilter.GLOBAL -> strings.mediaDetailActivityGlobal
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }
-                if (stateHolder.isLoadingMore) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center,
+
+                    when {
+                        stateHolder.isLoading -> PlatformListLoading(label = strings.listsLoadingLabel)
+                        stateHolder.error != null -> PlatformListMessage(
+                            title = strings.listsErrorLabel,
+                            tone = PlatformListMessageTone.Error,
+                            actionLabel = strings.mediaDetailLoadMoreAction,
+                            onAction = { stateHolder.load(forceRefresh = true) },
+                        )
+                        stateHolder.activities.isEmpty() -> PlatformListMessage(title = strings.listsEmptyLabel)
+                        else -> LazyColumn(
+                            state = activityListState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            CircularProgressIndicator()
+                            items(
+                                items = stateHolder.activities,
+                                key = { it.id },
+                            ) { activity ->
+                                FeedActivityCard(
+                                    activity = activity,
+                                    nowEpochSeconds = nowEpochSeconds,
+                                    onMediaClick = onMediaClick,
+                                )
+                            }
+                            if (stateHolder.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                FeedSection.REVIEWS -> {
+                    when {
+                        stateHolder.isLoadingReviews && stateHolder.reviews.isEmpty() ->
+                            PlatformListLoading(label = strings.listsLoadingLabel)
+                        stateHolder.reviewsError != null && stateHolder.reviews.isEmpty() ->
+                            PlatformListMessage(
+                                title = strings.listsErrorLabel,
+                                tone = PlatformListMessageTone.Error,
+                                actionLabel = strings.mediaDetailLoadMoreAction,
+                                onAction = { stateHolder.loadReviews(forceRefresh = true) },
+                            )
+                        stateHolder.reviews.isEmpty() -> PlatformListMessage(title = strings.listsEmptyLabel)
+                        else -> LazyColumn(
+                            state = reviewsListState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            items(
+                                items = stateHolder.reviews,
+                                key = { it.id },
+                            ) { review ->
+                                ReviewCard(
+                                    reviewerName = review.reviewerName,
+                                    reviewerImageUrl = review.reviewerImageUrl,
+                                    rating = review.rating,
+                                    summary = review.summary,
+                                    mediaTitle = "${strings.feedReviewOf} ${review.mediaTitle}",
+                                    onClick = { onMediaClick(review.mediaId, true) },
+                                )
+                            }
+                            if (stateHolder.isLoadingMoreReviews) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
     }
 }

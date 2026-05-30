@@ -11,7 +11,9 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.feed.data.FeedActivityFilter
 import com.luum.michi.app.feed.data.FeedFilter
 import com.luum.michi.app.feed.data.FeedRepository
+import com.luum.michi.app.feed.data.FeedSection
 import com.luum.michi.app.feed.presentation.model.FeedActivity
+import com.luum.michi.app.feed.presentation.model.FeedReview
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -23,6 +25,19 @@ internal class FeedStateHolder(
     private val viewerId: Int,
     private val scope: CoroutineScope,
 ) {
+    // — Section selector —
+    var section by mutableStateOf(FeedSection.ACTIVITY)
+        private set
+
+    fun selectSection(newSection: FeedSection) {
+        if (section == newSection) return
+        section = newSection
+        if (newSection == FeedSection.REVIEWS && reviewsBacking.isEmpty()) {
+            loadReviews()
+        }
+    }
+
+    // — Activity state —
     var filter by mutableStateOf(FeedFilter.FOLLOWING)
         private set
     var activityFilter by mutableStateOf(FeedActivityFilter())
@@ -49,6 +64,23 @@ internal class FeedStateHolder(
 
     private val timeMark = TimeSource.Monotonic
     private val lastLoadedByFilter = mutableMapOf<FeedFilter, TimeSource.Monotonic.ValueTimeMark>()
+
+    // — Reviews state —
+    private val reviewsBacking = mutableStateListOf<FeedReview>()
+    val reviews: List<FeedReview> get() = reviewsBacking
+
+    var reviewsHasNextPage by mutableStateOf(false)
+        private set
+    var isLoadingReviews by mutableStateOf(false)
+        private set
+    var isLoadingMoreReviews by mutableStateOf(false)
+        private set
+    var reviewsError by mutableStateOf<String?>(null)
+        private set
+
+    private var reviewsCurrentPage = 1
+    private var reviewsJob: Job? = null
+    private var reviewsLoadMoreJob: Job? = null
 
     fun selectFilter(newFilter: FeedFilter) {
         if (filter == newFilter) return
@@ -123,6 +155,55 @@ internal class FeedStateHolder(
                 }
             }
             isLoadingMore = false
+        }
+    }
+
+    fun loadReviews(forceRefresh: Boolean = false) {
+        if (!forceRefresh && reviewsBacking.isNotEmpty()) return
+        reviewsJob?.cancel()
+        reviewsLoadMoreJob?.cancel()
+        reviewsBacking.clear()
+        reviewsCurrentPage = 1
+        reviewsHasNextPage = false
+        reviewsError = null
+        isLoadingReviews = true
+        reviewsJob = scope.launch {
+            try {
+                when (val result = repository.loadReviews(page = 1)) {
+                    is NetworkResult.Success -> {
+                        val page = result.value
+                        reviewsBacking.addAll(page.reviews)
+                        reviewsHasNextPage = page.hasNextPage
+                        reviewsCurrentPage = 1
+                        reviewsError = null
+                    }
+                    is NetworkResult.Failure -> {
+                        reviewsError = result.error.toString()
+                    }
+                }
+            } finally {
+                isLoadingReviews = false
+            }
+        }
+    }
+
+    fun loadMoreReviews() {
+        if (isLoadingMoreReviews || !reviewsHasNextPage) return
+        val nextPage = reviewsCurrentPage + 1
+        isLoadingMoreReviews = true
+        reviewsLoadMoreJob = scope.launch {
+            when (val result = repository.loadReviews(page = nextPage)) {
+                is NetworkResult.Success -> {
+                    val page = result.value
+                    reviewsBacking.addAll(page.reviews)
+                    reviewsHasNextPage = page.hasNextPage
+                    reviewsCurrentPage = nextPage
+                }
+                is NetworkResult.Failure -> {
+                    reviewsError = result.error.toString()
+                }
+            }
+            isLoadingMoreReviews = false
         }
     }
 

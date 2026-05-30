@@ -64,7 +64,6 @@ fun App(
                         calendarRepository = dependencies.calendarRepository,
                         mediaDetailRepository = dependencies.mediaDetailRepository,
                         mediaListEntryRepository = dependencies.mediaListEntryRepository,
-                        searchRepository = dependencies.searchRepository,
                         feedRepository = dependencies.feedRepository,
                         studioDetailRepository = dependencies.studioDetailRepository,
                         characterDetailRepository = dependencies.characterDetailRepository,

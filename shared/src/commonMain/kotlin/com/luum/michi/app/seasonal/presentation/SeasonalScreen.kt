@@ -1,4 +1,4 @@
-package com.luum.michi.app.explore.presentation
+package com.luum.michi.app.seasonal.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,17 +24,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.media.MediaSeason
+import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.platform.components.DiscoverSortField
 import com.luum.michi.app.core.platform.components.DiscoverSortSheet
 import com.luum.michi.app.core.platform.components.PlatformFilterChip
-import com.luum.michi.app.explore.presentation.state.ExploreCategory
-import com.luum.michi.app.explore.presentation.state.ExploreStateHolder
 import com.luum.michi.app.search.presentation.components.SearchResultCard
+import com.luum.michi.app.seasonal.presentation.state.SeasonalStateHolder
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ExploreScreen(
-    stateHolder: ExploreStateHolder,
+internal fun SeasonalScreen(
+    stateHolder: SeasonalStateHolder,
     showSortSheet: Boolean,
     onDismissSortSheet: () -> Unit,
     onOpenMedia: (Int) -> Unit,
@@ -49,64 +50,16 @@ internal fun ExploreScreen(
         }
     }
 
-    // Type (category)
-    val categories = listOf(
-        ExploreCategory.ANIMATION,
-        ExploreCategory.READING,
-        ExploreCategory.CHARACTERS,
-        ExploreCategory.STAFF,
-        ExploreCategory.STUDIOS,
-    )
-    fun ExploreCategory.label(): String = when (this) {
-        ExploreCategory.ANIMATION -> if (isSpanish) "Animación" else "Animation"
-        ExploreCategory.READING -> if (isSpanish) "Lectura" else "Reading"
-        ExploreCategory.CHARACTERS -> if (isSpanish) "Personajes" else "Characters"
-        ExploreCategory.STAFF -> "Staff"
-        ExploreCategory.STUDIOS -> if (isSpanish) "Estudios" else "Studios"
+    val seasons = listOf(MediaSeason.WINTER, MediaSeason.SPRING, MediaSeason.SUMMER, MediaSeason.FALL)
+    fun MediaSeason.label(): String = when (this) {
+        MediaSeason.WINTER -> if (isSpanish) "Invierno" else "Winter"
+        MediaSeason.SPRING -> if (isSpanish) "Primavera" else "Spring"
+        MediaSeason.SUMMER -> if (isSpanish) "Verano" else "Summer"
+        MediaSeason.FALL -> if (isSpanish) "Otoño" else "Fall"
     }
 
-    // Genres
-    val allLabel = if (isSpanish) "Todos" else "All"
-    val genres = listOf(
-        allLabel, "Action", "Adventure", "Comedy", "Drama", "Fantasy",
-        "Horror", "Mecha", "Music", "Mystery", "Romance", "Sci-Fi",
-        "Slice of Life", "Sports", "Supernatural", "Thriller",
-    )
-    fun isAll(value: String) = value == "All" || value == "Todos"
+    val years = (currentSeasonAndYear().year + 1 downTo 2000).toList()
 
-    // Formats
-    val formatOptions = if (isSpanish) {
-        listOf(
-            FormatOption("All", "Todos los formatos"),
-            FormatOption("TV", "TV"),
-            FormatOption("MOVIE", "Películas"),
-            FormatOption("OVA", "OVAs"),
-            FormatOption("ONA", "ONAs"),
-            FormatOption("SPECIAL", "Especiales"),
-            FormatOption("MANGA", "Mangas"),
-            FormatOption("NOVEL", "Novelas"),
-            FormatOption("ONE_SHOT", "One-shots"),
-        )
-    } else {
-        listOf(
-            FormatOption("All", "All formats"),
-            FormatOption("TV", "TV"),
-            FormatOption("MOVIE", "Movies"),
-            FormatOption("OVA", "OVAs"),
-            FormatOption("ONA", "ONAs"),
-            FormatOption("SPECIAL", "Specials"),
-            FormatOption("MANGA", "Manga"),
-            FormatOption("NOVEL", "Novels"),
-            FormatOption("ONE_SHOT", "One-shots"),
-        )
-    }
-    val currentFormatOption = formatOptions.find { it.value.equals(stateHolder.format, ignoreCase = true) } ?: formatOptions.first()
-
-    // Years
-    val anyYearLabel = if (isSpanish) "Cualquier año" else "Any year"
-    val yearOptions: List<Int?> = listOf(null, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2005, 2000)
-
-    // Sort fields for the sort & order sheet
     val sortFields = listOf(
         DiscoverSortField("POPULARITY", if (isSpanish) "Popularidad" else "Popularity"),
         DiscoverSortField("SCORE", if (isSpanish) "Puntaje" else "Score"),
@@ -123,41 +76,23 @@ internal fun ExploreScreen(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             PlatformFilterChip(
-                label = if (isSpanish) "Tipo" else "Type",
-                selectedOption = stateHolder.category,
-                options = categories,
+                label = if (isSpanish) "Temporada" else "Season",
+                selectedOption = stateHolder.season,
+                options = seasons,
                 optionLabel = { it.label() },
-                onSelect = { stateHolder.updateFilters(newCategory = it) },
+                onSelect = { stateHolder.selectSeason(it) },
+                active = true,
             )
-            if (!stateHolder.isEntitySearch()) {
-                PlatformFilterChip(
-                    label = if (isSpanish) "Género" else "Genre",
-                    selectedOption = stateHolder.genre,
-                    options = genres,
-                    optionLabel = { if (isAll(it)) allLabel else it },
-                    onSelect = { stateHolder.updateFilters(newGenre = it) },
-                    active = !isAll(stateHolder.genre),
-                )
-                PlatformFilterChip(
-                    label = if (isSpanish) "Formato" else "Format",
-                    selectedOption = currentFormatOption,
-                    options = formatOptions,
-                    optionLabel = { it.label },
-                    onSelect = { stateHolder.updateFilters(newFormat = it.value) },
-                    active = !isAll(currentFormatOption.value),
-                )
-                PlatformFilterChip(
-                    label = if (isSpanish) "Año" else "Year",
-                    selectedOption = stateHolder.year,
-                    options = yearOptions,
-                    optionLabel = { it?.toString() ?: anyYearLabel },
-                    onSelect = { stateHolder.updateFilters(newYear = it) },
-                    active = stateHolder.year != null,
-                )
-            }
+            PlatformFilterChip(
+                label = if (isSpanish) "Año" else "Year",
+                selectedOption = stateHolder.year,
+                options = years,
+                optionLabel = { it.toString() },
+                onSelect = { stateHolder.selectYear(it) },
+                active = true,
+            )
         }
 
-        // Grid of results
         Box(modifier = Modifier.fillMaxSize().weight(1f)) {
             when {
                 stateHolder.isLoading && stateHolder.results.isEmpty() ->
@@ -166,9 +101,9 @@ internal fun ExploreScreen(
                         contentAlignment = Alignment.Center,
                     ) { CircularProgressIndicator() }
                 stateHolder.error != null && stateHolder.results.isEmpty() ->
-                    CenteredMessage(text = stateHolder.error ?: "", isError = true)
+                    SeasonalCenteredMessage(text = stateHolder.error ?: "", isError = true)
                 stateHolder.results.isEmpty() ->
-                    CenteredMessage(
+                    SeasonalCenteredMessage(
                         text = if (isSpanish) {
                             "No se encontraron resultados en el catálogo."
                         } else {
@@ -197,7 +132,7 @@ internal fun ExploreScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        items(stateHolder.results, key = { "${it.id}_${stateHolder.category.name}" }) { result ->
+                        items(stateHolder.results, key = { it.id }) { result ->
                             SearchResultCard(
                                 result = result,
                                 onClick = { onOpenMedia(result.id) },
@@ -226,7 +161,7 @@ internal fun ExploreScreen(
             applyLabel = if (isSpanish) "Aplicar" else "Apply",
             onDismiss = onDismissSortSheet,
             onApply = { newSort ->
-                stateHolder.updateFilters(newSort = newSort)
+                stateHolder.selectSort(newSort)
                 onDismissSortSheet()
             },
         )
@@ -234,7 +169,7 @@ internal fun ExploreScreen(
 }
 
 @Composable
-private fun CenteredMessage(text: String, isError: Boolean = false) {
+private fun SeasonalCenteredMessage(text: String, isError: Boolean = false) {
     Box(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         contentAlignment = Alignment.Center,
@@ -248,5 +183,3 @@ private fun CenteredMessage(text: String, isError: Boolean = false) {
         )
     }
 }
-
-private data class FormatOption(val value: String, val label: String)

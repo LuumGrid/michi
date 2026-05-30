@@ -28,6 +28,7 @@ query AnimeCatalog(
   ${'$'}format: MediaFormat,
   ${'$'}genre: String,
   ${'$'}seasonYear: Int,
+  ${'$'}season: MediaSeason,
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
   ${'$'}perPage: Int!
@@ -40,6 +41,7 @@ query AnimeCatalog(
       format: ${'$'}format,
       genre: ${'$'}genre,
       seasonYear: ${'$'}seasonYear,
+      season: ${'$'}season,
       sort: ${'$'}sort,
       isAdult: false
     ) {
@@ -165,6 +167,7 @@ internal class ExploreRepositoryImpl(
         sort: String,
         page: Int,
         perPage: Int,
+        season: String?,
     ): NetworkResult<SearchPage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -178,6 +181,9 @@ internal class ExploreRepositoryImpl(
             }
             if (year != null && year > 0) {
                 put("seasonYear", JsonPrimitive(year))
+            }
+            if (!season.isNullOrBlank()) {
+                put("season", JsonPrimitive(season))
             }
             put("sort", JsonArray(listOf(JsonPrimitive(sort))))
             put("page", JsonPrimitive(page))

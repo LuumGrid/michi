@@ -36,6 +36,7 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var editorInitialProgress by mutableStateOf<Int?>(null)
     var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
+    var isSeasonalOpen by mutableStateOf(false)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
@@ -75,6 +76,7 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
         selectedTab = ShellBottomTab.HOME
         accountRoute = ShellAccountRoute.ACCOUNT
         topBarBackHandler = null
+        isExploreOpen = true
     }
 
     private fun push(dest: DetailDestination) {
@@ -119,6 +121,14 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
 
     fun closeCalendar() {
         isCalendarOpen = false
+    }
+
+    fun openSeasonal() {
+        isSeasonalOpen = true
+    }
+
+    fun closeSeasonal() {
+        isSeasonalOpen = false
     }
 
     fun handleAccountBack() {

@@ -29,28 +29,29 @@ internal fun ShellTopBar(
     isDetailOpen: Boolean,
     isExploreOpen: Boolean,
     isCalendarOpen: Boolean,
+    isSeasonalOpen: Boolean,
     isSearchActive: Boolean,
     isSearchTab: Boolean,
     searchQuery: String,
     titleText: String,
     scrollBehavior: TopAppBarScrollBehavior,
     onOpenSearch: () -> Unit,
+    onOpenExplore: () -> Unit,
     onCloseSearch: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onAccountBack: () -> Unit,
     onMediaBack: () -> Unit,
     onExploreBack: () -> Unit,
     onCalendarBack: () -> Unit,
+    onSeasonalBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
     onForumClick: () -> Unit,
+    onOpenDiscoverSort: () -> Unit = {},
     chips: @Composable () -> Unit = {},
     exploreQuery: String = "",
     onExploreQueryChange: (String) -> Unit = {},
-    showExploreFiltersToggle: Boolean = false,
-    isExploreFiltersOpen: Boolean = false,
-    onToggleExploreFilters: () -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
  
@@ -104,6 +105,14 @@ internal fun ShellTopBar(
                             modifier = Modifier.size(28.dp),
                         )
                     }
+                } else if (isSeasonalOpen) {
+                    IconButton(onClick = onSeasonalBack) {
+                        Icon(
+                            painter = PlatformIcons.ArrowBack,
+                            contentDescription = strings.backButton,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
                 } else {
                     ShellTopBarNavigationIcon(
                         selectedTab = selectedTab,
@@ -117,23 +126,21 @@ internal fun ShellTopBar(
                 }
             },
             actions = {
-                if (isExploreOpen) {
-                    if (showExploreFiltersToggle) {
-                        IconButton(onClick = onToggleExploreFilters) {
-                            Icon(
-                                painter = PlatformIcons.FilterList,
-                                contentDescription = strings.filterAction,
-                                tint = if (isExploreFiltersOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
+                if (isExploreOpen || isSeasonalOpen) {
+                    IconButton(onClick = onOpenDiscoverSort) {
+                        Icon(
+                            painter = PlatformIcons.FilterList,
+                            contentDescription = strings.filterAction,
+                            modifier = Modifier.size(28.dp),
+                        )
                     }
-                } else if (!isDetailOpen && !isExploreOpen && !isCalendarOpen) {
+                } else if (!isDetailOpen && !isCalendarOpen) {
                     ShellTopBarActions(
                         selectedTab = selectedTab,
                         isSearchActive = isSearchActive,
                         isAccountDetail = isAccountDetail,
                         onOpenSearch = onOpenSearch,
+                        onOpenExplore = onOpenExplore,
                         onOpenSettings = onOpenSettings,
                         onForumClick = onForumClick,
                     )
@@ -143,7 +150,7 @@ internal fun ShellTopBar(
             windowInsets = WindowInsets.statusBars,
         )
 
-        if (!isDetailOpen && !isExploreOpen && !isCalendarOpen) {
+        if (!isDetailOpen && !isExploreOpen && !isCalendarOpen && !isSeasonalOpen) {
             chips()
         }
     }
@@ -242,13 +249,23 @@ private fun ShellTopBarActions(
     isSearchActive: Boolean,
     isAccountDetail: Boolean,
     onOpenSearch: () -> Unit,
+    onOpenExplore: () -> Unit,
     onOpenSettings: () -> Unit,
     onForumClick: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
 
     when (selectedTab) {
-        ShellBottomTab.HOME,
+        ShellBottomTab.HOME -> {
+            IconButton(onClick = onOpenExplore) {
+                Icon(
+                    painter = PlatformIcons.Search,
+                    contentDescription = strings.searchTitle,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+        }
+
         ShellBottomTab.ANIMATION,
         ShellBottomTab.READING -> {
             if (!isSearchActive) {

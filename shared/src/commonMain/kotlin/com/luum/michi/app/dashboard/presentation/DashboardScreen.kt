@@ -5,21 +5,28 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformHomeCommunityCard
 import com.luum.michi.app.core.platform.components.PlatformHomeHeader
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
 import com.luum.michi.app.core.platform.components.PlatformHomeReleaseRail
-import com.luum.michi.app.core.platform.components.PlatformHomeShortcut
-import com.luum.michi.app.core.platform.components.PlatformHomeShortcutRow
 import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
+
+/** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
+internal enum class DashboardRail {
+    RELEASING_TODAY,
+    POPULAR_THIS_SEASON,
+    TRENDING_ANIME,
+    TRENDING_MANGA,
+    UPCOMING_NEXT_SEASON,
+    ALL_TIME_POPULAR_ANIME,
+    ALL_TIME_POPULAR_MANGA,
+    TOP_ANIME,
+    TOP_MANGA,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,12 +34,10 @@ internal fun DashboardScreen(
     stateHolder: DashboardStateHolder,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
-    onOpenExplore: () -> Unit,
-    onOpenCalendar: () -> Unit,
+    onSeeAll: (DashboardRail) -> Unit,
     onRefresh: () -> Unit = { stateHolder.load(forceRefresh = true) },
 ) {
     val strings = LanguageProvider.strings
-    val shortcuts = dashboardShortcuts(strings, onOpenExplore, onOpenCalendar)
 
     PullToRefreshBox(
         isRefreshing = stateHolder.isRefreshing,
@@ -44,13 +49,6 @@ internal fun DashboardScreen(
         contentPadding = PaddingValues(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        item {
-            PlatformHomeHeader(
-                title = strings.homeGreetingTitle,
-                subtitle = strings.homeGreetingSubtitle,
-            )
-        }
-        item { PlatformHomeShortcutRow(items = shortcuts) }
 
         if (stateHolder.releasingToday.isNotEmpty()) {
             item {
@@ -59,6 +57,7 @@ internal fun DashboardScreen(
                     items = stateHolder.releasingToday,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.RELEASING_TODAY) },
                 )
             }
         }
@@ -70,6 +69,7 @@ internal fun DashboardScreen(
                     items = stateHolder.trendingAnimation,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.TRENDING_ANIME) },
                 )
             }
         }
@@ -81,6 +81,7 @@ internal fun DashboardScreen(
                     items = stateHolder.trendingReading,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.TRENDING_MANGA) },
                 )
             }
         }
@@ -92,6 +93,7 @@ internal fun DashboardScreen(
                     items = stateHolder.popularThisSeason,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.POPULAR_THIS_SEASON) },
                 )
             }
         }
@@ -103,6 +105,7 @@ internal fun DashboardScreen(
                     items = stateHolder.upcomingNextSeason,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.UPCOMING_NEXT_SEASON) },
                 )
             }
         }
@@ -114,6 +117,7 @@ internal fun DashboardScreen(
                     items = stateHolder.allTimePopularAnime,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_ANIME) },
                 )
             }
         }
@@ -125,6 +129,7 @@ internal fun DashboardScreen(
                     items = stateHolder.allTimePopularManga,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_MANGA) },
                 )
             }
         }
@@ -136,6 +141,7 @@ internal fun DashboardScreen(
                     items = stateHolder.topAnime,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.TOP_ANIME) },
                 )
             }
         }
@@ -147,21 +153,10 @@ internal fun DashboardScreen(
                     items = stateHolder.topManga,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
+                    onSeeAll = { onSeeAll(DashboardRail.TOP_MANGA) },
                 )
             }
         }
     }
     }
 }
-
-@Composable
-private fun dashboardShortcuts(
-    strings: LanguageStrings,
-    onOpenExplore: () -> Unit,
-    onOpenCalendar: () -> Unit,
-): List<PlatformHomeShortcut> = listOf(
-    PlatformHomeShortcut(strings.homeSeasonalAction, PlatformIcons.Season, MaterialTheme.colorScheme.primary),
-    PlatformHomeShortcut(strings.homeExploreAction, PlatformIcons.Explore, MaterialTheme.colorScheme.tertiary, onClick = onOpenExplore),
-    PlatformHomeShortcut(strings.homeReviewsAction, PlatformIcons.Comments, MaterialTheme.colorScheme.secondary),
-    PlatformHomeShortcut(strings.homeCalendarAction, PlatformIcons.Calendar, MaterialTheme.colorScheme.error, onClick = onOpenCalendar),
-)

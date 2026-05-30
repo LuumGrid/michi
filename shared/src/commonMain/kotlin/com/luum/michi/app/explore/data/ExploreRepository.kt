@@ -12,6 +12,7 @@ internal interface ExploreRepository {
         sort: String,
         page: Int = 1,
         perPage: Int = 30,
+        season: String? = null,
     ): NetworkResult<SearchPage>
 
     suspend fun searchManga(

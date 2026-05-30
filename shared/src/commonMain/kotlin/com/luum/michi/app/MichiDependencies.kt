@@ -33,8 +33,6 @@ import com.luum.michi.app.studioDetail.data.StudioDetailRepository
 import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.data.ReadingListRepositoryImpl
-import com.luum.michi.app.search.data.SearchRepository
-import com.luum.michi.app.search.data.SearchRepositoryImpl
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,9 +84,6 @@ class MichiDependencies internal constructor(
 
     internal val mediaListEntryRepository: MediaListEntryRepository =
         MediaListEntryRepositoryImpl(graphQLClient)
-
-    internal val searchRepository: SearchRepository =
-        SearchRepositoryImpl(graphQLClient)
 
     internal val feedRepository: FeedRepository =
         FeedRepositoryImpl(graphQLClient)

@@ -21,13 +21,8 @@ interface LanguageStrings {
     val addAccountAction: String
     val dashboardTitle: String
     val dashboardDescription: String
-    val homeGreetingTitle: String
-    val homeGreetingSubtitle: String
     val homeSearchPlaceholder: String
     val homeSeasonalAction: String
-    val homeExploreAction: String
-    val homeReviewsAction: String
-    val homeCalendarAction: String
     val homeReleasingTodayTitle: String
     val homeTrendingAnimationTitle: String
     val homeTrendingReadingTitle: String
@@ -331,6 +326,9 @@ interface LanguageStrings {
     val feedFilterReadingProgress: String
     val feedFilterMessages: String
     val feedFilterMyActivities: String
+    val feedSectionActivity: String
+    val feedSectionReviews: String
+    val feedReviewOf: String
 
     // Studio detail
     val studioDetailTitle: String
@@ -367,6 +365,7 @@ interface LanguageStrings {
     val staffNoMediaLabel: String
     val staffNoCharactersLabel: String
     val yearsActivePresent: String
+    val seeAllAction: String
 }
 
 val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }

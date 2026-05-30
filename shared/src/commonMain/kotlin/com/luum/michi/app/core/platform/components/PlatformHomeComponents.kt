@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 
 data class PlatformHomeShortcut(
@@ -160,16 +161,51 @@ fun PlatformHomeShortcutRow(items: List<PlatformHomeShortcut>) {
 @Composable
 fun PlatformHomeSection(
     title: String,
+    onSeeAll: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
+    val strings = LanguageProvider.strings
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            text = title,
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold,
-        )
+        if (onSeeAll != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                )
+                Row(
+                    modifier = Modifier.clickable { onSeeAll() },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = strings.seeAllAction,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Icon(
+                        painter = PlatformIcons.ChevronRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = title,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         content()
     }
 }
@@ -180,8 +216,9 @@ fun PlatformHomeReleaseRail(
     items: List<PlatformHomeReleaseItem>,
     onItemClick: ((Int) -> Unit)? = null,
     onItemLongClick: ((Int) -> Unit)? = null,
+    onSeeAll: (() -> Unit)? = null,
 ) {
-    PlatformHomeSection(title = title) {
+    PlatformHomeSection(title = title, onSeeAll = onSeeAll) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -313,8 +350,9 @@ fun PlatformHomeMediaRail(
     items: List<PlatformHomeMediaItem>,
     onItemClick: ((Int) -> Unit)? = null,
     onItemLongClick: ((Int) -> Unit)? = null,
+    onSeeAll: (() -> Unit)? = null,
 ) {
-    PlatformHomeSection(title = title) {
+    PlatformHomeSection(title = title, onSeeAll = onSeeAll) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
