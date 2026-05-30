@@ -148,8 +148,8 @@ internal fun ShellScreen(
     val filterSettings = rememberPlatformFilterSettings()
     LaunchedEffect(Unit) {
         filterSettings.loadFilter()?.let { (sortName, orderName, persist) ->
-            val sort = UserListSort.values().firstOrNull { it.name == sortName } ?: UserListSort.FOLLOW_LIST
-            val order = UserListOrder.values().firstOrNull { it.name == orderName } ?: UserListOrder.DESCENDING
+            val sort = UserListSort.entries.firstOrNull { it.name == sortName } ?: UserListSort.FOLLOW_LIST
+            val order = UserListOrder.entries.firstOrNull { it.name == orderName } ?: UserListOrder.DESCENDING
             animationState.updateSort(sort, order, persist)
             readingState.updateSort(sort, order, persist)
         }
