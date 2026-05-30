@@ -7,18 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,27 +44,28 @@ fun combineDiscoverSort(field: String, descending: Boolean): String =
     if (descending) "${field}_DESC" else field
 
 /**
- * Sheet de Sort + Order para las superficies de Discover (Explore, Seasonal), análogo al
- * [PlatformListFilterSheet] de las listas. Las etiquetas llegan ya localizadas desde el caller.
+ * Sheet de Order + filtros onList para las superficies de Discover (Explore, Seasonal).
+ * El sort field se maneja ahora vía un PlatformFilterChip en el caller.
+ * Las etiquetas llegan ya localizadas desde el caller.
  */
 @Composable
-fun DiscoverSortSheet(
+fun DiscoverFilterSheet(
     title: String,
-    sortTitle: String,
     orderTitle: String,
-    fields: List<DiscoverSortField>,
-    currentSort: String,
     ascendingLabel: String,
     descendingLabel: String,
+    currentDescending: Boolean,
+    showOnListFilters: Boolean,
+    hideOnListLabel: String,
+    onlyOnListLabel: String,
+    currentOnList: Boolean?,
     applyLabel: String,
     onDismiss: () -> Unit,
-    onApply: (String) -> Unit,
+    onApply: (descending: Boolean, onList: Boolean?) -> Unit,
 ) {
-    val (initialField, initialDescending) = parseDiscoverSort(currentSort)
-    var selectedField by remember(currentSort) {
-        mutableStateOf(fields.firstOrNull { it.field == initialField }?.field ?: fields.first().field)
-    }
-    var descending by remember(currentSort) { mutableStateOf(initialDescending) }
+    var descending by remember(currentDescending) { mutableStateOf(currentDescending) }
+    var hideOnList by remember(currentOnList) { mutableStateOf(currentOnList == false) }
+    var onlyOnList by remember(currentOnList) { mutableStateOf(currentOnList == true) }
 
     PlatformModalSheet(
         onDismiss = onDismiss,
@@ -135,43 +132,31 @@ fun DiscoverSortSheet(
                         }
                     }
 
-                    // Sort criterion selector
-                    item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = sortTitle,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+                    // onList checkboxes — only for ANIME/MANGA browse
+                    if (showOnListFilters) {
+                        item {
+                            PlatformBooleanRow(
+                                label = hideOnListLabel,
+                                checked = hideOnList,
+                                onCheckedChange = { checked ->
+                                    hideOnList = checked
+                                    if (checked) onlyOnList = false
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 6.dp),
                             )
-                            fields.forEach { sortField ->
-                                val isSelected = selectedField == sortField.field
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { selectedField = sortField.field }
-                                        .padding(vertical = 2.dp, horizontal = 6.dp),
-                                ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = { selectedField = sortField.field },
-                                        modifier = Modifier.size(36.dp),
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = sortField.label,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                    )
-                                }
-                            }
+                        }
+                        item {
+                            PlatformBooleanRow(
+                                label = onlyOnListLabel,
+                                checked = onlyOnList,
+                                onCheckedChange = { checked ->
+                                    onlyOnList = checked
+                                    if (checked) hideOnList = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     }
                 }
@@ -188,7 +173,14 @@ fun DiscoverSortSheet(
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                 ) {
                     Button(
-                        onClick = { onApply(combineDiscoverSort(selectedField, descending)) },
+                        onClick = {
+                            val onList = when {
+                                onlyOnList -> true
+                                hideOnList -> false
+                                else -> null
+                            }
+                            onApply(descending, onList)
+                        },
                         shape = RoundedCornerShape(24.dp),
                         modifier = Modifier
                             .fillMaxWidth()

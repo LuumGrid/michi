@@ -33,6 +33,7 @@ internal class ExploreStateHolder(
     var format by mutableStateOf("All")
     var year by mutableStateOf<Int?>(null)
     var sort by mutableStateOf("POPULARITY_DESC")
+    var onList by mutableStateOf<Boolean?>(null)
 
     private val resultsBacking = mutableStateListOf<SearchResult>()
     private var loadingState by mutableStateOf(false)
@@ -56,6 +57,7 @@ internal class ExploreStateHolder(
         newFormat: String = format,
         newYear: Int? = year,
         newSort: String = sort,
+        newOnList: Boolean? = onList,
     ) {
         query = newQuery
         category = newCategory
@@ -63,6 +65,7 @@ internal class ExploreStateHolder(
         format = newFormat
         year = newYear
         sort = newSort
+        onList = newOnList
 
         searchJob?.cancel()
         searchJob = scope.launch {
@@ -122,6 +125,7 @@ internal class ExploreStateHolder(
             year = year,
             sort = sort,
             page = page,
+            onList = onList,
         )
         ExploreCategory.READING -> repository.searchManga(
             query = query.takeIf { it.isNotBlank() },
@@ -130,6 +134,7 @@ internal class ExploreStateHolder(
             year = year,
             sort = sort,
             page = page,
+            onList = onList,
         )
         ExploreCategory.CHARACTERS -> repository.searchCharacters(
             query = query.takeIf { it.isNotBlank() },

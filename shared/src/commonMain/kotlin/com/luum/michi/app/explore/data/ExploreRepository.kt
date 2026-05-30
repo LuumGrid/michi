@@ -13,6 +13,7 @@ internal interface ExploreRepository {
         page: Int = 1,
         perPage: Int = 30,
         season: String? = null,
+        onList: Boolean? = null,
     ): NetworkResult<SearchPage>
 
     suspend fun searchManga(
@@ -23,6 +24,7 @@ internal interface ExploreRepository {
         sort: String,
         page: Int = 1,
         perPage: Int = 30,
+        onList: Boolean? = null,
     ): NetworkResult<SearchPage>
 
     suspend fun searchCharacters(

@@ -1,14 +1,15 @@
 package com.luum.michi.app.seasonal.presentation
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -26,13 +27,14 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.media.MediaSeason
 import com.luum.michi.app.core.media.currentSeasonAndYear
+import com.luum.michi.app.core.platform.components.DiscoverFilterSheet
 import com.luum.michi.app.core.platform.components.DiscoverSortField
-import com.luum.michi.app.core.platform.components.DiscoverSortSheet
+import com.luum.michi.app.core.platform.components.combineDiscoverSort
+import com.luum.michi.app.core.platform.components.parseDiscoverSort
 import com.luum.michi.app.core.platform.components.PlatformFilterChip
 import com.luum.michi.app.search.presentation.components.SearchResultCard
 import com.luum.michi.app.seasonal.presentation.state.SeasonalStateHolder
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SeasonalScreen(
     stateHolder: SeasonalStateHolder,
@@ -68,12 +70,12 @@ internal fun SeasonalScreen(
     )
 
     Column(modifier = Modifier.fillMaxSize()) {
-        FlowRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             PlatformFilterChip(
                 label = if (isSpanish) "Temporada" else "Season",
@@ -90,6 +92,18 @@ internal fun SeasonalScreen(
                 optionLabel = { it.toString() },
                 onSelect = { stateHolder.selectYear(it) },
                 active = true,
+            )
+            val (currentSortField, currentDescending) = parseDiscoverSort(stateHolder.sort)
+            val selectedSortField = sortFields.firstOrNull { it.field == currentSortField } ?: sortFields.first()
+            PlatformFilterChip(
+                label = if (isSpanish) "Orden" else "Sort",
+                selectedOption = selectedSortField,
+                options = sortFields,
+                optionLabel = { it.label },
+                onSelect = { field ->
+                    stateHolder.selectSort(combineDiscoverSort(field.field, currentDescending))
+                },
+                active = currentSortField != "POPULARITY",
             )
         }
 
@@ -150,18 +164,21 @@ internal fun SeasonalScreen(
     }
 
     if (showSortSheet) {
-        DiscoverSortSheet(
-            title = if (isSpanish) "Ordenar" else "Sort",
-            sortTitle = if (isSpanish) "Criterio" else "Sort by",
-            orderTitle = if (isSpanish) "Orden" else "Order",
-            fields = sortFields,
-            currentSort = stateHolder.sort,
+        val (currentSortFieldForSheet, currentDescendingForSheet) = parseDiscoverSort(stateHolder.sort)
+        DiscoverFilterSheet(
+            title = if (isSpanish) "Filtros" else "Filters",
+            orderTitle = if (isSpanish) "Dirección" else "Order",
             ascendingLabel = if (isSpanish) "Ascendente" else "Ascending",
             descendingLabel = if (isSpanish) "Descendente" else "Descending",
+            currentDescending = currentDescendingForSheet,
+            showOnListFilters = true,
+            hideOnListLabel = if (isSpanish) "Ocultar las de mi lista" else "Hide series on my list",
+            onlyOnListLabel = if (isSpanish) "Solo las de mi lista" else "Only show series on my list",
+            currentOnList = stateHolder.onList,
             applyLabel = if (isSpanish) "Aplicar" else "Apply",
             onDismiss = onDismissSortSheet,
-            onApply = { newSort ->
-                stateHolder.selectSort(newSort)
+            onApply = { descending, onList ->
+                stateHolder.applySortAndOnList(combineDiscoverSort(currentSortFieldForSheet, descending), onList)
                 onDismissSortSheet()
             },
         )

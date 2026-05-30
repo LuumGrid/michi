@@ -31,7 +31,8 @@ query AnimeCatalog(
   ${'$'}season: MediaSeason,
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
-  ${'$'}perPage: Int!
+  ${'$'}perPage: Int!,
+  ${'$'}onList: Boolean
 ) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
     pageInfo { hasNextPage }
@@ -43,6 +44,7 @@ query AnimeCatalog(
       seasonYear: ${'$'}seasonYear,
       season: ${'$'}season,
       sort: ${'$'}sort,
+      onList: ${'$'}onList,
       isAdult: false
     ) {
       id
@@ -77,7 +79,8 @@ query MangaCatalog(
   ${'$'}startDate_lesser: FuzzyDateInt,
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
-  ${'$'}perPage: Int!
+  ${'$'}perPage: Int!,
+  ${'$'}onList: Boolean
 ) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
     pageInfo { hasNextPage }
@@ -89,6 +92,7 @@ query MangaCatalog(
       startDate_greater: ${'$'}startDate_greater,
       startDate_lesser: ${'$'}startDate_lesser,
       sort: ${'$'}sort,
+      onList: ${'$'}onList,
       isAdult: false
     ) {
       id
@@ -168,6 +172,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         season: String?,
+        onList: Boolean?,
     ): NetworkResult<SearchPage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -184,6 +189,9 @@ internal class ExploreRepositoryImpl(
             }
             if (!season.isNullOrBlank()) {
                 put("season", JsonPrimitive(season))
+            }
+            if (onList != null) {
+                put("onList", JsonPrimitive(onList))
             }
             put("sort", JsonArray(listOf(JsonPrimitive(sort))))
             put("page", JsonPrimitive(page))
@@ -214,6 +222,7 @@ internal class ExploreRepositoryImpl(
         sort: String,
         page: Int,
         perPage: Int,
+        onList: Boolean?,
     ): NetworkResult<SearchPage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -230,6 +239,9 @@ internal class ExploreRepositoryImpl(
                 val startYearLesser = (year + 1) * 10000 + 101
                 put("startDate_greater", JsonPrimitive(startYearGreater))
                 put("startDate_lesser", JsonPrimitive(startYearLesser))
+            }
+            if (onList != null) {
+                put("onList", JsonPrimitive(onList))
             }
             put("sort", JsonArray(listOf(JsonPrimitive(sort))))
             put("page", JsonPrimitive(page))

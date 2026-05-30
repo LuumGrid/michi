@@ -1,14 +1,15 @@
 package com.luum.michi.app.explore.presentation
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -24,14 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.platform.components.DiscoverFilterSheet
 import com.luum.michi.app.core.platform.components.DiscoverSortField
-import com.luum.michi.app.core.platform.components.DiscoverSortSheet
+import com.luum.michi.app.core.platform.components.combineDiscoverSort
+import com.luum.michi.app.core.platform.components.parseDiscoverSort
 import com.luum.michi.app.core.platform.components.PlatformFilterChip
 import com.luum.michi.app.explore.presentation.state.ExploreCategory
 import com.luum.michi.app.explore.presentation.state.ExploreStateHolder
 import com.luum.michi.app.search.presentation.components.SearchResultCard
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ExploreScreen(
     stateHolder: ExploreStateHolder,
@@ -115,12 +117,12 @@ internal fun ExploreScreen(
     )
 
     Column(modifier = Modifier.fillMaxSize()) {
-        FlowRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             PlatformFilterChip(
                 label = if (isSpanish) "Tipo" else "Type",
@@ -153,6 +155,19 @@ internal fun ExploreScreen(
                     optionLabel = { it?.toString() ?: anyYearLabel },
                     onSelect = { stateHolder.updateFilters(newYear = it) },
                     active = stateHolder.year != null,
+                )
+                val (currentSortField, _) = parseDiscoverSort(stateHolder.sort)
+                val selectedSortField = sortFields.firstOrNull { it.field == currentSortField } ?: sortFields.first()
+                PlatformFilterChip(
+                    label = if (isSpanish) "Orden" else "Sort",
+                    selectedOption = selectedSortField,
+                    options = sortFields,
+                    optionLabel = { it.label },
+                    onSelect = { field ->
+                        val (_, desc) = parseDiscoverSort(stateHolder.sort)
+                        stateHolder.updateFilters(newSort = combineDiscoverSort(field.field, desc))
+                    },
+                    active = currentSortField != "POPULARITY",
                 )
             }
         }
@@ -215,18 +230,24 @@ internal fun ExploreScreen(
     }
 
     if (showSortSheet) {
-        DiscoverSortSheet(
-            title = if (isSpanish) "Ordenar" else "Sort",
-            sortTitle = if (isSpanish) "Criterio" else "Sort by",
-            orderTitle = if (isSpanish) "Orden" else "Order",
-            fields = sortFields,
-            currentSort = stateHolder.sort,
+        val (currentSortFieldForSheet, currentDescending) = parseDiscoverSort(stateHolder.sort)
+        DiscoverFilterSheet(
+            title = if (isSpanish) "Filtros" else "Filters",
+            orderTitle = if (isSpanish) "Dirección" else "Order",
             ascendingLabel = if (isSpanish) "Ascendente" else "Ascending",
             descendingLabel = if (isSpanish) "Descendente" else "Descending",
+            currentDescending = currentDescending,
+            showOnListFilters = !stateHolder.isEntitySearch(),
+            hideOnListLabel = if (isSpanish) "Ocultar las de mi lista" else "Hide series on my list",
+            onlyOnListLabel = if (isSpanish) "Solo las de mi lista" else "Only show series on my list",
+            currentOnList = stateHolder.onList,
             applyLabel = if (isSpanish) "Aplicar" else "Apply",
             onDismiss = onDismissSortSheet,
-            onApply = { newSort ->
-                stateHolder.updateFilters(newSort = newSort)
+            onApply = { descending, onList ->
+                stateHolder.updateFilters(
+                    newSort = combineDiscoverSort(currentSortFieldForSheet, descending),
+                    newOnList = onList,
+                )
                 onDismissSortSheet()
             },
         )

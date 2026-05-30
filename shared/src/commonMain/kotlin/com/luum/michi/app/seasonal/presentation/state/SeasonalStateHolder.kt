@@ -14,6 +14,7 @@ import com.luum.michi.app.explore.data.ExploreRepository
 import com.luum.michi.app.search.presentation.model.SearchResult
 import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 internal class SeasonalStateHolder(
@@ -27,6 +28,10 @@ internal class SeasonalStateHolder(
         private set
     var sort by mutableStateOf("POPULARITY_DESC")
         private set
+    var onList by mutableStateOf<Boolean?>(null)
+        private set
+
+    private var loadJob: Job? = null
 
     private val resultsBacking = mutableStateListOf<SearchResult>()
     private var loadingState by mutableStateOf(false)
@@ -62,12 +67,24 @@ internal class SeasonalStateHolder(
         load()
     }
 
+    fun selectOnList(value: Boolean?) {
+        onList = value
+        load()
+    }
+
+    fun applySortAndOnList(newSort: String, newOnList: Boolean?) {
+        sort = newSort
+        onList = newOnList
+        load()
+    }
+
     fun load() {
+        loadJob?.cancel()
         currentPage = 1
         hasNextPageState = false
         loadingState = true
         errorState = null
-        scope.launch {
+        loadJob = scope.launch {
             val result = fetchPage(1)
             when (result) {
                 is NetworkResult.Success -> {
@@ -113,6 +130,7 @@ internal class SeasonalStateHolder(
         sort = sort,
         page = page,
         season = season.name,
+        onList = onList,
     )
 }
 
