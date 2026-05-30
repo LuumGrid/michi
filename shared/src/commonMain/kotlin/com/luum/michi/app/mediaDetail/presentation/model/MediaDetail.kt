@@ -26,6 +26,7 @@ internal data class MediaDetail(
     val type: MediaDetailType,
     val title: String,
     val coverUrl: String?,
+    val coverFullUrl: String? = null,
     val bannerUrl: String?,
     val palette: List<Color>,
     val format: String?,

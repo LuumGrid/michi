@@ -72,6 +72,22 @@ internal fun MediaDetailHeader(
                 ),
         )
 
+        // Fade the banner bottom into the page surface (same as AccountBanner)
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.surface,
+                        ),
+                    ),
+                ),
+        )
+
         // Layer 3: content row
         Row(
             modifier = Modifier

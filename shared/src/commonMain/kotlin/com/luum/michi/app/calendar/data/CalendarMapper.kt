@@ -44,7 +44,7 @@ private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem {
         time = formatAiringTime(airingAt),
         colors = hexToPalette(media.coverImage?.color),
         id = media.id,
-        coverUrl = media.coverImage?.bestUrl,
+        coverUrl = media.coverImage?.thumbnailUrl,
         averageScore = media.averageScore,
         favourites = media.favourites,
         popularity = media.popularity,

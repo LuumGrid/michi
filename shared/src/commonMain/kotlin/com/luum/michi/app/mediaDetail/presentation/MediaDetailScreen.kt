@@ -170,9 +170,10 @@ private fun MediaDetailContent(
         }
     }
 
-    if (showCoverViewer && !detail.coverUrl.isNullOrBlank()) {
+    val coverFull = detail.coverFullUrl ?: detail.coverUrl
+    if (showCoverViewer && !coverFull.isNullOrBlank()) {
         FullscreenImageOverlay(
-            imageUrl = detail.coverUrl!!,
+            imageUrl = coverFull!!,
             contentDescription = detail.title,
             onDismiss = { showCoverViewer = false },
         )

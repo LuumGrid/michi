@@ -27,6 +27,7 @@ import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.core.platform.components.bottomNavBarClearance
 import com.luum.michi.app.feed.data.FeedChip
 import com.luum.michi.app.feed.data.FeedSection
 import com.luum.michi.app.feed.presentation.components.FeedActivityCard
@@ -126,7 +127,7 @@ internal fun FeedScreen(
                         else -> LazyColumn(
                             state = activityListState,
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp),
+                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = bottomNavBarClearance()),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             items(
@@ -170,7 +171,7 @@ internal fun FeedScreen(
                         else -> LazyColumn(
                             state = reviewsListState,
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp),
+                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = bottomNavBarClearance()),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             items(

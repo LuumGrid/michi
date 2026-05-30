@@ -24,6 +24,7 @@ import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
 import com.luum.michi.app.core.platform.components.PlatformSectionHeader
+import com.luum.michi.app.core.platform.components.bottomNavBarClearance
 import com.luum.michi.app.reading.presentation.components.ReadingListCard
 import com.luum.michi.app.reading.presentation.model.ReadingListEntry
 import com.luum.michi.app.reading.presentation.model.ReadingListSection
@@ -174,7 +175,7 @@ private fun ReadingContentList(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
-        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = bottomNavBarClearance()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         visibleSections.forEach { (section, sectionEntries) ->

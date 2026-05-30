@@ -187,8 +187,7 @@ internal fun PlatformListFilterSheet(
                             contentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
+                            .weight(1f),
                     ) {
                         Text(
                             text = strings.filterResetAction,
@@ -201,8 +200,7 @@ internal fun PlatformListFilterSheet(
                         onClick = { onApply(selectedSort, selectedOrder, persistFilter) },
                         shape = RoundedCornerShape(24.dp), // Styled exactly like Editor save button!
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
+                            .weight(1f),
                     ) {
                         Text(
                             text = strings.filterSaveAction,

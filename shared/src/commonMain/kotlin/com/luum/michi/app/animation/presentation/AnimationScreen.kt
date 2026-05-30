@@ -27,6 +27,7 @@ import com.luum.michi.app.animation.presentation.state.AnimationListStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformSectionHeader
+import com.luum.michi.app.core.platform.components.bottomNavBarClearance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,7 +121,7 @@ private fun AnimationContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 96.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 14.dp, bottom = bottomNavBarClearance()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 visibleSections.forEach { (section, sectionEntries) ->

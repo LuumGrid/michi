@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -61,7 +60,7 @@ internal fun ShellBottomNavBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(68.dp),
+            .height(64.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
         tonalElevation = 8.dp,
@@ -141,7 +140,7 @@ internal fun ShellBottomNavBar(
                         contentDescription = null,
                         tint = iconColor,
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(24.dp)
                             .offset(y = (-8).dp),
                     )
                     Text(

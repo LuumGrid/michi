@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
+import com.luum.michi.app.core.platform.components.bottomNavBarClearance
 import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
 
 /** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
@@ -43,7 +44,7 @@ internal fun DashboardScreen(
     ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 96.dp),
+        contentPadding = PaddingValues(bottom = bottomNavBarClearance()),
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
 

@@ -725,7 +725,7 @@ internal class MediaDetailRepositoryImpl(
                     MediaRecommendationEntry(
                         id = recMedia?.id ?: 0,
                         title = recMedia?.title?.userPreferred ?: recMedia?.title?.english ?: recMedia?.title?.romaji.orEmpty(),
-                        coverUrl = recMedia?.coverImage?.bestUrl,
+                        coverUrl = recMedia?.coverImage?.thumbnailUrl,
                         format = recMedia?.format?.replace("_", " ")?.lowercase()?.replaceFirstChar { it.uppercase() } ?: recMedia?.format,
                         year = recMedia?.seasonYear,
                         episodesCount = recMedia?.episodes,
