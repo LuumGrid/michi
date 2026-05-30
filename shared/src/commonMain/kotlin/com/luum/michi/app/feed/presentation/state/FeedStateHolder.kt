@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.feed.data.FeedActivityFilter
+import com.luum.michi.app.feed.data.FeedChip
 import com.luum.michi.app.feed.data.FeedFilter
 import com.luum.michi.app.feed.data.FeedRepository
 import com.luum.michi.app.feed.data.FeedSection
@@ -81,6 +82,36 @@ internal class FeedStateHolder(
     private var reviewsCurrentPage = 1
     private var reviewsJob: Job? = null
     private var reviewsLoadMoreJob: Job? = null
+
+    val selectedChip: FeedChip
+        get() = when {
+            section == FeedSection.REVIEWS -> FeedChip.REVIEWS
+            filter == FeedFilter.FOLLOWING -> FeedChip.FOLLOWING
+            else -> FeedChip.GLOBAL
+        }
+
+    fun selectChip(chip: FeedChip) {
+        when (chip) {
+            FeedChip.REVIEWS -> {
+                if (section != FeedSection.REVIEWS) {
+                    section = FeedSection.REVIEWS
+                    if (reviewsBacking.isEmpty()) loadReviews()
+                }
+            }
+            FeedChip.FOLLOWING, FeedChip.GLOBAL -> {
+                val newFilter = if (chip == FeedChip.FOLLOWING) FeedFilter.FOLLOWING else FeedFilter.GLOBAL
+                val wasReviews = section == FeedSection.REVIEWS
+                section = FeedSection.ACTIVITY
+                if (filter != newFilter) {
+                    filter = newFilter
+                    resetState()
+                    load(forceRefresh = true)
+                } else if (wasReviews && backing.isEmpty()) {
+                    load(forceRefresh = true)
+                }
+            }
+        }
+    }
 
     fun selectFilter(newFilter: FeedFilter) {
         if (filter == newFilter) return

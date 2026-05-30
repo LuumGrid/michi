@@ -8,6 +8,8 @@ internal enum class FeedFilter { FOLLOWING, GLOBAL }
 
 internal enum class FeedSection { ACTIVITY, REVIEWS }
 
+internal enum class FeedChip { FOLLOWING, GLOBAL, REVIEWS }
+
 internal data class FeedPage(val activities: List<FeedActivity>, val hasNextPage: Boolean)
 
 internal data class FeedActivityFilter(

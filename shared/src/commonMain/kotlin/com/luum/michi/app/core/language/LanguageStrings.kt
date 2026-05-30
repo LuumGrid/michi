@@ -23,7 +23,6 @@ interface LanguageStrings {
     val dashboardDescription: String
     val homeSearchPlaceholder: String
     val homeSeasonalAction: String
-    val homeReleasingTodayTitle: String
     val homeTrendingAnimationTitle: String
     val homeTrendingReadingTitle: String
     val searchTitle: String
@@ -33,7 +32,7 @@ interface LanguageStrings {
     val searchNoResultsLabel: String
     val searchGloballyAction: String
     val exploreTitle: String
-    val explorePopularThisSeasonTitle: String
+    val exploreThisSeasonTitle: String
     val exploreUpcomingNextSeasonTitle: String
     val exploreAllTimePopularAnimeTitle: String
     val exploreAllTimePopularMangaTitle: String
@@ -326,7 +325,6 @@ interface LanguageStrings {
     val feedFilterReadingProgress: String
     val feedFilterMessages: String
     val feedFilterMyActivities: String
-    val feedSectionActivity: String
     val feedSectionReviews: String
     val feedReviewOf: String
 

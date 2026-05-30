@@ -10,15 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.PlatformHomeHeader
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseRail
 import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
 
 /** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
 internal enum class DashboardRail {
-    RELEASING_TODAY,
-    POPULAR_THIS_SEASON,
+    THIS_SEASON,
     TRENDING_ANIME,
     TRENDING_MANGA,
     UPCOMING_NEXT_SEASON,
@@ -50,14 +47,14 @@ internal fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
 
-        if (stateHolder.releasingToday.isNotEmpty()) {
+        if (stateHolder.thisSeason.isNotEmpty()) {
             item {
-                PlatformHomeReleaseRail(
-                    title = strings.homeReleasingTodayTitle,
-                    items = stateHolder.releasingToday,
+                PlatformHomeMediaRail(
+                    title = strings.exploreThisSeasonTitle,
+                    items = stateHolder.thisSeason,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.RELEASING_TODAY) },
+                    onSeeAll = { onSeeAll(DashboardRail.THIS_SEASON) },
                 )
             }
         }
@@ -82,18 +79,6 @@ internal fun DashboardScreen(
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
                     onSeeAll = { onSeeAll(DashboardRail.TRENDING_MANGA) },
-                )
-            }
-        }
-
-        if (stateHolder.popularThisSeason.isNotEmpty()) {
-            item {
-                PlatformHomeMediaRail(
-                    title = strings.explorePopularThisSeasonTitle,
-                    items = stateHolder.popularThisSeason,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.POPULAR_THIS_SEASON) },
                 )
             }
         }

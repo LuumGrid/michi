@@ -300,6 +300,7 @@ internal fun ShellScreen(
                     }
                 },
                 onForumClick = { },
+                onOpenCalendar = shellState::openCalendar,
                 onOpenDiscoverSort = { showDiscoverSort = true },
                 exploreQuery = exploreState.query,
                 onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
@@ -346,8 +347,7 @@ internal fun ShellScreen(
                             onEditMedia = shellState::openEditor,
                             onSeeAll = { rail ->
                                 when (rail) {
-                                    DashboardRail.RELEASING_TODAY -> shellState.openCalendar()
-                                    DashboardRail.POPULAR_THIS_SEASON -> {
+                                    DashboardRail.THIS_SEASON -> {
                                         seasonalState.setSeasonYear(currentSeasonAndYear())
                                         shellState.openSeasonal()
                                     }

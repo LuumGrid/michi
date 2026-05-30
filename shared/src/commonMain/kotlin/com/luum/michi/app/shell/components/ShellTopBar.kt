@@ -48,6 +48,7 @@ internal fun ShellTopBar(
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
     onForumClick: () -> Unit,
+    onOpenCalendar: () -> Unit,
     onOpenDiscoverSort: () -> Unit = {},
     chips: @Composable () -> Unit = {},
     exploreQuery: String = "",
@@ -122,6 +123,7 @@ internal fun ShellTopBar(
                         onAccountBack = onAccountBack,
                         onNotificationsClick = onNotificationsClick,
                         onFilterClick = onFilterClick,
+                        onOpenCalendar = onOpenCalendar,
                     )
                 }
             },
@@ -165,6 +167,7 @@ private fun ShellTopBarNavigationIcon(
     onAccountBack: () -> Unit,
     onNotificationsClick: () -> Unit,
     onFilterClick: () -> Unit,
+    onOpenCalendar: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
 
@@ -194,6 +197,15 @@ private fun ShellTopBarNavigationIcon(
                             Icon(
                                 painter = PlatformIcons.FilterList,
                                 contentDescription = strings.filterAction,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+                    }
+                    if (selectedTab == ShellBottomTab.HOME) {
+                        IconButton(onClick = onOpenCalendar) {
+                            Icon(
+                                painter = PlatformIcons.Calendar,
+                                contentDescription = strings.calendarTitle,
                                 modifier = Modifier.size(28.dp),
                             )
                         }

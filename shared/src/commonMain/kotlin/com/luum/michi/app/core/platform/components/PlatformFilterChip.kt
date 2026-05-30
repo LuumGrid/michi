@@ -25,8 +25,6 @@ import com.luum.michi.app.core.platform.PlatformIcons
 /**
  * Chip compacto con forma "Etiqueta: Valor ▾" que abre un menú para elegir entre [options].
  * Reemplaza a las filas de [PlatformChips] cuando hay muchas dimensiones de filtro (Discover).
- *
- * @param active marca visualmente el chip como filtro aplicado (valor distinto al por defecto).
  */
 @Composable
 fun <T> PlatformFilterChip(
@@ -36,13 +34,12 @@ fun <T> PlatformFilterChip(
     optionLabel: (T) -> String,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
-    active: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
         FilterChip(
-            selected = active,
+            selected = true,
             onClick = { expanded = true },
             label = {
                 Text(
@@ -69,7 +66,7 @@ fun <T> PlatformFilterChip(
             ),
             border = FilterChipDefaults.filterChipBorder(
                 enabled = true,
-                selected = active,
+                selected = true,
                 borderColor = MaterialTheme.colorScheme.outline,
             ),
         )

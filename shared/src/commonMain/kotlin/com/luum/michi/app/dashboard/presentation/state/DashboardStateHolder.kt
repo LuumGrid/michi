@@ -8,7 +8,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
 import com.luum.michi.app.dashboard.data.DashboardFeed
 import com.luum.michi.app.dashboard.data.DashboardRepository
 import kotlinx.coroutines.CoroutineScope
@@ -17,10 +16,9 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
 private val EmptyFeed = DashboardFeed(
-    releasingToday = emptyList(),
     trendingAnimation = emptyList(),
     trendingReading = emptyList(),
-    popularThisSeason = emptyList(),
+    thisSeason = emptyList(),
     upcomingNextSeason = emptyList(),
     allTimePopularAnime = emptyList(),
     allTimePopularManga = emptyList(),
@@ -39,10 +37,9 @@ internal class DashboardStateHolder(
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
 
-    val releasingToday: List<PlatformHomeReleaseItem> get() = feedState.releasingToday
     val trendingAnimation: List<PlatformHomeMediaItem> get() = feedState.trendingAnimation
     val trendingReading: List<PlatformHomeMediaItem> get() = feedState.trendingReading
-    val popularThisSeason: List<PlatformHomeMediaItem> get() = feedState.popularThisSeason
+    val thisSeason: List<PlatformHomeMediaItem> get() = feedState.thisSeason
     val upcomingNextSeason: List<PlatformHomeMediaItem> get() = feedState.upcomingNextSeason
     val allTimePopularAnime: List<PlatformHomeMediaItem> get() = feedState.allTimePopularAnime
     val allTimePopularManga: List<PlatformHomeMediaItem> get() = feedState.allTimePopularManga

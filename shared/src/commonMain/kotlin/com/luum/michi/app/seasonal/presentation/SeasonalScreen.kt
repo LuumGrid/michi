@@ -83,7 +83,6 @@ internal fun SeasonalScreen(
                 options = seasons,
                 optionLabel = { it.label() },
                 onSelect = { stateHolder.selectSeason(it) },
-                active = true,
             )
             PlatformFilterChip(
                 label = if (isSpanish) "Año" else "Year",
@@ -91,7 +90,6 @@ internal fun SeasonalScreen(
                 options = years,
                 optionLabel = { it.toString() },
                 onSelect = { stateHolder.selectYear(it) },
-                active = true,
             )
             val (currentSortField, currentDescending) = parseDiscoverSort(stateHolder.sort)
             val selectedSortField = sortFields.firstOrNull { it.field == currentSortField } ?: sortFields.first()
@@ -103,7 +101,6 @@ internal fun SeasonalScreen(
                 onSelect = { field ->
                     stateHolder.selectSort(combineDiscoverSort(field.field, currentDescending))
                 },
-                active = currentSortField != "POPULARITY",
             )
         }
 

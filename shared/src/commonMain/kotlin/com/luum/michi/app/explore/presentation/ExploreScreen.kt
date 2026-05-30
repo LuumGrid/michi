@@ -138,7 +138,6 @@ internal fun ExploreScreen(
                     options = genres,
                     optionLabel = { if (isAll(it)) allLabel else it },
                     onSelect = { stateHolder.updateFilters(newGenre = it) },
-                    active = !isAll(stateHolder.genre),
                 )
                 PlatformFilterChip(
                     label = if (isSpanish) "Formato" else "Format",
@@ -146,7 +145,6 @@ internal fun ExploreScreen(
                     options = formatOptions,
                     optionLabel = { it.label },
                     onSelect = { stateHolder.updateFilters(newFormat = it.value) },
-                    active = !isAll(currentFormatOption.value),
                 )
                 PlatformFilterChip(
                     label = if (isSpanish) "Año" else "Year",
@@ -154,7 +152,6 @@ internal fun ExploreScreen(
                     options = yearOptions,
                     optionLabel = { it?.toString() ?: anyYearLabel },
                     onSelect = { stateHolder.updateFilters(newYear = it) },
-                    active = stateHolder.year != null,
                 )
                 val (currentSortField, _) = parseDiscoverSort(stateHolder.sort)
                 val selectedSortField = sortFields.firstOrNull { it.field == currentSortField } ?: sortFields.first()
@@ -167,7 +164,6 @@ internal fun ExploreScreen(
                         val (_, desc) = parseDiscoverSort(stateHolder.sort)
                         stateHolder.updateFilters(newSort = combineDiscoverSort(field.field, desc))
                     },
-                    active = currentSortField != "POPULARITY",
                 )
             }
         }

@@ -7,8 +7,7 @@ import kotlinx.serialization.Serializable
 internal data class DashboardResponseDto(
     @SerialName("trendingAnime") val trendingAnime: MediaPageDto? = null,
     @SerialName("trendingManga") val trendingManga: MediaPageDto? = null,
-    @SerialName("releasingToday") val releasingToday: AiringSchedulePageDto? = null,
-    @SerialName("popularThisSeason") val popularThisSeason: MediaPageDto? = null,
+    @SerialName("thisSeason") val popularThisSeason: MediaPageDto? = null,
     @SerialName("upcomingNextSeason") val upcomingNextSeason: MediaPageDto? = null,
     @SerialName("allTimePopularAnime") val allTimePopularAnime: MediaPageDto? = null,
     @SerialName("allTimePopularManga") val allTimePopularManga: MediaPageDto? = null,

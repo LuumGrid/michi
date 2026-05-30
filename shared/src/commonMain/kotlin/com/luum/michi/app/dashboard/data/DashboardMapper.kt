@@ -1,24 +1,19 @@
 package com.luum.michi.app.dashboard.data
 
-import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
 import com.luum.michi.app.core.platform.hexToPalette
 
 internal fun DashboardResponseDto.toDashboardFeed(): DashboardFeed = DashboardFeed(
-    releasingToday = releasingToday?.airingSchedules
-        ?.mapNotNull { it.toReleaseItem() }
-        .orEmpty(),
     trendingAnimation = trendingAnime?.media
         ?.map { it.toMediaItem(metaFor = ::animeMeta) }
         .orEmpty(),
     trendingReading = trendingManga?.media
         ?.map { it.toMediaItem(metaFor = ::mangaMeta) }
         .orEmpty(),
-    popularThisSeason = popularThisSeason?.media
+    thisSeason = popularThisSeason?.media
         ?.map { it.toMediaItem(metaFor = ::animeMeta) }
         .orEmpty(),
     upcomingNextSeason = upcomingNextSeason?.media
@@ -51,22 +46,6 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformHomeMed
         isUserRanked = mediaListEntry != null && (mediaListEntry.score ?: 0.0) > 0.0,
     )
 
-private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem? {
-    val media = media ?: return null
-    return PlatformHomeReleaseItem(
-        title = media.title.bestTitle(),
-        release = "Ep ${episode}",
-        time = formatAiringTime(airingAt),
-        colors = hexToPalette(media.coverImage?.color),
-        id = media.id,
-        coverUrl = media.coverImage?.thumbnailUrl,
-        averageScore = media.averageScore,
-        favourites = media.favourites,
-        isUserFavorited = media.isFavourite == true,
-        isUserRanked = media.mediaListEntry != null && (media.mediaListEntry.score ?: 0.0) > 0.0,
-    )
-}
-
 private fun MediaTitleDto?.bestTitle(): String {
     if (this == null) return ""
     return userPreferred ?: english ?: romaji ?: native ?: ""
@@ -89,11 +68,3 @@ private fun formatLabel(format: String?): String? = format
     ?.lowercase()
     ?.replaceFirstChar { it.uppercase() }
 
-private fun formatAiringTime(airingAtEpoch: Long): String {
-    val secondsInDay = ((airingAtEpoch % SecondsPerDay) + SecondsPerDay) % SecondsPerDay
-    val hour = (secondsInDay / 3600L).toInt()
-    val minute = ((secondsInDay % 3600L) / 60L).toInt()
-    return "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
-}
-
-private const val SecondsPerDay: Long = 86_400L

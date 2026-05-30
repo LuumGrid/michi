@@ -27,7 +27,7 @@ import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.feed.data.FeedFilter
+import com.luum.michi.app.feed.data.FeedChip
 import com.luum.michi.app.feed.data.FeedSection
 import com.luum.michi.app.feed.presentation.components.FeedActivityCard
 import com.luum.michi.app.feed.presentation.components.ReviewCard
@@ -98,15 +98,15 @@ internal fun FeedScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Top section selector
             PlatformChips(
-                items = FeedSection.entries,
-                selectedItem = stateHolder.section,
-                onSelect = stateHolder::selectSection,
-                label = { sec ->
-                    when (sec) {
-                        FeedSection.ACTIVITY -> strings.feedSectionActivity
-                        FeedSection.REVIEWS -> strings.feedSectionReviews
+                items = listOf(FeedChip.FOLLOWING, FeedChip.GLOBAL, FeedChip.REVIEWS),
+                selectedItem = stateHolder.selectedChip,
+                onSelect = stateHolder::selectChip,
+                label = { chip ->
+                    when (chip) {
+                        FeedChip.FOLLOWING -> strings.mediaDetailActivityFollowing
+                        FeedChip.GLOBAL -> strings.mediaDetailActivityGlobal
+                        FeedChip.REVIEWS -> strings.feedSectionReviews
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -114,20 +114,6 @@ internal fun FeedScreen(
 
             when (stateHolder.section) {
                 FeedSection.ACTIVITY -> {
-                    // Activity filter chips
-                    PlatformChips(
-                        items = FeedFilter.entries,
-                        selectedItem = stateHolder.filter,
-                        onSelect = stateHolder::selectFilter,
-                        label = { filter ->
-                            when (filter) {
-                                FeedFilter.FOLLOWING -> strings.mediaDetailActivityFollowing
-                                FeedFilter.GLOBAL -> strings.mediaDetailActivityGlobal
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
                     when {
                         stateHolder.isLoading -> PlatformListLoading(label = strings.listsLoadingLabel)
                         stateHolder.error != null -> PlatformListMessage(

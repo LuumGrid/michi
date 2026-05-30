@@ -1,7 +1,6 @@
 package com.luum.michi.app.dashboard.data
 
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
-import com.luum.michi.app.core.auth.currentEpochSeconds
 import com.luum.michi.app.core.media.MediaSeasonYear
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.media.next
@@ -16,8 +15,6 @@ import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val DashboardQuery = """
 query Dashboard(
-  ${'$'}from: Int!,
-  ${'$'}to: Int!,
   ${'$'}currentSeason: MediaSeason!,
   ${'$'}currentYear: Int!,
   ${'$'}nextSeason: MediaSeason!,
@@ -37,17 +34,7 @@ query Dashboard(
       coverImage { extraLarge large medium color }
     }
   }
-  releasingToday: Page(perPage: 25) {
-    airingSchedules(airingAt_greater: ${'$'}from, airingAt_lesser: ${'$'}to, sort: TIME) {
-      id airingAt episode
-      media {
-        id format averageScore favourites isFavourite mediaListEntry { id score }
-        title { romaji english native userPreferred }
-        coverImage { extraLarge large medium color }
-      }
-    }
-  }
-  popularThisSeason: Page(perPage: 20) {
+  thisSeason: Page(perPage: 20) {
     media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
@@ -94,22 +81,17 @@ query Dashboard(
 
 internal class DashboardRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
-    private val nowProvider: () -> Long = { currentEpochSeconds() },
     private val seasonProvider: () -> MediaSeasonYear = { currentSeasonAndYear() },
 ) : DashboardRepository {
 
     override suspend fun loadFeed(): NetworkResult<DashboardFeed> {
         val current = seasonProvider()
         val next = current.next()
-        val from = nowProvider()
-        val to = from + SecondsPerDay
 
         val request = AniListGraphQLRequest(
             query = DashboardQuery,
             variables = JsonObject(
                 mapOf(
-                    "from" to JsonPrimitive(from),
-                    "to" to JsonPrimitive(to),
                     "currentSeason" to JsonPrimitive(current.season.name),
                     "currentYear" to JsonPrimitive(current.year),
                     "nextSeason" to JsonPrimitive(next.season.name),
@@ -124,5 +106,3 @@ internal class DashboardRepositoryImpl(
         }.map { it.toDashboardFeed() }
     }
 }
-
-private const val SecondsPerDay: Long = 86_400L
