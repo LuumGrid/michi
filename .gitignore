@@ -18,6 +18,8 @@ xcuserdata
 
 # Local SDK paths and local machine properties (Android Studio)
 local.properties
+keystore.properties
+*.jks
 
 # IntelliJ/Android Studio project-specific settings folder
 .idea
