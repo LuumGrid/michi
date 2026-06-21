@@ -1,4 +1,5 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -50,6 +51,22 @@ val anilistClientIdValue: String =
     (localProperties["anilistClientId"] as? String)
         ?.takeIf { it.isNotBlank() }
         ?: System.getenv("ANILIST_CLIENT_ID").orEmpty()
+
+// Fail fast when packaging a release without a client id, otherwise the shipped
+// binary would bake in an empty ClientId and every user would hit the
+// "Missing anilistClientId" screen. Debug builds are intentionally allowed to
+// run without it so day-to-day development is not blocked.
+val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
+    taskName.substringAfterLast(':').contains("release", ignoreCase = true)
+}
+if (isReleaseBuild && anilistClientIdValue.isBlank()) {
+    throw GradleException(
+        "Missing anilistClientId for a release build. Set `anilistClientId` in " +
+            "local.properties or the ANILIST_CLIENT_ID environment variable before " +
+            "assembling a release — otherwise shipped users would see the " +
+            "\"Missing anilistClientId\" error."
+    )
+}
 
 val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>("generateAniListBuildConfig") {
     clientId.set(anilistClientIdValue)
