@@ -46,7 +46,10 @@ val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
-val anilistClientIdValue: String = (localProperties["anilistClientId"] as? String).orEmpty()
+val anilistClientIdValue: String =
+    (localProperties["anilistClientId"] as? String)
+        ?.takeIf { it.isNotBlank() }
+        ?: System.getenv("ANILIST_CLIENT_ID").orEmpty()
 
 val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>("generateAniListBuildConfig") {
     clientId.set(anilistClientIdValue)
