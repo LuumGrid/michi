@@ -2,9 +2,10 @@ package com.luum.michi.app.account.presentation.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,6 +22,7 @@ import com.luum.michi.app.core.platform.components.PlatformMediaCover
 @Composable
 internal fun AccountFavoriteMediaCard(
     media: AccountFavoriteMedia,
+    modifier: Modifier = Modifier.width(PlatformCoverSize.RailPosterWidth),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
@@ -32,22 +34,25 @@ internal fun AccountFavoriteMediaCard(
     } else {
         Modifier
     }
-    Column(modifier = Modifier.width(PlatformCoverSize.RailPosterWidth).then(clickModifier)) {
+    Column(
+        modifier = modifier.then(clickModifier),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         PlatformMediaCover(
             coverUrl = media.coverUrl,
             palette = media.palette,
             contentDescription = media.title,
             modifier = Modifier
-                .width(PlatformCoverSize.RailPosterWidth)
+                .fillMaxWidth()
                 .aspectRatio(PlatformCoverSize.PosterAspectRatio),
         )
         Text(
             text = media.title,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 6.dp),
         )
     }
 }

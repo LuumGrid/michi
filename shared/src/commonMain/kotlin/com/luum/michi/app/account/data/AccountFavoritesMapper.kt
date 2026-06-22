@@ -20,28 +20,28 @@ internal fun FavouritesDto.toDomain(): AccountFavorites = AccountFavorites(
     studios = studios?.nodes?.map(StudioDto::toAccountFavoriteStudio).orEmpty(),
 )
 
-private fun MediaDto.toAccountFavoriteMedia(): AccountFavoriteMedia = AccountFavoriteMedia(
+internal fun MediaDto.toAccountFavoriteMedia(): AccountFavoriteMedia = AccountFavoriteMedia(
     id = id,
     title = title.bestTitle(),
     coverUrl = coverImage?.thumbnailUrl,
     palette = hexToPalette(coverImage?.color),
 )
 
-private fun CharacterDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
+internal fun CharacterDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
     imageUrl = image?.bestUrl,
     palette = hexToPalette(null),
 )
 
-private fun StaffDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
+internal fun StaffDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
     imageUrl = image?.bestUrl,
     palette = hexToPalette(null),
 )
 
-private fun StudioDto.toAccountFavoriteStudio(): AccountFavoriteStudio = AccountFavoriteStudio(
+internal fun StudioDto.toAccountFavoriteStudio(): AccountFavoriteStudio = AccountFavoriteStudio(
     id = id,
     name = name,
     coverUrl = latestCoverImage?.thumbnailUrl,

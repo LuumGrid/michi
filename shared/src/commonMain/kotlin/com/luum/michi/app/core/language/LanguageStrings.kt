@@ -194,34 +194,27 @@ interface LanguageStrings {
     val accountFavoriteCharactersTitle: String
     val accountFavoriteStaffTitle: String
     val accountFavoriteStudiosTitle: String
-    val accountSeeMoreAction: String
     fun accountJoinedLabel(month: Int, year: Int): String
     val accountEditProfileAction: String
     val accountShareProfileAction: String
     val accountDownloadProfileQrAction: String
-    val accountChangeProfilePhotoAction: String
-    val accountEditNameLabel: String
-    val accountEditUsernameLabel: String
-    val accountEditBioLabel: String
-    val accountEditLinksLabel: String
-    val accountAddLinkAction: String
-    val accountEditLinkTitleLabel: String
-    val accountEditLinkUrlLabel: String
-    val accountEditGenderLabel: String
-    val accountEditCustomGenderLabel: String
-    val accountGenderMale: String
-    val accountGenderFemale: String
-    val accountGenderPreferNotToSay: String
-    val accountGenderCustom: String
-    val accountEditEmailLabel: String
-    val accountEditBirthDateLabel: String
-    val accountSelectDateAction: String
-    val accountSelectDateConfirmAction: String
-    val accountVisibilityPublic: String
-    val accountVisibilityPrivate: String
-    val accountVisibilitySubtitle: String
-    val accountEditAvatarUrlLabel: String
-    val accountSaveProfileAction: String
+    val accountWebOnlyFieldsNote: String
+    val accountEditProfileOnWebAction: String
+    val accountEditAccountOnWebAction: String
+    val accountStatsTitle: String
+    val accountStatsOverviewLabel: String
+    val accountStatsEpisodesWatchedLabel: String
+    val accountStatsChaptersReadLabel: String
+    val accountStatsDaysWatchedLabel: String
+    val accountStatsVolumesReadLabel: String
+    val accountStatsMeanScoreLabel: String
+    val accountStatsStandardDeviationLabel: String
+    val accountStatsScoreDistributionTitle: String
+    val accountStatsFormatDistributionTitle: String
+    val accountStatsStatusDistributionTitle: String
+    val accountStatsTopGenresTitle: String
+    val accountStatsEmptyLabel: String
+    val accountFavoritesGridEmptyLabel: String
     val settingsAppSection: String
     val settingsAniListSection: String
     val settingsListsSection: String

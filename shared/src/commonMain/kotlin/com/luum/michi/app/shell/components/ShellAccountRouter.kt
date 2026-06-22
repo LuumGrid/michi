@@ -2,11 +2,15 @@ package com.luum.michi.app.shell.components
 
 import androidx.compose.runtime.Composable
 import com.luum.michi.app.account.presentation.AccountEditProfileScreen
+import com.luum.michi.app.account.presentation.AccountFavoritesGridScreen
 import com.luum.michi.app.account.presentation.AccountScreen
 import com.luum.michi.app.account.presentation.AccountShareProfileScreen
+import com.luum.michi.app.account.presentation.AccountStatsScreen
 import com.luum.michi.app.account.presentation.model.AccountFavorites
+import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
 import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.settings.presentation.SettingsScreen
@@ -22,16 +26,21 @@ internal fun ShellAccountRouter(
     accountFavorites: AccountFavorites,
     accountIsRefreshing: Boolean,
     onAccountRefresh: () -> Unit,
+    favoritesCategory: AccountFavoritesCategory,
+    favoritesGridStateHolder: AccountFavoritesGridStateHolder,
     language: AppLanguage,
     isDarkMode: Boolean,
     onLanguageChange: (AppLanguage) -> Unit,
     onToggleTheme: () -> Unit,
-    onProfileChange: (AccountProfileDraft) -> Unit,
     onNavigate: (ShellAccountRoute) -> Unit,
     onOpenAnimationList: () -> Unit,
     onOpenReadingList: () -> Unit,
     onOpenMedia: (Int) -> Unit,
     onEditMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit,
+    onOpenFavoritesGrid: (AccountFavoritesCategory) -> Unit,
     onLogout: () -> Unit,
     onBackHandlerChange: (PlatformBackHandler?) -> Unit,
 ) {
@@ -54,6 +63,11 @@ internal fun ShellAccountRouter(
                 onOpenReadingList = onOpenReadingList,
                 onOpenMedia = onOpenMedia,
                 onEditMedia = onEditMedia,
+                onOpenCharacter = onOpenCharacter,
+                onOpenStaff = onOpenStaff,
+                onOpenStudio = onOpenStudio,
+                onOpenStats = { onNavigate(ShellAccountRoute.STATS) },
+                onOpenFavoritesGrid = onOpenFavoritesGrid,
             )
         }
 
@@ -73,14 +87,7 @@ internal fun ShellAccountRouter(
         }
 
         ShellAccountRoute.EDIT_PROFILE -> {
-            AccountEditProfileScreen(
-                initialDraft = profile,
-                onSave = { draft ->
-                    onProfileChange(draft)
-                    onNavigate(ShellAccountRoute.ACCOUNT)
-                },
-                onBackHandlerChange = onBackHandlerChange,
-            )
+            AccountEditProfileScreen(initialDraft = profile)
         }
 
         ShellAccountRoute.SHARE_PROFILE -> {
@@ -88,6 +95,22 @@ internal fun ShellAccountRouter(
                 username = profile.username,
                 displayName = profile.displayName,
                 avatarUrl = profile.avatarUrl,
+            )
+        }
+
+        ShellAccountRoute.STATS -> {
+            AccountStatsScreen(stats = accountStats)
+        }
+
+        ShellAccountRoute.FAVORITES -> {
+            AccountFavoritesGridScreen(
+                stateHolder = favoritesGridStateHolder,
+                category = favoritesCategory,
+                onOpenMedia = onOpenMedia,
+                onEditMedia = onEditMedia,
+                onOpenCharacter = onOpenCharacter,
+                onOpenStaff = onOpenStaff,
+                onOpenStudio = onOpenStudio,
             )
         }
     }

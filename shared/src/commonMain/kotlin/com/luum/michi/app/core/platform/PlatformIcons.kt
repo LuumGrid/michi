@@ -2,10 +2,14 @@ package com.luum.michi.app.core.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
+
+import org.jetbrains.compose.resources.painterResource
+
 import com.luum.michi.app.resources.Res
 import com.luum.michi.app.resources.add
 import com.luum.michi.app.resources.admin_panel_settings
 import com.luum.michi.app.resources.arrow_back
+import com.luum.michi.app.resources.bar_chart
 import com.luum.michi.app.resources.calendar_month
 import com.luum.michi.app.resources.close
 import com.luum.michi.app.resources.creator_tools
@@ -22,7 +26,6 @@ import com.luum.michi.app.resources.reply
 import com.luum.michi.app.resources.heart_broken
 import com.luum.michi.app.resources.help_support
 import com.luum.michi.app.resources.history
-import com.luum.michi.app.resources.home
 import com.luum.michi.app.resources.info
 import com.luum.michi.app.resources.keyboard_arrow_down
 import com.luum.michi.app.resources.keyboard_arrow_left
@@ -48,7 +51,6 @@ import com.luum.michi.app.resources.star_filled
 import com.luum.michi.app.resources.switch_account
 import com.luum.michi.app.resources.tv
 import com.luum.michi.app.resources.user_activity
-import org.jetbrains.compose.resources.painterResource
 
 object PlatformIcons {
     //Navbar
@@ -99,4 +101,5 @@ object PlatformIcons {
     val Groups: Painter @Composable get() = painterResource(Res.drawable.groups)
     val Star: Painter @Composable get() = painterResource(Res.drawable.star)
     val StarFilled: Painter @Composable get() = painterResource(Res.drawable.star_filled)
+    val Stats: Painter @Composable get() = painterResource(Res.drawable.bar_chart)
 }

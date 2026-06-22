@@ -38,12 +38,26 @@ internal data class ViewerDto(
     val createdAt: Long? = null,
     val donatorTier: Int = 0,
     val moderatorRoles: List<String>? = null,
+    val options: ViewerOptionsDto? = null,
+    val mediaListOptions: ViewerMediaListOptionsDto? = null,
 )
 
 @Serializable
 internal data class AvatarDto(
     val large: String? = null,
     val medium: String? = null,
+)
+
+@Serializable
+internal data class ViewerOptionsDto(
+    val titleLanguage: String? = null,
+    val staffNameLanguage: String? = null,
+    val displayAdultContent: Boolean = false,
+)
+
+@Serializable
+internal data class ViewerMediaListOptionsDto(
+    val scoreFormat: String? = null,
 )
 
 internal fun ViewerDto.toDomain(): Viewer = Viewer(
@@ -55,4 +69,8 @@ internal fun ViewerDto.toDomain(): Viewer = Viewer(
     createdAtEpochSeconds = createdAt,
     isDonator = donatorTier > 0,
     isModerator = !moderatorRoles.isNullOrEmpty(),
+    titleLanguage = options?.titleLanguage,
+    staffNameLanguage = options?.staffNameLanguage,
+    displayAdultContent = options?.displayAdultContent ?: false,
+    scoreFormat = mediaListOptions?.scoreFormat,
 )

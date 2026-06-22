@@ -30,3 +30,12 @@ internal data class AccountFavorites(
     val staff: List<AccountFavoritePerson>,
     val studios: List<AccountFavoriteStudio>,
 )
+
+/** Which favourites bucket a "see more" grid should page through. */
+internal enum class AccountFavoritesCategory {
+    ANIME,
+    MANGA,
+    CHARACTERS,
+    STAFF,
+    STUDIOS,
+}

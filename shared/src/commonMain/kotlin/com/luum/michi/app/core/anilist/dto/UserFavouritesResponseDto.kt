@@ -45,19 +45,23 @@ internal data class FavouritesDto(
 @Serializable
 internal data class MediaConnectionDto(
     val nodes: List<MediaDto> = emptyList(),
+    val pageInfo: PageInfoDto? = null,
 )
 
 @Serializable
 internal data class CharacterConnectionDto(
     val nodes: List<CharacterDto> = emptyList(),
+    val pageInfo: PageInfoDto? = null,
 )
 
 @Serializable
 internal data class StaffConnectionDto(
     val nodes: List<StaffDto> = emptyList(),
+    val pageInfo: PageInfoDto? = null,
 )
 
 @Serializable
 internal data class StudioConnectionDto(
     val nodes: List<StudioDto> = emptyList(),
+    val pageInfo: PageInfoDto? = null,
 )

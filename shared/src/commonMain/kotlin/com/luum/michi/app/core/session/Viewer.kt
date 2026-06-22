@@ -9,4 +9,8 @@ internal data class Viewer(
     val createdAtEpochSeconds: Long? = null,
     val isDonator: Boolean = false,
     val isModerator: Boolean = false,
+    val titleLanguage: String? = null,
+    val staffNameLanguage: String? = null,
+    val displayAdultContent: Boolean = false,
+    val scoreFormat: String? = null,
 )

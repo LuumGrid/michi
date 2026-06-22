@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.data.AccountRepository
+import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.presentation.state.rememberAccountFavoritesGridStateHolder
 import com.luum.michi.app.account.presentation.state.rememberAccountStateHolder
 import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.presentation.AnimationScreen
@@ -117,6 +119,7 @@ internal fun ShellScreen(
         repository = accountRepository,
         viewerId = viewer.id,
     )
+    val favoritesGridState = rememberAccountFavoritesGridStateHolder(accountRepository)
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
     val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
@@ -181,6 +184,12 @@ internal fun ShellScreen(
                 }
             }
             else -> {}
+        }
+    }
+
+    LaunchedEffect(shellState.accountRoute, shellState.favoritesCategory) {
+        if (shellState.accountRoute == ShellAccountRoute.FAVORITES) {
+            favoritesGridState.load(viewer.id, shellState.favoritesCategory)
         }
     }
 
@@ -251,6 +260,16 @@ internal fun ShellScreen(
             shellState.accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
+        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+            shellState.accountRoute == ShellAccountRoute.STATS -> strings.accountStatsTitle
+        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+            shellState.accountRoute == ShellAccountRoute.FAVORITES -> when (shellState.favoritesCategory) {
+                AccountFavoritesCategory.ANIME -> strings.accountFavoriteAnimeTitle
+                AccountFavoritesCategory.MANGA -> strings.accountFavoriteMangaTitle
+                AccountFavoritesCategory.CHARACTERS -> strings.accountFavoriteCharactersTitle
+                AccountFavoritesCategory.STAFF -> strings.accountFavoriteStaffTitle
+                AccountFavoritesCategory.STUDIOS -> strings.accountFavoriteStudiosTitle
+            }
         shellState.selectedTab == ShellBottomTab.ACCOUNT ->
             shellState.currentProfile.username
         else -> shellState.selectedTab.label(strings)
@@ -410,16 +429,21 @@ internal fun ShellScreen(
                             accountFavorites = accountState.favorites,
                             accountIsRefreshing = accountState.isRefreshing,
                             onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
+                            favoritesCategory = shellState.favoritesCategory,
+                            favoritesGridStateHolder = favoritesGridState,
                             language = language,
                             isDarkMode = isDarkMode,
                             onLanguageChange = onLanguageChange,
                             onToggleTheme = onToggleTheme,
-                            onProfileChange = { shellState.currentProfile = it },
                             onNavigate = { shellState.accountRoute = it },
                             onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
                             onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
+                            onOpenCharacter = shellState::openCharacter,
+                            onOpenStaff = shellState::openStaff,
+                            onOpenStudio = shellState::openStudio,
+                            onOpenFavoritesGrid = shellState::openFavoritesGrid,
                             onLogout = onLogout,
                             onBackHandlerChange = { shellState.topBarBackHandler = it },
                         )

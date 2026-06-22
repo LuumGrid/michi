@@ -5,7 +5,6 @@ import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
-import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val ViewerQuery = """
 query Viewer {
@@ -21,6 +20,14 @@ query Viewer {
     createdAt
     donatorTier
     moderatorRoles
+    options {
+      titleLanguage
+      staffNameLanguage
+      displayAdultContent
+    }
+    mediaListOptions {
+      scoreFormat
+    }
   }
 }
 """

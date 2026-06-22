@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.core.platform.PlatformBackHandler
@@ -19,6 +20,8 @@ internal enum class ShellAccountRoute {
     SETTINGS,
     EDIT_PROFILE,
     SHARE_PROFILE,
+    STATS,
+    FAVORITES,
 }
 
 internal class ShellState(initialProfile: AccountProfileDraft) {
@@ -37,6 +40,7 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
     var isSeasonalOpen by mutableStateOf(false)
+    var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
@@ -88,6 +92,11 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
     fun closeDetail() { if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex) }
+
+    fun openFavoritesGrid(category: AccountFavoritesCategory) {
+        favoritesCategory = category
+        accountRoute = ShellAccountRoute.FAVORITES
+    }
 
     fun openEditor(id: Int) {
         editorMediaId = id
@@ -150,5 +159,4 @@ private fun Viewer.toAccountProfileDraft(): AccountProfileDraft = AccountProfile
     avatarUrl = avatarUrl,
     bannerUrl = bannerUrl,
     bio = about.orEmpty(),
-    email = "",
 )
