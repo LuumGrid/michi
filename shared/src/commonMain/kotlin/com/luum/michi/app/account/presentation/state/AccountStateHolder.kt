@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.presentation.model.AccountFavorites
 import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,7 +39,7 @@ internal class AccountStateHolder(
     private var favoritesState by mutableStateOf(EmptyFavorites)
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
@@ -47,7 +48,7 @@ internal class AccountStateHolder(
     val favorites: AccountFavorites get() = favoritesState
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
@@ -66,7 +67,7 @@ internal class AccountStateHolder(
                         lastLoaded = timeMark.markNow()
                         lastUserId = userId
                     }
-                    is NetworkResult.Failure -> errorState = result.error.toString()
+                    is NetworkResult.Failure -> errorState = result.error
                 }
             } finally {
                 loadingState = false

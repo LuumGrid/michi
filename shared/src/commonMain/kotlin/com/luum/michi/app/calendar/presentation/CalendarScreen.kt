@@ -18,6 +18,7 @@ import com.luum.michi.app.calendar.presentation.components.CalendarItemRow
 import com.luum.michi.app.calendar.presentation.state.CalendarStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
@@ -40,7 +41,7 @@ internal fun CalendarScreen(
         stateHolder.isLoading && stateHolder.days.isEmpty() -> PlatformListLoading(strings.listsLoadingLabel)
         stateHolder.error != null && stateHolder.days.isEmpty() -> PlatformListMessage(
             title = strings.listsErrorLabel,
-            subtitle = stateHolder.error,
+            subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
             tone = PlatformListMessageTone.Error,
         )
         stateHolder.days.isEmpty() -> PlatformListMessage(title = strings.calendarEmptyLabel)

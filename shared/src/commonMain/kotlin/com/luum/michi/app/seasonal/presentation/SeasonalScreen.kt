@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.media.MediaSeason
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.platform.components.DiscoverFilterSheet
@@ -112,7 +113,10 @@ internal fun SeasonalScreen(
                         contentAlignment = Alignment.Center,
                     ) { CircularProgressIndicator() }
                 stateHolder.error != null && stateHolder.results.isEmpty() ->
-                    SeasonalCenteredMessage(text = stateHolder.error ?: "", isError = true)
+                    SeasonalCenteredMessage(
+                        text = stateHolder.error?.let { strings.networkErrorMessage(it) } ?: "",
+                        isError = true,
+                    )
                 stateHolder.results.isEmpty() ->
                     SeasonalCenteredMessage(
                         text = if (isSpanish) {

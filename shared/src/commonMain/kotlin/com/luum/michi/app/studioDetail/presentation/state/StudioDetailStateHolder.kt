@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.studioDetail.data.StudioDetailRepository
 import com.luum.michi.app.studioDetail.presentation.model.StudioDetail
@@ -52,7 +53,7 @@ internal class StudioDetailStateHolder(
 ) {
     private var detailState by mutableStateOf<StudioDetail?>(null)
     private var loadingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var currentStudioId: Int? = null
     private var currentJob: Job? = null
 
@@ -75,7 +76,7 @@ internal class StudioDetailStateHolder(
 
     val detail: StudioDetail? get() = detailState
     val isLoading: Boolean get() = loadingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(id: Int) {
         if (currentStudioId == id && (detailState != null || loadingState)) return
@@ -125,7 +126,7 @@ internal class StudioDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -156,7 +157,7 @@ internal class StudioDetailStateHolder(
                         )
                     }
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingMore = false
         }
@@ -195,7 +196,7 @@ internal class StudioDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -229,7 +230,7 @@ internal class StudioDetailStateHolder(
                 }
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    errorState = result.error.toString()
+                    errorState = result.error
                 }
             }
             isTogglingFavourite = false

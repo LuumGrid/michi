@@ -12,6 +12,7 @@ import com.luum.michi.app.account.presentation.model.AccountFavoriteMedia
 import com.luum.michi.app.account.presentation.model.AccountFavoritePerson
 import com.luum.michi.app.account.presentation.model.AccountFavoriteStudio
 import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -31,7 +32,7 @@ internal class AccountFavoritesGridStateHolder(
     private var isLoadingState by mutableStateOf(false)
     private var isLoadingMoreState by mutableStateOf(false)
     private var hasNextPageState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var currentPage = 0
     private var loadedUserId: Int? = null
     private var loadedCategory: AccountFavoritesCategory? = null
@@ -42,7 +43,7 @@ internal class AccountFavoritesGridStateHolder(
     val isLoading: Boolean get() = isLoadingState
     val isLoadingMore: Boolean get() = isLoadingMoreState
     val hasNextPage: Boolean get() = hasNextPageState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(userId: Int, category: AccountFavoritesCategory) {
         if (loadedUserId == userId && loadedCategory == category) return
@@ -88,7 +89,7 @@ internal class AccountFavoritesGridStateHolder(
                 hasNextPageState = result.value.hasNextPage
                 currentPage = page
             }
-            is NetworkResult.Failure -> errorState = result.error.toString()
+            is NetworkResult.Failure -> errorState = result.error
         }
     }
 }

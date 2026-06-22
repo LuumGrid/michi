@@ -10,6 +10,7 @@ import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.presentation.model.CharacterDetail
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaItem
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaSort
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -47,7 +48,7 @@ internal class CharacterDetailStateHolder(
 ) {
     private var detailState by mutableStateOf<CharacterDetail?>(null)
     private var loadingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var currentCharacterId: Int? = null
     private var currentJob: Job? = null
 
@@ -70,7 +71,7 @@ internal class CharacterDetailStateHolder(
 
     val detail: CharacterDetail? get() = detailState
     val isLoading: Boolean get() = loadingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(id: Int) {
         if (currentCharacterId == id && (detailState != null || loadingState)) return
@@ -120,7 +121,7 @@ internal class CharacterDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -150,7 +151,7 @@ internal class CharacterDetailStateHolder(
                         )
                     }
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingMore = false
         }
@@ -188,7 +189,7 @@ internal class CharacterDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -220,7 +221,7 @@ internal class CharacterDetailStateHolder(
                 }
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    errorState = result.error.toString()
+                    errorState = result.error
                 }
             }
             isTogglingFavourite = false

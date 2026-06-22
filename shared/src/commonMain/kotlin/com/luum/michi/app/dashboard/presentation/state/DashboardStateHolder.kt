@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
 import com.luum.michi.app.dashboard.data.DashboardFeed
@@ -33,7 +34,7 @@ internal class DashboardStateHolder(
     private var feedState by mutableStateOf(EmptyFeed)
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
 
@@ -47,7 +48,7 @@ internal class DashboardStateHolder(
     val topManga: List<PlatformHomeMediaItem> get() = feedState.topManga
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     /** Load feed, skipping the network call if data was fetched within the TTL. */
     fun load(forceRefresh: Boolean = false) {
@@ -67,7 +68,7 @@ internal class DashboardStateHolder(
                         feedState = result.value
                         lastLoaded = timeMark.markNow()
                     }
-                    is NetworkResult.Failure -> errorState = result.error.toString()
+                    is NetworkResult.Failure -> errorState = result.error
                 }
             } finally {
                 loadingState = false

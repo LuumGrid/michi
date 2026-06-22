@@ -11,6 +11,7 @@ import com.luum.michi.app.animation.data.AnimationListRepository
 import com.luum.michi.app.animation.presentation.model.AnimationListEntry
 import com.luum.michi.app.animation.presentation.model.AnimationListSection
 import com.luum.michi.app.animation.presentation.model.incremented
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -30,7 +31,7 @@ internal class AnimationListStateHolder(
     private val backing = mutableStateListOf<AnimationListEntry>()
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
@@ -42,7 +43,7 @@ internal class AnimationListStateHolder(
     val entries: List<AnimationListEntry> get() = backing
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
@@ -68,7 +69,7 @@ internal class AnimationListStateHolder(
                         lastUserId = userId
                     }
                     is NetworkResult.Failure -> {
-                        errorState = result.error.toString()
+                        errorState = result.error
                     }
                 }
             } finally {

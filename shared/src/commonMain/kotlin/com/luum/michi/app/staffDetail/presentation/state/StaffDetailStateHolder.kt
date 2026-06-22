@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.staffDetail.data.StaffDetailRepository
 import com.luum.michi.app.staffDetail.presentation.model.StaffCharacterItem
@@ -57,7 +58,7 @@ internal class StaffDetailStateHolder(
 ) {
     private var detailState by mutableStateOf<StaffDetail?>(null)
     private var loadingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var currentStaffId: Int? = null
     private var currentJob: Job? = null
 
@@ -93,7 +94,7 @@ internal class StaffDetailStateHolder(
 
     val detail: StaffDetail? get() = detailState
     val isLoading: Boolean get() = loadingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(id: Int) {
         if (currentStaffId == id && (detailState != null || loadingState)) return
@@ -142,7 +143,7 @@ internal class StaffDetailStateHolder(
                     isFavourite = value.isFavourite
                     detailCache.put(id, buildSnapshot(value))
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -162,7 +163,7 @@ internal class StaffDetailStateHolder(
                     mediaCurrentPage = result.value.currentPage
                     detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingMoreMedia = false
         }
@@ -182,7 +183,7 @@ internal class StaffDetailStateHolder(
                     charactersCurrentPage = result.value.currentPage
                     detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingMoreCharacters = false
         }
@@ -223,7 +224,7 @@ internal class StaffDetailStateHolder(
                     isFavourite = value.isFavourite
                     detailCache.put(id, buildSnapshot(value))
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -246,7 +247,7 @@ internal class StaffDetailStateHolder(
                 }
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    errorState = result.error.toString()
+                    errorState = result.error
                 }
             }
             isTogglingFavourite = false

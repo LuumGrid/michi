@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.DiscoverFilterSheet
 import com.luum.michi.app.core.platform.components.DiscoverSortField
 import com.luum.michi.app.core.platform.components.combineDiscoverSort
@@ -177,7 +178,10 @@ internal fun ExploreScreen(
                         contentAlignment = Alignment.Center,
                     ) { CircularProgressIndicator() }
                 stateHolder.error != null && stateHolder.results.isEmpty() ->
-                    CenteredMessage(text = stateHolder.error ?: "", isError = true)
+                    CenteredMessage(
+                        text = stateHolder.error?.let { strings.networkErrorMessage(it) } ?: "",
+                        isError = true,
+                    )
                 stateHolder.results.isEmpty() ->
                     CenteredMessage(
                         text = if (isSpanish) {

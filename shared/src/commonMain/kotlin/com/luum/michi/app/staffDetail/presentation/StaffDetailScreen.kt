@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
@@ -63,8 +64,8 @@ import com.luum.michi.app.staffDetail.presentation.state.StaffDetailStateHolder
 // Local enum — does NOT conflict with the StaffTab composable in mediaDetail
 private enum class StaffDetailTab { OVERVIEW, MEDIA, CHARACTERS }
 
-private val AllSortOptions = StaffMediaSort.values().toList()
-private val AllTabs = StaffDetailTab.values().toList()
+private val AllSortOptions = StaffMediaSort.entries
+private val AllTabs = StaffDetailTab.entries
 
 @Composable
 internal fun StaffDetailScreen(
@@ -89,7 +90,7 @@ internal fun StaffDetailScreen(
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
             title = strings.mediaDetailErrorLabel,
-            subtitle = stateHolder.error,
+            subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
             tone = PlatformListMessageTone.Error,
         )
         else -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)

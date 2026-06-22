@@ -50,6 +50,7 @@ import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaSort
 import com.luum.michi.app.characterDetail.presentation.state.CharacterDetailStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
@@ -61,8 +62,8 @@ import com.luum.michi.app.core.platform.components.PlatformRatingBadge
 
 private enum class CharacterTab { OVERVIEW, MEDIA }
 
-private val AllSortOptions = CharacterMediaSort.values().toList()
-private val AllTabs = CharacterTab.values().toList()
+private val AllSortOptions = CharacterMediaSort.entries
+private val AllTabs = CharacterTab.entries
 
 @Composable
 internal fun CharacterDetailScreen(
@@ -87,7 +88,7 @@ internal fun CharacterDetailScreen(
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
             title = strings.mediaDetailErrorLabel,
-            subtitle = stateHolder.error,
+            subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
             tone = PlatformListMessageTone.Error,
         )
         else -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)

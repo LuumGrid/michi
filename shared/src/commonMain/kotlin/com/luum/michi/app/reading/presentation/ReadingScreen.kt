@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
@@ -45,6 +46,7 @@ internal fun ReadingScreen(
     onSearchGlobally: () -> Unit = {},
     onRefresh: () -> Unit,
 ) {
+    val strings = LanguageProvider.strings
     PullToRefreshBox(
         isRefreshing = stateHolder.isRefreshing,
         onRefresh = onRefresh,
@@ -56,7 +58,7 @@ internal fun ReadingScreen(
             selectedSection = selectedSection,
             searchQuery = searchQuery,
             isLoading = stateHolder.isLoading,
-            error = stateHolder.error,
+            error = stateHolder.error?.let { strings.networkErrorMessage(it) },
             onIncrementChapters = stateHolder::incrementChapters,
             onIncrementVolumes = stateHolder::incrementVolumes,
             onOpenMedia = onOpenMedia,

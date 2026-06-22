@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import com.luum.michi.app.calendar.data.CalendarDay
 import com.luum.michi.app.calendar.data.CalendarRepository
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 
 internal class CalendarStateHolder(
@@ -19,11 +20,11 @@ internal class CalendarStateHolder(
 ) {
     private var daysState by mutableStateOf<List<CalendarDay>>(emptyList())
     private var loadingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
 
     val days: List<CalendarDay> get() = daysState
     val isLoading: Boolean get() = loadingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load() {
         loadingState = true
@@ -38,7 +39,7 @@ internal class CalendarStateHolder(
                             loadingState = false
                         }
                         is NetworkResult.Failure -> {
-                            if (daysState.isEmpty()) errorState = result.error.toString()
+                            if (daysState.isEmpty()) errorState = result.error
                             loadingState = false
                         }
                     }

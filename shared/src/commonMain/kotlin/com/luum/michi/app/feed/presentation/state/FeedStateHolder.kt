@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.feed.data.FeedActivityFilter
 import com.luum.michi.app.feed.data.FeedChip
@@ -55,7 +56,7 @@ internal class FeedStateHolder(
         private set
     var hasNextPage by mutableStateOf(false)
         private set
-    var error by mutableStateOf<String?>(null)
+    var error by mutableStateOf<NetworkError?>(null)
         private set
 
     private var currentPage = 1
@@ -76,7 +77,7 @@ internal class FeedStateHolder(
         private set
     var isLoadingMoreReviews by mutableStateOf(false)
         private set
-    var reviewsError by mutableStateOf<String?>(null)
+    var reviewsError by mutableStateOf<NetworkError?>(null)
         private set
 
     private var reviewsCurrentPage = 1
@@ -147,7 +148,7 @@ internal class FeedStateHolder(
                         error = null
                     }
                     is NetworkResult.Failure -> {
-                        error = result.error.toString()
+                        error = result.error
                     }
                 }
             } finally {
@@ -182,7 +183,7 @@ internal class FeedStateHolder(
                     currentPage = nextPage
                 }
                 is NetworkResult.Failure -> {
-                    error = result.error.toString()
+                    error = result.error
                 }
             }
             isLoadingMore = false
@@ -209,7 +210,7 @@ internal class FeedStateHolder(
                         reviewsError = null
                     }
                     is NetworkResult.Failure -> {
-                        reviewsError = result.error.toString()
+                        reviewsError = result.error
                     }
                 }
             } finally {
@@ -231,7 +232,7 @@ internal class FeedStateHolder(
                     reviewsCurrentPage = nextPage
                 }
                 is NetworkResult.Failure -> {
-                    reviewsError = result.error.toString()
+                    reviewsError = result.error
                 }
             }
             isLoadingMoreReviews = false

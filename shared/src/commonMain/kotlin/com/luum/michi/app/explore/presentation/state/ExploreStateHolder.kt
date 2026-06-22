@@ -2,18 +2,20 @@ package com.luum.michi.app.explore.presentation.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.explore.data.ExploreRepository
-import com.luum.michi.app.search.presentation.model.SearchResult
-import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+import com.luum.michi.app.core.network.NetworkError
+import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.explore.data.ExploreRepository
+import com.luum.michi.app.search.presentation.model.SearchResult
 
 internal enum class ExploreCategory {
     ANIMATION,
@@ -38,7 +40,7 @@ internal class ExploreStateHolder(
     private val resultsBacking = mutableStateListOf<SearchResult>()
     private var loadingState by mutableStateOf(false)
     private var loadingMoreState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var hasNextPageState by mutableStateOf(false)
     private var currentPage by mutableStateOf(1)
 
@@ -46,7 +48,7 @@ internal class ExploreStateHolder(
     val isLoading: Boolean get() = loadingState
     val isLoadingMore: Boolean get() = loadingMoreState
     val hasNextPage: Boolean get() = hasNextPageState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     private var searchJob: Job? = null
 
@@ -69,7 +71,7 @@ internal class ExploreStateHolder(
 
         searchJob?.cancel()
         searchJob = scope.launch {
-            delay(300)
+            delay(300.milliseconds)
             load()
         }
     }
@@ -89,7 +91,7 @@ internal class ExploreStateHolder(
                     currentPage = 1
                 }
                 is NetworkResult.Failure -> {
-                    errorState = result.error.toString()
+                    errorState = result.error
                     resultsBacking.clear()
                 }
             }
@@ -110,7 +112,7 @@ internal class ExploreStateHolder(
                     currentPage = nextPage
                 }
                 is NetworkResult.Failure -> {
-                    errorState = result.error.toString()
+                    errorState = result.error
                 }
             }
             loadingMoreState = false

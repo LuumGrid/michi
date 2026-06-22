@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.media.MediaSeason
 import com.luum.michi.app.core.media.MediaSeasonYear
 import com.luum.michi.app.core.media.currentSeasonAndYear
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.explore.data.ExploreRepository
 import com.luum.michi.app.search.presentation.model.SearchResult
@@ -36,7 +37,7 @@ internal class SeasonalStateHolder(
     private val resultsBacking = mutableStateListOf<SearchResult>()
     private var loadingState by mutableStateOf(false)
     private var loadingMoreState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var hasNextPageState by mutableStateOf(false)
     private var currentPage by mutableStateOf(1)
 
@@ -44,7 +45,7 @@ internal class SeasonalStateHolder(
     val isLoading: Boolean get() = loadingState
     val isLoadingMore: Boolean get() = loadingMoreState
     val hasNextPage: Boolean get() = hasNextPageState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun setSeasonYear(value: MediaSeasonYear) {
         season = value.season
@@ -94,7 +95,7 @@ internal class SeasonalStateHolder(
                     currentPage = 1
                 }
                 is NetworkResult.Failure -> {
-                    errorState = result.error.toString()
+                    errorState = result.error
                     resultsBacking.clear()
                 }
             }
@@ -115,7 +116,7 @@ internal class SeasonalStateHolder(
                     currentPage = nextPage
                 }
                 is NetworkResult.Failure -> {
-                    errorState = result.error.toString()
+                    errorState = result.error
                 }
             }
             loadingMoreState = false

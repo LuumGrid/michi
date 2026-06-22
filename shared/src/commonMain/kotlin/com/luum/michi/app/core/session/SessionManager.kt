@@ -47,7 +47,7 @@ internal class SessionManager(
     private suspend fun resolveViewer() {
         when (val result = viewerRepository.fetchViewer()) {
             is NetworkResult.Success -> _state.value = SessionState.Authenticated(result.value)
-            is NetworkResult.Failure -> _state.value = SessionState.Error(result.error.toString())
+            is NetworkResult.Failure -> _state.value = SessionState.Error(result.error)
         }
     }
 }

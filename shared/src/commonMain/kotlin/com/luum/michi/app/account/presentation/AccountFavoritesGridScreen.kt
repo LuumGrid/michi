@@ -28,6 +28,7 @@ import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioC
 import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.bottomNavBarClearance
 
 @Composable
@@ -63,7 +64,7 @@ internal fun AccountFavoritesGridScreen(
                 stateHolder.studioItems.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        text = stateHolder.error.orEmpty(),
+                        text = stateHolder.error?.let { strings.networkErrorMessage(it) }.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center,

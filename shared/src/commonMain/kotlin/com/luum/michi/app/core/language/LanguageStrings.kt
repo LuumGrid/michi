@@ -281,6 +281,11 @@ interface LanguageStrings {
     val listsLoadingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
+    val errorNoConnectionLabel: String
+    val errorUnauthorizedLabel: String
+    val errorRateLimitedLabel: String
+    val errorServerLabel: String
+    val errorUnknownLabel: String
 
     // Filter Sheet & Sort/Order Labels
     val filterSheetTitle: String

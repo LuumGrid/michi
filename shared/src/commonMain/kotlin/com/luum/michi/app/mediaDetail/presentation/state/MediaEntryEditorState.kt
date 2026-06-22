@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
@@ -27,7 +28,7 @@ internal class MediaEntryEditorState(
         private set
     var isLoadingDetail by mutableStateOf(true)
         private set
-    var loadError by mutableStateOf<String?>(null)
+    var loadError by mutableStateOf<NetworkError?>(null)
         private set
 
     var status by mutableStateOf(MediaListStatus.PLANNING)
@@ -61,7 +62,7 @@ internal class MediaEntryEditorState(
         private set
     var isDeleting by mutableStateOf(false)
         private set
-    var error by mutableStateOf<String?>(null)
+    var error by mutableStateOf<NetworkError?>(null)
         private set
 
     val isManga: Boolean get() = detail?.type == MediaDetailType.MANGA
@@ -99,7 +100,7 @@ internal class MediaEntryEditorState(
                         progress = initialProgressOverride ?: 0
                     }
                 }
-                is NetworkResult.Failure -> loadError = result.error.toString()
+                is NetworkResult.Failure -> loadError = result.error
             }
             isLoadingDetail = false
         }
@@ -145,7 +146,7 @@ internal class MediaEntryEditorState(
                 is NetworkResult.Success -> {}
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    error = result.error.toString()
+                    error = result.error
                 }
             }
             isTogglingFavourite = false
@@ -173,7 +174,7 @@ internal class MediaEntryEditorState(
             )
             when (result) {
                 is NetworkResult.Success -> onSaved()
-                is NetworkResult.Failure -> error = result.error.toString()
+                is NetworkResult.Failure -> error = result.error
             }
             isSaving = false
         }
@@ -188,7 +189,7 @@ internal class MediaEntryEditorState(
         scope.launch {
             when (val result = entryRepository.deleteEntry(entryId)) {
                 is NetworkResult.Success -> onDeleted()
-                is NetworkResult.Failure -> error = result.error.toString()
+                is NetworkResult.Failure -> error = result.error
             }
             isDeleting = false
         }

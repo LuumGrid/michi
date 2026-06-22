@@ -291,6 +291,11 @@ object EnglishLanguageStrings : LanguageStrings {
     override val listsLoadingLabel = "Loading your list..."
     override val listsEmptyLabel = "Your list is empty"
     override val listsErrorLabel = "Could not load your list"
+    override val errorNoConnectionLabel = "No internet connection."
+    override val errorUnauthorizedLabel = "Your session expired. Please sign in again."
+    override val errorRateLimitedLabel = "Too many requests. Please wait a moment."
+    override val errorServerLabel = "Something went wrong. Please try again."
+    override val errorUnknownLabel = "Something went wrong. Please try again."
 
     // Filter Sheet & Sort/Order Labels
     override val filterSheetTitle = "Sort & Order List"

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.presentation.model.*
@@ -56,7 +57,7 @@ internal class MediaDetailStateHolder(
 ) {
     private var detailState by mutableStateOf<MediaDetail?>(null)
     private var loadingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
 
@@ -125,7 +126,7 @@ internal class MediaDetailStateHolder(
 
     val detail: MediaDetail? get() = detailState
     val isLoading: Boolean get() = loadingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun load(mediaId: Int) {
         if (currentMediaId == mediaId && (detailState != null || loadingState)) return
@@ -203,7 +204,7 @@ internal class MediaDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             loadingState = false
         }
@@ -237,7 +238,7 @@ internal class MediaDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
         }
     }
@@ -254,7 +255,7 @@ internal class MediaDetailStateHolder(
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingCharacters = false
         }
@@ -272,7 +273,7 @@ internal class MediaDetailStateHolder(
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingCharacters = false
         }
@@ -290,7 +291,7 @@ internal class MediaDetailStateHolder(
                     staffHasNextPage = result.value.hasNextPage
                     staffCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingStaff = false
         }
@@ -308,7 +309,7 @@ internal class MediaDetailStateHolder(
                     reviewsHasNextPage = result.value.hasNextPage
                     reviewsCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingReviews = false
         }
@@ -326,7 +327,7 @@ internal class MediaDetailStateHolder(
                     reviewsHasNextPage = result.value.hasNextPage
                     reviewsCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingReviews = false
         }
@@ -344,7 +345,7 @@ internal class MediaDetailStateHolder(
                     threadsHasNextPage = result.value.hasNextPage
                     threadsCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingThreads = false
         }
@@ -362,7 +363,7 @@ internal class MediaDetailStateHolder(
                     threadsHasNextPage = result.value.hasNextPage
                     threadsCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingThreads = false
         }
@@ -378,7 +379,7 @@ internal class MediaDetailStateHolder(
                 is NetworkResult.Success -> {
                     followingEntries = result.value
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingFollowing = false
         }
@@ -409,7 +410,7 @@ internal class MediaDetailStateHolder(
                     activitiesHasNextPage = result.value.hasNextPage
                     activitiesCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingActivities = false
         }
@@ -425,7 +426,7 @@ internal class MediaDetailStateHolder(
                 is NetworkResult.Success -> {
                     recommendations = result.value
                 }
-                is NetworkResult.Failure -> errorState = result.error.toString()
+                is NetworkResult.Failure -> errorState = result.error
             }
             isLoadingRecommendations = false
         }

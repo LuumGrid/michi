@@ -1,5 +1,7 @@
 package com.luum.michi.app.core.session
 
+import com.luum.michi.app.core.network.NetworkError
+
 internal sealed class SessionState {
     /** Initial state while the app is checking persisted token storage. */
     data object Loading : SessionState()
@@ -11,5 +13,5 @@ internal sealed class SessionState {
     data class Authenticated(val viewer: Viewer) : SessionState()
 
     /** Token exists but viewer fetch failed (network error, expired token, etc.). */
-    data class Error(val message: String) : SessionState()
+    data class Error(val error: NetworkError) : SessionState()
 }

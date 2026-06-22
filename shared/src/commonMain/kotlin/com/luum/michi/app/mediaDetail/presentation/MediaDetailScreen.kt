@@ -28,6 +28,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
@@ -86,7 +87,7 @@ internal fun MediaDetailScreen(
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
             title = strings.mediaDetailErrorLabel,
-            subtitle = stateHolder.error,
+            subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
             tone = PlatformListMessageTone.Error,
         )
         else -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
@@ -173,7 +174,7 @@ private fun MediaDetailContent(
     val coverFull = detail.coverFullUrl ?: detail.coverUrl
     if (showCoverViewer && !coverFull.isNullOrBlank()) {
         FullscreenImageOverlay(
-            imageUrl = coverFull!!,
+            imageUrl = coverFull,
             contentDescription = detail.title,
             onDismiss = { showCoverViewer = false },
         )
@@ -181,7 +182,7 @@ private fun MediaDetailContent(
 
     if (showBannerViewer && !detail.bannerUrl.isNullOrBlank()) {
         FullscreenImageOverlay(
-            imageUrl = detail.bannerUrl!!,
+            imageUrl = detail.bannerUrl,
             contentDescription = detail.title,
             onDismiss = { showBannerViewer = false },
         )

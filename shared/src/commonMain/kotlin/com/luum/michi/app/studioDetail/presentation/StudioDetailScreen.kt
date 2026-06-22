@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
@@ -44,7 +44,7 @@ import com.luum.michi.app.studioDetail.presentation.model.StudioMediaItem
 import com.luum.michi.app.studioDetail.presentation.model.StudioMediaSort
 import com.luum.michi.app.studioDetail.presentation.state.StudioDetailStateHolder
 
-private val AllSortOptions = StudioMediaSort.values().toList()
+private val AllSortOptions = StudioMediaSort.entries
 
 @Composable
 internal fun StudioDetailScreen(
@@ -67,7 +67,7 @@ internal fun StudioDetailScreen(
         stateHolder.isLoading -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)
         stateHolder.error != null -> PlatformListMessage(
             title = strings.mediaDetailErrorLabel,
-            subtitle = stateHolder.error,
+            subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
             tone = PlatformListMessageTone.Error,
         )
         else -> PlatformListLoading(label = strings.mediaDetailLoadingLabel)

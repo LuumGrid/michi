@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.presentation.model.ReadingListEntry
@@ -31,7 +32,7 @@ internal class ReadingListStateHolder(
     private val backing = mutableStateListOf<ReadingListEntry>()
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
-    private var errorState by mutableStateOf<String?>(null)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
@@ -43,7 +44,7 @@ internal class ReadingListStateHolder(
     val entries: List<ReadingListEntry> get() = backing
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
-    val error: String? get() = errorState
+    val error: NetworkError? get() = errorState
 
     fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
@@ -69,7 +70,7 @@ internal class ReadingListStateHolder(
                         lastUserId = userId
                     }
                     is NetworkResult.Failure -> {
-                        errorState = result.error.toString()
+                        errorState = result.error
                     }
                 }
             } finally {

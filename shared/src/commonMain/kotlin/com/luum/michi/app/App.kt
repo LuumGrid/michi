@@ -17,8 +17,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luum.michi.app.auth.presentation.AuthLandingScreen
 import com.luum.michi.app.auth.presentation.AuthLoadingScreen
 import com.luum.michi.app.core.language.AppLanguage
+import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.ProvideLanguageStrings
 import com.luum.michi.app.core.language.currentPlatformLanguageCode
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.session.SessionState
 import com.luum.michi.app.shell.ShellScreen
 
@@ -45,6 +47,7 @@ fun App(
             color = MaterialTheme.colorScheme.background,
         ) {
             ProvideLanguageStrings(language) {
+                val strings = LanguageProvider.strings
                 when (val state = sessionState) {
                     is SessionState.Loading -> AuthLoadingScreen()
                     is SessionState.Anonymous -> AuthLandingScreen(
@@ -52,7 +55,7 @@ fun App(
                     )
                     is SessionState.Error -> AuthLandingScreen(
                         onLoginClick = { dependencies.oAuthLauncher.open() },
-                        errorMessage = state.message,
+                        errorMessage = strings.networkErrorMessage(state.error),
                     )
                     is SessionState.Authenticated -> ShellScreen(
                         viewer = state.viewer,
