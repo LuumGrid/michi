@@ -21,6 +21,8 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.ProvideLanguageStrings
 import com.luum.michi.app.core.language.currentPlatformLanguageCode
 import com.luum.michi.app.core.language.networkErrorMessage
+import com.luum.michi.app.core.platform.SettingsStoreKeys
+import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.session.SessionState
 import com.luum.michi.app.shell.ShellScreen
 
@@ -29,9 +31,21 @@ fun App(
     dependencies: MichiDependencies,
     initialLanguage: AppLanguage = AppLanguage.fromCode(currentPlatformLanguageCode()),
 ) {
+    val store = rememberPlatformSettingsStore()
     val systemDark = isSystemInDarkTheme()
-    var isDarkMode by remember { mutableStateOf(systemDark) }
-    var language by remember(initialLanguage) { mutableStateOf(initialLanguage) }
+    // Theme + language are owned here (above the authenticated shell), so they must read their
+    // persisted value at startup — SettingsState writes both keys but can't restore them this early.
+    val initialDark = when (store.getString(SettingsStoreKeys.ThemeMode)) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> systemDark // SYSTEM or unset
+    }
+    var isDarkMode by remember { mutableStateOf(initialDark) }
+    var language by remember {
+        mutableStateOf(
+            store.getString(SettingsStoreKeys.Language)?.let { AppLanguage.fromCode(it) } ?: initialLanguage,
+        )
+    }
 
     LaunchedEffect(dependencies) {
         dependencies.bootstrap()
@@ -68,11 +82,16 @@ fun App(
                         mediaDetailRepository = dependencies.mediaDetailRepository,
                         mediaListEntryRepository = dependencies.mediaListEntryRepository,
                         feedRepository = dependencies.feedRepository,
+                        notificationsRepository = dependencies.notificationsRepository,
                         studioDetailRepository = dependencies.studioDetailRepository,
                         characterDetailRepository = dependencies.characterDetailRepository,
                         staffDetailRepository = dependencies.staffDetailRepository,
+                        settingsRepository = dependencies.settingsRepository,
                         language = language,
-                        onLanguageChange = { language = it },
+                        onLanguageChange = {
+                            language = it
+                            store.putString(SettingsStoreKeys.Language, it.code)
+                        },
                         isDarkMode = isDarkMode,
                         onToggleTheme = { isDarkMode = !isDarkMode },
                         onLogout = { dependencies.logout() },

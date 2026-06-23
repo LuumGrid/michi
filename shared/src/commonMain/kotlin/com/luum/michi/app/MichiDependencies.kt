@@ -25,6 +25,8 @@ import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
 import com.luum.michi.app.feed.data.FeedRepository
 import com.luum.michi.app.feed.data.FeedRepositoryImpl
+import com.luum.michi.app.notifications.data.NotificationsRepository
+import com.luum.michi.app.notifications.data.NotificationsRepositoryImpl
 import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.data.CharacterDetailRepositoryImpl
 import com.luum.michi.app.staffDetail.data.StaffDetailRepository
@@ -33,6 +35,8 @@ import com.luum.michi.app.studioDetail.data.StudioDetailRepository
 import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.data.ReadingListRepositoryImpl
+import com.luum.michi.app.settings.data.SettingsRepository
+import com.luum.michi.app.settings.data.SettingsRepositoryImpl
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +92,9 @@ class MichiDependencies internal constructor(
     internal val feedRepository: FeedRepository =
         FeedRepositoryImpl(graphQLClient)
 
+    internal val notificationsRepository: NotificationsRepository =
+        NotificationsRepositoryImpl(graphQLClient)
+
     internal val studioDetailRepository: StudioDetailRepository =
         StudioDetailRepositoryImpl(graphQLClient)
 
@@ -96,6 +103,9 @@ class MichiDependencies internal constructor(
 
     internal val staffDetailRepository: StaffDetailRepository =
         StaffDetailRepositoryImpl(graphQLClient)
+
+    internal val settingsRepository: SettingsRepository =
+        SettingsRepositoryImpl(graphQLClient)
 
     internal val sessionManager: SessionManager =
         SessionManager(tokenStorage, viewerRepository)

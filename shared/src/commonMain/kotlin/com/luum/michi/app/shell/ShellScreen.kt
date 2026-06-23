@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
@@ -69,13 +70,22 @@ import com.luum.michi.app.studioDetail.presentation.state.rememberStudioDetailSt
 import com.luum.michi.app.feed.data.FeedRepository
 import com.luum.michi.app.feed.presentation.FeedScreen
 import com.luum.michi.app.feed.presentation.state.rememberFeedStateHolder
+import com.luum.michi.app.notifications.data.NotificationsRepository
+import com.luum.michi.app.notifications.presentation.NotificationsScreen
+import com.luum.michi.app.notifications.presentation.components.NotificationFilterSheet
+import com.luum.michi.app.notifications.presentation.model.NotificationTarget
+import com.luum.michi.app.notifications.presentation.state.rememberNotificationsStateHolder
 import com.luum.michi.app.reading.data.ReadingListRepository
 import com.luum.michi.app.reading.presentation.ReadingScreen
 import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
 import com.luum.michi.app.reading.presentation.state.rememberReadingListStateHolder
+import com.luum.michi.app.settings.data.SettingsRepository
+import com.luum.michi.app.settings.presentation.model.HomeTabOption
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
+import com.luum.michi.app.core.platform.SettingsStoreKeys
 import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
+import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
@@ -102,9 +112,11 @@ internal fun ShellScreen(
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     feedRepository: FeedRepository,
+    notificationsRepository: NotificationsRepository,
     studioDetailRepository: StudioDetailRepository,
     characterDetailRepository: CharacterDetailRepository,
     staffDetailRepository: StaffDetailRepository,
+    settingsRepository: SettingsRepository,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
@@ -112,7 +124,13 @@ internal fun ShellScreen(
     onLogout: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
-    val shellState = rememberShellState(viewer)
+    val settingsStore = rememberPlatformSettingsStore()
+    val initialTab = remember(settingsStore) {
+        settingsStore.getString(SettingsStoreKeys.DefaultHomeTab)
+            ?.let { name -> HomeTabOption.entries.firstOrNull { it.name == name } }
+            ?.toShellTab() ?: ShellBottomTab.HOME
+    }
+    val shellState = rememberShellState(viewer, initialTab)
     val animationState = rememberAnimationListStateHolder(animationListRepository, mediaListEntryRepository, viewer.id)
     val readingState = rememberReadingListStateHolder(readingListRepository, mediaListEntryRepository, viewer.id)
     val accountState = rememberAccountStateHolder(
@@ -129,10 +147,13 @@ internal fun ShellScreen(
     val characterDetailState = rememberCharacterDetailStateHolder(characterDetailRepository, viewerId = viewer.id)
     val staffDetailState = rememberStaffDetailStateHolder(staffDetailRepository, viewerId = viewer.id)
     val feedState = rememberFeedStateHolder(feedRepository, viewer.id)
-    val settingsState = rememberSettingsState()
+    val notificationsState = rememberNotificationsStateHolder(notificationsRepository)
+    val settingsState = rememberSettingsState(settingsRepository, settingsStore)
+    val uriHandler = LocalUriHandler.current
     var showDiscoverSort by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
     var showFeedFilterSheet by remember { mutableStateOf(false) }
+    var showNotificationFilterSheet by remember { mutableStateOf(false) }
 
     // Abre la superficie unificada de Explore con un preset de categoría + orden,
     // limpiando los demás filtros para que el rail "Ver todo" muestre exactamente esa lista.
@@ -237,12 +258,18 @@ internal fun ShellScreen(
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isAccountDetail,
+            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isNotificationsOpen,
+        onBack = shellState::closeNotifications,
+    )
+    PlatformSystemBackHandler(
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isSearchTab && shellState.isSearchActive,
+            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen &&
+            shellState.isSearchTab && shellState.isSearchActive,
         onBack = shellState::closeSearch,
     )
 
@@ -254,6 +281,7 @@ internal fun ShellScreen(
         shellState.isExploreOpen -> strings.exploreTitle
         shellState.isCalendarOpen -> strings.calendarTitle
         shellState.isSeasonalOpen -> strings.homeSeasonalAction
+        shellState.isNotificationsOpen -> strings.notificationsAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
         shellState.selectedTab == ShellBottomTab.ACCOUNT &&
@@ -312,9 +340,17 @@ internal fun ShellScreen(
                     }
                 },
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
-                onNotificationsClick = { },
+                onNotificationsClick = {
+                    shellState.openNotifications()
+                    notificationsState.load(resetCount = true)
+                },
+                unreadCount = notificationsState.unreadCount,
+                isNotificationsOpen = shellState.isNotificationsOpen,
+                onNotificationsBack = shellState::closeNotifications,
                 onFilterClick = {
-                    if (shellState.selectedTab == ShellBottomTab.FEED) {
+                    if (shellState.isNotificationsOpen) {
+                        showNotificationFilterSheet = true
+                    } else if (shellState.selectedTab == ShellBottomTab.FEED) {
                         showFeedFilterSheet = true
                     } else {
                         showListFilterSheet = true
@@ -485,6 +521,24 @@ internal fun ShellScreen(
                 }
             }
 
+            if (shellState.isNotificationsOpen) {
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    NotificationsScreen(
+                        stateHolder = notificationsState,
+                        onOpen = { target ->
+                            when (target) {
+                                is NotificationTarget.Media -> {
+                                    shellState.closeNotifications()
+                                    shellState.openMedia(target.id)
+                                }
+                                is NotificationTarget.Web -> uriHandler.openUri(target.url)
+                                NotificationTarget.None -> {}
+                            }
+                        },
+                    )
+                }
+            }
+
             when (val dest = shellState.currentDetail) {
                 is DetailDestination.Media -> detailStateHolder.SaveableStateProvider("media-${dest.id}") {
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -531,7 +585,7 @@ internal fun ShellScreen(
                 else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen) {
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen) {
                 ShellBottomNavBar(
                     selected = shellState.selectedTab,
                     onSelect = shellState::selectTab,
@@ -616,5 +670,24 @@ internal fun ShellScreen(
                 },
             )
         }
+
+        if (showNotificationFilterSheet) {
+            NotificationFilterSheet(
+                selected = notificationsState.selectedFilter,
+                onSelect = {
+                    notificationsState.selectFilter(it)
+                    showNotificationFilterSheet = false
+                },
+                onDismiss = { showNotificationFilterSheet = false },
+            )
+        }
     }
+}
+
+/** Maps the persisted "default home tab" preference onto the shell's bottom-nav tabs. */
+private fun HomeTabOption.toShellTab(): ShellBottomTab = when (this) {
+    HomeTabOption.HOME -> ShellBottomTab.HOME
+    HomeTabOption.ANIMATION -> ShellBottomTab.ANIMATION
+    HomeTabOption.READING -> ShellBottomTab.READING
+    HomeTabOption.ACCOUNT -> ShellBottomTab.ACCOUNT
 }

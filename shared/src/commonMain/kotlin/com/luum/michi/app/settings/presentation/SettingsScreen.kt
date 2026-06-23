@@ -36,7 +36,6 @@ internal fun SettingsScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     isDarkMode: Boolean,
     onToggleTheme: () -> Unit,
-    onAddAccount: () -> Unit,
     onLogout: () -> Unit,
     onManageAccount: () -> Unit,
     onHelp: () -> Unit,
@@ -92,7 +91,6 @@ internal fun SettingsScreen(
                     item = item,
                     settingsState = settingsState,
                     onOpenDetail = { selectedItem = item },
-                    onAddAccount = onAddAccount,
                     onLogout = onLogout,
                     onManageAccount = onManageAccount,
                     onHelp = onHelp,
@@ -107,7 +105,6 @@ private fun SettingsItemRow(
     item: SettingsItem,
     settingsState: SettingsState,
     onOpenDetail: () -> Unit,
-    onAddAccount: () -> Unit,
     onLogout: () -> Unit,
     onManageAccount: () -> Unit,
     onHelp: () -> Unit,
@@ -135,7 +132,6 @@ private fun SettingsItemRow(
 
         item.type.isAction -> {
             val onClick = when (item.type) {
-                SettingsItemType.ADD_ACCOUNT -> onAddAccount
                 SettingsItemType.LOGOUT -> onLogout
                 SettingsItemType.MANAGE_ACCOUNT -> onManageAccount
                 SettingsItemType.HELP -> onHelp

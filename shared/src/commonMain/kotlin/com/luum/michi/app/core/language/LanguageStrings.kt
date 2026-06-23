@@ -185,6 +185,7 @@ interface LanguageStrings {
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String
     fun nextVolumeReleaseLabel(volumeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
+    fun notificationDateLabel(dateTime: MediaReleaseDateTime): String
     val accountAnimeLabel: String
     val accountMangaLabel: String
     val accountFollowersLabel: String
@@ -325,6 +326,24 @@ interface LanguageStrings {
     val feedFilterMyActivities: String
     val feedSectionReviews: String
     val feedReviewOf: String
+
+    // Notifications
+    val notificationsEmptyLabel: String
+    val notificationsErrorLabel: String
+    val notificationsFilterTitle: String
+    val notificationFilterAll: String
+    val notificationFilterAiring: String
+    val notificationFilterActivity: String
+    val notificationFilterForum: String
+    val notificationFilterFollows: String
+    val notificationFilterMedia: String
+    val notifAiringPrefix: String
+    val notifAiringAired: String
+    val notifFollowingLabel: String
+    val notifActivityLabel: String
+    val notifForumLabel: String
+    val notifMessageLabel: String
+    val notifMediaChangeLabel: String
 
     // Studio detail
     val studioDetailTitle: String

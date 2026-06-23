@@ -1,6 +1,7 @@
 package com.luum.michi.app.shell.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalUriHandler
 import com.luum.michi.app.account.presentation.AccountEditProfileScreen
 import com.luum.michi.app.account.presentation.AccountFavoritesGridScreen
 import com.luum.michi.app.account.presentation.AccountScreen
@@ -44,6 +45,8 @@ internal fun ShellAccountRouter(
     onLogout: () -> Unit,
     onBackHandlerChange: (PlatformBackHandler?) -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
+
     when (route) {
         ShellAccountRoute.ACCOUNT -> {
             AccountScreen(
@@ -78,10 +81,9 @@ internal fun ShellAccountRouter(
                 onLanguageChange = onLanguageChange,
                 isDarkMode = isDarkMode,
                 onToggleTheme = onToggleTheme,
-                onAddAccount = { },
                 onLogout = onLogout,
-                onManageAccount = { },
-                onHelp = { },
+                onManageAccount = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
+                onHelp = { uriHandler.openUri("https://anilist.co/forum/overview") },
                 onBackHandlerChange = onBackHandlerChange,
             )
         }

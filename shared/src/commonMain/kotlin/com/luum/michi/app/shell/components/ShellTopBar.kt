@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +55,9 @@ internal fun ShellTopBar(
     chips: @Composable () -> Unit = {},
     exploreQuery: String = "",
     onExploreQueryChange: (String) -> Unit = {},
+    unreadCount: Int = 0,
+    isNotificationsOpen: Boolean = false,
+    onNotificationsBack: () -> Unit = {},
 ) {
     val strings = LanguageProvider.strings
  
@@ -114,11 +119,20 @@ internal fun ShellTopBar(
                             modifier = Modifier.size(28.dp),
                         )
                     }
+                } else if (isNotificationsOpen) {
+                    IconButton(onClick = onNotificationsBack) {
+                        Icon(
+                            painter = PlatformIcons.ArrowBack,
+                            contentDescription = strings.backButton,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
                 } else {
                     ShellTopBarNavigationIcon(
                         selectedTab = selectedTab,
                         isSearchActive = isSearchActive,
                         isAccountDetail = isAccountDetail,
+                        unreadCount = unreadCount,
                         onCloseSearch = onCloseSearch,
                         onAccountBack = onAccountBack,
                         onNotificationsClick = onNotificationsClick,
@@ -130,6 +144,14 @@ internal fun ShellTopBar(
             actions = {
                 if (isExploreOpen || isSeasonalOpen) {
                     IconButton(onClick = onOpenDiscoverSort) {
+                        Icon(
+                            painter = PlatformIcons.FilterList,
+                            contentDescription = strings.filterAction,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                } else if (isNotificationsOpen) {
+                    IconButton(onClick = onFilterClick) {
                         Icon(
                             painter = PlatformIcons.FilterList,
                             contentDescription = strings.filterAction,
@@ -152,7 +174,7 @@ internal fun ShellTopBar(
             windowInsets = WindowInsets.statusBars,
         )
 
-        if (!isDetailOpen && !isExploreOpen && !isCalendarOpen && !isSeasonalOpen) {
+        if (!isDetailOpen && !isExploreOpen && !isCalendarOpen && !isSeasonalOpen && !isNotificationsOpen) {
             chips()
         }
     }
@@ -163,6 +185,7 @@ private fun ShellTopBarNavigationIcon(
     selectedTab: ShellBottomTab,
     isSearchActive: Boolean,
     isAccountDetail: Boolean,
+    unreadCount: Int,
     onCloseSearch: () -> Unit,
     onAccountBack: () -> Unit,
     onNotificationsClick: () -> Unit,
@@ -186,11 +209,19 @@ private fun ShellTopBarNavigationIcon(
             } else {
                 Row {
                     IconButton(onClick = onNotificationsClick) {
-                        Icon(
-                            painter = PlatformIcons.Notifications,
-                            contentDescription = strings.notificationsAction,
-                            modifier = Modifier.size(28.dp),
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) {
+                                    Badge { Text(text = if (unreadCount > 99) "99+" else unreadCount.toString()) }
+                                }
+                            },
+                        ) {
+                            Icon(
+                                painter = PlatformIcons.Notifications,
+                                contentDescription = strings.notificationsAction,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
                     }
                     if (selectedTab == ShellBottomTab.ANIMATION || selectedTab == ShellBottomTab.READING) {
                         IconButton(onClick = onFilterClick) {
@@ -217,11 +248,19 @@ private fun ShellTopBarNavigationIcon(
         ShellBottomTab.FEED -> {
             Row {
                 IconButton(onClick = onNotificationsClick) {
-                    Icon(
-                        painter = PlatformIcons.Notifications,
-                        contentDescription = strings.notificationsAction,
-                        modifier = Modifier.size(28.dp),
-                    )
+                    BadgedBox(
+                        badge = {
+                            if (unreadCount > 0) {
+                                Badge { Text(text = if (unreadCount > 99) "99+" else unreadCount.toString()) }
+                            }
+                        },
+                    ) {
+                        Icon(
+                            painter = PlatformIcons.Notifications,
+                            contentDescription = strings.notificationsAction,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
                 }
                 IconButton(onClick = onFilterClick) {
                     Icon(
@@ -244,11 +283,19 @@ private fun ShellTopBarNavigationIcon(
                 }
             } else {
                 IconButton(onClick = onNotificationsClick) {
-                    Icon(
-                        painter = PlatformIcons.Notifications,
-                        contentDescription = strings.notificationsAction,
-                        modifier = Modifier.size(28.dp),
-                    )
+                    BadgedBox(
+                        badge = {
+                            if (unreadCount > 0) {
+                                Badge { Text(text = if (unreadCount > 99) "99+" else unreadCount.toString()) }
+                            }
+                        },
+                    ) {
+                        Icon(
+                            painter = PlatformIcons.Notifications,
+                            contentDescription = strings.notificationsAction,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
                 }
             }
         }

@@ -24,7 +24,6 @@ internal enum class SettingsItemType {
     ADVANCED_SCORING,
     NOTIFICATIONS,
     MANAGE_ACCOUNT,
-    ADD_ACCOUNT,
     LOGOUT,
     HELP,
     ABOUT,
@@ -41,7 +40,6 @@ internal val SettingsItemType.isInlineToggle: Boolean
 
 internal val SettingsItemType.isAction: Boolean
     get() = when (this) {
-        SettingsItemType.ADD_ACCOUNT,
         SettingsItemType.LOGOUT,
         SettingsItemType.MANAGE_ACCOUNT,
         SettingsItemType.HELP -> true
@@ -150,11 +148,6 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
                 subtitle = strings.settingsManageAccountSubtitle,
                 icon = { PlatformIcons.ManageAccount },
                 type = SettingsItemType.MANAGE_ACCOUNT,
-            ),
-            SettingsItem(
-                title = strings.addAccountAction,
-                icon = { PlatformIcons.SwitchAccount },
-                type = SettingsItemType.ADD_ACCOUNT,
             ),
             SettingsItem(
                 title = strings.logoutAction,

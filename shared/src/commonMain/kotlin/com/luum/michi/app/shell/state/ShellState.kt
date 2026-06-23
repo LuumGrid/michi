@@ -24,8 +24,11 @@ internal enum class ShellAccountRoute {
     FAVORITES,
 }
 
-internal class ShellState(initialProfile: AccountProfileDraft) {
-    var selectedTab by mutableStateOf(ShellBottomTab.HOME)
+internal class ShellState(
+    initialProfile: AccountProfileDraft,
+    initialTab: ShellBottomTab = ShellBottomTab.HOME,
+) {
+    var selectedTab by mutableStateOf(initialTab)
     var selectedAnimationSection by mutableStateOf(AnimationListSection.ALL)
     var selectedReadingSection by mutableStateOf(ReadingListSection.ALL)
     var accountRoute by mutableStateOf(ShellAccountRoute.ACCOUNT)
@@ -40,6 +43,7 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
     var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
     var isSeasonalOpen by mutableStateOf(false)
+    var isNotificationsOpen by mutableStateOf(false)
     var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
@@ -140,6 +144,14 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
         isSeasonalOpen = false
     }
 
+    fun openNotifications() {
+        isNotificationsOpen = true
+    }
+
+    fun closeNotifications() {
+        isNotificationsOpen = false
+    }
+
     fun handleAccountBack() {
         val handler = topBarBackHandler
         if (handler != null) handler() else accountRoute = ShellAccountRoute.ACCOUNT
@@ -147,9 +159,15 @@ internal class ShellState(initialProfile: AccountProfileDraft) {
 }
 
 @Composable
-internal fun rememberShellState(viewer: Viewer): ShellState {
+internal fun rememberShellState(
+    viewer: Viewer,
+    initialTab: ShellBottomTab = ShellBottomTab.HOME,
+): ShellState {
     return remember(viewer.id) {
-        ShellState(initialProfile = viewer.toAccountProfileDraft())
+        ShellState(
+            initialProfile = viewer.toAccountProfileDraft(),
+            initialTab = initialTab,
+        )
     }
 }
 

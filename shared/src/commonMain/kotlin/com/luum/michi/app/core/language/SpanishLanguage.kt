@@ -193,6 +193,9 @@ object SpanishLanguageStrings : LanguageStrings {
     override fun nextChapterReleaseLabel(chapterNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
         return "Cap. $chapterNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
+    override fun notificationDateLabel(dateTime: MediaReleaseDateTime): String {
+        return dateTime.formatReadableDateTime(::monthName)
+    }
     override fun nextVolumeReleaseLabel(volumeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
         return "Vol. $volumeNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
@@ -337,6 +340,23 @@ object SpanishLanguageStrings : LanguageStrings {
     override val feedFilterMyActivities = "Mis actividades"
     override val feedSectionReviews = "Reseñas"
     override val feedReviewOf = "Reseña de"
+
+    override val notificationsEmptyLabel = "Aún no tienes notificaciones."
+    override val notificationsErrorLabel = "No se pudieron cargar las notificaciones."
+    override val notificationsFilterTitle = "Filtrar"
+    override val notificationFilterAll = "Todo"
+    override val notificationFilterAiring = "Emisión"
+    override val notificationFilterActivity = "Actividad"
+    override val notificationFilterForum = "Foro"
+    override val notificationFilterFollows = "Seguidos"
+    override val notificationFilterMedia = "Medios"
+    override val notifAiringPrefix = "Episodio"
+    override val notifAiringAired = "de"
+    override val notifFollowingLabel = "comenzó a seguirte"
+    override val notifActivityLabel = "Nueva actividad"
+    override val notifForumLabel = "Respuesta en el foro"
+    override val notifMessageLabel = "Nuevo mensaje"
+    override val notifMediaChangeLabel = "Cambió un título de tu lista"
 
     // Studio detail
     override val studioDetailTitle = "Estudio"
