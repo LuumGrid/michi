@@ -26,6 +26,7 @@ import com.luum.michi.app.account.presentation.components.AccountEditableAvatar
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 
 private const val AniListProfileSettingsUrl = "https://anilist.co/settings/profile"
 private const val AniListAccountSettingsUrl = "https://anilist.co/settings/account"
@@ -43,7 +44,7 @@ internal fun AccountEditProfileScreen(initialDraft: AccountProfileDraft) {
             .padding(
                 PaddingValues(
                     start = 16.dp,
-                    top = 16.dp,
+                    top = floatingToolbarClearance(),
                     end = 16.dp,
                     bottom = 24.dp,
                 ),

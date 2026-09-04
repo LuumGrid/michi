@@ -6,7 +6,7 @@ import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.media.isoDayOfWeek
 import com.luum.michi.app.core.media.localMidnightEpoch
 import com.luum.michi.app.core.media.toLocalMediaReleaseDateTime
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
+import com.luum.michi.app.core.platform.components.PlatformDiscoverReleaseItem
 import com.luum.michi.app.core.platform.components.StreamingPlatform
 import com.luum.michi.app.core.platform.hexToPalette
 
@@ -33,12 +33,12 @@ internal fun List<AiringScheduleDto>.toCalendarFeed(nowEpoch: Long): CalendarFee
     return CalendarFeed(days = days)
 }
 
-private fun AiringScheduleDto.toReleaseItem(): PlatformHomeReleaseItem {
+private fun AiringScheduleDto.toReleaseItem(): PlatformDiscoverReleaseItem {
     val media = media!!
     val hasUserScore = (media.mediaListEntry?.score ?: 0.0) > 0.0
     val totalEpisodes = media.episodes?.takeIf { it > 0 }
     val releaseLabel = totalEpisodes?.let { "Ep $episode / $it" } ?: "Ep $episode"
-    return PlatformHomeReleaseItem(
+    return PlatformDiscoverReleaseItem(
         title = media.title.bestTitle(),
         release = releaseLabel,
         time = formatAiringTime(airingAt),

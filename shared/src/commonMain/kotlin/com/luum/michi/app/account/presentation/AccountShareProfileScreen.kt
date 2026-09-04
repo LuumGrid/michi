@@ -36,6 +36,7 @@ import com.luum.michi.app.account.presentation.components.AccountShareAvatar
 import com.luum.michi.app.account.presentation.util.toProfilePathSegment
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.setPlainText
 import kotlinx.coroutines.launch
 
@@ -54,7 +55,14 @@ internal fun AccountShareProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 24.dp)),
+            .padding(
+                PaddingValues(
+                    start = 20.dp,
+                    top = floatingToolbarClearance(),
+                    end = 20.dp,
+                    bottom = 24.dp,
+                ),
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(8.dp))

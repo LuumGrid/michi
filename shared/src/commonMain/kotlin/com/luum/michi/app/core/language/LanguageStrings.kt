@@ -10,28 +10,26 @@ interface LanguageStrings {
     val languageLabel: String
     val logoutAction: String
     val notificationsAction: String
-    val tabHome: String
-    val tabAnimation: String
-    val tabReading: String
-    val tabFeed: String
+    val tabDiscover: String
+    val tabAnime: String
+    val tabManga: String
     val tabAccount: String
     val filterAction: String
+    val filterByLabel: String
+    val orderByLabel: String
     val settingsAction: String
     val inUseLabel: String
     val addAccountAction: String
-    val dashboardTitle: String
-    val dashboardDescription: String
-    val homeSearchPlaceholder: String
-    val homeSeasonalAction: String
-    val homeTrendingAnimationTitle: String
-    val homeTrendingReadingTitle: String
+    val discoverSeasonalAction: String
+    val discoverTrendingAnimeTitle: String
+    val discoverTrendingMangaTitle: String
     val searchTitle: String
     val searchDescription: String
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
     val searchGloballyAction: String
-    val exploreTitle: String
+    val discoverTitle: String
     val exploreThisSeasonTitle: String
     val exploreUpcomingNextSeasonTitle: String
     val exploreAllTimePopularAnimeTitle: String
@@ -75,10 +73,6 @@ interface LanguageStrings {
     val mediaDetailTabConnections: String
     val mediaDetailTabCharacters: String
     val mediaDetailTabStaff: String
-    val mediaDetailTabReviews: String
-    val mediaDetailTabThreads: String
-    val mediaDetailTabFollowing: String
-    val mediaDetailTabActivities: String
     val mediaDetailTabRecommendations: String
     val mediaDetailTabStats: String
     val mediaDetailCharacterRoleMain: String
@@ -86,14 +80,7 @@ interface LanguageStrings {
     val mediaDetailCharacterRoleBackground: String
     val mediaDetailNoCharactersLabel: String
     val mediaDetailNoStaffLabel: String
-    val mediaDetailNoReviewsLabel: String
-    val mediaDetailNoThreadsLabel: String
-    val mediaDetailNoFollowingLabel: String
-    val mediaDetailNoActivitiesLabel: String
     val mediaDetailNoRecommendationsLabel: String
-    val mediaDetailActivityGlobal: String
-    val mediaDetailActivityFollowing: String
-    val mediaDetailActivitySelf: String
     val mediaDetailRecommendationReason: String
     val mediaDetailLoadMoreAction: String
     val mediaDetailVoiceLanguageLabel: String
@@ -144,7 +131,7 @@ interface LanguageStrings {
     val confirmDeleteAction: String
     val sectionAll: String
     val sectionWatching: String
-    val sectionReading: String
+    val sectionCurrent: String
     val sectionCompleted: String
     val sectionCompletedTv: String
     val sectionCompletedMovie: String
@@ -156,7 +143,7 @@ interface LanguageStrings {
     val sectionDropped: String
     val sectionPlanning: String
     val sectionRewatching: String
-    val sectionRereading: String
+    val sectionRepeating: String
     val statusLabel: String
     val progressLabel: String
     val chaptersLabel: String
@@ -229,8 +216,8 @@ interface LanguageStrings {
     val settingsThemeDark: String
     val settingsLanguageTitle: String
     val settingsLanguageSubtitle: String
-    val settingsHomeTabTitle: String
-    val settingsHomeTabSubtitle: String
+    val settingsDiscoverTabTitle: String
+    val settingsDiscoverTabSubtitle: String
     val settingsTitleLanguageTitle: String
     val settingsTitleLanguageSubtitle: String
     val settingsTitleLanguageRomaji: String
@@ -288,8 +275,7 @@ interface LanguageStrings {
     val errorServerLabel: String
     val errorUnknownLabel: String
 
-    // Filter Sheet & Sort/Order Labels
-    val filterSheetTitle: String
+    // Filter Sheet & Filter/Order Labels
     val filterPersistLabel: String
     val filterOrderDirectionTitle: String
     val filterSortCriterionTitle: String
@@ -316,16 +302,7 @@ interface LanguageStrings {
     val orderAscending: String
     val orderDescending: String
 
-    val exploreSearchPlaceholder: String
-    val forumAction: String
-    val feedFilterTitle: String
-    val feedFilterStatuses: String
-    val feedFilterAnimationProgress: String
-    val feedFilterReadingProgress: String
-    val feedFilterMessages: String
-    val feedFilterMyActivities: String
-    val feedSectionReviews: String
-    val feedReviewOf: String
+    val discoverSearchPlaceholder: String
 
     // Notifications
     val notificationsEmptyLabel: String
@@ -347,13 +324,18 @@ interface LanguageStrings {
 
     // Studio detail
     val studioDetailTitle: String
-    val studioAnimationLabel: String
+    val studioAnimeLabel: String
     val studioNoMediaLabel: String
     val sortByPopularity: String
     val sortByNewest: String
     val sortByOldest: String
     val sortByFavourites: String
     val sortByScore: String
+    val sortBestMatch: String
+    val sortMostPopular: String
+    val sortLeastPopular: String
+    val sortHighestScored: String
+    val sortLowestScored: String
 
     // Character detail
     val characterDetailTitle: String

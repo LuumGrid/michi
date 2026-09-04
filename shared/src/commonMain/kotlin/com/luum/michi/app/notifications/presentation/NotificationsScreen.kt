@@ -23,7 +23,8 @@ import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.core.platform.components.bottomNavBarClearance
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.core.platform.components.tabBarClearance
 import com.luum.michi.app.notifications.presentation.components.NotificationCard
 import com.luum.michi.app.notifications.presentation.model.NotificationTarget
 import com.luum.michi.app.notifications.presentation.state.NotificationsStateHolder
@@ -61,7 +62,12 @@ internal fun NotificationsScreen(
         else -> LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = bottomNavBarClearance()),
+            contentPadding = PaddingValues(
+                start = 12.dp,
+                end = 12.dp,
+                top = floatingToolbarClearance(),
+                bottom = tabBarClearance(),
+            ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(

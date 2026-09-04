@@ -70,9 +70,9 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
                 type = SettingsItemType.LANGUAGE,
             ),
             SettingsItem(
-                title = strings.settingsHomeTabTitle,
-                subtitle = strings.settingsHomeTabSubtitle,
-                icon = { PlatformIcons.Home },
+                title = strings.settingsDiscoverTabTitle,
+                subtitle = strings.settingsDiscoverTabSubtitle,
+                icon = { PlatformIcons.Discover },
                 type = SettingsItemType.HOME_TAB,
             ),
         ),
@@ -106,19 +106,19 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsListSortTitle,
                 subtitle = strings.settingsListSortSubtitle,
-                icon = { PlatformIcons.FilterList },
+                icon = { PlatformIcons.Sort },
                 type = SettingsItemType.LIST_SORT,
             ),
             SettingsItem(
                 title = strings.settingsSplitCompletedAnimeTitle,
                 subtitle = strings.settingsSplitCompletedAnimeSubtitle,
-                icon = { PlatformIcons.Animation },
+                icon = { PlatformIcons.Anime },
                 type = SettingsItemType.SPLIT_COMPLETED_ANIME,
             ),
             SettingsItem(
                 title = strings.settingsSplitCompletedMangaTitle,
                 subtitle = strings.settingsSplitCompletedMangaSubtitle,
-                icon = { PlatformIcons.Reading },
+                icon = { PlatformIcons.Manga },
                 type = SettingsItemType.SPLIT_COMPLETED_MANGA,
             ),
             SettingsItem(

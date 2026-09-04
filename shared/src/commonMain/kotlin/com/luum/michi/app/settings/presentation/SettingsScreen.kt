@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformBackHandlerSetter
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.settings.presentation.components.SettingsDetailContent
 import com.luum.michi.app.settings.presentation.components.SettingsGroupHeader
 import com.luum.michi.app.settings.presentation.components.SettingsRow
@@ -75,7 +76,7 @@ internal fun SettingsScreen(
             .background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(
             start = 16.dp,
-            top = 16.dp,
+            top = floatingToolbarClearance(),
             end = 16.dp,
             bottom = 24.dp,
         ),

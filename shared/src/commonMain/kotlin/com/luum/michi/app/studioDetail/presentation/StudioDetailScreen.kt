@@ -32,7 +32,8 @@ import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformChips
+import com.luum.michi.app.core.platform.components.PlatformFilterChip
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
@@ -81,7 +82,11 @@ private fun StudioDetailContent(
     strings: LanguageStrings,
     onOpenMedia: (Int) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = floatingToolbarClearance()),
+    ) {
         StudioDetailHeader(
             detail = detail,
             isFavourite = stateHolder.isFavourite,
@@ -90,14 +95,20 @@ private fun StudioDetailContent(
             strings = strings,
         )
 
-        PlatformChips(
-            items = AllSortOptions,
-            selectedItem = stateHolder.sort,
-            onSelect = stateHolder::changeSort,
-            label = { sort -> sort.toLabel(strings) },
-            useSoftActiveColor = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            PlatformFilterChip(
+                label = strings.orderByLabel,
+                selectedOption = stateHolder.sort,
+                options = AllSortOptions,
+                optionLabel = { sort -> sort.toLabel(strings) },
+                onSelect = stateHolder::changeSort,
+            )
+        }
 
         StudioMediaGrid(
             items = stateHolder.mediaItems,
@@ -134,9 +145,9 @@ private fun StudioDetailHeader(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (detail.isAnimationStudio) {
+            if (detail.isAnimeStudio) {
                 Text(
-                    text = strings.studioAnimationLabel,
+                    text = strings.studioAnimeLabel,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = 2.dp),

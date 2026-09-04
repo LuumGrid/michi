@@ -8,12 +8,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
-import com.luum.michi.app.animation.presentation.model.AnimationListSection
+import com.luum.michi.app.anime.presentation.model.AnimeListSection
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.core.session.Viewer
 import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
-import com.luum.michi.app.reading.presentation.model.ReadingListSection
-import com.luum.michi.app.shell.components.ShellBottomTab
+import com.luum.michi.app.manga.presentation.model.MangaListSection
+import com.luum.michi.app.shell.components.ShellTabSection
 
 internal enum class ShellAccountRoute {
     ACCOUNT,
@@ -26,24 +26,24 @@ internal enum class ShellAccountRoute {
 
 internal class ShellState(
     initialProfile: AccountProfileDraft,
-    initialTab: ShellBottomTab = ShellBottomTab.HOME,
+    initialTab: ShellTabSection = ShellTabSection.DISCOVER,
 ) {
     var selectedTab by mutableStateOf(initialTab)
-    var selectedAnimationSection by mutableStateOf(AnimationListSection.ALL)
-    var selectedReadingSection by mutableStateOf(ReadingListSection.ALL)
+    var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
+    var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
     var accountRoute by mutableStateOf(ShellAccountRoute.ACCOUNT)
-    var topBarBackHandler by mutableStateOf<PlatformBackHandler?>(null)
-    var isSearchActive by mutableStateOf(false)
-    var searchQuery by mutableStateOf("")
+    var toolBarBackHandler by mutableStateOf<PlatformBackHandler?>(null)
     var currentProfile by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
     var editorMediaId by mutableStateOf<Int?>(null)
     var editorInitialStatus by mutableStateOf<MediaListStatus?>(null)
     var editorInitialProgress by mutableStateOf<Int?>(null)
-    var isExploreOpen by mutableStateOf(false)
+    var isDiscoverOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
     var isSeasonalOpen by mutableStateOf(false)
     var isNotificationsOpen by mutableStateOf(false)
+    var isSectionFilterOpen by mutableStateOf(false)
+    var isDiscoverFilterOpen by mutableStateOf(false)
     var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
@@ -55,36 +55,14 @@ internal class ShellState(
         get() = editorMediaId != null
 
     val isAccountDetail: Boolean
-        get() = selectedTab == ShellBottomTab.ACCOUNT && accountRoute != ShellAccountRoute.ACCOUNT
+        get() = selectedTab == ShellTabSection.ACCOUNT && accountRoute != ShellAccountRoute.ACCOUNT
 
-    val isSearchTab: Boolean
-        get() = selectedTab == ShellBottomTab.HOME ||
-            selectedTab == ShellBottomTab.ANIMATION ||
-            selectedTab == ShellBottomTab.READING
-
-    fun closeSearch() {
-        isSearchActive = false
-        searchQuery = ""
-    }
-
-    fun openSearch() {
-        isSearchActive = true
-    }
-
-    fun selectTab(tab: ShellBottomTab) {
+    fun selectTab(tab: ShellTabSection) {
         selectedTab = tab
-        closeSearch()
-        if (tab != ShellBottomTab.ACCOUNT) {
+        if (tab != ShellTabSection.ACCOUNT) {
             accountRoute = ShellAccountRoute.ACCOUNT
-            topBarBackHandler = null
+            toolBarBackHandler = null
         }
-    }
-
-    fun searchGlobally() {
-        selectedTab = ShellBottomTab.HOME
-        accountRoute = ShellAccountRoute.ACCOUNT
-        topBarBackHandler = null
-        isExploreOpen = true
     }
 
     private fun push(dest: DetailDestination) {
@@ -120,12 +98,12 @@ internal class ShellState(
         editorInitialProgress = null
     }
 
-    fun openExplore() {
-        isExploreOpen = true
+    fun openDiscover() {
+        isDiscoverOpen = true
     }
 
-    fun closeExplore() {
-        isExploreOpen = false
+    fun closeDiscover() {
+        isDiscoverOpen = false
     }
 
     fun openCalendar() {
@@ -152,8 +130,24 @@ internal class ShellState(
         isNotificationsOpen = false
     }
 
+    fun openSectionFilter() {
+        isSectionFilterOpen = true
+    }
+
+    fun closeSectionFilter() {
+        isSectionFilterOpen = false
+    }
+
+    fun openDiscoverFilter() {
+        isDiscoverFilterOpen = true
+    }
+
+    fun closeDiscoverFilter() {
+        isDiscoverFilterOpen = false
+    }
+
     fun handleAccountBack() {
-        val handler = topBarBackHandler
+        val handler = toolBarBackHandler
         if (handler != null) handler() else accountRoute = ShellAccountRoute.ACCOUNT
     }
 }
@@ -161,7 +155,7 @@ internal class ShellState(
 @Composable
 internal fun rememberShellState(
     viewer: Viewer,
-    initialTab: ShellBottomTab = ShellBottomTab.HOME,
+    initialTab: ShellTabSection = ShellTabSection.DISCOVER,
 ): ShellState {
     return remember(viewer.id) {
         ShellState(

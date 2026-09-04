@@ -33,16 +33,12 @@ import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.mediaDetail.presentation.components.ActivitiesTab
 import com.luum.michi.app.mediaDetail.presentation.components.CharactersTab
 import com.luum.michi.app.mediaDetail.presentation.components.ConnectionsTab
-import com.luum.michi.app.mediaDetail.presentation.components.FollowingTab
 import com.luum.michi.app.mediaDetail.presentation.components.MediaDetailHeader
 import com.luum.michi.app.mediaDetail.presentation.components.OverviewTab
-import com.luum.michi.app.mediaDetail.presentation.components.ReviewsTab
 import com.luum.michi.app.mediaDetail.presentation.components.StaffTab
 import com.luum.michi.app.mediaDetail.presentation.components.StatsTab
-import com.luum.michi.app.mediaDetail.presentation.components.ThreadsTab
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 import com.luum.michi.app.mediaDetail.presentation.state.MediaDetailStateHolder
 
@@ -51,10 +47,6 @@ private enum class DetailTab {
     CONNECTIONS,
     CHARACTERS,
     STAFF,
-    REVIEWS,
-    THREADS,
-    FOLLOWING,
-    ACTIVITIES,
     STATS,
 }
 
@@ -147,22 +139,6 @@ private fun MediaDetailContent(
                     strings = strings,
                     onOpenStaff = onOpenStaff,
                 )
-                DetailTab.REVIEWS -> ReviewsTab(
-                    stateHolder = stateHolder,
-                    strings = strings,
-                )
-                DetailTab.THREADS -> ThreadsTab(
-                    stateHolder = stateHolder,
-                    strings = strings,
-                )
-                DetailTab.FOLLOWING -> FollowingTab(
-                    stateHolder = stateHolder,
-                    strings = strings,
-                )
-                DetailTab.ACTIVITIES -> ActivitiesTab(
-                    stateHolder = stateHolder,
-                    strings = strings,
-                )
                 DetailTab.STATS -> StatsTab(
                     detail = detail,
                     strings = strings,
@@ -194,10 +170,6 @@ private fun DetailTab.label(strings: LanguageStrings): String = when (this) {
     DetailTab.CONNECTIONS -> strings.mediaDetailTabConnections
     DetailTab.CHARACTERS -> strings.mediaDetailTabCharacters
     DetailTab.STAFF -> strings.mediaDetailTabStaff
-    DetailTab.REVIEWS -> strings.mediaDetailTabReviews
-    DetailTab.THREADS -> strings.mediaDetailTabThreads
-    DetailTab.FOLLOWING -> strings.mediaDetailTabFollowing
-    DetailTab.ACTIVITIES -> strings.mediaDetailTabActivities
     DetailTab.STATS -> strings.mediaDetailTabStats
 }
 

@@ -33,7 +33,7 @@ import com.luum.michi.app.core.platform.PlatformIcons
  * poster ratio); width drives height implicitly.
  */
 object PlatformCoverSize {
-    /** Vertical poster in horizontal rails and 2-column grids (Home rails, Explore, Account favorites). */
+    /** Vertical poster in horizontal rails and 2-column grids (Discover rails, catalog, Account favorites). */
     val RailPosterWidth: Dp = 116.dp
     /** Horizontal row card cover (Library, Calendar, Detail Connections). */
     val RowPosterWidth: Dp = 93.dp

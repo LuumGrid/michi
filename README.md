@@ -20,11 +20,11 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 
 | Anime list | Manga list | Discover | Calendar |
 |:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-reading.webp" width="200" alt="Manga list (Planning)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
+| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-manga.webp" width="200" alt="Manga list (Current)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
 
-| Activity | Profile | Completed list |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/06-activity.webp" width="200" alt="Activity feed" /> | <img src="docs/screenshots/07-profile.webp" width="200" alt="Profile with favorites" /> | <img src="docs/screenshots/02-anime-completed.webp" width="200" alt="Anime list (Completed TV)" /> |
+| Profile | Completed list |
+|:---:|:---:|
+| <img src="docs/screenshots/07-profile.webp" width="200" alt="Profile with favorites" /> | <img src="docs/screenshots/02-anime-completed.webp" width="200" alt="Anime list (Completed TV)" /> |
 
 ## Features
 
@@ -32,9 +32,9 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 - **Profile:** your AniList profile, stats, favorites (media, characters, staff, studios), and a shareable profile QR code.
 - **Discover / Explore:** find new titles, trending and seasonal content.
 - **Airing calendar:** track what's airing and when.
-- **Media detail:** rich detail screens with overview, characters, staff, stats, reviews, threads and related connections.
+- **Media detail:** rich detail screens with overview, characters, staff, stats and related connections.
 - **Search:** across anime, manga, characters, staff and studios.
-- **Activity feed:** follow community activity and reviews.
+
 - **Bilingual:** full English and Spanish support, switchable in-app.
 - **Light & dark themes.**
 - **Secure AniList login** via OAuth (implicit grant, no client secret shipped in the app).
@@ -53,7 +53,7 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 
 ### Architecture highlights
 
-- **18 feature modules of Kotlin** cleanly separated into data, presentation and state layers.
+- **17 feature modules of Kotlin** cleanly separated into data, presentation and state layers.
 - A **hand-rolled GraphQL client** over Ktor with a typed envelope, `NetworkResult` error handling, and a **client-side rate limiter** that respects AniList's API limits.
 - **`expect`/`actual` platform abstractions** for token storage, OAuth launching, clipboard, language settings and system back handling. The shared module holds the logic; platform modules hold the thin native bridges.
 

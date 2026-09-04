@@ -7,13 +7,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,13 +48,16 @@ fun combineDiscoverSort(field: String, descending: Boolean): String =
     if (descending) "${field}_DESC" else field
 
 /**
- * Sheet de Order + filtros onList para las superficies de Discover (Explore, Seasonal).
- * El sort field se maneja ahora vía un PlatformFilterChip en el caller.
+ * Sheet de Filter completo (campo + dirección) + filtros onList para las superficies
+ * de catálogo (Discover, Seasonal).
  * Las etiquetas llegan ya localizadas desde el caller.
  */
 @Composable
 fun DiscoverFilterSheet(
     title: String,
+    sortFields: List<DiscoverSortField>,
+    currentField: String,
+    sortFieldTitle: String,
     orderTitle: String,
     ascendingLabel: String,
     descendingLabel: String,
@@ -60,8 +68,9 @@ fun DiscoverFilterSheet(
     currentOnList: Boolean?,
     applyLabel: String,
     onDismiss: () -> Unit,
-    onApply: (descending: Boolean, onList: Boolean?) -> Unit,
+    onApply: (field: String, descending: Boolean, onList: Boolean?) -> Unit,
 ) {
+    var selectedField by remember(currentField) { mutableStateOf(currentField) }
     var descending by remember(currentDescending) { mutableStateOf(currentDescending) }
     var hideOnList by remember(currentOnList) { mutableStateOf(currentOnList == false) }
     var onlyOnList by remember(currentOnList) { mutableStateOf(currentOnList == true) }
@@ -91,6 +100,40 @@ fun DiscoverFilterSheet(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    // Filter field selector
+                    item {
+                        Text(
+                            text = sortFieldTitle,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    items(sortFields, key = { it.field }) { field ->
+                        val isFieldSelected = field.field == selectedField
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { selectedField = field.field }
+                                .padding(vertical = 2.dp, horizontal = 6.dp),
+                        ) {
+                            RadioButton(
+                                selected = isFieldSelected,
+                                onClick = { selectedField = field.field },
+                                modifier = Modifier.size(36.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = field.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isFieldSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isFieldSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
                     // Order direction selector
                     item {
                         Text(
@@ -98,7 +141,7 @@ fun DiscoverFilterSheet(
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 4.dp),
+                            modifier = Modifier.padding(bottom = 4.dp, top = 6.dp),
                         )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -178,7 +221,7 @@ fun DiscoverFilterSheet(
                                 hideOnList -> false
                                 else -> null
                             }
-                            onApply(descending, onList)
+                            onApply(selectedField, descending, onList)
                         },
                         shape = RoundedCornerShape(24.dp),
                         modifier = Modifier

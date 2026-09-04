@@ -6,7 +6,7 @@ import com.luum.michi.app.settings.presentation.model.ScoreFormat
 import com.luum.michi.app.settings.presentation.model.TitleLanguage
 
 /**
- * AniList-synced settings payload. Theme and default home tab are intentionally
+ * AniList-synced settings payload. Theme and default discover tab are intentionally
  * excluded - they are local-only preferences with no AniList equivalent.
  */
 internal data class SettingsData(

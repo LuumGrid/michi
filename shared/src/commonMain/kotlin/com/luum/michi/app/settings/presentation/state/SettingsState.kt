@@ -12,7 +12,7 @@ import com.luum.michi.app.core.platform.PlatformSettingsStore
 import com.luum.michi.app.core.platform.SettingsStoreKeys
 import com.luum.michi.app.settings.data.SettingsData
 import com.luum.michi.app.settings.data.SettingsRepository
-import com.luum.michi.app.settings.presentation.model.HomeTabOption
+import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.model.ListSort
 import com.luum.michi.app.settings.presentation.model.NotificationPreferences
 import com.luum.michi.app.settings.presentation.model.ScoreFormat
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val KeyThemeMode = SettingsStoreKeys.ThemeMode
-private const val KeyDefaultHomeTab = SettingsStoreKeys.DefaultHomeTab
+private const val KeyDefaultDiscoverTab = SettingsStoreKeys.DefaultDiscoverTab
 private const val KeyTitleLanguage = "title_language"
 private const val KeyDisplayAdultContent = "display_adult_content"
 private const val KeyScoreFormat = "score_format"
@@ -56,12 +56,12 @@ internal class SettingsState(
             store.putString(KeyThemeMode, value.name)
         }
 
-    private var _defaultHomeTab by mutableStateOf(HomeTabOption.HOME)
-    var defaultHomeTab: HomeTabOption
-        get() = _defaultHomeTab
+    private var _defaultDiscoverTab by mutableStateOf(DiscoverTabOption.DISCOVER)
+    var defaultDiscoverTab: DiscoverTabOption
+        get() = _defaultDiscoverTab
         set(value) {
-            _defaultHomeTab = value
-            store.putString(KeyDefaultHomeTab, value.name)
+            _defaultDiscoverTab = value
+            store.putString(KeyDefaultDiscoverTab, value.name)
         }
 
     // AniList-synced prefs.
@@ -159,8 +159,8 @@ internal class SettingsState(
         store.getString(KeyThemeMode)?.let { saved ->
             ThemeMode.entries.firstOrNull { it.name == saved }?.let { _themeMode = it }
         }
-        store.getString(KeyDefaultHomeTab)?.let { saved ->
-            HomeTabOption.entries.firstOrNull { it.name == saved }?.let { _defaultHomeTab = it }
+        store.getString(KeyDefaultDiscoverTab)?.let { saved ->
+            DiscoverTabOption.entries.firstOrNull { it.name == saved }?.let { _defaultDiscoverTab = it }
         }
         store.getString(KeyTitleLanguage)?.let { saved ->
             TitleLanguage.entries.firstOrNull { it.name == saved }?.let { _titleLanguage = it }

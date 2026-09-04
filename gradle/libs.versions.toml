@@ -17,7 +17,7 @@ junit = "4.13.2"
 kotlin = "2.4.10"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"
-material3 = "1.11.0-alpha07"
+material3 = "1.9.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

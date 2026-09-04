@@ -20,27 +20,6 @@ internal interface MediaDetailRepository {
         page: Int,
     ): NetworkResult<MediaStaffPage>
 
-    suspend fun loadReviewsPage(
-        mediaId: Int,
-        page: Int,
-    ): NetworkResult<MediaReviewsPage>
-
-    suspend fun loadThreadsPage(
-        mediaId: Int,
-        page: Int,
-    ): NetworkResult<MediaThreadsPage>
-
-    suspend fun loadFollowingEntries(
-        mediaId: Int,
-    ): NetworkResult<List<MediaFollowingEntry>>
-
-    suspend fun loadActivitiesPage(
-        mediaId: Int,
-        page: Int,
-        userId: Int? = null,
-        isFollowing: Boolean? = null,
-    ): NetworkResult<MediaActivitiesPage>
-
     suspend fun loadRecommendations(
         mediaId: Int,
     ): NetworkResult<List<MediaRecommendationEntry>>

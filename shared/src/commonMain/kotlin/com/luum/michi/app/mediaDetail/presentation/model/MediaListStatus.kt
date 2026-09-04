@@ -17,10 +17,10 @@ internal fun parseMediaListStatus(raw: String?): MediaListStatus? = when (raw) {
 }
 
 internal fun MediaListStatus.label(strings: LanguageStrings, isManga: Boolean): String = when (this) {
-    MediaListStatus.CURRENT -> if (isManga) strings.sectionReading else strings.sectionWatching
+    MediaListStatus.CURRENT -> if (isManga) strings.sectionCurrent else strings.sectionWatching
     MediaListStatus.PLANNING -> strings.sectionPlanning
     MediaListStatus.COMPLETED -> strings.sectionCompleted
     MediaListStatus.DROPPED -> strings.sectionDropped
     MediaListStatus.PAUSED -> strings.sectionPaused
-    MediaListStatus.REPEATING -> if (isManga) strings.sectionRereading else strings.sectionRewatching
+    MediaListStatus.REPEATING -> if (isManga) strings.sectionRepeating else strings.sectionRewatching
 }

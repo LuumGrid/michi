@@ -25,7 +25,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifAiringTitle,
-                icon = { PlatformIcons.Animation },
+                icon = { PlatformIcons.Anime },
             ),
             checked = preferences.airing,
             onCheckedChange = { onChange(preferences.copy(airing = it)) },

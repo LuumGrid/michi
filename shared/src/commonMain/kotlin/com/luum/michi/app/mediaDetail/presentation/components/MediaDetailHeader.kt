@@ -104,7 +104,7 @@ internal fun MediaDetailHeader(
                     .width(PlatformCoverSize.RailPosterWidth)
                     .aspectRatio(PlatformCoverSize.PosterAspectRatio)
                     .clickable { onCoverClick() },
-                fallbackIcon = PlatformIcons.Home,
+                fallbackIcon = PlatformIcons.Discover,
                 fallbackIconSize = 34.dp,
             )
             Column(

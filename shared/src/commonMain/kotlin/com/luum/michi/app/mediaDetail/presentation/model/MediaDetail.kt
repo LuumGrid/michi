@@ -119,60 +119,6 @@ internal data class MediaDetailRelation(
     val viewerStatus: String?,
 )
 
-internal data class MediaReviewEntry(
-    val id: Int,
-    val summary: String,
-    val rating: String,
-    val reviewerName: String,
-    val reviewerImageUrl: String?,
-    val text: String,
-)
-
-internal data class MediaReviewsPage(
-    val items: List<MediaReviewEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
-internal data class MediaThreadEntry(
-    val id: Int,
-    val title: String,
-    val authorName: String,
-    val authorImageUrl: String?,
-    val replyCount: Int,
-    val viewCount: Int,
-    val createdAt: Long,
-)
-
-internal data class MediaThreadsPage(
-    val items: List<MediaThreadEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
-internal data class MediaFollowingEntry(
-    val id: Int,
-    val userName: String,
-    val userImageUrl: String?,
-    val progressLabel: String,
-    val scoreLabel: String,
-)
-
-internal data class MediaActivityEntry(
-    val id: Int,
-    val userName: String,
-    val userImageUrl: String?,
-    val actionText: String,
-    val timeLabel: String,
-    val likesCount: Int,
-)
-
-internal data class MediaActivitiesPage(
-    val items: List<MediaActivityEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
 internal data class MediaRecommendationEntry(
     val id: Int,
     val title: String,

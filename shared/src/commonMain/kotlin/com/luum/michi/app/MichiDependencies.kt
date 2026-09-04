@@ -2,10 +2,10 @@ package com.luum.michi.app
 
 import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.data.AccountRepositoryImpl
-import com.luum.michi.app.animation.data.AnimationListRepository
-import com.luum.michi.app.animation.data.AnimationListRepositoryImpl
-import com.luum.michi.app.explore.data.ExploreRepository
-import com.luum.michi.app.explore.data.ExploreRepositoryImpl
+import com.luum.michi.app.anime.data.AnimeListRepository
+import com.luum.michi.app.anime.data.AnimeListRepositoryImpl
+import com.luum.michi.app.discover.data.DiscoverRepository
+import com.luum.michi.app.discover.data.DiscoverRepositoryImpl
 import com.luum.michi.app.calendar.data.CalendarRepository
 import com.luum.michi.app.calendar.data.CalendarRepositoryImpl
 import com.luum.michi.app.core.auth.AniListOAuthLauncher
@@ -23,8 +23,6 @@ import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
-import com.luum.michi.app.feed.data.FeedRepository
-import com.luum.michi.app.feed.data.FeedRepositoryImpl
 import com.luum.michi.app.notifications.data.NotificationsRepository
 import com.luum.michi.app.notifications.data.NotificationsRepositoryImpl
 import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
@@ -33,8 +31,8 @@ import com.luum.michi.app.staffDetail.data.StaffDetailRepository
 import com.luum.michi.app.staffDetail.data.StaffDetailRepositoryImpl
 import com.luum.michi.app.studioDetail.data.StudioDetailRepository
 import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
-import com.luum.michi.app.reading.data.ReadingListRepository
-import com.luum.michi.app.reading.data.ReadingListRepositoryImpl
+import com.luum.michi.app.manga.data.MangaListRepository
+import com.luum.michi.app.manga.data.MangaListRepositoryImpl
 import com.luum.michi.app.settings.data.SettingsRepository
 import com.luum.michi.app.settings.data.SettingsRepositoryImpl
 import io.ktor.client.HttpClient
@@ -65,11 +63,11 @@ class MichiDependencies internal constructor(
     internal val viewerRepository: AniListViewerRepository =
         AniListViewerRepositoryImpl(graphQLClient)
 
-    internal val animationListRepository: AnimationListRepository =
-        AnimationListRepositoryImpl(graphQLClient)
+    internal val animeListRepository: AnimeListRepository =
+        AnimeListRepositoryImpl(graphQLClient)
 
-    internal val readingListRepository: ReadingListRepository =
-        ReadingListRepositoryImpl(graphQLClient)
+    internal val mangaListRepository: MangaListRepository =
+        MangaListRepositoryImpl(graphQLClient)
 
     internal val accountRepository: AccountRepository =
         AccountRepositoryImpl(graphQLClient)
@@ -77,8 +75,8 @@ class MichiDependencies internal constructor(
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)
 
-    internal val exploreRepository: ExploreRepository =
-        ExploreRepositoryImpl(graphQLClient)
+    internal val discoverRepository: DiscoverRepository =
+        DiscoverRepositoryImpl(graphQLClient)
 
     internal val calendarRepository: CalendarRepository =
         CalendarRepositoryImpl(graphQLClient)
@@ -88,9 +86,6 @@ class MichiDependencies internal constructor(
 
     internal val mediaListEntryRepository: MediaListEntryRepository =
         MediaListEntryRepositoryImpl(graphQLClient)
-
-    internal val feedRepository: FeedRepository =
-        FeedRepositoryImpl(graphQLClient)
 
     internal val notificationsRepository: NotificationsRepository =
         NotificationsRepositoryImpl(graphQLClient)

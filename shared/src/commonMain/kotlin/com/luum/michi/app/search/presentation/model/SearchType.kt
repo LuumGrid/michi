@@ -6,8 +6,8 @@ internal enum class SearchType { ALL, ANIME, MANGA }
 
 internal fun SearchType.label(strings: LanguageStrings): String = when (this) {
     SearchType.ALL -> strings.searchTypeAll
-    SearchType.ANIME -> strings.tabAnimation
-    SearchType.MANGA -> strings.tabReading
+    SearchType.ANIME -> strings.tabAnime
+    SearchType.MANGA -> strings.tabManga
 }
 
 internal fun SearchType.toApiValue(): String? = when (this) {

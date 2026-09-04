@@ -33,6 +33,7 @@ import com.luum.michi.app.core.platform.components.DiscoverSortField
 import com.luum.michi.app.core.platform.components.combineDiscoverSort
 import com.luum.michi.app.core.platform.components.parseDiscoverSort
 import com.luum.michi.app.core.platform.components.PlatformFilterChip
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.search.presentation.components.SearchResultCard
 import com.luum.michi.app.seasonal.presentation.state.SeasonalStateHolder
 
@@ -70,7 +71,7 @@ internal fun SeasonalScreen(
         DiscoverSortField("START_DATE", if (isSpanish) "Fecha de inicio" else "Start date"),
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().padding(top = floatingToolbarClearance())) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,7 +96,7 @@ internal fun SeasonalScreen(
             val (currentSortField, currentDescending) = parseDiscoverSort(stateHolder.sort)
             val selectedSortField = sortFields.firstOrNull { it.field == currentSortField } ?: sortFields.first()
             PlatformFilterChip(
-                label = if (isSpanish) "Orden" else "Sort",
+                label = if (isSpanish) "Orden" else "Filter",
                 selectedOption = selectedSortField,
                 options = sortFields,
                 optionLabel = { it.label },
@@ -143,7 +144,7 @@ internal fun SeasonalScreen(
                         state = gridState,
                         columns = GridCells.Fixed(2),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 96.dp),
+                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
@@ -167,7 +168,10 @@ internal fun SeasonalScreen(
     if (showSortSheet) {
         val (currentSortFieldForSheet, currentDescendingForSheet) = parseDiscoverSort(stateHolder.sort)
         DiscoverFilterSheet(
-            title = if (isSpanish) "Filtros" else "Filters",
+            title = strings.orderByLabel,
+            sortFields = sortFields,
+            currentField = currentSortFieldForSheet,
+            sortFieldTitle = strings.orderByLabel,
             orderTitle = if (isSpanish) "Dirección" else "Order",
             ascendingLabel = if (isSpanish) "Ascendente" else "Ascending",
             descendingLabel = if (isSpanish) "Descendente" else "Descending",
@@ -178,8 +182,8 @@ internal fun SeasonalScreen(
             currentOnList = stateHolder.onList,
             applyLabel = if (isSpanish) "Aplicar" else "Apply",
             onDismiss = onDismissSortSheet,
-            onApply = { descending, onList ->
-                stateHolder.applySortAndOnList(combineDiscoverSort(currentSortFieldForSheet, descending), onList)
+            onApply = { field, descending, onList ->
+                stateHolder.applySortAndOnList(combineDiscoverSort(field, descending), onList)
                 onDismissSortSheet()
             },
         )

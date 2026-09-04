@@ -22,6 +22,7 @@ import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
 import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 
 @Composable
 internal fun CalendarScreen(
@@ -47,7 +48,12 @@ internal fun CalendarScreen(
         stateHolder.days.isEmpty() -> PlatformListMessage(title = strings.calendarEmptyLabel)
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp),
+            contentPadding = PaddingValues(
+                start = 12.dp,
+                end = 12.dp,
+                top = floatingToolbarClearance(),
+                bottom = 14.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             stateHolder.days.forEach { day ->

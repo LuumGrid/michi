@@ -12,7 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.settings.presentation.model.HomeTabOption
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.model.ListSort
 import com.luum.michi.app.settings.presentation.model.ScoreFormat
 import com.luum.michi.app.settings.presentation.model.SettingsItem
@@ -40,7 +41,7 @@ internal fun SettingsDetailContent(
             .background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(
             start = 16.dp,
-            top = 16.dp,
+            top = floatingToolbarClearance(),
             end = 16.dp,
             bottom = 24.dp,
         ),
@@ -75,9 +76,9 @@ internal fun SettingsDetailContent(
                 )
 
                 SettingsItemType.HOME_TAB -> SettingsRadioPicker(
-                    options = HomeTabOption.entries,
-                    selected = settingsState.defaultHomeTab,
-                    onSelect = { settingsState.defaultHomeTab = it },
+                    options = DiscoverTabOption.entries,
+                    selected = settingsState.defaultDiscoverTab,
+                    onSelect = { settingsState.defaultDiscoverTab = it },
                     label = { it.label(strings) },
                 )
 

@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 internal data class StudioDetail(
     val id: Int,
     val name: String,
-    val isAnimationStudio: Boolean,
+    val isAnimeStudio: Boolean,
     val favourites: Int?,
     val isFavourite: Boolean,
     val media: StudioMediaPage,

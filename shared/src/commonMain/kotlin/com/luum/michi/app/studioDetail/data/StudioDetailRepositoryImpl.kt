@@ -210,7 +210,7 @@ internal class StudioDetailRepositoryImpl(
                         StudioDetail(
                             id = studio.id,
                             name = studio.name,
-                            isAnimationStudio = studio.isAnimationStudio,
+                            isAnimeStudio = studio.isAnimationStudio,
                             favourites = studio.favourites?.takeIf { it > 0 },
                             isFavourite = studio.isFavourite,
                             media = studio.media.toMediaPage(fallbackPage = 1),

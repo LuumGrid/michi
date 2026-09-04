@@ -29,7 +29,8 @@ import com.luum.michi.app.account.presentation.components.AccountStatBarChart
 import com.luum.michi.app.account.presentation.model.AccountMediaTypeStats
 import com.luum.michi.app.account.presentation.model.AccountStats
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.bottomNavBarClearance
+import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import kotlin.math.round
 
 private enum class AccountStatsTab { ANIME, MANGA }
@@ -48,8 +49,8 @@ internal fun AccountStatsScreen(stats: AccountStats) {
         contentPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
-            top = 16.dp,
-            bottom = bottomNavBarClearance(),
+            top = floatingToolbarClearance(),
+            bottom = tabBarClearance(),
         ),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {

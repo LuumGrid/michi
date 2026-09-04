@@ -58,7 +58,7 @@ internal class KtorAniListGraphQLClient(
         val token = tokenProvider()
 
         // The permit is held only for the round-trip and released in withPermit's finally,
-        // even on cancellation. Body reading happens after the permit is released.
+        // even on cancellation. __BODY_MANGA__ after the permit is released.
         val response = rateLimiter.withPermit {
             httpClient.post(AniListEndpoints.GraphQL) {
                 headers {

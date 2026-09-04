@@ -29,7 +29,8 @@ import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.bottomNavBarClearance
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.core.platform.components.tabBarClearance
 
 @Composable
 internal fun AccountFavoritesGridScreen(
@@ -105,8 +106,8 @@ internal fun AccountFavoritesGridScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = 12.dp,
-                        bottom = bottomNavBarClearance(),
+                        top = floatingToolbarClearance(),
+                        bottom = tabBarClearance(),
                     ),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),

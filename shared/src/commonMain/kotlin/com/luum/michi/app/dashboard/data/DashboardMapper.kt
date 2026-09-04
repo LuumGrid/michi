@@ -3,14 +3,14 @@ package com.luum.michi.app.dashboard.data
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
-import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
+import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
 import com.luum.michi.app.core.platform.hexToPalette
 
 internal fun DashboardResponseDto.toDashboardFeed(): DashboardFeed = DashboardFeed(
-    trendingAnimation = trendingAnime?.media
+    trendingAnime = trendingAnime?.media
         ?.map { it.toMediaItem(metaFor = ::animeMeta) }
         .orEmpty(),
-    trendingReading = trendingManga?.media
+    trendingManga = trendingManga?.media
         ?.map { it.toMediaItem(metaFor = ::mangaMeta) }
         .orEmpty(),
     thisSeason = popularThisSeason?.media
@@ -33,8 +33,8 @@ internal fun DashboardResponseDto.toDashboardFeed(): DashboardFeed = DashboardFe
         .orEmpty(),
 )
 
-private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformHomeMediaItem =
-    PlatformHomeMediaItem(
+private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformDiscoverMediaItem =
+    PlatformDiscoverMediaItem(
         title = title.bestTitle(),
         meta = metaFor(this),
         colors = hexToPalette(coverImage?.color),

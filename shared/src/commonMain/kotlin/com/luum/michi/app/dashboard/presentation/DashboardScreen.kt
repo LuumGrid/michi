@@ -10,8 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.PlatformHomeMediaRail
-import com.luum.michi.app.core.platform.components.bottomNavBarClearance
+import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaRail
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.core.platform.components.tabBarClearance
 import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
 
 /** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
@@ -44,13 +45,13 @@ internal fun DashboardScreen(
     ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = bottomNavBarClearance()),
+        contentPadding = PaddingValues(top = floatingToolbarClearance(), bottom = tabBarClearance()),
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
 
         if (stateHolder.thisSeason.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreThisSeasonTitle,
                     items = stateHolder.thisSeason,
                     onItemClick = onOpenMedia,
@@ -60,11 +61,11 @@ internal fun DashboardScreen(
             }
         }
 
-        if (stateHolder.trendingAnimation.isNotEmpty()) {
+        if (stateHolder.trendingAnime.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
-                    title = strings.homeTrendingAnimationTitle,
-                    items = stateHolder.trendingAnimation,
+                PlatformDiscoverMediaRail(
+                    title = strings.discoverTrendingAnimeTitle,
+                    items = stateHolder.trendingAnime,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
                     onSeeAll = { onSeeAll(DashboardRail.TRENDING_ANIME) },
@@ -72,11 +73,11 @@ internal fun DashboardScreen(
             }
         }
 
-        if (stateHolder.trendingReading.isNotEmpty()) {
+        if (stateHolder.trendingManga.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
-                    title = strings.homeTrendingReadingTitle,
-                    items = stateHolder.trendingReading,
+                PlatformDiscoverMediaRail(
+                    title = strings.discoverTrendingMangaTitle,
+                    items = stateHolder.trendingManga,
                     onItemClick = onOpenMedia,
                     onItemLongClick = onEditMedia,
                     onSeeAll = { onSeeAll(DashboardRail.TRENDING_MANGA) },
@@ -86,7 +87,7 @@ internal fun DashboardScreen(
 
         if (stateHolder.upcomingNextSeason.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreUpcomingNextSeasonTitle,
                     items = stateHolder.upcomingNextSeason,
                     onItemClick = onOpenMedia,
@@ -98,7 +99,7 @@ internal fun DashboardScreen(
 
         if (stateHolder.allTimePopularAnime.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreAllTimePopularAnimeTitle,
                     items = stateHolder.allTimePopularAnime,
                     onItemClick = onOpenMedia,
@@ -110,7 +111,7 @@ internal fun DashboardScreen(
 
         if (stateHolder.allTimePopularManga.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreAllTimePopularMangaTitle,
                     items = stateHolder.allTimePopularManga,
                     onItemClick = onOpenMedia,
@@ -122,7 +123,7 @@ internal fun DashboardScreen(
 
         if (stateHolder.topAnime.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreTopAnimeTitle,
                     items = stateHolder.topAnime,
                     onItemClick = onOpenMedia,
@@ -134,7 +135,7 @@ internal fun DashboardScreen(
 
         if (stateHolder.topManga.isNotEmpty()) {
             item {
-                PlatformHomeMediaRail(
+                PlatformDiscoverMediaRail(
                     title = strings.exploreTopMangaTitle,
                     items = stateHolder.topManga,
                     onItemClick = onOpenMedia,

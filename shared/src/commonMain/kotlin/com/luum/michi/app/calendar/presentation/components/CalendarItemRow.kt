@@ -26,14 +26,14 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.components.PlatformCommunityMetaRow
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
-import com.luum.michi.app.core.platform.components.PlatformHomePoster
-import com.luum.michi.app.core.platform.components.PlatformHomeReleaseItem
+import com.luum.michi.app.core.platform.components.PlatformDiscoverPoster
+import com.luum.michi.app.core.platform.components.PlatformDiscoverReleaseItem
 import com.luum.michi.app.core.platform.components.StreamingPlatform
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun CalendarItemRow(
-    item: PlatformHomeReleaseItem,
+    item: PlatformDiscoverReleaseItem,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -49,7 +49,7 @@ internal fun CalendarItemRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlatformHomePoster(
+            PlatformDiscoverPoster(
                 colors = item.colors,
                 coverUrl = item.coverUrl,
                 contentDescription = item.title,

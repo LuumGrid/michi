@@ -4,8 +4,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,6 +20,8 @@ import com.luum.michi.app.core.language.ProvideLanguageStrings
 import com.luum.michi.app.core.language.currentPlatformLanguageCode
 import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.SettingsStoreKeys
+import com.luum.michi.app.core.platform.MichiDarkAmoledColorScheme
+import com.luum.michi.app.core.platform.MichiLightColorScheme
 import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.session.SessionState
 import com.luum.michi.app.shell.ShellScreen
@@ -54,7 +54,7 @@ fun App(
     val sessionState by dependencies.sessionManager.state.collectAsStateWithLifecycle()
 
     MaterialTheme(
-        colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme(),
+        colorScheme = if (isDarkMode) MichiDarkAmoledColorScheme else MichiLightColorScheme,
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -73,15 +73,14 @@ fun App(
                     )
                     is SessionState.Authenticated -> ShellScreen(
                         viewer = state.viewer,
-                        animationListRepository = dependencies.animationListRepository,
-                        readingListRepository = dependencies.readingListRepository,
+                        animeListRepository = dependencies.animeListRepository,
+                        mangaListRepository = dependencies.mangaListRepository,
                         accountRepository = dependencies.accountRepository,
                         dashboardRepository = dependencies.dashboardRepository,
-                        exploreRepository = dependencies.exploreRepository,
+                        discoverRepository = dependencies.discoverRepository,
                         calendarRepository = dependencies.calendarRepository,
                         mediaDetailRepository = dependencies.mediaDetailRepository,
                         mediaListEntryRepository = dependencies.mediaListEntryRepository,
-                        feedRepository = dependencies.feedRepository,
                         notificationsRepository = dependencies.notificationsRepository,
                         studioDetailRepository = dependencies.studioDetailRepository,
                         characterDetailRepository = dependencies.characterDetailRepository,

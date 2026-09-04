@@ -11,7 +11,7 @@ import com.luum.michi.app.core.media.MediaSeasonYear
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.explore.data.ExploreRepository
+import com.luum.michi.app.discover.data.DiscoverRepository
 import com.luum.michi.app.search.presentation.model.SearchResult
 import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 internal class SeasonalStateHolder(
-    private val repository: ExploreRepository,
+    private val repository: DiscoverRepository,
     private val scope: CoroutineScope,
     initial: MediaSeasonYear = currentSeasonAndYear(),
 ) {
@@ -137,7 +137,7 @@ internal class SeasonalStateHolder(
 
 @Composable
 internal fun rememberSeasonalStateHolder(
-    repository: ExploreRepository,
+    repository: DiscoverRepository,
 ): SeasonalStateHolder {
     val scope = rememberCoroutineScope()
     return remember(repository) {

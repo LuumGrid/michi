@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.components.AccountFavoriteMediaCard
-import com.luum.michi.app.core.platform.components.bottomNavBarClearance
+import com.luum.michi.app.core.platform.components.tabBarClearance
 import com.luum.michi.app.account.presentation.components.AccountFavoritePersonCard
 import com.luum.michi.app.account.presentation.components.AccountFavoriteSection
 import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioCard
@@ -65,8 +65,8 @@ internal fun AccountScreen(
     onRefresh: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
     onShareProfileClick: () -> Unit = {},
-    onOpenAnimationList: () -> Unit = {},
-    onOpenReadingList: () -> Unit = {},
+    onOpenAnimeList: () -> Unit = {},
+    onOpenMangaList: () -> Unit = {},
     onOpenMedia: (Int) -> Unit = {},
     onEditMedia: (Int) -> Unit = {},
     onOpenCharacter: (Int) -> Unit = {},
@@ -86,7 +86,7 @@ internal fun AccountScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(bottom = bottomNavBarClearance()),
+        contentPadding = PaddingValues(bottom = tabBarClearance()),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item {
@@ -105,8 +105,8 @@ internal fun AccountScreen(
         item {
             AccountStatsRow(
                 stats = stats,
-                onAnimeClick = onOpenAnimationList,
-                onMangaClick = onOpenReadingList,
+                onAnimeClick = onOpenAnimeList,
+                onMangaClick = onOpenMangaList,
             )
         }
 

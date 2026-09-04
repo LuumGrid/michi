@@ -2,41 +2,41 @@ package com.luum.michi.app.shell
 
 import androidx.compose.foundation.background
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.data.AccountRepository
 import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.rememberAccountFavoritesGridStateHolder
 import com.luum.michi.app.account.presentation.state.rememberAccountStateHolder
-import com.luum.michi.app.animation.data.AnimationListRepository
-import com.luum.michi.app.animation.presentation.AnimationScreen
-import com.luum.michi.app.animation.presentation.components.AnimationSectionChips
-import com.luum.michi.app.animation.presentation.state.rememberAnimationListStateHolder
-import com.luum.michi.app.explore.data.ExploreRepository
-import com.luum.michi.app.explore.presentation.ExploreScreen
-import com.luum.michi.app.explore.presentation.state.ExploreCategory
-import com.luum.michi.app.explore.presentation.state.rememberExploreStateHolder
+import com.luum.michi.app.anime.data.AnimeListRepository
+import com.luum.michi.app.anime.presentation.AnimeScreen
+import com.luum.michi.app.anime.presentation.model.AnimeListSection
+import com.luum.michi.app.anime.presentation.model.label
+import com.luum.michi.app.manga.presentation.model.MangaListSection
+import com.luum.michi.app.manga.presentation.model.label
+import com.luum.michi.app.anime.presentation.state.rememberAnimeListStateHolder
+import com.luum.michi.app.discover.data.DiscoverRepository
+import com.luum.michi.app.discover.presentation.DiscoverScreen
+import com.luum.michi.app.discover.presentation.components.DiscoverFiltersSheet
+import com.luum.michi.app.discover.presentation.model.applyFilterSelection
+import com.luum.michi.app.discover.presentation.model.buildDiscoverFilterGroups
+import com.luum.michi.app.discover.presentation.state.DiscoverCategory
+import com.luum.michi.app.discover.presentation.state.rememberDiscoverStateHolder
 import com.luum.michi.app.calendar.data.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
 import com.luum.michi.app.calendar.presentation.state.rememberCalendarStateHolder
@@ -67,20 +67,15 @@ import com.luum.michi.app.staffDetail.presentation.state.rememberStaffDetailStat
 import com.luum.michi.app.studioDetail.data.StudioDetailRepository
 import com.luum.michi.app.studioDetail.presentation.StudioDetailScreen
 import com.luum.michi.app.studioDetail.presentation.state.rememberStudioDetailStateHolder
-import com.luum.michi.app.feed.data.FeedRepository
-import com.luum.michi.app.feed.presentation.FeedScreen
-import com.luum.michi.app.feed.presentation.state.rememberFeedStateHolder
 import com.luum.michi.app.notifications.data.NotificationsRepository
 import com.luum.michi.app.notifications.presentation.NotificationsScreen
-import com.luum.michi.app.notifications.presentation.components.NotificationFilterSheet
 import com.luum.michi.app.notifications.presentation.model.NotificationTarget
 import com.luum.michi.app.notifications.presentation.state.rememberNotificationsStateHolder
-import com.luum.michi.app.reading.data.ReadingListRepository
-import com.luum.michi.app.reading.presentation.ReadingScreen
-import com.luum.michi.app.reading.presentation.components.ReadingSectionChips
-import com.luum.michi.app.reading.presentation.state.rememberReadingListStateHolder
+import com.luum.michi.app.manga.data.MangaListRepository
+import com.luum.michi.app.manga.presentation.MangaScreen
+import com.luum.michi.app.manga.presentation.state.rememberMangaListStateHolder
 import com.luum.michi.app.settings.data.SettingsRepository
-import com.luum.michi.app.settings.presentation.model.HomeTabOption
+import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
 import com.luum.michi.app.core.platform.SettingsStoreKeys
@@ -89,29 +84,27 @@ import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
-import com.luum.michi.app.feed.presentation.components.FeedFilterSheet
-import com.luum.michi.app.shell.components.ShellBottomNavBar
-import com.luum.michi.app.shell.components.ShellBottomTab
-import com.luum.michi.app.shell.components.ShellTopBar
+import com.luum.michi.app.shell.components.ShellBottomCluster
+import com.luum.michi.app.shell.components.ShellSectionFilterSheet
+import com.luum.michi.app.shell.components.ShellSectionOption
+import com.luum.michi.app.shell.components.ShellTabSection
 import com.luum.michi.app.shell.components.label
-import com.luum.michi.app.shell.components.shellCollapsibleChipsModifier
+import com.luum.michi.app.shell.components.ShellToolBar
 import com.luum.michi.app.shell.state.DetailDestination
 import com.luum.michi.app.shell.state.ShellAccountRoute
 import com.luum.michi.app.shell.state.rememberShellState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ShellScreen(
     viewer: Viewer,
-    animationListRepository: AnimationListRepository,
-    readingListRepository: ReadingListRepository,
+    animeListRepository: AnimeListRepository,
+    mangaListRepository: MangaListRepository,
     accountRepository: AccountRepository,
     dashboardRepository: DashboardRepository,
-    exploreRepository: ExploreRepository,
+    discoverRepository: DiscoverRepository,
     calendarRepository: CalendarRepository,
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
-    feedRepository: FeedRepository,
     notificationsRepository: NotificationsRepository,
     studioDetailRepository: StudioDetailRepository,
     characterDetailRepository: CharacterDetailRepository,
@@ -126,39 +119,45 @@ internal fun ShellScreen(
     val strings = LanguageProvider.strings
     val settingsStore = rememberPlatformSettingsStore()
     val initialTab = remember(settingsStore) {
-        settingsStore.getString(SettingsStoreKeys.DefaultHomeTab)
-            ?.let { name -> HomeTabOption.entries.firstOrNull { it.name == name } }
-            ?.toShellTab() ?: ShellBottomTab.HOME
+        settingsStore.getString(SettingsStoreKeys.DefaultDiscoverTab)
+            ?.let { name ->
+                DiscoverTabOption.entries.firstOrNull { it.name == name }
+                    ?: when (name) {
+                        "HOME" -> DiscoverTabOption.DISCOVER
+                        "ANIMATION" -> DiscoverTabOption.ANIME
+                        "READING" -> DiscoverTabOption.MANGA
+                        else -> null
+                    }
+            }
+            ?.toShellTab() ?: ShellTabSection.DISCOVER
     }
     val shellState = rememberShellState(viewer, initialTab)
-    val animationState = rememberAnimationListStateHolder(animationListRepository, mediaListEntryRepository, viewer.id)
-    val readingState = rememberReadingListStateHolder(readingListRepository, mediaListEntryRepository, viewer.id)
+    val animeState = rememberAnimeListStateHolder(animeListRepository, mediaListEntryRepository, viewer.id)
+    val mangaState = rememberMangaListStateHolder(mangaListRepository, mediaListEntryRepository, viewer.id)
     val accountState = rememberAccountStateHolder(
         repository = accountRepository,
         viewerId = viewer.id,
     )
     val favoritesGridState = rememberAccountFavoritesGridStateHolder(accountRepository)
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
-    val exploreState = rememberExploreStateHolder(exploreRepository)
+    val discoverState = rememberDiscoverStateHolder(discoverRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
-    val seasonalState = rememberSeasonalStateHolder(exploreRepository)
-    val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository, viewerId = viewer.id)
+    val seasonalState = rememberSeasonalStateHolder(discoverRepository)
+    val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository)
     val studioDetailState = rememberStudioDetailStateHolder(studioDetailRepository, viewerId = viewer.id)
     val characterDetailState = rememberCharacterDetailStateHolder(characterDetailRepository, viewerId = viewer.id)
     val staffDetailState = rememberStaffDetailStateHolder(staffDetailRepository, viewerId = viewer.id)
-    val feedState = rememberFeedStateHolder(feedRepository, viewer.id)
     val notificationsState = rememberNotificationsStateHolder(notificationsRepository)
     val settingsState = rememberSettingsState(settingsRepository, settingsStore)
     val uriHandler = LocalUriHandler.current
-    var showDiscoverSort by remember { mutableStateOf(false) }
+    var showSeasonalSort by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
-    var showFeedFilterSheet by remember { mutableStateOf(false) }
-    var showNotificationFilterSheet by remember { mutableStateOf(false) }
+    var showDiscoverSortDropdown by remember { mutableStateOf(false) }
 
-    // Abre la superficie unificada de Explore con un preset de categoría + orden,
-    // limpiando los demás filtros para que el rail "Ver todo" muestre exactamente esa lista.
-    val openExploreWith: (ExploreCategory, String) -> Unit = { category, sort ->
-        exploreState.updateFilters(
+    // Discover es tab: los rails "Ver todo" preseleccionan categoría + orden
+    // en la misma view, limpiando los demás filtros.
+    val openDiscoverWith: (DiscoverCategory, String) -> Unit = { category, sort ->
+        discoverState.updateFilters(
             newQuery = "",
             newCategory = category,
             newGenre = "All",
@@ -166,7 +165,7 @@ internal fun ShellScreen(
             newYear = null,
             newSort = sort,
         )
-        shellState.openExplore()
+        shellState.openDiscover()
     }
 
     val filterSettings = rememberPlatformFilterSettings()
@@ -174,8 +173,8 @@ internal fun ShellScreen(
         filterSettings.loadFilter()?.let { (sortName, orderName, persist) ->
             val sort = UserListSort.entries.firstOrNull { it.name == sortName } ?: UserListSort.FOLLOW_LIST
             val order = UserListOrder.entries.firstOrNull { it.name == orderName } ?: UserListOrder.DESCENDING
-            animationState.updateSort(sort, order, persist)
-            readingState.updateSort(sort, order, persist)
+            animeState.updateSort(sort, order, persist)
+            mangaState.updateSort(sort, order, persist)
         }
     }
 
@@ -184,24 +183,19 @@ internal fun ShellScreen(
 
     LaunchedEffect(shellState.selectedTab) {
         when (shellState.selectedTab) {
-            ShellBottomTab.ANIMATION -> {
-                if (animationState.entries.isEmpty() && !animationState.isLoading) {
-                    animationState.load(viewer.id)
+            ShellTabSection.ANIME -> {
+                if (animeState.entries.isEmpty() && !animeState.isLoading) {
+                    animeState.load(viewer.id)
                 }
             }
-            ShellBottomTab.READING -> {
-                if (readingState.entries.isEmpty() && !readingState.isLoading) {
-                    readingState.load(viewer.id)
+            ShellTabSection.MANGA -> {
+                if (mangaState.entries.isEmpty() && !mangaState.isLoading) {
+                    mangaState.load(viewer.id)
                 }
             }
-            ShellBottomTab.ACCOUNT -> {
+            ShellTabSection.ACCOUNT -> {
                 if (accountState.stats.animeCount == 0 && !accountState.isLoading) {
                     accountState.load(viewer.id)
-                }
-            }
-            ShellBottomTab.FEED -> {
-                if (feedState.activities.isEmpty() && !feedState.isLoading) {
-                    feedState.load()
                 }
             }
             else -> {}
@@ -214,14 +208,6 @@ internal fun ShellScreen(
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val chipsFraction by remember {
-        derivedStateOf {
-            val limit = scrollBehavior.state.heightOffsetLimit
-            if (limit < 0f) (scrollBehavior.state.heightOffset / limit).coerceIn(0f, 1f) else 0f
-        }
-    }
-
     PlatformSystemBackHandler(
         enabled = shellState.isEditorOpen,
         onBack = shellState::closeEditor,
@@ -231,66 +217,59 @@ internal fun ShellScreen(
         onBack = shellState::closeDetail,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isExploreOpen,
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isDiscoverOpen,
         onBack = {
-            if (showDiscoverSort) {
-                showDiscoverSort = false
+            if (showDiscoverSortDropdown) {
+                showDiscoverSortDropdown = false
             } else {
-                shellState.closeExplore()
+                shellState.closeDiscover()
             }
         },
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
             shellState.isCalendarOpen,
         onBack = shellState::closeCalendar,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
             !shellState.isCalendarOpen && shellState.isSeasonalOpen,
         onBack = {
-            if (showDiscoverSort) {
-                showDiscoverSort = false
+            if (showSeasonalSort) {
+                showSeasonalSort = false
             } else {
                 shellState.closeSeasonal()
             }
         },
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
             !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isNotificationsOpen,
         onBack = shellState::closeNotifications,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
             !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
-    PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen &&
-            shellState.isSearchTab && shellState.isSearchActive,
-        onBack = shellState::closeSearch,
-    )
-
     val titleText = when {
         shellState.currentDetail is DetailDestination.Character -> strings.characterDetailTitle
         shellState.currentDetail is DetailDestination.Studio -> strings.studioDetailTitle
         shellState.currentDetail is DetailDestination.Staff -> strings.staffDetailTitle
         shellState.isDetailOpen -> strings.mediaDetailTitle
-        shellState.isExploreOpen -> strings.exploreTitle
+        shellState.isDiscoverOpen -> strings.discoverTitle
         shellState.isCalendarOpen -> strings.calendarTitle
-        shellState.isSeasonalOpen -> strings.homeSeasonalAction
+        shellState.isSeasonalOpen -> strings.discoverSeasonalAction
         shellState.isNotificationsOpen -> strings.notificationsAction
-        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
-        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
-        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
-        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.STATS -> strings.accountStatsTitle
-        shellState.selectedTab == ShellBottomTab.ACCOUNT &&
+        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.FAVORITES -> when (shellState.favoritesCategory) {
                 AccountFavoritesCategory.ANIME -> strings.accountFavoriteAnimeTitle
                 AccountFavoritesCategory.MANGA -> strings.accountFavoriteMangaTitle
@@ -298,107 +277,25 @@ internal fun ShellScreen(
                 AccountFavoritesCategory.STAFF -> strings.accountFavoriteStaffTitle
                 AccountFavoritesCategory.STUDIOS -> strings.accountFavoriteStudiosTitle
             }
-        shellState.selectedTab == ShellBottomTab.ACCOUNT ->
+        shellState.selectedTab == ShellTabSection.ACCOUNT ->
             shellState.currentProfile.username
         else -> shellState.selectedTab.label(strings)
     }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
-        topBar = {
-            ShellTopBar(
-                selectedTab = shellState.selectedTab,
-                isAccountDetail = shellState.isAccountDetail,
-                isDetailOpen = shellState.isDetailOpen,
-                isExploreOpen = shellState.isExploreOpen,
-                isCalendarOpen = shellState.isCalendarOpen,
-                isSeasonalOpen = shellState.isSeasonalOpen,
-                isSearchActive = shellState.isSearchActive,
-                isSearchTab = shellState.isSearchTab,
-                searchQuery = shellState.searchQuery,
-                titleText = titleText,
-                scrollBehavior = scrollBehavior,
-                onOpenSearch = shellState::openSearch,
-                onOpenExplore = shellState::openExplore,
-                onCloseSearch = shellState::closeSearch,
-                onSearchQueryChange = { shellState.searchQuery = it },
-                onAccountBack = shellState::handleAccountBack,
-                onMediaBack = shellState::closeDetail,
-                onExploreBack = {
-                    if (showDiscoverSort) {
-                        showDiscoverSort = false
-                    } else {
-                        shellState.closeExplore()
-                    }
-                },
-                onCalendarBack = shellState::closeCalendar,
-                onSeasonalBack = {
-                    if (showDiscoverSort) {
-                        showDiscoverSort = false
-                    } else {
-                        shellState.closeSeasonal()
-                    }
-                },
-                onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
-                onNotificationsClick = {
-                    shellState.openNotifications()
-                    notificationsState.load(resetCount = true)
-                },
-                unreadCount = notificationsState.unreadCount,
-                isNotificationsOpen = shellState.isNotificationsOpen,
-                onNotificationsBack = shellState::closeNotifications,
-                onFilterClick = {
-                    if (shellState.isNotificationsOpen) {
-                        showNotificationFilterSheet = true
-                    } else if (shellState.selectedTab == ShellBottomTab.FEED) {
-                        showFeedFilterSheet = true
-                    } else {
-                        showListFilterSheet = true
-                    }
-                },
-                onForumClick = { },
-                onOpenCalendar = shellState::openCalendar,
-                onOpenDiscoverSort = { showDiscoverSort = true },
-                exploreQuery = exploreState.query,
-                onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
-                chips = {
-                    if (!shellState.isSearchActive) {
-                        when (shellState.selectedTab) {
-                            ShellBottomTab.ANIMATION -> AnimationSectionChips(
-                                selected = shellState.selectedAnimationSection,
-                                onSelect = { shellState.selectedAnimationSection = it },
-                                countForSection = animationState::countInSection,
-                                modifier = shellCollapsibleChipsModifier(chipsFraction),
-                            )
-                            ShellBottomTab.READING -> ReadingSectionChips(
-                                selected = shellState.selectedReadingSection,
-                                onSelect = { shellState.selectedReadingSection = it },
-                                countForSection = readingState::countInSection,
-                                modifier = shellCollapsibleChipsModifier(chipsFraction),
-                            )
-                            else -> { }
-                        }
-                    }
-                },
-            )
-        },
-    ) { contentPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    top = contentPadding.calculateTopPadding(),
-                ),
-        ) {
+    ) {
+        // Contenido full-bleed: la toolbar y el bottom cluster flotan por encima.
+        Box(modifier = Modifier.fillMaxSize()) {
             Crossfade(
                 targetState = shellState.selectedTab,
-                animationSpec = tween(durationMillis = 220),
+                animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
                 modifier = Modifier.fillMaxSize(),
                 label = "tabCrossfade",
             ) { tab ->
                 tabStateHolder.SaveableStateProvider(tab) {
                     when (tab) {
-                        ShellBottomTab.HOME -> DashboardScreen(
+                        ShellTabSection.DISCOVER -> DashboardScreen(
                             stateHolder = dashboardState,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
@@ -413,51 +310,41 @@ internal fun ShellScreen(
                                         shellState.openSeasonal()
                                     }
                                     DashboardRail.TRENDING_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIMATION, "TRENDING_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, "TRENDING_DESC")
                                     DashboardRail.TRENDING_MANGA ->
-                                        openExploreWith(ExploreCategory.READING, "TRENDING_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, "TRENDING_DESC")
                                     DashboardRail.ALL_TIME_POPULAR_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIMATION, "POPULARITY_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, "POPULARITY_DESC")
                                     DashboardRail.ALL_TIME_POPULAR_MANGA ->
-                                        openExploreWith(ExploreCategory.READING, "POPULARITY_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, "POPULARITY_DESC")
                                     DashboardRail.TOP_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIMATION, "SCORE_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, "SCORE_DESC")
                                     DashboardRail.TOP_MANGA ->
-                                        openExploreWith(ExploreCategory.READING, "SCORE_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, "SCORE_DESC")
                                 }
                             },
                         )
-                        ShellBottomTab.ANIMATION -> AnimationScreen(
-                            stateHolder = animationState,
-                            selectedSection = shellState.selectedAnimationSection,
-                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                            scrollBehavior = scrollBehavior,
+                        ShellTabSection.ANIME -> AnimeScreen(
+                            stateHolder = animeState,
+                            selectedSection = shellState.selectedAnimeSection,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
                             onCompletionReached = { id, progress ->
                                 shellState.openEditorForCompletion(id, progress)
                             },
-                            onSearchGlobally = shellState::searchGlobally,
-                            onRefresh = { animationState.load(viewer.id, forceRefresh = true) },
+                            onRefresh = { animeState.load(viewer.id, forceRefresh = true) },
                         )
-                        ShellBottomTab.READING -> ReadingScreen(
-                            stateHolder = readingState,
-                            selectedSection = shellState.selectedReadingSection,
-                            searchQuery = if (shellState.isSearchActive) shellState.searchQuery else "",
-                            scrollBehavior = scrollBehavior,
+                        ShellTabSection.MANGA -> MangaScreen(
+                            stateHolder = mangaState,
+                            selectedSection = shellState.selectedMangaSection,
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
                             onCompletionReached = { id, progress ->
                                 shellState.openEditorForCompletion(id, progress)
                             },
-                            onSearchGlobally = shellState::searchGlobally,
-                            onRefresh = { readingState.load(viewer.id, forceRefresh = true) },
+                            onRefresh = { mangaState.load(viewer.id, forceRefresh = true) },
                         )
-                        ShellBottomTab.FEED -> FeedScreen(
-                            stateHolder = feedState,
-                            onMediaClick = { mediaId, _ -> shellState.openMedia(mediaId) },
-                        )
-                        ShellBottomTab.ACCOUNT -> ShellAccountRouter(
+                        ShellTabSection.ACCOUNT -> ShellAccountRouter(
                             route = shellState.accountRoute,
                             profile = shellState.currentProfile,
                             settingsState = settingsState,
@@ -472,8 +359,8 @@ internal fun ShellScreen(
                             onLanguageChange = onLanguageChange,
                             onToggleTheme = onToggleTheme,
                             onNavigate = { shellState.accountRoute = it },
-                            onOpenAnimationList = { shellState.selectTab(ShellBottomTab.ANIMATION) },
-                            onOpenReadingList = { shellState.selectTab(ShellBottomTab.READING) },
+                            onOpenAnimeList = { shellState.selectTab(ShellTabSection.ANIME) },
+                            onOpenMangaList = { shellState.selectTab(ShellTabSection.MANGA) },
                             onOpenMedia = shellState::openMedia,
                             onEditMedia = shellState::openEditor,
                             onOpenCharacter = shellState::openCharacter,
@@ -481,18 +368,16 @@ internal fun ShellScreen(
                             onOpenStudio = shellState::openStudio,
                             onOpenFavoritesGrid = shellState::openFavoritesGrid,
                             onLogout = onLogout,
-                            onBackHandlerChange = { shellState.topBarBackHandler = it },
+                            onBackHandlerChange = { shellState.toolBarBackHandler = it },
                         )
                     }
                 }
             }
 
-            if (shellState.isExploreOpen) {
+            if (shellState.isDiscoverOpen) {
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    ExploreScreen(
-                        stateHolder = exploreState,
-                        showSortSheet = showDiscoverSort,
-                        onDismissSortSheet = { showDiscoverSort = false },
+                    DiscoverScreen(
+                        stateHolder = discoverState,
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -513,8 +398,8 @@ internal fun ShellScreen(
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     SeasonalScreen(
                         stateHolder = seasonalState,
-                        showSortSheet = showDiscoverSort,
-                        onDismissSortSheet = { showDiscoverSort = false },
+                        showSortSheet = showSeasonalSort,
+                        onDismissSortSheet = { showSeasonalSort = false },
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -585,16 +470,67 @@ internal fun ShellScreen(
                 else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isExploreOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen) {
-                ShellBottomNavBar(
-                    selected = shellState.selectedTab,
-                    onSelect = shellState::selectTab,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(horizontal = 16.dp),
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isDiscoverOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen) {
+                ShellBottomCluster(
+                    selectedTab = shellState.selectedTab,
+                    onSearchClick = {
+                        discoverState.enterBlankSearch()
+                        shellState.openDiscover()
+                    },
+                    onSelectTab = shellState::selectTab,
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
+
+            // Toolbar global flotante: overlay dibujado al final para quedar sobre el contenido.
+            ShellToolBar(
+                selectedTab = shellState.selectedTab,
+                isAccountDetail = shellState.isAccountDetail,
+                isDetailOpen = shellState.isDetailOpen,
+                isDiscoverOpen = shellState.isDiscoverOpen,
+                isCalendarOpen = shellState.isCalendarOpen,
+                isSeasonalOpen = shellState.isSeasonalOpen,
+                isNotificationsOpen = shellState.isNotificationsOpen,
+                titleText = titleText,
+                onAccountBack = shellState::handleAccountBack,
+                onMediaBack = shellState::closeDetail,
+                onDiscoverBack = {
+                    if (showDiscoverSortDropdown) {
+                        showDiscoverSortDropdown = false
+                    } else {
+                        shellState.closeDiscover()
+                    }
+                },
+                onCalendarBack = shellState::closeCalendar,
+                onSeasonalBack = {
+                    if (showSeasonalSort) {
+                        showSeasonalSort = false
+                    } else {
+                        shellState.closeSeasonal()
+                    }
+                },
+                onNotificationsBack = shellState::closeNotifications,
+                onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
+                onNotificationsClick = {
+                    shellState.openNotifications()
+                    notificationsState.load(resetCount = true)
+                },
+                onSortClick = { showListFilterSheet = true },
+                onSectionFilterClick = shellState::openSectionFilter,
+                onOpenCalendar = shellState::openCalendar,
+                onOpenDiscoverSort = { showDiscoverSortDropdown = true },
+                onDiscoverFilterClick = shellState::openDiscoverFilter,
+                isDiscoverEntitySearch = discoverState.isEntitySearch(),
+                sortDropdownExpanded = showDiscoverSortDropdown,
+                selectedDiscoverSort = discoverState.sortSelection,
+                onDiscoverSortSelect = {
+                    discoverState.selectSort(it)
+                    showDiscoverSortDropdown = false
+                },
+                onDiscoverSortDismiss = { showDiscoverSortDropdown = false },
+                unreadCount = notificationsState.unreadCount,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
         }
 
         shellState.editorMediaId?.let { editorMediaId ->
@@ -614,9 +550,9 @@ internal fun ShellScreen(
                     // firing 2 heavy queries when only 1 was needed.
                     // forceRefresh = true bypasses the TTL cache to reflect the edit.
                     if (editorState.isManga) {
-                        readingState.load(viewer.id, forceRefresh = true)
+                        mangaState.load(viewer.id, forceRefresh = true)
                     } else {
-                        animationState.load(viewer.id, forceRefresh = true)
+                        animeState.load(viewer.id, forceRefresh = true)
                     }
                     if (shellState.selectedMediaId == editorMediaId) {
                         mediaDetailState.refresh()
@@ -625,9 +561,9 @@ internal fun ShellScreen(
                 onDeleted = {
                     shellState.closeEditor()
                     if (editorState.isManga) {
-                        readingState.load(viewer.id, forceRefresh = true)
+                        mangaState.load(viewer.id, forceRefresh = true)
                     } else {
-                        animationState.load(viewer.id, forceRefresh = true)
+                        animeState.load(viewer.id, forceRefresh = true)
                     }
                     if (shellState.selectedMediaId == editorMediaId) {
                         mediaDetailState.refresh()
@@ -638,21 +574,21 @@ internal fun ShellScreen(
 
         if (showListFilterSheet) {
             val tab = shellState.selectedTab
-            val sortOption = if (tab == ShellBottomTab.ANIMATION) animationState.currentSortOption else readingState.currentSortOption
-            val sortOrder = if (tab == ShellBottomTab.ANIMATION) animationState.currentSortOrder else readingState.currentSortOrder
-            val isPersisted = if (tab == ShellBottomTab.ANIMATION) animationState.isFilterPersisted else readingState.isFilterPersisted
+            val sortOption = if (tab == ShellTabSection.ANIME) animeState.currentSortOption else mangaState.currentSortOption
+            val sortOrder = if (tab == ShellTabSection.ANIME) animeState.currentSortOrder else mangaState.currentSortOrder
+            val isPersisted = if (tab == ShellTabSection.ANIME) animeState.isFilterPersisted else mangaState.isFilterPersisted
 
             PlatformListFilterSheet(
                 currentSort = sortOption,
                 currentOrder = sortOrder,
                 persist = isPersisted,
-                isManga = tab == ShellBottomTab.READING,
+                isManga = tab == ShellTabSection.MANGA,
                 onDismiss = { showListFilterSheet = false },
                 onApply = { newSort, newOrder, newPersist ->
-                    if (tab == ShellBottomTab.ANIMATION) {
-                        animationState.updateSort(newSort, newOrder, newPersist)
+                    if (tab == ShellTabSection.ANIME) {
+                        animeState.updateSort(newSort, newOrder, newPersist)
                     } else {
-                        readingState.updateSort(newSort, newOrder, newPersist)
+                        mangaState.updateSort(newSort, newOrder, newPersist)
                     }
                     filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
                     showListFilterSheet = false
@@ -660,34 +596,73 @@ internal fun ShellScreen(
             )
         }
 
-        if (showFeedFilterSheet) {
-            FeedFilterSheet(
-                current = feedState.activityFilter,
-                onDismiss = { showFeedFilterSheet = false },
-                onApply = { newFilter ->
-                    feedState.applyActivityFilter(newFilter)
-                    showFeedFilterSheet = false
+        if (shellState.isDiscoverFilterOpen) {
+            val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
+            DiscoverFiltersSheet(
+                groups = buildDiscoverFilterGroups(discoverState, isSpanish),
+                onSelect = { groupId, optionId ->
+                    discoverState.applyFilterSelection(groupId, optionId)
                 },
+                onDismiss = shellState::closeDiscoverFilter,
             )
         }
 
-        if (showNotificationFilterSheet) {
-            NotificationFilterSheet(
-                selected = notificationsState.selectedFilter,
-                onSelect = {
-                    notificationsState.selectFilter(it)
-                    showNotificationFilterSheet = false
-                },
-                onDismiss = { showNotificationFilterSheet = false },
-            )
+        if (shellState.isSectionFilterOpen) {
+            val sectionOptions: List<ShellSectionOption>?
+            val selectedSectionId: String?
+            when (shellState.selectedTab) {
+                ShellTabSection.ANIME -> {
+                    sectionOptions = AnimeListSection.entries.map { section ->
+                        ShellSectionOption(
+                            id = section.name,
+                            label = section.label(strings),
+                            count = animeState.countInSection(section),
+                        )
+                    }
+                    selectedSectionId = shellState.selectedAnimeSection.name
+                }
+                ShellTabSection.MANGA -> {
+                    sectionOptions = MangaListSection.entries.map { section ->
+                        ShellSectionOption(
+                            id = section.name,
+                            label = section.label(strings),
+                            count = mangaState.countInSection(section),
+                        )
+                    }
+                    selectedSectionId = shellState.selectedMangaSection.name
+                }
+                else -> {
+                    sectionOptions = null
+                    selectedSectionId = null
+                }
+            }
+            if (sectionOptions != null && selectedSectionId != null) {
+                ShellSectionFilterSheet(
+                    options = sectionOptions,
+                    selectedId = selectedSectionId,
+                    onSelect = { id ->
+                        when (shellState.selectedTab) {
+                            ShellTabSection.ANIME -> AnimeListSection.entries
+                                .firstOrNull { it.name == id }
+                                ?.let { shellState.selectedAnimeSection = it }
+                            ShellTabSection.MANGA -> MangaListSection.entries
+                                .firstOrNull { it.name == id }
+                                ?.let { shellState.selectedMangaSection = it }
+                            else -> {}
+                        }
+                        shellState.closeSectionFilter()
+                    },
+                    onDismiss = shellState::closeSectionFilter,
+                )
+            }
         }
     }
 }
 
-/** Maps the persisted "default home tab" preference onto the shell's bottom-nav tabs. */
-private fun HomeTabOption.toShellTab(): ShellBottomTab = when (this) {
-    HomeTabOption.HOME -> ShellBottomTab.HOME
-    HomeTabOption.ANIMATION -> ShellBottomTab.ANIMATION
-    HomeTabOption.READING -> ShellBottomTab.READING
-    HomeTabOption.ACCOUNT -> ShellBottomTab.ACCOUNT
+/** Maps the persisted "default discover tab" preference onto the shell's tab-bar sections. */
+private fun DiscoverTabOption.toShellTab(): ShellTabSection = when (this) {
+    DiscoverTabOption.DISCOVER -> ShellTabSection.DISCOVER
+    DiscoverTabOption.ANIME -> ShellTabSection.ANIME
+    DiscoverTabOption.MANGA -> ShellTabSection.MANGA
+    DiscoverTabOption.ACCOUNT -> ShellTabSection.ACCOUNT
 }

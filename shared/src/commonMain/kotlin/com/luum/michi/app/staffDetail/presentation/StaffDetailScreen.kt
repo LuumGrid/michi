@@ -49,6 +49,8 @@ import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformChips
+import com.luum.michi.app.core.platform.components.PlatformFilterChip
+import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformListLoading
 import com.luum.michi.app.core.platform.components.PlatformListMessage
@@ -108,7 +110,11 @@ private fun StaffDetailContent(
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
     val selectedTab = AllTabs[selectedTabIndex.coerceIn(0, AllTabs.lastIndex)]
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = floatingToolbarClearance()),
+    ) {
         StaffDetailHeader(
             detail = detail,
             isFavourite = stateHolder.isFavourite,
@@ -348,14 +354,20 @@ private fun StaffMediaTab(
     strings: LanguageStrings,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        PlatformChips(
-            items = AllSortOptions,
-            selectedItem = sort,
-            onSelect = onChangeSort,
-            label = { s -> s.toLabel(strings) },
-            useSoftActiveColor = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            PlatformFilterChip(
+                label = strings.orderByLabel,
+                selectedOption = sort,
+                options = AllSortOptions,
+                optionLabel = { s -> s.toLabel(strings) },
+                onSelect = onChangeSort,
+            )
+        }
 
         if (items.isEmpty() && !isLoadingMore) {
             PlatformListMessage(

@@ -16,7 +16,6 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PlatformListFilterSheet(
     currentSort: UserListSort,
@@ -47,7 +46,7 @@ internal fun PlatformListFilterSheet(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = strings.filterSheetTitle,
+                    text = strings.orderByLabel,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -114,7 +113,7 @@ internal fun PlatformListFilterSheet(
                         }
                     }
 
-                    // Sort Criteria Selector (Grouped inside a Column to avoid the LazyColumn verticalArrangement spacedBy padding)
+                    // Filter Criteria Selector (Grouped inside a Column to avoid the LazyColumn verticalArrangement spacedBy padding)
                     item {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(2.dp),

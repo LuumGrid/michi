@@ -89,12 +89,6 @@ internal class NotificationsStateHolder(
             isLoadingMore = false
         }
     }
-
-    fun selectFilter(filter: NotificationFilter) {
-        if (filter == selectedFilter) return
-        selectedFilter = filter
-        load(resetCount = false)
-    }
 }
 
 @Composable

@@ -1,17 +1,17 @@
 package com.luum.michi.app.dashboard.data
 
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.core.platform.components.PlatformHomeMediaItem
+import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
 
 internal data class DashboardFeed(
-    val trendingAnimation: List<PlatformHomeMediaItem>,
-    val trendingReading: List<PlatformHomeMediaItem>,
-    val thisSeason: List<PlatformHomeMediaItem>,
-    val upcomingNextSeason: List<PlatformHomeMediaItem>,
-    val allTimePopularAnime: List<PlatformHomeMediaItem>,
-    val allTimePopularManga: List<PlatformHomeMediaItem>,
-    val topAnime: List<PlatformHomeMediaItem>,
-    val topManga: List<PlatformHomeMediaItem>,
+    val trendingAnime: List<PlatformDiscoverMediaItem>,
+    val trendingManga: List<PlatformDiscoverMediaItem>,
+    val thisSeason: List<PlatformDiscoverMediaItem>,
+    val upcomingNextSeason: List<PlatformDiscoverMediaItem>,
+    val allTimePopularAnime: List<PlatformDiscoverMediaItem>,
+    val allTimePopularManga: List<PlatformDiscoverMediaItem>,
+    val topAnime: List<PlatformDiscoverMediaItem>,
+    val topManga: List<PlatformDiscoverMediaItem>,
 )
 
 internal interface DashboardRepository {
