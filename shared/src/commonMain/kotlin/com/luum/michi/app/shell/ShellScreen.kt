@@ -152,18 +152,18 @@ internal fun ShellScreen(
     val uriHandler = LocalUriHandler.current
     var showSeasonalSort by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
-    var showDiscoverSortDropdown by remember { mutableStateOf(false) }
 
     // Discover es tab: los rails "Ver todo" preseleccionan categoría + orden
     // en la misma view, limpiando los demás filtros.
-    val openDiscoverWith: (DiscoverCategory, String) -> Unit = { category, sort ->
+    val openDiscoverWith: (DiscoverCategory, UserListSort) -> Unit = { category, sortOption ->
+        discoverState.updateSort(sortOption, UserListOrder.DESCENDING, persist = false)
         discoverState.updateFilters(
             newQuery = "",
             newCategory = category,
+            newSeason = null,
             newGenre = "All",
             newFormat = "All",
             newYear = null,
-            newSort = sort,
         )
         shellState.openDiscover()
     }
@@ -218,13 +218,7 @@ internal fun ShellScreen(
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isDiscoverOpen,
-        onBack = {
-            if (showDiscoverSortDropdown) {
-                showDiscoverSortDropdown = false
-            } else {
-                shellState.closeDiscover()
-            }
-        },
+        onBack = shellState::closeDiscover,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
@@ -310,17 +304,17 @@ internal fun ShellScreen(
                                         shellState.openSeasonal()
                                     }
                                     DashboardRail.TRENDING_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, "TRENDING_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.TRENDING)
                                     DashboardRail.TRENDING_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, "TRENDING_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.TRENDING)
                                     DashboardRail.ALL_TIME_POPULAR_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, "POPULARITY_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.POPULARITY)
                                     DashboardRail.ALL_TIME_POPULAR_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, "POPULARITY_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.POPULARITY)
                                     DashboardRail.TOP_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, "SCORE_DESC")
+                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.AVERAGE_SCORE)
                                     DashboardRail.TOP_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, "SCORE_DESC")
+                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.AVERAGE_SCORE)
                                 }
                             },
                         )
@@ -494,13 +488,7 @@ internal fun ShellScreen(
                 titleText = titleText,
                 onAccountBack = shellState::handleAccountBack,
                 onMediaBack = shellState::closeDetail,
-                onDiscoverBack = {
-                    if (showDiscoverSortDropdown) {
-                        showDiscoverSortDropdown = false
-                    } else {
-                        shellState.closeDiscover()
-                    }
-                },
+                onDiscoverBack = shellState::closeDiscover,
                 onCalendarBack = shellState::closeCalendar,
                 onSeasonalBack = {
                     if (showSeasonalSort) {
@@ -516,18 +504,15 @@ internal fun ShellScreen(
                     notificationsState.load(resetCount = true)
                 },
                 onSortClick = { showListFilterSheet = true },
-                onSectionFilterClick = shellState::openSectionFilter,
-                onOpenCalendar = shellState::openCalendar,
-                onOpenDiscoverSort = { showDiscoverSortDropdown = true },
-                onDiscoverFilterClick = shellState::openDiscoverFilter,
-                isDiscoverEntitySearch = discoverState.isEntitySearch(),
-                sortDropdownExpanded = showDiscoverSortDropdown,
-                selectedDiscoverSort = discoverState.sortSelection,
-                onDiscoverSortSelect = {
-                    discoverState.selectSort(it)
-                    showDiscoverSortDropdown = false
+                onSectionFilterClick = {
+                    if (shellState.selectedTab == ShellTabSection.DISCOVER) {
+                        shellState.openDiscoverFilter()
+                    } else {
+                        shellState.openSectionFilter()
+                    }
                 },
-                onDiscoverSortDismiss = { showDiscoverSortDropdown = false },
+                onOpenCalendar = shellState::openCalendar,
+                onSeasonalSortClick = { showSeasonalSort = true },
                 unreadCount = notificationsState.unreadCount,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
@@ -574,23 +559,45 @@ internal fun ShellScreen(
 
         if (showListFilterSheet) {
             val tab = shellState.selectedTab
-            val sortOption = if (tab == ShellTabSection.ANIME) animeState.currentSortOption else mangaState.currentSortOption
-            val sortOrder = if (tab == ShellTabSection.ANIME) animeState.currentSortOrder else mangaState.currentSortOrder
-            val isPersisted = if (tab == ShellTabSection.ANIME) animeState.isFilterPersisted else mangaState.isFilterPersisted
+            val sortOption = when (tab) {
+                ShellTabSection.DISCOVER -> discoverState.currentSortOption
+                ShellTabSection.ANIME -> animeState.currentSortOption
+                ShellTabSection.MANGA -> mangaState.currentSortOption
+                else -> animeState.currentSortOption
+            }
+            val sortOrder = when (tab) {
+                ShellTabSection.DISCOVER -> discoverState.currentSortOrder
+                ShellTabSection.ANIME -> animeState.currentSortOrder
+                ShellTabSection.MANGA -> mangaState.currentSortOrder
+                else -> animeState.currentSortOrder
+            }
+            val isPersisted = when (tab) {
+                ShellTabSection.DISCOVER -> discoverState.isFilterPersisted
+                ShellTabSection.ANIME -> animeState.isFilterPersisted
+                ShellTabSection.MANGA -> mangaState.isFilterPersisted
+                else -> false
+            }
 
             PlatformListFilterSheet(
                 currentSort = sortOption,
                 currentOrder = sortOrder,
                 persist = isPersisted,
-                isManga = tab == ShellTabSection.MANGA,
+                isManga = tab == ShellTabSection.MANGA ||
+                    (tab == ShellTabSection.DISCOVER && discoverState.category == DiscoverCategory.MANGA),
                 onDismiss = { showListFilterSheet = false },
                 onApply = { newSort, newOrder, newPersist ->
-                    if (tab == ShellTabSection.ANIME) {
-                        animeState.updateSort(newSort, newOrder, newPersist)
-                    } else {
-                        mangaState.updateSort(newSort, newOrder, newPersist)
+                    when (tab) {
+                        ShellTabSection.DISCOVER -> discoverState.updateSort(newSort, newOrder, newPersist)
+                        ShellTabSection.ANIME -> {
+                            animeState.updateSort(newSort, newOrder, newPersist)
+                            filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
+                        }
+                        ShellTabSection.MANGA -> {
+                            mangaState.updateSort(newSort, newOrder, newPersist)
+                            filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
+                        }
+                        else -> {}
                     }
-                    filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
                     showListFilterSheet = false
                 }
             )

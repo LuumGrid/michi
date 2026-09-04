@@ -1,6 +1,5 @@
 package com.luum.michi.app.shell.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,8 +30,6 @@ import com.luum.michi.app.core.platform.components.PlatformFloatingActionGroup
 import com.luum.michi.app.core.platform.components.PlatformFloatingBackButton
 import com.luum.michi.app.core.platform.components.PlatformFloatingPillHeight
 import com.luum.michi.app.core.platform.components.PlatformFloatingSearchContainer
-import com.luum.michi.app.discover.presentation.components.DiscoverSortDropdown
-import com.luum.michi.app.discover.presentation.state.DiscoverSortSelection
 
 /**
  * Toolbar global de la app, 100% flotante: se dibuja como overlay sobre el contenido
@@ -40,7 +37,8 @@ import com.luum.michi.app.discover.presentation.state.DiscoverSortSelection
  * opaca — back aislado en círculo + grupos conectados + título en píldora.
  *
  * Sin search (vive abajo junto a la tab bar) y sin chips (absorbidos por el filter).
- * Derecha en listas: filter (secciones) + sort (orden) separados.
+ * Derecha en Discover/listas: filter (secciones) + sort (orden) separados.
+ * El overlay de search es solo back, sin título ni acciones.
  */
 @Composable
 internal fun ShellToolBar(
@@ -63,20 +61,14 @@ internal fun ShellToolBar(
     onSortClick: () -> Unit,
     onSectionFilterClick: () -> Unit,
     onOpenCalendar: () -> Unit,
-    onOpenDiscoverSort: () -> Unit = {},
-    onDiscoverFilterClick: () -> Unit = {},
-    isDiscoverEntitySearch: Boolean = false,
-    sortDropdownExpanded: Boolean = false,
-    selectedDiscoverSort: DiscoverSortSelection = DiscoverSortSelection.BEST_MATCH,
-    onDiscoverSortSelect: (DiscoverSortSelection) -> Unit = {},
-    onDiscoverSortDismiss: () -> Unit = {},
+    onSeasonalSortClick: () -> Unit = {},
     unreadCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     val strings = LanguageProvider.strings
 
     // Back aislado (círculo propio). Null = sin back, se muestra grupo leading.
-    // Discover es overlay: back + filter + sort al inicio, sin trailing.
+    // Search es overlay vacío: solo back, sin título ni acciones.
     val backAction: (() -> Unit)? = when {
         isDetailOpen -> onMediaBack
         isDiscoverOpen -> onDiscoverBack
@@ -91,7 +83,9 @@ internal fun ShellToolBar(
     // y calendar el back queda aislado como en la referencia de Apple.
     val noOverlay = !isDetailOpen && !isDiscoverOpen && !isCalendarOpen && !isSeasonalOpen && !isNotificationsOpen
     val showSeasonalSort = isSeasonalOpen
-    val showListActions = (selectedTab == ShellTabSection.ANIME || selectedTab == ShellTabSection.MANGA) && noOverlay
+    val showListActions = (selectedTab == ShellTabSection.DISCOVER ||
+        selectedTab == ShellTabSection.ANIME ||
+        selectedTab == ShellTabSection.MANGA) && noOverlay
     val showTrailingMain = (selectedTab == ShellTabSection.ACCOUNT && !isAccountDetail) &&
         !isDetailOpen && !isCalendarOpen && !isNotificationsOpen
 
@@ -115,37 +109,8 @@ internal fun ShellToolBar(
                     modifier = Modifier.size(24.dp),
                 )
             }
-            // En Discover, filter y sort viven al inicio junto al back.
-            if (isDiscoverOpen) {
-                Spacer(modifier = Modifier.width(8.dp))
-                PlatformFloatingActionGroup {
-                    IconButton(onClick = onDiscoverFilterClick) {
-                        Icon(
-                            painter = PlatformIcons.Filter,
-                            contentDescription = strings.filterByLabel,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                    // Sin sort en entidades (personajes/staff/estudios).
-                    if (!isDiscoverEntitySearch) {
-                        Box {
-                            IconButton(onClick = onOpenDiscoverSort) {
-                                Icon(
-                                    painter = PlatformIcons.Sort,
-                                    contentDescription = strings.orderByLabel,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                            DiscoverSortDropdown(
-                                expanded = sortDropdownExpanded,
-                                selected = selectedDiscoverSort,
-                                onSelect = onDiscoverSortSelect,
-                                onDismiss = onDiscoverSortDismiss,
-                            )
-                        }
-                    }
-                }
-            }
+            // Search es overlay vacío: solo back, sin título ni acciones.
+            if (isDiscoverOpen) return@Column
         } else {
                 ShellToolBarLeadingGroup(
                     selectedTab = selectedTab,
@@ -174,7 +139,7 @@ internal fun ShellToolBar(
             PlatformFloatingActionGroup {
                 when {
                     showSeasonalSort -> {
-                        IconButton(onClick = onOpenDiscoverSort) {
+                        IconButton(onClick = onSeasonalSortClick) {
                             Icon(
                                 painter = PlatformIcons.Sort,
                                 contentDescription = strings.orderByLabel,

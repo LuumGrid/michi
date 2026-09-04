@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.platform.model.UserListOrder
+import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.discover.data.DiscoverRepository
 import com.luum.michi.app.search.presentation.model.SearchResult
 
@@ -25,26 +27,21 @@ internal enum class DiscoverCategory {
     STUDIOS
 }
 
-internal enum class DiscoverSortSelection {
-    BEST_MATCH,
-    MOST_POPULAR,
-    LEAST_POPULAR,
-    HIGHEST_SCORED,
-    LOWEST_SCORED,
-}
-
 internal class DiscoverStateHolder(
     private val repository: DiscoverRepository,
     private val scope: CoroutineScope,
 ) {
     var query by mutableStateOf("")
     var category by mutableStateOf(DiscoverCategory.ANIME)
+    var season by mutableStateOf<String?>(null)
     var genre by mutableStateOf("All")
     var format by mutableStateOf("All")
     var year by mutableStateOf<Int?>(null)
     var sort by mutableStateOf("POPULARITY_DESC")
     var onList by mutableStateOf<Boolean?>(null)
-    var sortSelection by mutableStateOf(DiscoverSortSelection.BEST_MATCH)
+    var currentSortOption by mutableStateOf(UserListSort.POPULARITY)
+    var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
+    var isFilterPersisted by mutableStateOf(false)
     var focusSearchRequested by mutableStateOf(false)
 
     private val resultsBacking = mutableStateListOf<SearchResult>()
@@ -60,14 +57,19 @@ internal class DiscoverStateHolder(
     val hasNextPage: Boolean get() = hasNextPageState
     val error: NetworkError? get() = errorState
 
-    /** Resultados con el orden in-app aplicado (popularidad = favoritos, puntaje). */
+    /** Orden in-app espejo de las listas: solo TITLE/AVERAGE_SCORE/FAVORITES
+     *  tienen dato local en SearchResult; el resto lo ordena el servidor
+     *  vía el MediaSort derivado en [updateSort]. */
     val visibleResults: List<SearchResult>
-        get() = when (sortSelection) {
-            DiscoverSortSelection.BEST_MATCH -> resultsBacking
-            DiscoverSortSelection.MOST_POPULAR -> resultsBacking.sortedByDescending { it.favourites ?: -1 }
-            DiscoverSortSelection.LEAST_POPULAR -> resultsBacking.sortedBy { it.favourites ?: Int.MAX_VALUE }
-            DiscoverSortSelection.HIGHEST_SCORED -> resultsBacking.sortedByDescending { it.averageScore ?: -1 }
-            DiscoverSortSelection.LOWEST_SCORED -> resultsBacking.sortedBy { it.averageScore ?: Int.MAX_VALUE }
+        get() {
+            val ordered = when (currentSortOption) {
+                UserListSort.TITLE -> resultsBacking.sortedBy { it.title.lowercase() }
+                UserListSort.AVERAGE_SCORE,
+                UserListSort.SCORE -> resultsBacking.sortedBy { it.averageScore ?: -1 }
+                UserListSort.FAVORITES -> resultsBacking.sortedBy { it.favourites ?: -1 }
+                else -> return resultsBacking.toList()
+            }
+            return if (currentSortOrder == UserListOrder.DESCENDING) ordered.reversed() else ordered
         }
 
     /** Entrada estilo YT: vacía todo y pide foco al field, preservando filtros. */
@@ -85,8 +87,19 @@ internal class DiscoverStateHolder(
         focusSearchRequested = false
     }
 
-    fun selectSort(selection: DiscoverSortSelection) {
-        sortSelection = selection
+    /** Espejo de las listas: guarda la selección y deriva el MediaSort del API.
+     *  La persistencia entre reinicios es solo de sesión en Discover (el slot
+     *  de PlatformFilterSettings es único y lo comparten anime/manga). */
+    fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
+        currentSortOption = option
+        currentSortOrder = order
+        isFilterPersisted = persist
+        sort = option.toMediaSort(order, category)
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            delay(300.milliseconds)
+            load()
+        }
     }
 
     private var searchJob: Job? = null
@@ -94,18 +107,18 @@ internal class DiscoverStateHolder(
     fun updateFilters(
         newQuery: String = query,
         newCategory: DiscoverCategory = category,
+        newSeason: String? = season,
         newGenre: String = genre,
         newFormat: String = format,
         newYear: Int? = year,
-        newSort: String = sort,
         newOnList: Boolean? = onList,
     ) {
         query = newQuery
         category = newCategory
+        season = newSeason
         genre = newGenre
         format = newFormat
         year = newYear
-        sort = newSort
         onList = newOnList
 
         searchJob?.cancel()
@@ -166,6 +179,7 @@ internal class DiscoverStateHolder(
             year = year,
             sort = sort,
             page = page,
+            season = season,
             onList = onList,
         )
         DiscoverCategory.MANGA -> repository.searchManga(
@@ -195,6 +209,34 @@ internal class DiscoverStateHolder(
         category == DiscoverCategory.CHARACTERS ||
         category == DiscoverCategory.STAFF ||
         category == DiscoverCategory.STUDIOS
+}
+
+/** Deriva el MediaSort del API desde la selección del sheet compartido
+ *  con anime/manga. Las claves sin equivalente usan la más cercana. */
+internal fun UserListSort.toMediaSort(order: UserListOrder, category: DiscoverCategory): String {
+    val descending = order == UserListOrder.DESCENDING
+    fun both(asc: String, desc: String) = if (descending) desc else asc
+    return when (this) {
+        UserListSort.FOLLOW_LIST -> both("POPULARITY", "POPULARITY_DESC")
+        UserListSort.TITLE -> both("TITLE_ROMAJI", "TITLE_ROMAJI_DESC")
+        UserListSort.SCORE -> both("SCORE", "SCORE_DESC")
+        UserListSort.PROGRESS -> if (category == DiscoverCategory.MANGA) {
+            both("CHAPTERS", "CHAPTERS_DESC")
+        } else {
+            both("EPISODES", "EPISODES_DESC")
+        }
+        UserListSort.LAST_UPDATED -> both("UPDATED_AT", "UPDATED_AT_DESC")
+        UserListSort.LAST_ADDED -> both("ID", "ID_DESC")
+        UserListSort.START_DATE -> both("START_DATE", "START_DATE_DESC")
+        UserListSort.COMPLETED_DATE -> both("END_DATE", "END_DATE_DESC")
+        UserListSort.RELEASE_DATE -> both("START_DATE", "START_DATE_DESC")
+        UserListSort.AVERAGE_SCORE -> both("SCORE", "SCORE_DESC")
+        UserListSort.POPULARITY -> both("POPULARITY", "POPULARITY_DESC")
+        UserListSort.FAVORITES -> both("FAVOURITES", "FAVOURITES_DESC")
+        UserListSort.TRENDING -> both("TRENDING", "TRENDING_DESC")
+        UserListSort.PRIORITY -> both("POPULARITY", "POPULARITY_DESC")
+        UserListSort.NEXT_AIRING -> both("START_DATE", "START_DATE_DESC")
+    }
 }
 
 @Composable

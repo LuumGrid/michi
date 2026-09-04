@@ -331,11 +331,6 @@ interface LanguageStrings {
     val sortByOldest: String
     val sortByFavourites: String
     val sortByScore: String
-    val sortBestMatch: String
-    val sortMostPopular: String
-    val sortLeastPopular: String
-    val sortHighestScored: String
-    val sortLowestScored: String
 
     // Character detail
     val characterDetailTitle: String

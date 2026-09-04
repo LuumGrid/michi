@@ -63,6 +63,18 @@ internal fun discoverFormats(isSpanish: Boolean): List<DiscoverFormatOption> = i
 internal fun discoverYears(): List<Int?> =
     listOf(null, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2005, 2000)
 
+internal fun discoverSeasonOptions(isSpanish: Boolean): List<DiscoverFilterOption> {
+    val any = if (isSpanish) "Cualquier temporada" else "Any season"
+    val labels = if (isSpanish) {
+        listOf("Invierno", "Primavera", "Verano", "Otoño")
+    } else {
+        listOf("Winter", "Spring", "Summer", "Fall")
+    }
+    val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
+    return listOf(DiscoverFilterOption("any", any)) +
+        ids.zip(labels) { id, label -> DiscoverFilterOption(id, label) }
+}
+
 /**
  * Grupos del filter sheet (lo que mostraban los chips inline, ya eliminados).
  * En categorías de entidades solo aplica Tipo.
@@ -80,6 +92,17 @@ internal fun buildDiscoverFilterGroups(
         selectedId = stateHolder.category.name,
     )
     if (stateHolder.isEntitySearch()) return listOf(typeGroup)
+
+    val groups = mutableListOf(typeGroup)
+    // Season solo aplica a anime (la query de manga no tiene season).
+    if (stateHolder.category == DiscoverCategory.ANIME) {
+        groups += DiscoverFilterGroup(
+            id = "season",
+            title = if (isSpanish) "Temporada" else "Season",
+            options = discoverSeasonOptions(isSpanish),
+            selectedId = stateHolder.season ?: "any",
+        )
+    }
 
     val allLabel = if (isSpanish) "Todos" else "All"
     val genreGroup = DiscoverFilterGroup(
@@ -111,7 +134,7 @@ internal fun buildDiscoverFilterGroups(
         },
         selectedId = stateHolder.year?.toString() ?: "any",
     )
-    return listOf(typeGroup, genreGroup, formatGroup, yearGroup)
+    return groups + listOf(genreGroup, formatGroup, yearGroup)
 }
 
 /** Aplica una selección del filter sheet al holder (con su debounce de 300ms). */
@@ -119,7 +142,14 @@ internal fun DiscoverStateHolder.applyFilterSelection(groupId: String, optionId:
     when (groupId) {
         "type" -> DiscoverCategory.entries
             .firstOrNull { it.name == optionId }
-            ?.let { updateFilters(newCategory = it) }
+            ?.let {
+                // Al cambiar de tipo se limpia season si deja de aplicar.
+                updateFilters(
+                    newCategory = it,
+                    newSeason = if (it == DiscoverCategory.ANIME) season else null,
+                )
+            }
+        "season" -> updateFilters(newSeason = if (optionId == "any") null else optionId)
         "genre" -> updateFilters(newGenre = optionId)
         "format" -> updateFilters(newFormat = optionId)
         "year" -> updateFilters(newYear = if (optionId == "any") null else optionId.toIntOrNull())

@@ -344,11 +344,6 @@ object SpanishLanguageStrings : LanguageStrings {
     override val sortByOldest = "Más antiguo"
     override val sortByFavourites = "Favoritos"
     override val sortByScore = "Puntuación"
-    override val sortBestMatch = "Mejor coincidencia"
-    override val sortMostPopular = "Más populares"
-    override val sortLeastPopular = "Menos populares"
-    override val sortHighestScored = "Mejor puntaje"
-    override val sortLowestScored = "Menor puntaje"
 
     // Character detail
     override val characterDetailTitle = "Personaje"
