@@ -61,13 +61,3 @@ internal fun AnimeListSection.label(strings: LanguageStrings): String = when (th
     AnimeListSection.PLANNING -> strings.sectionPlanning
     AnimeListSection.REWATCHING -> strings.sectionRewatching
 }
-
-internal fun AnimeListSection.modalLabel(strings: LanguageStrings): String = when (this) {
-    AnimeListSection.COMPLETED_TV,
-    AnimeListSection.COMPLETED_MOVIE,
-    AnimeListSection.COMPLETED_OVA,
-    AnimeListSection.COMPLETED_ONA,
-    AnimeListSection.COMPLETED_TV_SHORT,
-    AnimeListSection.COMPLETED_SPECIAL -> strings.sectionCompleted
-    else -> label(strings)
-}

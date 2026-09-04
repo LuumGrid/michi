@@ -12,7 +12,6 @@ import com.luum.michi.app.core.anilist.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.anilist.dto.MediaVoiceActorDto
 import com.luum.michi.app.core.media.CalendarDateParts
 import com.luum.michi.app.core.media.calendarPartsToMillis
-import com.luum.michi.app.core.media.millisToCalendarParts
 import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry

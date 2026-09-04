@@ -5,7 +5,6 @@ import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.anilist.dto.toComparableInt
-import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.manga.presentation.model.MangaListEntry
 import com.luum.michi.app.manga.presentation.model.MangaListSection

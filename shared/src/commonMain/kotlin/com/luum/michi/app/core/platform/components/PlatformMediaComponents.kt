@@ -1,7 +1,6 @@
 package com.luum.michi.app.core.platform.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
@@ -52,7 +50,6 @@ fun PlatformMediaListCard(
     title: String,
     subtitle: String,
     score: String,
-    primaryProgressLabel: String,
     primaryProgressRatio: Float,
     palette: List<Color>,
     icon: Painter,
@@ -446,35 +443,6 @@ fun PlatformScoreField(
                 text = (kotlin.math.round(score * 10f) / 10f).toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-@Composable
-fun PlatformDateField(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    PlatformOutlinedFieldFrame(label = label, modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = value.ifBlank { "—" },
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                painter = PlatformIcons.Close,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
             )
         }
     }
