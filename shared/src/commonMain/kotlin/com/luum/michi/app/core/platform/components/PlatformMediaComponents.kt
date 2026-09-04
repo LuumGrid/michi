@@ -50,6 +50,7 @@ fun PlatformMediaListCard(
     title: String,
     subtitle: String,
     score: String,
+    primaryProgressLabel: String,
     primaryProgressRatio: Float,
     palette: List<Color>,
     icon: Painter,
