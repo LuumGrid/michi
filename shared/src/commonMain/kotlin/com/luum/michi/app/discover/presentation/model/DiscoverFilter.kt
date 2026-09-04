@@ -1,19 +1,9 @@
 package com.luum.michi.app.discover.presentation.model
 
+import com.luum.michi.app.core.platform.components.PlatformFilterGroup
+import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.discover.presentation.state.DiscoverCategory
 import com.luum.michi.app.discover.presentation.state.DiscoverStateHolder
-
-internal data class DiscoverFilterOption(
-    val id: String,
-    val label: String,
-)
-
-internal data class DiscoverFilterGroup(
-    val id: String,
-    val title: String,
-    val options: List<DiscoverFilterOption>,
-    val selectedId: String,
-)
 
 internal data class DiscoverFormatOption(val value: String, val label: String)
 
@@ -63,7 +53,7 @@ internal fun discoverFormats(isSpanish: Boolean): List<DiscoverFormatOption> = i
 internal fun discoverYears(): List<Int?> =
     listOf(null, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2005, 2000)
 
-internal fun discoverSeasonOptions(isSpanish: Boolean): List<DiscoverFilterOption> {
+internal fun discoverSeasonOptions(isSpanish: Boolean): List<PlatformFilterOption> {
     val any = if (isSpanish) "Cualquier temporada" else "Any season"
     val labels = if (isSpanish) {
         listOf("Invierno", "Primavera", "Verano", "Otoño")
@@ -71,8 +61,8 @@ internal fun discoverSeasonOptions(isSpanish: Boolean): List<DiscoverFilterOptio
         listOf("Winter", "Spring", "Summer", "Fall")
     }
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
-    return listOf(DiscoverFilterOption("any", any)) +
-        ids.zip(labels) { id, label -> DiscoverFilterOption(id, label) }
+    return listOf(PlatformFilterOption("any", any)) +
+        ids.zip(labels) { id, label -> PlatformFilterOption(id, label) }
 }
 
 /**
@@ -82,12 +72,12 @@ internal fun discoverSeasonOptions(isSpanish: Boolean): List<DiscoverFilterOptio
 internal fun buildDiscoverFilterGroups(
     stateHolder: DiscoverStateHolder,
     isSpanish: Boolean,
-): List<DiscoverFilterGroup> {
-    val typeGroup = DiscoverFilterGroup(
+): List<PlatformFilterGroup> {
+    val typeGroup = PlatformFilterGroup(
         id = "type",
         title = if (isSpanish) "Tipo" else "Type",
         options = DiscoverCategory.entries.map { category ->
-            DiscoverFilterOption(id = category.name, label = category.filterLabel(isSpanish))
+            PlatformFilterOption(id = category.name, label = category.filterLabel(isSpanish))
         },
         selectedId = stateHolder.category.name,
     )
@@ -96,7 +86,7 @@ internal fun buildDiscoverFilterGroups(
     val groups = mutableListOf(typeGroup)
     // Season solo aplica a anime (la query de manga no tiene season).
     if (stateHolder.category == DiscoverCategory.ANIME) {
-        groups += DiscoverFilterGroup(
+        groups += PlatformFilterGroup(
             id = "season",
             title = if (isSpanish) "Temporada" else "Season",
             options = discoverSeasonOptions(isSpanish),
@@ -105,29 +95,29 @@ internal fun buildDiscoverFilterGroups(
     }
 
     val allLabel = if (isSpanish) "Todos" else "All"
-    val genreGroup = DiscoverFilterGroup(
+    val genreGroup = PlatformFilterGroup(
         id = "genre",
         title = if (isSpanish) "Género" else "Genre",
         options = discoverGenres(isSpanish).map { genre ->
             val id = if (genre == allLabel) "All" else genre
-            DiscoverFilterOption(id = id, label = genre)
+            PlatformFilterOption(id = id, label = genre)
         },
         selectedId = if (stateHolder.genre == "All" || stateHolder.genre == "Todos") "All" else stateHolder.genre,
     )
     val formats = discoverFormats(isSpanish)
-    val formatGroup = DiscoverFilterGroup(
+    val formatGroup = PlatformFilterGroup(
         id = "format",
         title = if (isSpanish) "Formato" else "Format",
-        options = formats.map { DiscoverFilterOption(id = it.value, label = it.label) },
+        options = formats.map { PlatformFilterOption(id = it.value, label = it.label) },
         selectedId = formats
             .firstOrNull { it.value.equals(stateHolder.format, ignoreCase = true) }
             ?.value ?: "All",
     )
-    val yearGroup = DiscoverFilterGroup(
+    val yearGroup = PlatformFilterGroup(
         id = "year",
         title = if (isSpanish) "Año" else "Year",
         options = discoverYears().map { year ->
-            DiscoverFilterOption(
+            PlatformFilterOption(
                 id = year?.toString() ?: "any",
                 label = year?.toString() ?: if (isSpanish) "Cualquier año" else "Any year",
             )

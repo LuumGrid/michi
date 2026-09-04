@@ -32,8 +32,6 @@ import com.luum.michi.app.manga.presentation.model.label
 import com.luum.michi.app.anime.presentation.state.rememberAnimeListStateHolder
 import com.luum.michi.app.discover.data.DiscoverRepository
 import com.luum.michi.app.discover.presentation.DiscoverScreen
-import com.luum.michi.app.discover.presentation.components.DiscoverFiltersSheet
-import com.luum.michi.app.discover.presentation.model.applyFilterSelection
 import com.luum.michi.app.discover.presentation.model.buildDiscoverFilterGroups
 import com.luum.michi.app.discover.presentation.state.DiscoverCategory
 import com.luum.michi.app.discover.presentation.state.rememberDiscoverStateHolder
@@ -61,6 +59,7 @@ import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaEntryEdito
 import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.presentation.CharacterDetailScreen
 import com.luum.michi.app.characterDetail.presentation.state.rememberCharacterDetailStateHolder
+import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.staffDetail.data.StaffDetailRepository
 import com.luum.michi.app.staffDetail.presentation.StaffDetailScreen
 import com.luum.michi.app.staffDetail.presentation.state.rememberStaffDetailStateHolder
@@ -79,14 +78,16 @@ import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
 import com.luum.michi.app.core.platform.SettingsStoreKeys
+import com.luum.michi.app.core.platform.components.PlatformFilterSheet
+import com.luum.michi.app.core.platform.components.PlatformFilterGroup
+import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
 import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
+import com.luum.michi.app.discover.presentation.model.applyFilterSelection
 import com.luum.michi.app.shell.components.ShellBottomCluster
-import com.luum.michi.app.shell.components.ShellSectionFilterSheet
-import com.luum.michi.app.shell.components.ShellSectionOption
 import com.luum.michi.app.shell.components.ShellTabSection
 import com.luum.michi.app.shell.components.label
 import com.luum.michi.app.shell.components.ShellToolBar
@@ -345,6 +346,8 @@ internal fun ShellScreen(
                             accountStats = accountState.stats,
                             accountFavorites = accountState.favorites,
                             accountIsRefreshing = accountState.isRefreshing,
+                            accountIsLoading = accountState.isLoading,
+                            accountError = accountState.error?.let { strings.networkErrorMessage(it) },
                             onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
                             favoritesCategory = shellState.favoritesCategory,
                             favoritesGridStateHolder = favoritesGridState,
@@ -605,7 +608,7 @@ internal fun ShellScreen(
 
         if (shellState.isDiscoverFilterOpen) {
             val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
-            DiscoverFiltersSheet(
+            PlatformFilterSheet(
                 groups = buildDiscoverFilterGroups(discoverState, isSpanish),
                 onSelect = { groupId, optionId ->
                     discoverState.applyFilterSelection(groupId, optionId)
@@ -615,12 +618,12 @@ internal fun ShellScreen(
         }
 
         if (shellState.isSectionFilterOpen) {
-            val sectionOptions: List<ShellSectionOption>?
+            val sectionOptions: List<PlatformFilterOption>?
             val selectedSectionId: String?
             when (shellState.selectedTab) {
                 ShellTabSection.ANIME -> {
                     sectionOptions = AnimeListSection.entries.map { section ->
-                        ShellSectionOption(
+                        PlatformFilterOption(
                             id = section.name,
                             label = section.label(strings),
                             count = animeState.countInSection(section),
@@ -630,7 +633,7 @@ internal fun ShellScreen(
                 }
                 ShellTabSection.MANGA -> {
                     sectionOptions = MangaListSection.entries.map { section ->
-                        ShellSectionOption(
+                        PlatformFilterOption(
                             id = section.name,
                             label = section.label(strings),
                             count = mangaState.countInSection(section),
@@ -644,10 +647,16 @@ internal fun ShellScreen(
                 }
             }
             if (sectionOptions != null && selectedSectionId != null) {
-                ShellSectionFilterSheet(
-                    options = sectionOptions,
-                    selectedId = selectedSectionId,
-                    onSelect = { id ->
+                PlatformFilterSheet(
+                    groups = listOf(
+                        PlatformFilterGroup(
+                            id = "section",
+                            title = null,
+                            options = sectionOptions,
+                            selectedId = selectedSectionId,
+                        ),
+                    ),
+                    onSelect = { _, id ->
                         when (shellState.selectedTab) {
                             ShellTabSection.ANIME -> AnimeListSection.entries
                                 .firstOrNull { it.name == id }
