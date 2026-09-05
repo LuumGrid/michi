@@ -9,18 +9,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.manga.data.MangaListRepository
-import com.luum.michi.app.manga.presentation.model.MangaListEntry
-import com.luum.michi.app.manga.presentation.model.MangaListSection
-import com.luum.michi.app.manga.presentation.model.incrementedChapters
-import com.luum.michi.app.manga.presentation.model.incrementedVolumes
+import com.luum.michi.app.manga.domain.MangaListRepository
+import com.luum.michi.app.manga.domain.model.MangaListEntry
+import com.luum.michi.app.manga.domain.model.MangaListSection
+import com.luum.michi.app.manga.domain.model.incrementedChapters
+import com.luum.michi.app.manga.domain.model.incrementedVolumes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
-import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
-import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
+import com.luum.michi.app.core.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.MediaListStatus
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
@@ -119,6 +119,7 @@ internal class MangaListStateHolder(
             val result = entryRepository.saveProgress(
                 mediaId = entry.id,
                 progress = updatedEntry.chaptersProgress,
+                status = updatedEntry.status.toMediaListStatus(),
                 progressVolumes = updatedEntry.volumesProgress,
             )
             if (result is NetworkResult.Failure) {
@@ -135,7 +136,7 @@ internal class MangaListStateHolder(
         val sorted = when (currentSortOption) {
             UserListSort.FOLLOW_LIST -> filtered.sortedBy { it.originalIndex }
             UserListSort.TITLE -> filtered.sortedBy { it.title }
-            UserListSort.SCORE -> filtered.sortedBy { it.scoreDouble }
+            UserListSort.SCORE -> filtered.sortedBy { it.score }
             UserListSort.PROGRESS -> filtered.sortedBy { it.chaptersProgress } // Strictly by chapter!
             UserListSort.LAST_UPDATED -> filtered.sortedBy { it.updatedAt }
             UserListSort.LAST_ADDED -> filtered.sortedBy { it.id }

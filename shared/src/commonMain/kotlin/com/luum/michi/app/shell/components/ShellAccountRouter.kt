@@ -7,11 +7,10 @@ import com.luum.michi.app.account.presentation.AccountFavoritesGridScreen
 import com.luum.michi.app.account.presentation.AccountScreen
 import com.luum.michi.app.account.presentation.AccountShareProfileScreen
 import com.luum.michi.app.account.presentation.AccountStatsScreen
-import com.luum.michi.app.account.presentation.model.AccountFavorites
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
-import com.luum.michi.app.account.presentation.model.AccountStats
 import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
+import com.luum.michi.app.account.presentation.state.AccountStateHolder
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.settings.presentation.SettingsScreen
@@ -23,12 +22,7 @@ internal fun ShellAccountRouter(
     route: ShellAccountRoute,
     profile: AccountProfileDraft,
     settingsState: SettingsState,
-    accountStats: AccountStats,
-    accountFavorites: AccountFavorites,
-    accountIsRefreshing: Boolean,
-    accountIsLoading: Boolean,
-    accountError: String?,
-    onAccountRefresh: () -> Unit,
+    accountState: AccountStateHolder,
     favoritesCategory: AccountFavoritesCategory,
     favoritesGridStateHolder: AccountFavoritesGridStateHolder,
     language: AppLanguage,
@@ -52,18 +46,14 @@ internal fun ShellAccountRouter(
     when (route) {
         ShellAccountRoute.ACCOUNT -> {
             AccountScreen(
+                stateHolder = accountState,
                 username = profile.username,
                 displayName = profile.displayName,
                 bannerUrl = profile.bannerUrl,
                 userAvatarUrl = profile.avatarUrl,
                 userBio = profile.bio,
                 joinedLabel = null,
-                stats = accountStats,
-                favorites = accountFavorites,
-                isRefreshing = accountIsRefreshing,
-                isLoading = accountIsLoading,
-                error = accountError,
-                onRefresh = onAccountRefresh,
+                onRefresh = accountState::refresh,
                 onEditProfileClick = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
                 onShareProfileClick = { onNavigate(ShellAccountRoute.SHARE_PROFILE) },
                 onOpenAnimeList = onOpenAnimeList,
@@ -105,7 +95,7 @@ internal fun ShellAccountRouter(
         }
 
         ShellAccountRoute.STATS -> {
-            AccountStatsScreen(stats = accountStats)
+            AccountStatsScreen(stats = accountState.stats)
         }
 
         ShellAccountRoute.FAVORITES -> {

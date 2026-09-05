@@ -1,6 +1,7 @@
 package com.luum.michi.app.studioDetail.data
 
 import com.luum.michi.app.core.anilist.dto.MediaCoverImageDto
+import com.luum.michi.app.studioDetail.domain.StudioDetailRepository
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest

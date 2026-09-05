@@ -14,7 +14,6 @@ object EnglishLanguageStrings : LanguageStrings {
     override val orderByLabel = "Order by"
     override val settingsAction = "Settings"
     override val inUseLabel = "in use"
-    override val discoverSeasonalAction = "Seasonal"
     override val discoverTrendingAnimeTitle = "Trending anime"
     override val discoverTrendingMangaTitle = "Trending manga"
     override val searchTitle = "Search"

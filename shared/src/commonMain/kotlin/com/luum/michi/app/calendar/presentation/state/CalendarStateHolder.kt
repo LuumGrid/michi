@@ -9,8 +9,8 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import com.luum.michi.app.calendar.data.CalendarDay
-import com.luum.michi.app.calendar.data.CalendarRepository
+import com.luum.michi.app.calendar.domain.CalendarDay
+import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 

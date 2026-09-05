@@ -1,7 +1,7 @@
 package com.luum.michi.app.account.data
 
-import com.luum.michi.app.account.presentation.model.AccountMediaTypeStats
-import com.luum.michi.app.account.presentation.model.AccountStatDistributionEntry
+import com.luum.michi.app.account.domain.model.AccountMediaTypeStats
+import com.luum.michi.app.account.domain.model.AccountStatDistributionEntry
 import com.luum.michi.app.core.anilist.dto.UserStatisticsDto
 
 /**

@@ -25,10 +25,10 @@ import com.luum.michi.app.core.platform.components.PlatformSectionHeader
 import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.components.tabBarClearance
 import com.luum.michi.app.manga.presentation.components.MangaListCard
-import com.luum.michi.app.manga.presentation.model.MangaListEntry
-import com.luum.michi.app.manga.presentation.model.MangaListSection
-import com.luum.michi.app.manga.presentation.model.MangaStatusSections
-import com.luum.michi.app.manga.presentation.model.label
+import com.luum.michi.app.manga.domain.model.MangaListEntry
+import com.luum.michi.app.manga.domain.model.MangaListSection
+import com.luum.michi.app.manga.domain.model.MangaStatusSections
+import com.luum.michi.app.manga.domain.model.label
 import com.luum.michi.app.manga.presentation.state.MangaListStateHolder
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,6 +123,15 @@ private fun MangaContentList(
         }
     }
 
+    val handleIncrementVolumes: (MangaListEntry) -> Unit = { entry ->
+        val total = entry.totalVolumes
+        if (total != null && entry.volumesProgress + 1 >= total) {
+            onCompletionReached(entry.id, total)
+        } else {
+            onIncrementVolumes(entry)
+        }
+    }
+
     val visibleSections by remember(selectedSection) {
         derivedStateOf {
             if (selectedSection == MangaListSection.ALL) {
@@ -171,7 +180,7 @@ private fun MangaContentList(
                     onOpen = { onOpenMedia(entry.id) },
                     onEdit = { onEditMedia(entry.id) },
                     onIncrementChapters = { handleIncrement(entry) },
-                    onIncrementVolumes = { onIncrementVolumes(entry) },
+                    onIncrementVolumes = { handleIncrementVolumes(entry) },
                 )
             }
         }

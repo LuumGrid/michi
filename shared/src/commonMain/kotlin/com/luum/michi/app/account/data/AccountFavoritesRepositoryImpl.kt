@@ -1,6 +1,7 @@
 package com.luum.michi.app.account.data
 
-import com.luum.michi.app.account.presentation.model.AccountFavorites
+import com.luum.michi.app.account.domain.AccountFavoritesRepository
+import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.core.anilist.dto.UserFavouritesResponseDto
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest

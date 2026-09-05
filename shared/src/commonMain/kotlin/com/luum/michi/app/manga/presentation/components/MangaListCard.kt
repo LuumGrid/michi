@@ -4,15 +4,17 @@ import androidx.compose.runtime.Composable
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformMediaListCard
-import com.luum.michi.app.manga.presentation.model.MangaListEntry
-import com.luum.michi.app.manga.presentation.model.behindLabel
-import com.luum.michi.app.manga.presentation.model.canIncrementChapters
-import com.luum.michi.app.manga.presentation.model.canIncrementVolumes
-import com.luum.michi.app.manga.presentation.model.chaptersProgressLabel
-import com.luum.michi.app.manga.presentation.model.chaptersProgressRatio
-import com.luum.michi.app.manga.presentation.model.label
-import com.luum.michi.app.manga.presentation.model.releaseLabel
-import com.luum.michi.app.manga.presentation.model.volumesProgressLabel
+import com.luum.michi.app.manga.domain.model.MangaListEntry
+import com.luum.michi.app.manga.domain.model.behindLabel
+import com.luum.michi.app.manga.domain.model.canIncrementChapters
+import com.luum.michi.app.manga.domain.model.canIncrementVolumes
+import com.luum.michi.app.manga.domain.model.chaptersProgressLabel
+import com.luum.michi.app.manga.domain.model.chaptersProgressRatio
+import com.luum.michi.app.manga.domain.model.formattedScore
+import com.luum.michi.app.manga.domain.model.isComplete
+import com.luum.michi.app.manga.domain.model.label
+import com.luum.michi.app.manga.domain.model.releaseLabel
+import com.luum.michi.app.manga.domain.model.volumesProgressLabel
 
 @Composable
 internal fun MangaListCard(
@@ -26,8 +28,8 @@ internal fun MangaListCard(
 
     PlatformMediaListCard(
         title = entry.title,
-        subtitle = entry.format,
-        score = entry.score,
+        subtitle = entry.format.label(),
+        score = entry.formattedScore(),
         primaryProgressLabel = entry.chaptersProgressLabel(),
         primaryProgressRatio = entry.chaptersProgressRatio(),
         primaryIncrementLabel = "+1 CH",
@@ -39,7 +41,7 @@ internal fun MangaListCard(
         palette = entry.palette,
         coverUrl = entry.coverUrl,
         icon = PlatformIcons.Manga,
-        isComplete = !entry.canIncrementChapters(),
+        isComplete = entry.isComplete(),
         releaseLabel = entry.releaseLabel(strings),
         behindLabel = entry.behindLabel(strings),
         fallbackStatusLabel = entry.status.label(strings),

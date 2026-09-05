@@ -43,107 +43,107 @@ internal fun DashboardScreen(
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize(),
     ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = floatingToolbarClearance(), bottom = tabBarClearance()),
-        verticalArrangement = Arrangement.spacedBy(22.dp),
-    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = floatingToolbarClearance(), bottom = tabBarClearance()),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
+        ) {
 
-        if (stateHolder.thisSeason.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreThisSeasonTitle,
-                    items = stateHolder.thisSeason,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.THIS_SEASON) },
-                )
+            if (stateHolder.thisSeason.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreThisSeasonTitle,
+                        items = stateHolder.thisSeason,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.THIS_SEASON) },
+                    )
+                }
+            }
+
+            if (stateHolder.trendingAnime.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.discoverTrendingAnimeTitle,
+                        items = stateHolder.trendingAnime,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.TRENDING_ANIME) },
+                    )
+                }
+            }
+
+            if (stateHolder.trendingManga.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.discoverTrendingMangaTitle,
+                        items = stateHolder.trendingManga,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.TRENDING_MANGA) },
+                    )
+                }
+            }
+
+            if (stateHolder.upcomingNextSeason.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreUpcomingNextSeasonTitle,
+                        items = stateHolder.upcomingNextSeason,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.UPCOMING_NEXT_SEASON) },
+                    )
+                }
+            }
+
+            if (stateHolder.allTimePopularAnime.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreAllTimePopularAnimeTitle,
+                        items = stateHolder.allTimePopularAnime,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_ANIME) },
+                    )
+                }
+            }
+
+            if (stateHolder.allTimePopularManga.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreAllTimePopularMangaTitle,
+                        items = stateHolder.allTimePopularManga,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_MANGA) },
+                    )
+                }
+            }
+
+            if (stateHolder.topAnime.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreTopAnimeTitle,
+                        items = stateHolder.topAnime,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.TOP_ANIME) },
+                    )
+                }
+            }
+
+            if (stateHolder.topManga.isNotEmpty()) {
+                item {
+                    PlatformDiscoverMediaRail(
+                        title = strings.exploreTopMangaTitle,
+                        items = stateHolder.topManga,
+                        onItemClick = onOpenMedia,
+                        onItemLongClick = onEditMedia,
+                        onSeeAll = { onSeeAll(DashboardRail.TOP_MANGA) },
+                    )
+                }
             }
         }
-
-        if (stateHolder.trendingAnime.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.discoverTrendingAnimeTitle,
-                    items = stateHolder.trendingAnime,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.TRENDING_ANIME) },
-                )
-            }
-        }
-
-        if (stateHolder.trendingManga.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.discoverTrendingMangaTitle,
-                    items = stateHolder.trendingManga,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.TRENDING_MANGA) },
-                )
-            }
-        }
-
-        if (stateHolder.upcomingNextSeason.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreUpcomingNextSeasonTitle,
-                    items = stateHolder.upcomingNextSeason,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.UPCOMING_NEXT_SEASON) },
-                )
-            }
-        }
-
-        if (stateHolder.allTimePopularAnime.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreAllTimePopularAnimeTitle,
-                    items = stateHolder.allTimePopularAnime,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_ANIME) },
-                )
-            }
-        }
-
-        if (stateHolder.allTimePopularManga.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreAllTimePopularMangaTitle,
-                    items = stateHolder.allTimePopularManga,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.ALL_TIME_POPULAR_MANGA) },
-                )
-            }
-        }
-
-        if (stateHolder.topAnime.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreTopAnimeTitle,
-                    items = stateHolder.topAnime,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.TOP_ANIME) },
-                )
-            }
-        }
-
-        if (stateHolder.topManga.isNotEmpty()) {
-            item {
-                PlatformDiscoverMediaRail(
-                    title = strings.exploreTopMangaTitle,
-                    items = stateHolder.topManga,
-                    onItemClick = onOpenMedia,
-                    onItemLongClick = onEditMedia,
-                    onSeeAll = { onSeeAll(DashboardRail.TOP_MANGA) },
-                )
-            }
-        }
-    }
     }
 }

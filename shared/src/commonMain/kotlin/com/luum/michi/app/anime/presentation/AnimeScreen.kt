@@ -17,10 +17,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.anime.presentation.components.AnimeListCard
-import com.luum.michi.app.anime.presentation.model.AnimeListEntry
-import com.luum.michi.app.anime.presentation.model.AnimeListSection
-import com.luum.michi.app.anime.presentation.model.AnimeStatusSections
-import com.luum.michi.app.anime.presentation.model.label
+import com.luum.michi.app.anime.domain.model.AnimeListEntry
+import com.luum.michi.app.anime.domain.model.AnimeListSection
+import com.luum.michi.app.anime.domain.model.AnimeStatusSections
+import com.luum.michi.app.anime.domain.model.label
 import com.luum.michi.app.anime.presentation.state.AnimeListStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage

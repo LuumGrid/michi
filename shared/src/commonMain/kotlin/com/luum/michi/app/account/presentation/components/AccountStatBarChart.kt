@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.account.presentation.model.AccountStatDistributionEntry
+import com.luum.michi.app.account.domain.model.AccountStatDistributionEntry
 
 private val BarHeight = 10.dp
 private val LabelWidth = 72.dp

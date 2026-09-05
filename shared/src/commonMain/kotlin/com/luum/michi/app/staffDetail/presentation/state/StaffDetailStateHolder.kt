@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.staffDetail.data.StaffDetailRepository
+import com.luum.michi.app.staffDetail.domain.StaffDetailRepository
 import com.luum.michi.app.staffDetail.presentation.model.StaffCharacterItem
 import com.luum.michi.app.staffDetail.presentation.model.StaffDetail
 import com.luum.michi.app.staffDetail.presentation.model.StaffMediaItem

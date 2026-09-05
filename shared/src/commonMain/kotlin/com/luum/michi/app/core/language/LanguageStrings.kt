@@ -18,7 +18,6 @@ interface LanguageStrings {
     val orderByLabel: String
     val settingsAction: String
     val inUseLabel: String
-    val discoverSeasonalAction: String
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
     val searchTitle: String

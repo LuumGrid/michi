@@ -1,6 +1,7 @@
 package com.luum.michi.app.anime.data
 
-import com.luum.michi.app.anime.presentation.model.AnimeListEntry
+import com.luum.michi.app.anime.domain.AnimeListRepository
+import com.luum.michi.app.anime.domain.model.AnimeListEntry
 import com.luum.michi.app.core.anilist.dto.MediaListCollectionResponseDto
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest

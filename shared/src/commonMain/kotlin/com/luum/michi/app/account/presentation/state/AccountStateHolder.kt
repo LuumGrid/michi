@@ -6,9 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.data.AccountRepository
-import com.luum.michi.app.account.presentation.model.AccountFavorites
-import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.account.domain.AccountRepository
+import com.luum.michi.app.account.domain.model.AccountFavorites
+import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
@@ -16,14 +16,14 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
-private val EmptyStats = AccountStats(
+internal val EmptyStats = AccountStats(
     animeCount = 0,
     mangaCount = 0,
     followingCount = 0,
     followersCount = 0,
 )
 
-private val EmptyFavorites = AccountFavorites(
+internal val EmptyFavorites = AccountFavorites(
     anime = emptyList(),
     manga = emptyList(),
     characters = emptyList(),
@@ -74,6 +74,10 @@ internal class AccountStateHolder(
                 refreshingState = false
             }
         }
+    }
+
+    fun refresh() {
+        lastUserId?.let { load(it, forceRefresh = true) }
     }
 
     companion object {

@@ -9,8 +9,8 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
-import com.luum.michi.app.dashboard.data.DashboardFeed
-import com.luum.michi.app.dashboard.data.DashboardRepository
+import com.luum.michi.app.dashboard.domain.DashboardFeed
+import com.luum.michi.app.dashboard.domain.DashboardRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes

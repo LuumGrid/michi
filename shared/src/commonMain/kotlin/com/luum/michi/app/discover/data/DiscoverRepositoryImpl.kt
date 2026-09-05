@@ -11,9 +11,10 @@ import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import com.luum.michi.app.core.platform.hexToPalette
-import com.luum.michi.app.search.data.SearchPage
+import com.luum.michi.app.discover.domain.DiscoverRepository
 import com.luum.michi.app.search.data.toSearchResult
-import com.luum.michi.app.search.presentation.model.SearchResult
+import com.luum.michi.app.search.domain.SearchPage
+import com.luum.michi.app.search.domain.model.SearchResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray

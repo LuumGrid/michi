@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.studioDetail.data.StudioDetailRepository
+import com.luum.michi.app.studioDetail.domain.StudioDetailRepository
 import com.luum.michi.app.studioDetail.presentation.model.StudioDetail
 import com.luum.michi.app.studioDetail.presentation.model.StudioMediaItem
 import com.luum.michi.app.studioDetail.presentation.model.StudioMediaSort

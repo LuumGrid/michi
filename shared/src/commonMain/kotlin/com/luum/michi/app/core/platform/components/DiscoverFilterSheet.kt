@@ -49,7 +49,7 @@ fun combineDiscoverSort(field: String, descending: Boolean): String =
 
 /**
  * Sheet de Filter completo (campo + dirección) + filtros onList para las superficies
- * de catálogo (Discover, Seasonal).
+ * de catálogo (Discover).
  * Las etiquetas llegan ya localizadas desde el caller.
  */
 @Composable

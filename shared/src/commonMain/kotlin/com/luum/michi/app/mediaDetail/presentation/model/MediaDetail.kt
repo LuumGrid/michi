@@ -1,25 +1,12 @@
 package com.luum.michi.app.mediaDetail.presentation.model
 
 import androidx.compose.ui.graphics.Color
+import com.luum.michi.app.core.medialist.MediaListStatus
+import com.luum.michi.app.core.medialist.MediaListViewerEntry
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 
 internal data class StudioRef(val id: Int, val name: String)
-
-internal data class MediaDetailViewerEntry(
-    val id: Int,
-    val status: MediaListStatus?,
-    val progress: Int,
-    val progressVolumes: Int?,
-    val score: Float,
-    val notes: String,
-    val repeat: Int,
-    val priority: Int,
-    val isPrivate: Boolean,
-    val hiddenFromStatusLists: Boolean,
-    val startedAtMillis: Long?,
-    val completedAtMillis: Long?,
-)
 
 internal data class MediaDetail(
     val id: Int,
@@ -48,7 +35,7 @@ internal data class MediaDetail(
     val descriptionPlain: String,
     val isAdult: Boolean,
     val isFavourite: Boolean,
-    val viewerEntry: MediaDetailViewerEntry?,
+    val viewerEntry: MediaListViewerEntry?,
     val relations: List<MediaDetailRelation>,
     val scoreDistribution: List<MediaScoreBucket>,
     val statusDistribution: List<MediaStatusBucket>,

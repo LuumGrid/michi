@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.platform.components.PlatformFavouritesBadge
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.core.platform.components.PlatformRatingBadge
-import com.luum.michi.app.search.presentation.model.SearchResult
+import com.luum.michi.app.search.domain.model.SearchResult
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

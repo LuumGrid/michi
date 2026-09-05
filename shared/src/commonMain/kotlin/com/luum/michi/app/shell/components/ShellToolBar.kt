@@ -47,21 +47,18 @@ internal fun ShellToolBar(
     isDetailOpen: Boolean,
     isDiscoverOpen: Boolean,
     isCalendarOpen: Boolean,
-    isSeasonalOpen: Boolean,
     isNotificationsOpen: Boolean,
     titleText: String,
     onAccountBack: () -> Unit,
     onMediaBack: () -> Unit,
     onDiscoverBack: () -> Unit,
     onCalendarBack: () -> Unit,
-    onSeasonalBack: () -> Unit,
     onNotificationsBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
     onSortClick: () -> Unit,
     onSectionFilterClick: () -> Unit,
     onOpenCalendar: () -> Unit,
-    onSeasonalSortClick: () -> Unit = {},
     unreadCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
@@ -73,7 +70,6 @@ internal fun ShellToolBar(
         isDetailOpen -> onMediaBack
         isDiscoverOpen -> onDiscoverBack
         isCalendarOpen -> onCalendarBack
-        isSeasonalOpen -> onSeasonalBack
         isNotificationsOpen -> onNotificationsBack
         selectedTab == ShellTabSection.ACCOUNT && isAccountDetail -> onAccountBack
         else -> null
@@ -81,8 +77,7 @@ internal fun ShellToolBar(
 
     // Trailing con acciones solo donde hay algo que mostrar: en detail puro
     // y calendar el back queda aislado como en la referencia de Apple.
-    val noOverlay = !isDetailOpen && !isDiscoverOpen && !isCalendarOpen && !isSeasonalOpen && !isNotificationsOpen
-    val showSeasonalSort = isSeasonalOpen
+    val noOverlay = !isDetailOpen && !isDiscoverOpen && !isCalendarOpen && !isNotificationsOpen
     val showListActions = (selectedTab == ShellTabSection.DISCOVER ||
         selectedTab == ShellTabSection.ANIME ||
         selectedTab == ShellTabSection.MANGA) && noOverlay
@@ -134,19 +129,10 @@ internal fun ShellToolBar(
             )
         }
 
-        if (showSeasonalSort || showListActions || showTrailingMain) {
+        if (showListActions || showTrailingMain) {
             Spacer(modifier = Modifier.width(8.dp))
             PlatformFloatingActionGroup {
                 when {
-                    showSeasonalSort -> {
-                        IconButton(onClick = onSeasonalSortClick) {
-                            Icon(
-                                painter = PlatformIcons.Sort,
-                                contentDescription = strings.orderByLabel,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
-                    }
                     showListActions -> {
                         IconButton(onClick = onSectionFilterClick) {
                             Icon(

@@ -1,5 +1,6 @@
 package com.luum.michi.app.characterDetail.data
 
+import com.luum.michi.app.characterDetail.domain.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.presentation.model.CharacterDetail
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaItem
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaPage

@@ -5,6 +5,7 @@ import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
 import com.luum.michi.app.core.platform.hexToPalette
+import com.luum.michi.app.dashboard.domain.DashboardFeed
 
 internal fun DashboardResponseDto.toDashboardFeed(): DashboardFeed = DashboardFeed(
     trendingAnime = trendingAnime?.media

@@ -7,10 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.anime.data.AnimeListRepository
-import com.luum.michi.app.anime.presentation.model.AnimeListEntry
-import com.luum.michi.app.anime.presentation.model.AnimeListSection
-import com.luum.michi.app.anime.presentation.model.incremented
+import com.luum.michi.app.anime.domain.AnimeListRepository
+import com.luum.michi.app.anime.domain.model.AnimeListEntry
+import com.luum.michi.app.anime.domain.model.AnimeListSection
+import com.luum.michi.app.anime.domain.model.incremented
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
-import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
-import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
+import com.luum.michi.app.core.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.MediaListStatus
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
@@ -111,7 +111,7 @@ internal class AnimeListStateHolder(
         val sorted = when (currentSortOption) {
             UserListSort.FOLLOW_LIST -> filtered.sortedBy { it.originalIndex }
             UserListSort.TITLE -> filtered.sortedBy { it.title }
-            UserListSort.SCORE -> filtered.sortedBy { it.scoreDouble }
+            UserListSort.SCORE -> filtered.sortedBy { it.score }
             UserListSort.PROGRESS -> filtered.sortedBy { it.progress }
             UserListSort.LAST_UPDATED -> filtered.sortedBy { it.updatedAt }
             UserListSort.LAST_ADDED -> filtered.sortedBy { it.id }

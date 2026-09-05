@@ -1,6 +1,8 @@
 package com.luum.michi.app.settings.data
 
 import com.luum.michi.app.core.network.AniListGraphQLClient
+import com.luum.michi.app.settings.domain.SettingsRepository
+import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult

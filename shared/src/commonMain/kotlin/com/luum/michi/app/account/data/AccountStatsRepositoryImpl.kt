@@ -1,6 +1,7 @@
 package com.luum.michi.app.account.data
 
-import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.account.domain.AccountStatsRepository
+import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.core.anilist.dto.UserStatsResponseDto
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest

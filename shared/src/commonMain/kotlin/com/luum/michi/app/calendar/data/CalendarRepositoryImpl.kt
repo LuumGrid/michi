@@ -6,6 +6,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.calendar.domain.CalendarFeed
+import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.AiringSchedulePageDto
 import com.luum.michi.app.core.auth.currentEpochSeconds

@@ -26,8 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.components.AccountStatBarChart
-import com.luum.michi.app.account.presentation.model.AccountMediaTypeStats
-import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.account.domain.model.AccountMediaTypeStats
+import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.components.tabBarClearance
 import com.luum.michi.app.core.platform.components.floatingToolbarClearance

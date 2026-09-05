@@ -21,7 +21,7 @@ import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 import com.luum.michi.app.mediaDetail.presentation.model.StudioRef
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailType
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailViewerEntry
+import com.luum.michi.app.core.medialist.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.presentation.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.presentation.model.MediaScoreBucket
 import com.luum.michi.app.mediaDetail.presentation.model.MediaStaffEntry
@@ -29,7 +29,7 @@ import com.luum.michi.app.mediaDetail.presentation.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.presentation.model.MediaStatsStatus
 import com.luum.michi.app.mediaDetail.presentation.model.MediaStatusBucket
 import com.luum.michi.app.mediaDetail.presentation.model.MediaVoiceActor
-import com.luum.michi.app.mediaDetail.presentation.model.parseMediaListStatus
+import com.luum.michi.app.core.medialist.parseMediaListStatus
 
 internal fun MediaDetailDto.toDomain(): MediaDetail = MediaDetail(
     id = id,
@@ -170,7 +170,7 @@ private fun parseRelationKind(raw: String?): MediaRelationKind = when (raw) {
     else -> MediaRelationKind.OTHER
 }
 
-private fun MediaViewerListEntryDto.toViewerEntry(): MediaDetailViewerEntry = MediaDetailViewerEntry(
+private fun MediaViewerListEntryDto.toViewerEntry(): MediaListViewerEntry = MediaListViewerEntry(
     id = id,
     status = parseMediaListStatus(status),
     progress = progress ?: 0,

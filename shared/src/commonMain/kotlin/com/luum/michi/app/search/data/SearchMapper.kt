@@ -2,7 +2,7 @@ package com.luum.michi.app.search.data
 
 import com.luum.michi.app.core.anilist.dto.MediaSearchItemDto
 import com.luum.michi.app.core.platform.hexToPalette
-import com.luum.michi.app.search.presentation.model.SearchResult
+import com.luum.michi.app.search.domain.model.SearchResult
 
 internal fun MediaSearchItemDto.toSearchResult(): SearchResult {
     val titleText = title?.userPreferred ?: title?.english ?: title?.romaji ?: title?.native ?: ""

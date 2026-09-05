@@ -1,9 +1,9 @@
 package com.luum.michi.app.account.data
 
-import com.luum.michi.app.account.presentation.model.AccountFavoriteMedia
-import com.luum.michi.app.account.presentation.model.AccountFavoritePerson
-import com.luum.michi.app.account.presentation.model.AccountFavoriteStudio
-import com.luum.michi.app.account.presentation.model.AccountFavorites
+import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
+import com.luum.michi.app.account.domain.model.AccountFavoritePerson
+import com.luum.michi.app.account.domain.model.AccountFavoriteStudio
+import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.core.anilist.dto.CharacterDto
 import com.luum.michi.app.core.anilist.dto.FavouritesDto
 import com.luum.michi.app.core.anilist.dto.MediaDto

@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.presentation.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.presentation.model.MediaDetail
 import com.luum.michi.app.mediaDetail.presentation.model.MediaRecommendationEntry

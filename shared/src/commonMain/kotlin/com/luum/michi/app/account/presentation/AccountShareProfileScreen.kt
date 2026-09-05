@@ -96,6 +96,9 @@ internal fun AccountShareProfileScreen(
                 Text(strings.accountShareProfileAction, maxLines = 1)
             }
 
+            // TODO: implement QR export (render AccountQrMatrix to a bitmap and save/share
+            // it via platform storage). Disabled until there is expect/actual plumbing for
+            // image saving, like the existing clipboard helper for plain text.
             OutlinedButton(
                 onClick = { },
                 enabled = false,

@@ -7,11 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.data.AccountRepository
-import com.luum.michi.app.account.presentation.model.AccountFavoriteMedia
-import com.luum.michi.app.account.presentation.model.AccountFavoritePerson
-import com.luum.michi.app.account.presentation.model.AccountFavoriteStudio
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.AccountRepository
+import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
+import com.luum.michi.app.account.domain.model.AccountFavoritePerson
+import com.luum.michi.app.account.domain.model.AccountFavoriteStudio
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope

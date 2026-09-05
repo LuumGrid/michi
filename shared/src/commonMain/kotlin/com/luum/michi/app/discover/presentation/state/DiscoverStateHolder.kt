@@ -16,8 +16,8 @@ import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.core.platform.model.UserListSort
-import com.luum.michi.app.discover.data.DiscoverRepository
-import com.luum.michi.app.search.presentation.model.SearchResult
+import com.luum.michi.app.discover.domain.DiscoverRepository
+import com.luum.michi.app.search.domain.model.SearchResult
 
 internal enum class DiscoverCategory {
     ANIME,

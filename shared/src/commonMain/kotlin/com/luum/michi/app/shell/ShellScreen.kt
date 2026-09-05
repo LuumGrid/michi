@@ -19,61 +19,58 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import com.luum.michi.app.account.data.AccountRepository
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.AccountRepository
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.rememberAccountFavoritesGridStateHolder
 import com.luum.michi.app.account.presentation.state.rememberAccountStateHolder
-import com.luum.michi.app.anime.data.AnimeListRepository
+import com.luum.michi.app.anime.domain.AnimeListRepository
 import com.luum.michi.app.anime.presentation.AnimeScreen
-import com.luum.michi.app.anime.presentation.model.AnimeListSection
-import com.luum.michi.app.anime.presentation.model.label
-import com.luum.michi.app.manga.presentation.model.MangaListSection
-import com.luum.michi.app.manga.presentation.model.label
+import com.luum.michi.app.anime.domain.model.AnimeListSection
+import com.luum.michi.app.anime.domain.model.label
+import com.luum.michi.app.manga.domain.model.MangaListSection
+import com.luum.michi.app.manga.domain.model.label
 import com.luum.michi.app.anime.presentation.state.rememberAnimeListStateHolder
-import com.luum.michi.app.discover.data.DiscoverRepository
+import com.luum.michi.app.discover.domain.DiscoverRepository
 import com.luum.michi.app.discover.presentation.DiscoverScreen
 import com.luum.michi.app.discover.presentation.model.buildDiscoverFilterGroups
 import com.luum.michi.app.discover.presentation.state.DiscoverCategory
 import com.luum.michi.app.discover.presentation.state.rememberDiscoverStateHolder
-import com.luum.michi.app.calendar.data.CalendarRepository
+import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
 import com.luum.michi.app.calendar.presentation.state.rememberCalendarStateHolder
 import com.luum.michi.app.core.language.AppLanguage
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.media.next
-import com.luum.michi.app.seasonal.presentation.SeasonalScreen
-import com.luum.michi.app.seasonal.presentation.state.rememberSeasonalStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
 import com.luum.michi.app.core.session.Viewer
-import com.luum.michi.app.dashboard.data.DashboardRepository
+import com.luum.michi.app.dashboard.domain.DashboardRepository
 import com.luum.michi.app.dashboard.presentation.DashboardRail
 import com.luum.michi.app.dashboard.presentation.DashboardScreen
 import com.luum.michi.app.dashboard.presentation.state.rememberDashboardStateHolder
-import com.luum.michi.app.mediaDetail.data.MediaDetailRepository
-import com.luum.michi.app.mediaDetail.data.MediaListEntryRepository
+import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
+import com.luum.michi.app.core.medialist.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.presentation.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.presentation.components.MediaDetailEditorSheet
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.presentation.state.rememberMediaEntryEditorState
-import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
+import com.luum.michi.app.characterDetail.domain.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.presentation.CharacterDetailScreen
 import com.luum.michi.app.characterDetail.presentation.state.rememberCharacterDetailStateHolder
-import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.staffDetail.data.StaffDetailRepository
+import com.luum.michi.app.staffDetail.domain.StaffDetailRepository
 import com.luum.michi.app.staffDetail.presentation.StaffDetailScreen
 import com.luum.michi.app.staffDetail.presentation.state.rememberStaffDetailStateHolder
-import com.luum.michi.app.studioDetail.data.StudioDetailRepository
+import com.luum.michi.app.studioDetail.domain.StudioDetailRepository
 import com.luum.michi.app.studioDetail.presentation.StudioDetailScreen
 import com.luum.michi.app.studioDetail.presentation.state.rememberStudioDetailStateHolder
-import com.luum.michi.app.notifications.data.NotificationsRepository
+import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.notifications.presentation.NotificationsScreen
 import com.luum.michi.app.notifications.presentation.model.NotificationTarget
 import com.luum.michi.app.notifications.presentation.state.rememberNotificationsStateHolder
-import com.luum.michi.app.manga.data.MangaListRepository
+import com.luum.michi.app.manga.domain.MangaListRepository
 import com.luum.michi.app.manga.presentation.MangaScreen
 import com.luum.michi.app.manga.presentation.state.rememberMangaListStateHolder
-import com.luum.michi.app.settings.data.SettingsRepository
+import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
@@ -143,7 +140,6 @@ internal fun ShellScreen(
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
     val discoverState = rememberDiscoverStateHolder(discoverRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
-    val seasonalState = rememberSeasonalStateHolder(discoverRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository)
     val studioDetailState = rememberStudioDetailStateHolder(studioDetailRepository, viewerId = viewer.id)
     val characterDetailState = rememberCharacterDetailStateHolder(characterDetailRepository, viewerId = viewer.id)
@@ -151,20 +147,25 @@ internal fun ShellScreen(
     val notificationsState = rememberNotificationsStateHolder(notificationsRepository)
     val settingsState = rememberSettingsState(settingsRepository, settingsStore)
     val uriHandler = LocalUriHandler.current
-    var showSeasonalSort by remember { mutableStateOf(false) }
     var showListFilterSheet by remember { mutableStateOf(false) }
 
     // Discover es tab: los rails "Ver todo" preseleccionan categoría + orden
     // en la misma view, limpiando los demás filtros.
-    val openDiscoverWith: (DiscoverCategory, UserListSort) -> Unit = { category, sortOption ->
+    fun openDiscoverWith(
+        category: DiscoverCategory,
+        sortOption: UserListSort,
+        season: String? = null,
+        year: Int? = null,
+    ) {
         discoverState.updateSort(sortOption, UserListOrder.DESCENDING, persist = false)
         discoverState.updateFilters(
             newQuery = "",
             newCategory = category,
-            newSeason = null,
+            newSeason = season,
             newGenre = "All",
             newFormat = "All",
-            newYear = null,
+            newYear = year,
+            newOnList = null,
         )
         shellState.openDiscover()
     }
@@ -228,23 +229,12 @@ internal fun ShellScreen(
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
-            !shellState.isCalendarOpen && shellState.isSeasonalOpen,
-        onBack = {
-            if (showSeasonalSort) {
-                showSeasonalSort = false
-            } else {
-                shellState.closeSeasonal()
-            }
-        },
-    )
-    PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
-            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && shellState.isNotificationsOpen,
+            !shellState.isCalendarOpen && shellState.isNotificationsOpen,
         onBack = shellState::closeNotifications,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
-            !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
+            !shellState.isCalendarOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     val titleText = when {
@@ -254,7 +244,6 @@ internal fun ShellScreen(
         shellState.isDetailOpen -> strings.mediaDetailTitle
         shellState.isDiscoverOpen -> strings.discoverTitle
         shellState.isCalendarOpen -> strings.calendarTitle
-        shellState.isSeasonalOpen -> strings.discoverSeasonalAction
         shellState.isNotificationsOpen -> strings.notificationsAction
         shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
@@ -297,12 +286,22 @@ internal fun ShellScreen(
                             onSeeAll = { rail ->
                                 when (rail) {
                                     DashboardRail.THIS_SEASON -> {
-                                        seasonalState.setSeasonYear(currentSeasonAndYear())
-                                        shellState.openSeasonal()
+                                        val current = currentSeasonAndYear()
+                                        openDiscoverWith(
+                                            DiscoverCategory.ANIME,
+                                            UserListSort.POPULARITY,
+                                            season = current.season.name,
+                                            year = current.year,
+                                        )
                                     }
                                     DashboardRail.UPCOMING_NEXT_SEASON -> {
-                                        seasonalState.setSeasonYear(currentSeasonAndYear().next())
-                                        shellState.openSeasonal()
+                                        val upcoming = currentSeasonAndYear().next()
+                                        openDiscoverWith(
+                                            DiscoverCategory.ANIME,
+                                            UserListSort.POPULARITY,
+                                            season = upcoming.season.name,
+                                            year = upcoming.year,
+                                        )
                                     }
                                     DashboardRail.TRENDING_ANIME ->
                                         openDiscoverWith(DiscoverCategory.ANIME, UserListSort.TRENDING)
@@ -343,12 +342,7 @@ internal fun ShellScreen(
                             route = shellState.accountRoute,
                             profile = shellState.currentProfile,
                             settingsState = settingsState,
-                            accountStats = accountState.stats,
-                            accountFavorites = accountState.favorites,
-                            accountIsRefreshing = accountState.isRefreshing,
-                            accountIsLoading = accountState.isLoading,
-                            accountError = accountState.error?.let { strings.networkErrorMessage(it) },
-                            onAccountRefresh = { accountState.load(viewer.id, forceRefresh = true) },
+                            accountState = accountState,
                             favoritesCategory = shellState.favoritesCategory,
                             favoritesGridStateHolder = favoritesGridState,
                             language = language,
@@ -385,18 +379,6 @@ internal fun ShellScreen(
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     CalendarScreen(
                         stateHolder = calendarState,
-                        onOpenMedia = shellState::openMedia,
-                        onEditMedia = shellState::openEditor,
-                    )
-                }
-            }
-
-            if (shellState.isSeasonalOpen) {
-                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    SeasonalScreen(
-                        stateHolder = seasonalState,
-                        showSortSheet = showSeasonalSort,
-                        onDismissSortSheet = { showSeasonalSort = false },
                         onOpenMedia = shellState::openMedia,
                         onEditMedia = shellState::openEditor,
                     )
@@ -467,7 +449,7 @@ internal fun ShellScreen(
                 else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isDiscoverOpen && !shellState.isCalendarOpen && !shellState.isSeasonalOpen && !shellState.isNotificationsOpen) {
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isDiscoverOpen && !shellState.isCalendarOpen && !shellState.isNotificationsOpen) {
                 ShellBottomCluster(
                     selectedTab = shellState.selectedTab,
                     onSearchClick = {
@@ -486,20 +468,12 @@ internal fun ShellScreen(
                 isDetailOpen = shellState.isDetailOpen,
                 isDiscoverOpen = shellState.isDiscoverOpen,
                 isCalendarOpen = shellState.isCalendarOpen,
-                isSeasonalOpen = shellState.isSeasonalOpen,
                 isNotificationsOpen = shellState.isNotificationsOpen,
                 titleText = titleText,
                 onAccountBack = shellState::handleAccountBack,
                 onMediaBack = shellState::closeDetail,
                 onDiscoverBack = shellState::closeDiscover,
                 onCalendarBack = shellState::closeCalendar,
-                onSeasonalBack = {
-                    if (showSeasonalSort) {
-                        showSeasonalSort = false
-                    } else {
-                        shellState.closeSeasonal()
-                    }
-                },
                 onNotificationsBack = shellState::closeNotifications,
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
                 onNotificationsClick = {
@@ -515,7 +489,6 @@ internal fun ShellScreen(
                     }
                 },
                 onOpenCalendar = shellState::openCalendar,
-                onSeasonalSortClick = { showSeasonalSort = true },
                 unreadCount = notificationsState.unreadCount,
                 modifier = Modifier.align(Alignment.TopCenter),
             )

@@ -9,7 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.notifications.data.NotificationsRepository
+import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.notifications.presentation.model.AppNotification
 import com.luum.michi.app.notifications.presentation.model.NotificationFilter
 import kotlinx.coroutines.CoroutineScope

@@ -43,8 +43,8 @@ import com.luum.michi.app.core.platform.components.PlatformDatePickerField
 import com.luum.michi.app.core.platform.components.PlatformModalSheet
 import com.luum.michi.app.core.platform.components.PlatformScoreField
 import com.luum.michi.app.core.platform.components.PlatformStepperField
-import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
-import com.luum.michi.app.mediaDetail.presentation.model.label
+import com.luum.michi.app.core.medialist.MediaListStatus
+import com.luum.michi.app.core.medialist.label
 import com.luum.michi.app.mediaDetail.presentation.state.MediaEntryEditorState
 
 private val EditorStatusOptions: List<MediaListStatus> = listOf(

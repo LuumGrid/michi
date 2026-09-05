@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.account.presentation.model.AccountFavoritePerson
+import com.luum.michi.app.account.domain.model.AccountFavoritePerson
 import com.luum.michi.app.core.platform.components.PlatformCoverSize
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 

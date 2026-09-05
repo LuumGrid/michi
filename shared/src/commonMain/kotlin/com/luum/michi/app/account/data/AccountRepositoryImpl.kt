@@ -3,9 +3,12 @@ package com.luum.michi.app.account.data
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-import com.luum.michi.app.account.presentation.model.AccountFavorites
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
-import com.luum.michi.app.account.presentation.model.AccountStats
+import com.luum.michi.app.account.domain.AccountData
+import com.luum.michi.app.account.domain.AccountFavoritesPage
+import com.luum.michi.app.account.domain.AccountRepository
+import com.luum.michi.app.account.domain.model.AccountFavorites
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.core.anilist.dto.CharacterDto
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.StaffDto
@@ -17,6 +20,29 @@ import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
+
+/** Shared node fields for anime/manga favourites. Single source of truth for both account queries. */
+private const val MediaFavoriteNodeFields = """
+  id
+  title { romaji english native userPreferred }
+  coverImage { extraLarge large medium color }
+"""
+
+/** Shared node fields for character/staff favourites. Single source of truth for both account queries. */
+private const val PersonFavoriteNodeFields = """
+  id
+  name { full userPreferred }
+  image { large medium }
+"""
+
+/** Shared node fields for studio favourites. Single source of truth for both account queries. */
+private const val StudioFavoriteNodeFields = """
+  id
+  name
+  media(sort: [START_DATE_DESC], perPage: 10) {
+    nodes { status coverImage { extraLarge large medium color } }
+  }
+"""
 
 private const val UserAccountQuery = """
 query UserAccount(${'$'}userId: Int!) {
@@ -48,39 +74,27 @@ query UserAccount(${'$'}userId: Int!) {
     favourites {
       anime(perPage: 12) {
         nodes {
-          id
-          title { romaji english native userPreferred }
-          coverImage { extraLarge large medium color }
+          $MediaFavoriteNodeFields
         }
       }
       manga(perPage: 12) {
         nodes {
-          id
-          title { romaji english native userPreferred }
-          coverImage { extraLarge large medium color }
+          $MediaFavoriteNodeFields
         }
       }
       characters(perPage: 12) {
         nodes {
-          id
-          name { full userPreferred }
-          image { large medium }
+          $PersonFavoriteNodeFields
         }
       }
       staff(perPage: 12) {
         nodes {
-          id
-          name { full userPreferred }
-          image { large medium }
+          $PersonFavoriteNodeFields
         }
       }
       studios(perPage: 12) {
         nodes {
-          id
-          name
-          media(sort: [START_DATE_DESC], perPage: 10) {
-            nodes { status coverImage { extraLarge large medium color } }
-          }
+          $StudioFavoriteNodeFields
         }
       }
     }
@@ -102,9 +116,7 @@ private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
             anime(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
-                id
-                title { romaji english native userPreferred }
-                coverImage { extraLarge large medium color }
+                $MediaFavoriteNodeFields
               }
             }
         """.trimIndent()
@@ -112,33 +124,27 @@ private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
             manga(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
-                id
-                title { romaji english native userPreferred }
-                coverImage { extraLarge large medium color }
+                $MediaFavoriteNodeFields
               }
             }
         """.trimIndent()
         AccountFavoritesCategory.CHARACTERS -> """
             characters(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
-              nodes { id name { full userPreferred } image { large medium } }
+              nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
         AccountFavoritesCategory.STAFF -> """
             staff(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
-              nodes { id name { full userPreferred } image { large medium } }
+              nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
         AccountFavoritesCategory.STUDIOS -> """
             studios(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
-                id
-                name
-                media(sort: [START_DATE_DESC], perPage: 10) {
-                  nodes { status coverImage { extraLarge large medium color } }
-                }
+                $StudioFavoriteNodeFields
               }
             }
         """.trimIndent()

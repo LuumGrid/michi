@@ -1,6 +1,7 @@
 package com.luum.michi.app.staffDetail.data
 
 import com.luum.michi.app.core.anilist.dto.FuzzyDateDto
+import com.luum.michi.app.staffDetail.domain.StaffDetailRepository
 import com.luum.michi.app.core.anilist.dto.MediaCoverImageDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.network.AniListGraphQLClient

@@ -1,12 +1,13 @@
 package com.luum.michi.app.manga.data
 
 import com.luum.michi.app.core.anilist.dto.MediaListCollectionResponseDto
+import com.luum.michi.app.manga.domain.MangaListRepository
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
-import com.luum.michi.app.manga.presentation.model.MangaListEntry
+import com.luum.michi.app.manga.domain.model.MangaListEntry
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement

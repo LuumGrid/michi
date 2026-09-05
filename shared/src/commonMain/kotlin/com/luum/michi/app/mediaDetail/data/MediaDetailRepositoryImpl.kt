@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.data
 
 import com.luum.michi.app.core.anilist.dto.MediaCharacterConnectionDto
+import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
 import com.luum.michi.app.core.anilist.dto.MediaDetailResponseDto
 import com.luum.michi.app.core.anilist.dto.MediaStaffConnectionDto
 import com.luum.michi.app.core.network.AniListGraphQLClient

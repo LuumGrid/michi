@@ -1,6 +1,11 @@
 package com.luum.michi.app.mediaDetail.data
 
 import com.luum.michi.app.core.anilist.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.medialist.MediaListStatus
+import com.luum.michi.app.core.medialist.parseMediaListStatus
+import com.luum.michi.app.core.medialist.toApiValue
 import com.luum.michi.app.core.media.CalendarDateParts
 import com.luum.michi.app.core.media.millisToCalendarParts
 import com.luum.michi.app.core.network.AniListGraphQLClient
@@ -8,10 +13,6 @@ import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
-import com.luum.michi.app.mediaDetail.presentation.model.MediaDetailViewerEntry
-import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
-import com.luum.michi.app.mediaDetail.presentation.model.parseMediaListStatus
-import com.luum.michi.app.mediaDetail.presentation.model.toApiValue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -125,7 +126,7 @@ internal class MediaListEntryRepositoryImpl(
         hiddenFromStatusLists: Boolean,
         startedAtMillis: Long?,
         completedAtMillis: Long?,
-    ): NetworkResult<MediaDetailViewerEntry> {
+    ): NetworkResult<MediaListViewerEntry> {
         val variables = buildMap<String, JsonElement> {
             put("mediaId", JsonPrimitive(mediaId))
             put("status", JsonPrimitive(status.toApiValue()))
@@ -150,7 +151,7 @@ internal class MediaListEntryRepositoryImpl(
             AniListJson.decodeFromJsonElement(SaveMediaListEntryResponse.serializer(), dataJson)
         }.map { response ->
             val entry = response.entry
-            MediaDetailViewerEntry(
+            MediaListViewerEntry(
                 id = entry?.id ?: 0,
                 status = parseMediaListStatus(entry?.status) ?: status,
                 progress = entry?.progress ?: progress,

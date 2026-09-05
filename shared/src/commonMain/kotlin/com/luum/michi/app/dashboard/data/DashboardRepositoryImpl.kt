@@ -1,6 +1,8 @@
 package com.luum.michi.app.dashboard.data
 
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
+import com.luum.michi.app.dashboard.domain.DashboardFeed
+import com.luum.michi.app.dashboard.domain.DashboardRepository
 import com.luum.michi.app.core.media.MediaSeasonYear
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.media.next

@@ -1,5 +1,8 @@
 package com.luum.michi.app.calendar.data
 
+import com.luum.michi.app.calendar.domain.CalendarDay
+import com.luum.michi.app.calendar.domain.CalendarEntry
+import com.luum.michi.app.calendar.domain.CalendarFeed
 import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.MediaExternalLinkDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto

@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.calendar.data.CalendarDay
+import com.luum.michi.app.calendar.domain.CalendarDay
 import com.luum.michi.app.calendar.presentation.components.CalendarItemRow
 import com.luum.michi.app.calendar.presentation.state.CalendarStateHolder
 import com.luum.michi.app.core.language.LanguageProvider

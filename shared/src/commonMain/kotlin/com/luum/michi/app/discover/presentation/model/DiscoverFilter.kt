@@ -1,5 +1,6 @@
 package com.luum.michi.app.discover.presentation.model
 
+import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.platform.components.PlatformFilterGroup
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.discover.presentation.state.DiscoverCategory
@@ -50,8 +51,14 @@ internal fun discoverFormats(isSpanish: Boolean): List<DiscoverFormatOption> = i
     )
 }
 
-internal fun discoverYears(): List<Int?> =
-    listOf(null, 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2005, 2000)
+/**
+ * Años seleccionables: del año siguiente al actual (cubre la "próxima temporada"
+ * cuando cae en enero del año que viene) hacia atrás, con la cola curada clásica.
+ */
+internal fun discoverYears(): List<Int?> {
+    val currentYear = currentSeasonAndYear().year
+    return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
+}
 
 internal fun discoverSeasonOptions(isSpanish: Boolean): List<PlatformFilterOption> {
     val any = if (isSpanish) "Cualquier temporada" else "Any season"

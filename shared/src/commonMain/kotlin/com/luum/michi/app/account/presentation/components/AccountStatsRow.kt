@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.account.presentation.model.AccountStats
-import com.luum.michi.app.account.presentation.model.toCompactCountLabel
+import com.luum.michi.app.account.domain.model.AccountStats
+import com.luum.michi.app.account.domain.model.toCompactCountLabel
 import com.luum.michi.app.core.language.LanguageProvider
 
 @Composable

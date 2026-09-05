@@ -10,8 +10,8 @@ import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.PlatformSettingsStore
 import com.luum.michi.app.core.platform.SettingsStoreKeys
-import com.luum.michi.app.settings.data.SettingsData
-import com.luum.michi.app.settings.data.SettingsRepository
+import com.luum.michi.app.settings.domain.model.SettingsData
+import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.model.ListSort
 import com.luum.michi.app.settings.presentation.model.NotificationPreferences

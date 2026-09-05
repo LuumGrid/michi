@@ -6,13 +6,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
-import com.luum.michi.app.anime.presentation.model.AnimeListSection
+import com.luum.michi.app.anime.domain.model.AnimeListSection
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.core.session.Viewer
-import com.luum.michi.app.mediaDetail.presentation.model.MediaListStatus
-import com.luum.michi.app.manga.presentation.model.MangaListSection
+import com.luum.michi.app.core.medialist.MediaListStatus
+import com.luum.michi.app.manga.domain.model.MangaListSection
 import com.luum.michi.app.shell.components.ShellTabSection
 
 internal enum class ShellAccountRoute {
@@ -40,7 +40,6 @@ internal class ShellState(
     var editorInitialProgress by mutableStateOf<Int?>(null)
     var isDiscoverOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
-    var isSeasonalOpen by mutableStateOf(false)
     var isNotificationsOpen by mutableStateOf(false)
     var isSectionFilterOpen by mutableStateOf(false)
     var isDiscoverFilterOpen by mutableStateOf(false)
@@ -112,14 +111,6 @@ internal class ShellState(
 
     fun closeCalendar() {
         isCalendarOpen = false
-    }
-
-    fun openSeasonal() {
-        isSeasonalOpen = true
-    }
-
-    fun closeSeasonal() {
-        isSeasonalOpen = false
     }
 
     fun openNotifications() {

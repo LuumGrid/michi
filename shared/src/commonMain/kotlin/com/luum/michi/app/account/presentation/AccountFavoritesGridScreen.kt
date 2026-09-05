@@ -25,7 +25,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import com.luum.michi.app.account.presentation.components.AccountFavoriteMediaCard
 import com.luum.michi.app.account.presentation.components.AccountFavoritePersonCard
 import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioCard
-import com.luum.michi.app.account.presentation.model.AccountFavoritesCategory
+import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
@@ -43,6 +43,9 @@ internal fun AccountFavoritesGridScreen(
     onOpenStudio: (Int) -> Unit,
 ) {
     val strings = LanguageProvider.strings
+    val hasNoItems = stateHolder.mediaItems.isEmpty() &&
+        stateHolder.personItems.isEmpty() &&
+        stateHolder.studioItems.isEmpty()
 
     Box(
         modifier = Modifier
@@ -50,19 +53,13 @@ internal fun AccountFavoritesGridScreen(
             .background(MaterialTheme.colorScheme.surface),
     ) {
         when {
-            stateHolder.isLoading &&
-                stateHolder.mediaItems.isEmpty() &&
-                stateHolder.personItems.isEmpty() &&
-                stateHolder.studioItems.isEmpty() -> {
+            stateHolder.isLoading && hasNoItems -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
-            stateHolder.error != null &&
-                stateHolder.mediaItems.isEmpty() &&
-                stateHolder.personItems.isEmpty() &&
-                stateHolder.studioItems.isEmpty() -> {
+            stateHolder.error != null && hasNoItems -> {
                 Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = stateHolder.error?.let { strings.networkErrorMessage(it) }.orEmpty(),
@@ -73,9 +70,7 @@ internal fun AccountFavoritesGridScreen(
                 }
             }
 
-            stateHolder.mediaItems.isEmpty() &&
-                stateHolder.personItems.isEmpty() &&
-                stateHolder.studioItems.isEmpty() -> {
+            hasNoItems -> {
                 Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = strings.accountFavoritesGridEmptyLabel,

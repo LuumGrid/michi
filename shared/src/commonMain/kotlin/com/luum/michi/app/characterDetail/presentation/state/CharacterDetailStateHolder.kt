@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.characterDetail.data.CharacterDetailRepository
+import com.luum.michi.app.characterDetail.domain.CharacterDetailRepository
 import com.luum.michi.app.characterDetail.presentation.model.CharacterDetail
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaItem
 import com.luum.michi.app.characterDetail.presentation.model.CharacterMediaSort
