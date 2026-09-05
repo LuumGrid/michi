@@ -1,0 +1,71 @@
+package com.luum.michi.app.core.platform.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+/**
+ * Fila horizontal de altura fija con [FilterChip] de Material3 y sombra de
+ * overflow en ambos bordes (replica `ShadowedOverflowList` + `ChipSelector` /
+ * `ChipMultiSelector` de Otraku). Con [multiSelect] en true cada tap alterna
+ * esa opción sin afectar las demás; en false el tap reemplaza la selección.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PlatformChipRow(
+    options: List<PlatformFilterOption>,
+    selectedIds: Set<String>,
+    onToggle: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    multiSelect: Boolean = false,
+) {
+    Box(modifier = modifier.height(40.dp)) {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            modifier = Modifier.height(40.dp),
+        ) {
+            items(options, key = { it.id }) { option ->
+                val selected = option.id in selectedIds
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        if (multiSelect || !selected) onToggle(option.id)
+                    },
+                    label = { Text(option.label) },
+                )
+            }
+        }
+        val surface = MaterialTheme.colorScheme.surface
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(24.dp)
+                .fillMaxHeight()
+                .background(Brush.horizontalGradient(listOf(surface, Color.Transparent))),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width(24.dp)
+                .fillMaxHeight()
+                .background(Brush.horizontalGradient(listOf(Color.Transparent, surface))),
+        )
+    }
+}

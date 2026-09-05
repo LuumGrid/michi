@@ -1,40 +1,40 @@
 package com.luum.michi.app
 
-import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.data.AccountRepositoryImpl
-import com.luum.michi.app.anime.domain.AnimeListRepository
+import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.anime.data.AnimeListRepositoryImpl
-import com.luum.michi.app.discover.domain.DiscoverRepository
-import com.luum.michi.app.discover.data.DiscoverRepositoryImpl
-import com.luum.michi.app.calendar.domain.CalendarRepository
+import com.luum.michi.app.anime.domain.AnimeListRepository
 import com.luum.michi.app.calendar.data.CalendarRepositoryImpl
+import com.luum.michi.app.calendar.domain.CalendarRepository
+import com.luum.michi.app.characterDetail.data.CharacterDetailRepositoryImpl
+import com.luum.michi.app.characterDetail.domain.CharacterDetailRepository
 import com.luum.michi.app.core.auth.AniListOAuthLauncher
 import com.luum.michi.app.core.auth.AniListTokenStorage
 import com.luum.michi.app.core.auth.parseAniListOAuthCallback
+import com.luum.michi.app.core.medialist.MediaListEntryRepository
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.KtorAniListGraphQLClient
 import com.luum.michi.app.core.network.createAniListHttpClient
 import com.luum.michi.app.core.session.AniListViewerRepository
 import com.luum.michi.app.core.session.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.SessionManager
-import com.luum.michi.app.dashboard.domain.DashboardRepository
-import com.luum.michi.app.dashboard.data.DashboardRepositoryImpl
-import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
-import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
-import com.luum.michi.app.core.medialist.MediaListEntryRepository
-import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
-import com.luum.michi.app.notifications.domain.NotificationsRepository
-import com.luum.michi.app.notifications.data.NotificationsRepositoryImpl
-import com.luum.michi.app.characterDetail.domain.CharacterDetailRepository
-import com.luum.michi.app.characterDetail.data.CharacterDetailRepositoryImpl
-import com.luum.michi.app.staffDetail.domain.StaffDetailRepository
-import com.luum.michi.app.staffDetail.data.StaffDetailRepositoryImpl
-import com.luum.michi.app.studioDetail.domain.StudioDetailRepository
-import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
-import com.luum.michi.app.manga.domain.MangaListRepository
+import com.luum.michi.app.discover.data.DashboardRepositoryImpl
+import com.luum.michi.app.discover.data.ExploreRepositoryImpl
+import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.manga.data.MangaListRepositoryImpl
-import com.luum.michi.app.settings.domain.SettingsRepository
+import com.luum.michi.app.manga.domain.MangaListRepository
+import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
+import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
+import com.luum.michi.app.notifications.data.NotificationsRepositoryImpl
+import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.settings.data.SettingsRepositoryImpl
+import com.luum.michi.app.settings.domain.SettingsRepository
+import com.luum.michi.app.staffDetail.data.StaffDetailRepositoryImpl
+import com.luum.michi.app.staffDetail.domain.StaffDetailRepository
+import com.luum.michi.app.studioDetail.data.StudioDetailRepositoryImpl
+import com.luum.michi.app.studioDetail.domain.StudioDetailRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,8 +75,8 @@ class MichiDependencies internal constructor(
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)
 
-    internal val discoverRepository: DiscoverRepository =
-        DiscoverRepositoryImpl(graphQLClient)
+    internal val exploreRepository: ExploreRepository =
+        ExploreRepositoryImpl(graphQLClient)
 
     internal val calendarRepository: CalendarRepository =
         CalendarRepositoryImpl(graphQLClient)
