@@ -266,6 +266,7 @@ interface LanguageStrings {
     val filterOrderDirectionTitle: String
     val filterSortCriterionTitle: String
     val filterResetAction: String
+    val filterApplyAction: String
     val filterSaveAction: String
 
     val sortFollowList: String

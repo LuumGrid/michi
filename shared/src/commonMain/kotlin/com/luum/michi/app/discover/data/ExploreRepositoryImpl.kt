@@ -11,7 +11,7 @@ import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import com.luum.michi.app.core.platform.hexToPalette
-import com.luum.michi.app.discover.domain.DiscoverRepository
+import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.search.data.toSearchResult
 import com.luum.michi.app.search.domain.SearchPage
 import com.luum.michi.app.search.domain.model.SearchResult
@@ -26,8 +26,8 @@ import kotlinx.serialization.json.decodeFromJsonElement
 private const val AnimeCatalogQuery = """
 query AnimeCatalog(
   ${'$'}search: String,
-  ${'$'}format: MediaFormat,
-  ${'$'}genre: String,
+  ${'$'}format_in: [MediaFormat],
+  ${'$'}genre_in: [String],
   ${'$'}seasonYear: Int,
   ${'$'}season: MediaSeason,
   ${'$'}sort: [MediaSort]!,
@@ -40,8 +40,8 @@ query AnimeCatalog(
     media(
       search: ${'$'}search,
       type: ANIME,
-      format: ${'$'}format,
-      genre: ${'$'}genre,
+      format_in: ${'$'}format_in,
+      genre_in: ${'$'}genre_in,
       seasonYear: ${'$'}seasonYear,
       season: ${'$'}season,
       sort: ${'$'}sort,
@@ -74,8 +74,8 @@ query AnimeCatalog(
 private const val MangaCatalogQuery = """
 query MangaCatalog(
   ${'$'}search: String,
-  ${'$'}format: MediaFormat,
-  ${'$'}genre: String,
+  ${'$'}format_in: [MediaFormat],
+  ${'$'}genre_in: [String],
   ${'$'}startDate_greater: FuzzyDateInt,
   ${'$'}startDate_lesser: FuzzyDateInt,
   ${'$'}sort: [MediaSort]!,
@@ -88,8 +88,8 @@ query MangaCatalog(
     media(
       search: ${'$'}search,
       type: MANGA,
-      format: ${'$'}format,
-      genre: ${'$'}genre,
+      format_in: ${'$'}format_in,
+      genre_in: ${'$'}genre_in,
       startDate_greater: ${'$'}startDate_greater,
       startDate_lesser: ${'$'}startDate_lesser,
       sort: ${'$'}sort,
@@ -160,14 +160,14 @@ query StudioSearch(${'$'}search: String, ${'$'}sort: [StudioSort], ${'$'}page: I
 }
 """
 
-internal class DiscoverRepositoryImpl(
+internal class ExploreRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
-) : DiscoverRepository {
+) : ExploreRepository {
 
     override suspend fun searchCatalog(
         query: String?,
-        genre: String?,
-        format: String?,
+        genres: List<String>,
+        formats: List<String>,
         year: Int?,
         sort: String,
         page: Int,
@@ -179,11 +179,11 @@ internal class DiscoverRepositoryImpl(
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
             }
-            if (!genre.isNullOrBlank() && genre != "All" && genre != "Todos") {
-                put("genre", JsonPrimitive(genre))
+            if (genres.isNotEmpty()) {
+                put("genre_in", JsonArray(genres.map { JsonPrimitive(it) }))
             }
-            if (!format.isNullOrBlank() && format != "All" && format != "Todos") {
-                put("format", JsonPrimitive(format.uppercase().replace(" ", "_")))
+            if (formats.isNotEmpty()) {
+                put("format_in", JsonArray(formats.map { JsonPrimitive(it.uppercase().replace(" ", "_")) }))
             }
             if (year != null && year > 0) {
                 put("seasonYear", JsonPrimitive(year))
@@ -217,8 +217,8 @@ internal class DiscoverRepositoryImpl(
 
     override suspend fun searchManga(
         query: String?,
-        genre: String?,
-        format: String?,
+        genres: List<String>,
+        formats: List<String>,
         year: Int?,
         sort: String,
         page: Int,
@@ -229,11 +229,11 @@ internal class DiscoverRepositoryImpl(
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
             }
-            if (!genre.isNullOrBlank() && genre != "All" && genre != "Todos") {
-                put("genre", JsonPrimitive(genre))
+            if (genres.isNotEmpty()) {
+                put("genre_in", JsonArray(genres.map { JsonPrimitive(it) }))
             }
-            if (!format.isNullOrBlank() && format != "All" && format != "Todos") {
-                put("format", JsonPrimitive(format.uppercase().replace(" ", "_")))
+            if (formats.isNotEmpty()) {
+                put("format_in", JsonArray(formats.map { JsonPrimitive(it.uppercase().replace(" ", "_")) }))
             }
             if (year != null && year > 0) {
                 val startYearGreater = (year - 1) * 10000 + 1231

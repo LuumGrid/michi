@@ -1,4 +1,4 @@
-package com.luum.michi.app.discover.presentation.state
+package com.luum.michi.app.discover.presentation.explore.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,10 +16,10 @@ import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.core.platform.model.UserListSort
-import com.luum.michi.app.discover.domain.DiscoverRepository
+import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.search.domain.model.SearchResult
 
-internal enum class DiscoverCategory {
+internal enum class ExploreCategory {
     ANIME,
     MANGA,
     CHARACTERS,
@@ -27,19 +27,19 @@ internal enum class DiscoverCategory {
     STUDIOS
 }
 
-internal class DiscoverStateHolder(
-    private val repository: DiscoverRepository,
+internal class ExploreStateHolder(
+    private val repository: ExploreRepository,
     private val scope: CoroutineScope,
 ) {
     var query by mutableStateOf("")
-    var category by mutableStateOf(DiscoverCategory.ANIME)
+    var category by mutableStateOf(ExploreCategory.ANIME)
     var season by mutableStateOf<String?>(null)
-    var genre by mutableStateOf("All")
-    var format by mutableStateOf("All")
+    var genres by mutableStateOf(emptyList<String>())
+    var formats by mutableStateOf(emptyList<String>())
     var year by mutableStateOf<Int?>(null)
-    var sort by mutableStateOf("POPULARITY_DESC")
+    var sort by mutableStateOf("TRENDING_DESC")
     var onList by mutableStateOf<Boolean?>(null)
-    var currentSortOption by mutableStateOf(UserListSort.POPULARITY)
+    var currentSortOption by mutableStateOf(UserListSort.TRENDING)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
     var isFilterPersisted by mutableStateOf(false)
     var focusSearchRequested by mutableStateOf(false)
@@ -95,6 +95,7 @@ internal class DiscoverStateHolder(
         currentSortOrder = order
         isFilterPersisted = persist
         sort = option.toMediaSort(order, category)
+        loadingState = true
         searchJob?.cancel()
         searchJob = scope.launch {
             delay(300.milliseconds)
@@ -104,23 +105,48 @@ internal class DiscoverStateHolder(
 
     private var searchJob: Job? = null
 
+    /** Igual que updateFilters + updateSort, pero sin debounce: para navegación
+     *  programática ("Ver todo" desde Dashboard), donde la carga debe verse
+     *  instantánea en vez de esperar el retraso pensado para tipeo. */
+    fun applyPreset(
+        category: ExploreCategory,
+        sortOption: UserListSort,
+        sortOrder: UserListOrder = UserListOrder.DESCENDING,
+        season: String? = null,
+        year: Int? = null,
+    ) {
+        searchJob?.cancel()
+        query = ""
+        this.category = category
+        this.season = season
+        genres = emptyList()
+        formats = emptyList()
+        this.year = year
+        onList = null
+        currentSortOption = sortOption
+        currentSortOrder = sortOrder
+        isFilterPersisted = false
+        sort = sortOption.toMediaSort(sortOrder, category)
+        load()
+    }
+
     fun updateFilters(
         newQuery: String = query,
-        newCategory: DiscoverCategory = category,
+        newCategory: ExploreCategory = category,
         newSeason: String? = season,
-        newGenre: String = genre,
-        newFormat: String = format,
+        newGenres: List<String> = genres,
+        newFormats: List<String> = formats,
         newYear: Int? = year,
         newOnList: Boolean? = onList,
     ) {
         query = newQuery
         category = newCategory
         season = newSeason
-        genre = newGenre
-        format = newFormat
+        genres = newGenres
+        formats = newFormats
         year = newYear
         onList = newOnList
-
+        loadingState = true
         searchJob?.cancel()
         searchJob = scope.launch {
             delay(300.milliseconds)
@@ -172,55 +198,55 @@ internal class DiscoverStateHolder(
     }
 
     private suspend fun fetchPage(page: Int) = when (category) {
-        DiscoverCategory.ANIME -> repository.searchCatalog(
+        ExploreCategory.ANIME -> repository.searchCatalog(
             query = query.takeIf { it.isNotBlank() },
-            genre = genre.takeIf { it != "All" && it != "Todos" },
-            format = format.takeIf { it != "All" && it != "Todos" },
+            genres = genres,
+            formats = formats,
             year = year,
             sort = sort,
             page = page,
             season = season,
             onList = onList,
         )
-        DiscoverCategory.MANGA -> repository.searchManga(
+        ExploreCategory.MANGA -> repository.searchManga(
             query = query.takeIf { it.isNotBlank() },
-            genre = genre.takeIf { it != "All" && it != "Todos" },
-            format = format.takeIf { it != "All" && it != "Todos" },
+            genres = genres,
+            formats = formats,
             year = year,
             sort = sort,
             page = page,
             onList = onList,
         )
-        DiscoverCategory.CHARACTERS -> repository.searchCharacters(
+        ExploreCategory.CHARACTERS -> repository.searchCharacters(
             query = query.takeIf { it.isNotBlank() },
             page = page,
         )
-        DiscoverCategory.STAFF -> repository.searchStaff(
+        ExploreCategory.STAFF -> repository.searchStaff(
             query = query.takeIf { it.isNotBlank() },
             page = page,
         )
-        DiscoverCategory.STUDIOS -> repository.searchStudios(
+        ExploreCategory.STUDIOS -> repository.searchStudios(
             query = query.takeIf { it.isNotBlank() },
             page = page,
         )
     }
 
     fun isEntitySearch(): Boolean =
-        category == DiscoverCategory.CHARACTERS ||
-        category == DiscoverCategory.STAFF ||
-        category == DiscoverCategory.STUDIOS
+        category == ExploreCategory.CHARACTERS ||
+        category == ExploreCategory.STAFF ||
+        category == ExploreCategory.STUDIOS
 }
 
 /** Deriva el MediaSort del API desde la selección del sheet compartido
  *  con anime/manga. Las claves sin equivalente usan la más cercana. */
-internal fun UserListSort.toMediaSort(order: UserListOrder, category: DiscoverCategory): String {
+internal fun UserListSort.toMediaSort(order: UserListOrder, category: ExploreCategory): String {
     val descending = order == UserListOrder.DESCENDING
     fun both(asc: String, desc: String) = if (descending) desc else asc
     return when (this) {
         UserListSort.FOLLOW_LIST -> both("POPULARITY", "POPULARITY_DESC")
         UserListSort.TITLE -> both("TITLE_ROMAJI", "TITLE_ROMAJI_DESC")
         UserListSort.SCORE -> both("SCORE", "SCORE_DESC")
-        UserListSort.PROGRESS -> if (category == DiscoverCategory.MANGA) {
+        UserListSort.PROGRESS -> if (category == ExploreCategory.MANGA) {
             both("CHAPTERS", "CHAPTERS_DESC")
         } else {
             both("EPISODES", "EPISODES_DESC")
@@ -240,11 +266,11 @@ internal fun UserListSort.toMediaSort(order: UserListOrder, category: DiscoverCa
 }
 
 @Composable
-internal fun rememberDiscoverStateHolder(
-    repository: DiscoverRepository,
-): DiscoverStateHolder {
+internal fun rememberExploreStateHolder(
+    repository: ExploreRepository,
+): ExploreStateHolder {
     val scope = rememberCoroutineScope()
     return remember(repository) {
-        DiscoverStateHolder(repository, scope)
+        ExploreStateHolder(repository, scope)
     }
 }

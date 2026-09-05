@@ -278,6 +278,7 @@ object EnglishLanguageStrings : LanguageStrings {
     override val filterOrderDirectionTitle = "Order Direction"
     override val filterSortCriterionTitle = "Filter Criterion"
     override val filterResetAction = "Reset"
+    override val filterApplyAction = "Apply"
     override val filterSaveAction = "Save"
 
     override val sortFollowList = "Follow List Setting"

@@ -48,7 +48,7 @@ internal data class PlatformFilterGroup(
 )
 
 /**
- * Bottom sheet de filtro genérico: reemplaza lo que antes eran
+ * Bottom sheet de filtro genérico de selección única: reemplaza lo que antes eran
  * ShellSectionFilterSheet (Anime/Manga) y DiscoverFiltersSheet (Discover),
  * que eran casi el mismo composable duplicado dos veces.
  */

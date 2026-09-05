@@ -280,6 +280,7 @@ object SpanishLanguageStrings : LanguageStrings {
     override val filterOrderDirectionTitle = "Dirección del Orden"
     override val filterSortCriterionTitle = "Criterio de Ordenamiento"
     override val filterResetAction = "Restablecer"
+    override val filterApplyAction = "Aplicar"
     override val filterSaveAction = "Guardar"
 
     override val sortFollowList = "Predeterminado"

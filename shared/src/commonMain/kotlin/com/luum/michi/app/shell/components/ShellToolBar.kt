@@ -37,7 +37,9 @@ import com.luum.michi.app.core.platform.components.PlatformFloatingSearchContain
  * opaca — back aislado en círculo + grupos conectados + título en píldora.
  *
  * Sin search (vive abajo junto a la tab bar) y sin chips (absorbidos por el filter).
- * Derecha en Discover/listas: filter (secciones) + sort (orden) separados.
+ * Derecha en listas: filter (secciones) + sort (orden) separados.
+ * En el tab Discover, el centro y los trailing alternan con AnimatedContent:
+ * Dashboard muestra título + ícono de catálogo; Explore muestra search field + sort + filtro.
  * El overlay de search es solo back, sin título ni acciones.
  */
 @Composable
@@ -45,13 +47,13 @@ internal fun ShellToolBar(
     selectedTab: ShellTabSection,
     isAccountDetail: Boolean,
     isDetailOpen: Boolean,
-    isDiscoverOpen: Boolean,
+    isExploreOpen: Boolean,
     isCalendarOpen: Boolean,
     isNotificationsOpen: Boolean,
     titleText: String,
     onAccountBack: () -> Unit,
     onMediaBack: () -> Unit,
-    onDiscoverBack: () -> Unit,
+    onExploreBack: () -> Unit,
     onCalendarBack: () -> Unit,
     onNotificationsBack: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -59,6 +61,12 @@ internal fun ShellToolBar(
     onSortClick: () -> Unit,
     onSectionFilterClick: () -> Unit,
     onOpenCalendar: () -> Unit,
+    onOpenExplore: () -> Unit = {},
+    exploreQuery: String = "",
+    onExploreQueryChange: (String) -> Unit = {},
+    exploreFocusRequested: Boolean = false,
+    onExploreFocusConsumed: () -> Unit = {},
+    onExploreFilterClick: () -> Unit = {},
     unreadCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
@@ -68,7 +76,7 @@ internal fun ShellToolBar(
     // Search es overlay vacío: solo back, sin título ni acciones.
     val backAction: (() -> Unit)? = when {
         isDetailOpen -> onMediaBack
-        isDiscoverOpen -> onDiscoverBack
+        isExploreOpen -> onExploreBack
         isCalendarOpen -> onCalendarBack
         isNotificationsOpen -> onNotificationsBack
         selectedTab == ShellTabSection.ACCOUNT && isAccountDetail -> onAccountBack
@@ -77,9 +85,10 @@ internal fun ShellToolBar(
 
     // Trailing con acciones solo donde hay algo que mostrar: en detail puro
     // y calendar el back queda aislado como en la referencia de Apple.
-    val noOverlay = !isDetailOpen && !isDiscoverOpen && !isCalendarOpen && !isNotificationsOpen
-    val showListActions = (selectedTab == ShellTabSection.DISCOVER ||
-        selectedTab == ShellTabSection.ANIME ||
+    val noOverlay = !isDetailOpen && !isCalendarOpen && !isNotificationsOpen
+    val showExploreEntry = selectedTab == ShellTabSection.DISCOVER && !isExploreOpen && noOverlay
+    val showExploreActions = isExploreOpen
+    val showListActions = (selectedTab == ShellTabSection.ANIME ||
         selectedTab == ShellTabSection.MANGA) && noOverlay
     val showTrailingMain = (selectedTab == ShellTabSection.ACCOUNT && !isAccountDetail) &&
         !isDetailOpen && !isCalendarOpen && !isNotificationsOpen
@@ -104,8 +113,8 @@ internal fun ShellToolBar(
                     modifier = Modifier.size(24.dp),
                 )
             }
-            // Search es overlay vacío: solo back, sin título ni acciones.
-            if (isDiscoverOpen) return@Column
+            // Explore no es overlay vacío: back + search field + acciones.
+            if (!isExploreOpen) return@Column
         } else {
                 ShellToolBarLeadingGroup(
                     selectedTab = selectedTab,
@@ -118,21 +127,57 @@ internal fun ShellToolBar(
         Spacer(modifier = Modifier.width(8.dp))
 
         PlatformFloatingSearchContainer(modifier = Modifier.weight(1f)) {
-            Text(
-                text = titleText,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
+            if (isExploreOpen) {
+                ShellSearchField(
+                    query = exploreQuery,
+                    onQueryChange = onExploreQueryChange,
+                    placeholder = strings.discoverSearchPlaceholder,
+                    autoFocus = false,
+                    externalFocusRequest = exploreFocusRequested,
+                    onFocusConsumed = onExploreFocusConsumed,
+                )
+            } else {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+            }
         }
 
-        if (showListActions || showTrailingMain) {
+        if (showExploreEntry || showExploreActions || showListActions || showTrailingMain) {
             Spacer(modifier = Modifier.width(8.dp))
             PlatformFloatingActionGroup {
                 when {
+                    showExploreEntry -> {
+                        IconButton(onClick = onOpenExplore) {
+                            Icon(
+                                painter = PlatformIcons.Discover,
+                                contentDescription = strings.discoverTitle,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+                    showExploreActions -> {
+                        IconButton(onClick = onExploreFilterClick) {
+                            Icon(
+                                painter = PlatformIcons.Filter,
+                                contentDescription = strings.filterByLabel,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        IconButton(onClick = onSortClick) {
+                            Icon(
+                                painter = PlatformIcons.Sort,
+                                contentDescription = strings.orderByLabel,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
                     showListActions -> {
                         IconButton(onClick = onSectionFilterClick) {
                             Icon(

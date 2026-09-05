@@ -30,11 +30,15 @@ import com.luum.michi.app.anime.domain.model.label
 import com.luum.michi.app.manga.domain.model.MangaListSection
 import com.luum.michi.app.manga.domain.model.label
 import com.luum.michi.app.anime.presentation.state.rememberAnimeListStateHolder
-import com.luum.michi.app.discover.domain.DiscoverRepository
-import com.luum.michi.app.discover.presentation.DiscoverScreen
-import com.luum.michi.app.discover.presentation.model.buildDiscoverFilterGroups
-import com.luum.michi.app.discover.presentation.state.DiscoverCategory
-import com.luum.michi.app.discover.presentation.state.rememberDiscoverStateHolder
+import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.presentation.dashboard.DashboardRail
+import com.luum.michi.app.discover.presentation.dashboard.DashboardScreen
+import com.luum.michi.app.discover.presentation.dashboard.state.rememberDashboardStateHolder
+import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.discover.presentation.explore.ExploreScreen
+import com.luum.michi.app.discover.presentation.explore.ExploreFilterSheet
+import com.luum.michi.app.discover.presentation.explore.state.ExploreCategory
+import com.luum.michi.app.discover.presentation.explore.state.rememberExploreStateHolder
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
 import com.luum.michi.app.calendar.presentation.state.rememberCalendarStateHolder
@@ -44,10 +48,6 @@ import com.luum.michi.app.core.media.next
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformSystemBackHandler
 import com.luum.michi.app.core.session.Viewer
-import com.luum.michi.app.dashboard.domain.DashboardRepository
-import com.luum.michi.app.dashboard.presentation.DashboardRail
-import com.luum.michi.app.dashboard.presentation.DashboardScreen
-import com.luum.michi.app.dashboard.presentation.state.rememberDashboardStateHolder
 import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository
 import com.luum.michi.app.core.medialist.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.presentation.MediaDetailScreen
@@ -83,7 +83,6 @@ import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
 import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
-import com.luum.michi.app.discover.presentation.model.applyFilterSelection
 import com.luum.michi.app.shell.components.ShellBottomCluster
 import com.luum.michi.app.shell.components.ShellTabSection
 import com.luum.michi.app.shell.components.label
@@ -99,7 +98,7 @@ internal fun ShellScreen(
     mangaListRepository: MangaListRepository,
     accountRepository: AccountRepository,
     dashboardRepository: DashboardRepository,
-    discoverRepository: DiscoverRepository,
+    exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     mediaDetailRepository: MediaDetailRepository,
     mediaListEntryRepository: MediaListEntryRepository,
@@ -138,7 +137,7 @@ internal fun ShellScreen(
     )
     val favoritesGridState = rememberAccountFavoritesGridStateHolder(accountRepository)
     val dashboardState = rememberDashboardStateHolder(dashboardRepository)
-    val discoverState = rememberDiscoverStateHolder(discoverRepository)
+    val exploreState = rememberExploreStateHolder(exploreRepository)
     val calendarState = rememberCalendarStateHolder(calendarRepository)
     val mediaDetailState = rememberMediaDetailStateHolder(mediaDetailRepository)
     val studioDetailState = rememberStudioDetailStateHolder(studioDetailRepository, viewerId = viewer.id)
@@ -151,23 +150,14 @@ internal fun ShellScreen(
 
     // Discover es tab: los rails "Ver todo" preseleccionan categoría + orden
     // en la misma view, limpiando los demás filtros.
-    fun openDiscoverWith(
-        category: DiscoverCategory,
+    fun openExploreWith(
+        category: ExploreCategory,
         sortOption: UserListSort,
         season: String? = null,
         year: Int? = null,
     ) {
-        discoverState.updateSort(sortOption, UserListOrder.DESCENDING, persist = false)
-        discoverState.updateFilters(
-            newQuery = "",
-            newCategory = category,
-            newSeason = season,
-            newGenre = "All",
-            newFormat = "All",
-            newYear = year,
-            newOnList = null,
-        )
-        shellState.openDiscover()
+        exploreState.applyPreset(category, sortOption, season = season, year = year)
+        shellState.openExplore()
     }
 
     val filterSettings = rememberPlatformFilterSettings()
@@ -219,21 +209,27 @@ internal fun ShellScreen(
         onBack = shellState::closeDetail,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isDiscoverOpen,
-        onBack = shellState::closeDiscover,
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && shellState.isExploreOpen,
+        onBack = {
+            if (shellState.isExploreFilterOpen) {
+                shellState.closeExploreFilter()
+            } else {
+                shellState.closeExplore()
+            }
+        },
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             shellState.isCalendarOpen,
         onBack = shellState::closeCalendar,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && shellState.isNotificationsOpen,
         onBack = shellState::closeNotifications,
     )
     PlatformSystemBackHandler(
-        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isDiscoverOpen &&
+        enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
             !shellState.isCalendarOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
@@ -242,7 +238,6 @@ internal fun ShellScreen(
         shellState.currentDetail is DetailDestination.Studio -> strings.studioDetailTitle
         shellState.currentDetail is DetailDestination.Staff -> strings.staffDetailTitle
         shellState.isDetailOpen -> strings.mediaDetailTitle
-        shellState.isDiscoverOpen -> strings.discoverTitle
         shellState.isCalendarOpen -> strings.calendarTitle
         shellState.isNotificationsOpen -> strings.notificationsAction
         shellState.selectedTab == ShellTabSection.ACCOUNT &&
@@ -279,16 +274,27 @@ internal fun ShellScreen(
             ) { tab ->
                 tabStateHolder.SaveableStateProvider(tab) {
                     when (tab) {
-                        ShellTabSection.DISCOVER -> DashboardScreen(
-                            stateHolder = dashboardState,
-                            onOpenMedia = shellState::openMedia,
-                            onEditMedia = shellState::openEditor,
-                            onSeeAll = { rail ->
+                        ShellTabSection.DISCOVER -> Crossfade(
+                            targetState = shellState.isExploreOpen,
+                            label = "discoverExploreCrossfade",
+                        ) { showingExplore ->
+                            if (showingExplore) {
+                                ExploreScreen(
+                                    stateHolder = exploreState,
+                                    onOpenMedia = shellState::openMedia,
+                                    onEditMedia = shellState::openEditor,
+                                )
+                            } else {
+                                DashboardScreen(
+                                    stateHolder = dashboardState,
+                                    onOpenMedia = shellState::openMedia,
+                                    onEditMedia = shellState::openEditor,
+                                    onSeeAll = { rail ->
                                 when (rail) {
                                     DashboardRail.THIS_SEASON -> {
                                         val current = currentSeasonAndYear()
-                                        openDiscoverWith(
-                                            DiscoverCategory.ANIME,
+                                        openExploreWith(
+                                            ExploreCategory.ANIME,
                                             UserListSort.POPULARITY,
                                             season = current.season.name,
                                             year = current.year,
@@ -296,28 +302,30 @@ internal fun ShellScreen(
                                     }
                                     DashboardRail.UPCOMING_NEXT_SEASON -> {
                                         val upcoming = currentSeasonAndYear().next()
-                                        openDiscoverWith(
-                                            DiscoverCategory.ANIME,
+                                        openExploreWith(
+                                            ExploreCategory.ANIME,
                                             UserListSort.POPULARITY,
                                             season = upcoming.season.name,
                                             year = upcoming.year,
                                         )
                                     }
                                     DashboardRail.TRENDING_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.TRENDING)
+                                        openExploreWith(ExploreCategory.ANIME, UserListSort.TRENDING)
                                     DashboardRail.TRENDING_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.TRENDING)
+                                        openExploreWith(ExploreCategory.MANGA, UserListSort.TRENDING)
                                     DashboardRail.ALL_TIME_POPULAR_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.POPULARITY)
+                                        openExploreWith(ExploreCategory.ANIME, UserListSort.POPULARITY)
                                     DashboardRail.ALL_TIME_POPULAR_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.POPULARITY)
+                                        openExploreWith(ExploreCategory.MANGA, UserListSort.POPULARITY)
                                     DashboardRail.TOP_ANIME ->
-                                        openDiscoverWith(DiscoverCategory.ANIME, UserListSort.AVERAGE_SCORE)
+                                        openExploreWith(ExploreCategory.ANIME, UserListSort.AVERAGE_SCORE)
                                     DashboardRail.TOP_MANGA ->
-                                        openDiscoverWith(DiscoverCategory.MANGA, UserListSort.AVERAGE_SCORE)
+                                        openExploreWith(ExploreCategory.MANGA, UserListSort.AVERAGE_SCORE)
                                 }
                             },
                         )
+                            }
+                        }
                         ShellTabSection.ANIME -> AnimeScreen(
                             stateHolder = animeState,
                             selectedSection = shellState.selectedAnimeSection,
@@ -362,16 +370,6 @@ internal fun ShellScreen(
                             onBackHandlerChange = { shellState.toolBarBackHandler = it },
                         )
                     }
-                }
-            }
-
-            if (shellState.isDiscoverOpen) {
-                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    DiscoverScreen(
-                        stateHolder = discoverState,
-                        onOpenMedia = shellState::openMedia,
-                        onEditMedia = shellState::openEditor,
-                    )
                 }
             }
 
@@ -449,12 +447,12 @@ internal fun ShellScreen(
                 else -> {}
             }
 
-            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isDiscoverOpen && !shellState.isCalendarOpen && !shellState.isNotificationsOpen) {
+            if (!shellState.isAccountDetail && !shellState.isDetailOpen && !shellState.isCalendarOpen && !shellState.isNotificationsOpen) {
                 ShellBottomCluster(
                     selectedTab = shellState.selectedTab,
                     onSearchClick = {
-                        discoverState.enterBlankSearch()
-                        shellState.openDiscover()
+                        exploreState.enterBlankSearch()
+                        shellState.openExplore()
                     },
                     onSelectTab = shellState::selectTab,
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -466,13 +464,19 @@ internal fun ShellScreen(
                 selectedTab = shellState.selectedTab,
                 isAccountDetail = shellState.isAccountDetail,
                 isDetailOpen = shellState.isDetailOpen,
-                isDiscoverOpen = shellState.isDiscoverOpen,
+                isExploreOpen = shellState.isExploreOpen,
                 isCalendarOpen = shellState.isCalendarOpen,
                 isNotificationsOpen = shellState.isNotificationsOpen,
                 titleText = titleText,
                 onAccountBack = shellState::handleAccountBack,
                 onMediaBack = shellState::closeDetail,
-                onDiscoverBack = shellState::closeDiscover,
+                onExploreBack = {
+                    if (shellState.isExploreFilterOpen) {
+                        shellState.closeExploreFilter()
+                    } else {
+                        shellState.closeExplore()
+                    }
+                },
                 onCalendarBack = shellState::closeCalendar,
                 onNotificationsBack = shellState::closeNotifications,
                 onOpenSettings = { shellState.accountRoute = ShellAccountRoute.SETTINGS },
@@ -483,12 +487,18 @@ internal fun ShellScreen(
                 onSortClick = { showListFilterSheet = true },
                 onSectionFilterClick = {
                     if (shellState.selectedTab == ShellTabSection.DISCOVER) {
-                        shellState.openDiscoverFilter()
+                        shellState.openExploreFilter()
                     } else {
                         shellState.openSectionFilter()
                     }
                 },
                 onOpenCalendar = shellState::openCalendar,
+                onOpenExplore = { openExploreWith(ExploreCategory.ANIME, UserListSort.TRENDING) },
+                exploreQuery = exploreState.query,
+                onExploreQueryChange = { exploreState.updateFilters(newQuery = it) },
+                exploreFocusRequested = exploreState.focusSearchRequested,
+                onExploreFocusConsumed = exploreState::consumeFocusRequest,
+                onExploreFilterClick = shellState::openExploreFilter,
                 unreadCount = notificationsState.unreadCount,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
@@ -536,19 +546,19 @@ internal fun ShellScreen(
         if (showListFilterSheet) {
             val tab = shellState.selectedTab
             val sortOption = when (tab) {
-                ShellTabSection.DISCOVER -> discoverState.currentSortOption
+                ShellTabSection.DISCOVER -> exploreState.currentSortOption
                 ShellTabSection.ANIME -> animeState.currentSortOption
                 ShellTabSection.MANGA -> mangaState.currentSortOption
                 else -> animeState.currentSortOption
             }
             val sortOrder = when (tab) {
-                ShellTabSection.DISCOVER -> discoverState.currentSortOrder
+                ShellTabSection.DISCOVER -> exploreState.currentSortOrder
                 ShellTabSection.ANIME -> animeState.currentSortOrder
                 ShellTabSection.MANGA -> mangaState.currentSortOrder
                 else -> animeState.currentSortOrder
             }
             val isPersisted = when (tab) {
-                ShellTabSection.DISCOVER -> discoverState.isFilterPersisted
+                ShellTabSection.DISCOVER -> exploreState.isFilterPersisted
                 ShellTabSection.ANIME -> animeState.isFilterPersisted
                 ShellTabSection.MANGA -> mangaState.isFilterPersisted
                 else -> false
@@ -559,11 +569,11 @@ internal fun ShellScreen(
                 currentOrder = sortOrder,
                 persist = isPersisted,
                 isManga = tab == ShellTabSection.MANGA ||
-                    (tab == ShellTabSection.DISCOVER && discoverState.category == DiscoverCategory.MANGA),
+                    (tab == ShellTabSection.DISCOVER && exploreState.category == ExploreCategory.MANGA),
                 onDismiss = { showListFilterSheet = false },
                 onApply = { newSort, newOrder, newPersist ->
                     when (tab) {
-                        ShellTabSection.DISCOVER -> discoverState.updateSort(newSort, newOrder, newPersist)
+                        ShellTabSection.DISCOVER -> exploreState.updateSort(newSort, newOrder, newPersist)
                         ShellTabSection.ANIME -> {
                             animeState.updateSort(newSort, newOrder, newPersist)
                             filterSettings.saveFilter(newSort.name, newOrder.name, newPersist)
@@ -579,14 +589,12 @@ internal fun ShellScreen(
             )
         }
 
-        if (shellState.isDiscoverFilterOpen) {
+        if (shellState.isExploreFilterOpen) {
             val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
-            PlatformFilterSheet(
-                groups = buildDiscoverFilterGroups(discoverState, isSpanish),
-                onSelect = { groupId, optionId ->
-                    discoverState.applyFilterSelection(groupId, optionId)
-                },
-                onDismiss = shellState::closeDiscoverFilter,
+            ExploreFilterSheet(
+                stateHolder = exploreState,
+                isSpanish = isSpanish,
+                onDismiss = shellState::closeExploreFilter,
             )
         }
 

@@ -1,4 +1,4 @@
-package com.luum.michi.app.dashboard.presentation
+package com.luum.michi.app.discover.presentation.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +13,7 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaRail
 import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.components.tabBarClearance
-import com.luum.michi.app.dashboard.presentation.state.DashboardStateHolder
+import com.luum.michi.app.discover.presentation.dashboard.state.DashboardStateHolder
 
 /** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
 internal enum class DashboardRail {

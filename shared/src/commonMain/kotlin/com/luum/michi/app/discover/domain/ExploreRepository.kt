@@ -3,11 +3,11 @@ package com.luum.michi.app.discover.domain
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.search.domain.SearchPage
 
-internal interface DiscoverRepository {
+internal interface ExploreRepository {
     suspend fun searchCatalog(
         query: String?,
-        genre: String?,
-        format: String?,
+        genres: List<String>,
+        formats: List<String>,
         year: Int?,
         sort: String,
         page: Int = 1,
@@ -18,8 +18,8 @@ internal interface DiscoverRepository {
 
     suspend fun searchManga(
         query: String?,
-        genre: String?,
-        format: String?,
+        genres: List<String>,
+        formats: List<String>,
         year: Int?,
         sort: String,
         page: Int = 1,

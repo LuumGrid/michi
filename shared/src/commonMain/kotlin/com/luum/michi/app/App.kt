@@ -77,7 +77,7 @@ fun App(
                         mangaListRepository = dependencies.mangaListRepository,
                         accountRepository = dependencies.accountRepository,
                         dashboardRepository = dependencies.dashboardRepository,
-                        discoverRepository = dependencies.discoverRepository,
+                        exploreRepository = dependencies.exploreRepository,
                         calendarRepository = dependencies.calendarRepository,
                         mediaDetailRepository = dependencies.mediaDetailRepository,
                         mediaListEntryRepository = dependencies.mediaListEntryRepository,

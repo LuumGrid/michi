@@ -1,11 +1,11 @@
-package com.luum.michi.app.dashboard.data
+package com.luum.michi.app.discover.data
 
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
 import com.luum.michi.app.core.platform.hexToPalette
-import com.luum.michi.app.dashboard.domain.DashboardFeed
+import com.luum.michi.app.discover.domain.DashboardFeed
 
 internal fun DashboardResponseDto.toDashboardFeed(): DashboardFeed = DashboardFeed(
     trendingAnime = trendingAnime?.media

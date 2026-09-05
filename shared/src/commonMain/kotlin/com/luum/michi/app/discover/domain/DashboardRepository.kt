@@ -1,4 +1,4 @@
-package com.luum.michi.app.dashboard.domain
+package com.luum.michi.app.discover.domain
 
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem

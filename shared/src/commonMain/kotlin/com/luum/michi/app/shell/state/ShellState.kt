@@ -38,11 +38,11 @@ internal class ShellState(
     var editorMediaId by mutableStateOf<Int?>(null)
     var editorInitialStatus by mutableStateOf<MediaListStatus?>(null)
     var editorInitialProgress by mutableStateOf<Int?>(null)
-    var isDiscoverOpen by mutableStateOf(false)
+    var isExploreOpen by mutableStateOf(false)
     var isCalendarOpen by mutableStateOf(false)
     var isNotificationsOpen by mutableStateOf(false)
     var isSectionFilterOpen by mutableStateOf(false)
-    var isDiscoverFilterOpen by mutableStateOf(false)
+    var isExploreFilterOpen by mutableStateOf(false)
     var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
@@ -97,12 +97,12 @@ internal class ShellState(
         editorInitialProgress = null
     }
 
-    fun openDiscover() {
-        isDiscoverOpen = true
+    fun openExplore() {
+        isExploreOpen = true
     }
 
-    fun closeDiscover() {
-        isDiscoverOpen = false
+    fun closeExplore() {
+        isExploreOpen = false
     }
 
     fun openCalendar() {
@@ -129,12 +129,12 @@ internal class ShellState(
         isSectionFilterOpen = false
     }
 
-    fun openDiscoverFilter() {
-        isDiscoverFilterOpen = true
+    fun openExploreFilter() {
+        isExploreFilterOpen = true
     }
 
-    fun closeDiscoverFilter() {
-        isDiscoverFilterOpen = false
+    fun closeExploreFilter() {
+        isExploreFilterOpen = false
     }
 
     fun handleAccountBack() {

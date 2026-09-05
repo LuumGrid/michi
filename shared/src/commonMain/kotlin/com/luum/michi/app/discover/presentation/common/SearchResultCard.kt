@@ -1,4 +1,4 @@
-package com.luum.michi.app.search.presentation.components
+package com.luum.michi.app.discover.presentation.common
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
