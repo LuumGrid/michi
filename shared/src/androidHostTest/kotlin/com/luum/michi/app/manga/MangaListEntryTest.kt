@@ -1,14 +1,14 @@
 package com.luum.michi.app.manga
 
-import com.luum.michi.app.manga.domain.model.MangaListEntry
-import com.luum.michi.app.manga.domain.model.MangaListSection
-import com.luum.michi.app.manga.domain.model.MangaMediaFormat
-import com.luum.michi.app.manga.domain.model.canIncrementChapters
-import com.luum.michi.app.manga.domain.model.canIncrementVolumes
-import com.luum.michi.app.manga.domain.model.formattedScore
-import com.luum.michi.app.manga.domain.model.incrementedChapters
-import com.luum.michi.app.manga.domain.model.incrementedVolumes
-import com.luum.michi.app.manga.domain.model.isComplete
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.MangaMediaFormat
+import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
+import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
+import com.luum.michi.app.mediaList.domain.manga.model.formattedScore
+import com.luum.michi.app.mediaList.domain.manga.model.incrementedChapters
+import com.luum.michi.app.mediaList.domain.manga.model.incrementedVolumes
+import com.luum.michi.app.mediaList.domain.manga.model.isComplete
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

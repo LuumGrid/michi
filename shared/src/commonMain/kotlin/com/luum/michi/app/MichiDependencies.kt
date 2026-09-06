@@ -2,8 +2,8 @@ package com.luum.michi.app
 
 import com.luum.michi.app.account.data.AccountRepositoryImpl
 import com.luum.michi.app.account.domain.AccountRepository
-import com.luum.michi.app.anime.data.AnimeListRepositoryImpl
-import com.luum.michi.app.anime.domain.AnimeListRepository
+import com.luum.michi.app.mediaList.data.anime.AnimeListRepositoryImpl
+import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.calendar.data.CalendarRepositoryImpl
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.characterDetail.data.CharacterDetailRepositoryImpl
@@ -22,8 +22,8 @@ import com.luum.michi.app.discover.data.DashboardRepositoryImpl
 import com.luum.michi.app.discover.data.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.manga.data.MangaListRepositoryImpl
-import com.luum.michi.app.manga.domain.MangaListRepository
+import com.luum.michi.app.mediaList.data.manga.MangaListRepositoryImpl
+import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaDetail.data.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.data.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.MediaDetailRepository

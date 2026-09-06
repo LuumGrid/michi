@@ -8,11 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
-import com.luum.michi.app.anime.domain.model.AnimeListSection
+import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.core.session.Viewer
 import com.luum.michi.app.core.medialist.MediaListStatus
-import com.luum.michi.app.manga.domain.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.shell.components.ShellTabSection
 
 internal enum class ShellAccountRoute {
