@@ -173,8 +173,11 @@ interface LanguageStrings {
     val accountShareProfileAction: String
     val accountDownloadProfileQrAction: String
     val accountWebOnlyFieldsNote: String
-    val accountEditProfileOnWebAction: String
-    val accountEditAccountOnWebAction: String
+    val accountUpdateProfileOnWebAction: String
+    val accountManageAccountOnWebAction: String
+    val accountSettingsTitle: String
+    val accountListSettingsOnWebAction: String
+    val accountImportListOnWebAction: String
     val accountStatsTitle: String
     val accountStatsOverviewLabel: String
     val accountStatsEpisodesWatchedLabel: String
@@ -351,7 +354,8 @@ val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLa
 fun getLanguageStrings(language: AppLanguage): LanguageStrings {
     return when (language.code) {
         "en" -> EnglishLanguageStrings
-        else -> SpanishLanguageStrings
+        "es" -> SpanishLanguageStrings
+        else -> EnglishLanguageStrings
     }
 }
 

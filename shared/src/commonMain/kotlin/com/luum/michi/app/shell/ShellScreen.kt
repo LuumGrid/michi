@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
+import com.luum.michi.app.account.presentation.AccountSettingsSheet
+import com.luum.michi.app.account.presentation.AccountShareProfileSheet
 import com.luum.michi.app.account.presentation.state.rememberAccountFavoritesGridStateHolder
 import com.luum.michi.app.account.presentation.state.rememberAccountStateHolder
 import com.luum.michi.app.anime.domain.AnimeListRepository
@@ -220,17 +222,17 @@ internal fun ShellScreen(
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            shellState.isCalendarOpen,
+                shellState.isCalendarOpen,
         onBack = shellState::closeCalendar,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && shellState.isNotificationsOpen,
+                !shellState.isCalendarOpen && shellState.isNotificationsOpen,
         onBack = shellState::closeNotifications,
     )
     PlatformSystemBackHandler(
         enabled = !shellState.isEditorOpen && !shellState.isDetailOpen && !shellState.isExploreOpen &&
-            !shellState.isCalendarOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
+                !shellState.isCalendarOpen && !shellState.isNotificationsOpen && shellState.isAccountDetail,
         onBack = shellState::handleAccountBack,
     )
     val titleText = when {
@@ -243,19 +245,15 @@ internal fun ShellScreen(
         shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.SETTINGS -> strings.settingsAction
         shellState.selectedTab == ShellTabSection.ACCOUNT &&
-            shellState.accountRoute == ShellAccountRoute.EDIT_PROFILE -> strings.accountEditProfileAction
-        shellState.selectedTab == ShellTabSection.ACCOUNT &&
-            shellState.accountRoute == ShellAccountRoute.SHARE_PROFILE -> strings.accountShareProfileAction
-        shellState.selectedTab == ShellTabSection.ACCOUNT &&
             shellState.accountRoute == ShellAccountRoute.STATS -> strings.accountStatsTitle
         shellState.selectedTab == ShellTabSection.ACCOUNT &&
-            shellState.accountRoute == ShellAccountRoute.FAVORITES -> when (shellState.favoritesCategory) {
-                AccountFavoritesCategory.ANIME -> strings.accountFavoriteAnimeTitle
-                AccountFavoritesCategory.MANGA -> strings.accountFavoriteMangaTitle
-                AccountFavoritesCategory.CHARACTERS -> strings.accountFavoriteCharactersTitle
-                AccountFavoritesCategory.STAFF -> strings.accountFavoriteStaffTitle
-                AccountFavoritesCategory.STUDIOS -> strings.accountFavoriteStudiosTitle
-            }
+                shellState.accountRoute == ShellAccountRoute.FAVORITES -> when (shellState.favoritesCategory) {
+            AccountFavoritesCategory.ANIME -> strings.accountFavoriteAnimeTitle
+            AccountFavoritesCategory.MANGA -> strings.accountFavoriteMangaTitle
+            AccountFavoritesCategory.CHARACTERS -> strings.accountFavoriteCharactersTitle
+            AccountFavoritesCategory.STAFF -> strings.accountFavoriteStaffTitle
+            AccountFavoritesCategory.STUDIOS -> strings.accountFavoriteStudiosTitle
+        }
         shellState.selectedTab == ShellTabSection.ACCOUNT ->
             shellState.currentProfile.username
         else -> shellState.selectedTab.label(strings)
@@ -290,40 +288,40 @@ internal fun ShellScreen(
                                     onOpenMedia = shellState::openMedia,
                                     onEditMedia = shellState::openEditor,
                                     onSeeAll = { rail ->
-                                when (rail) {
-                                    DashboardRail.THIS_SEASON -> {
-                                        val current = currentSeasonAndYear()
-                                        openExploreWith(
-                                            ExploreCategory.ANIME,
-                                            UserListSort.POPULARITY,
-                                            season = current.season.name,
-                                            year = current.year,
-                                        )
-                                    }
-                                    DashboardRail.UPCOMING_NEXT_SEASON -> {
-                                        val upcoming = currentSeasonAndYear().next()
-                                        openExploreWith(
-                                            ExploreCategory.ANIME,
-                                            UserListSort.POPULARITY,
-                                            season = upcoming.season.name,
-                                            year = upcoming.year,
-                                        )
-                                    }
-                                    DashboardRail.TRENDING_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIME, UserListSort.TRENDING)
-                                    DashboardRail.TRENDING_MANGA ->
-                                        openExploreWith(ExploreCategory.MANGA, UserListSort.TRENDING)
-                                    DashboardRail.ALL_TIME_POPULAR_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIME, UserListSort.POPULARITY)
-                                    DashboardRail.ALL_TIME_POPULAR_MANGA ->
-                                        openExploreWith(ExploreCategory.MANGA, UserListSort.POPULARITY)
-                                    DashboardRail.TOP_ANIME ->
-                                        openExploreWith(ExploreCategory.ANIME, UserListSort.AVERAGE_SCORE)
-                                    DashboardRail.TOP_MANGA ->
-                                        openExploreWith(ExploreCategory.MANGA, UserListSort.AVERAGE_SCORE)
-                                }
-                            },
-                        )
+                                        when (rail) {
+                                            DashboardRail.THIS_SEASON -> {
+                                                val current = currentSeasonAndYear()
+                                                openExploreWith(
+                                                    ExploreCategory.ANIME,
+                                                    UserListSort.POPULARITY,
+                                                    season = current.season.name,
+                                                    year = current.year,
+                                                )
+                                            }
+                                            DashboardRail.UPCOMING_NEXT_SEASON -> {
+                                                val upcoming = currentSeasonAndYear().next()
+                                                openExploreWith(
+                                                    ExploreCategory.ANIME,
+                                                    UserListSort.POPULARITY,
+                                                    season = upcoming.season.name,
+                                                    year = upcoming.year,
+                                                )
+                                            }
+                                            DashboardRail.TRENDING_ANIME ->
+                                                openExploreWith(ExploreCategory.ANIME, UserListSort.TRENDING)
+                                            DashboardRail.TRENDING_MANGA ->
+                                                openExploreWith(ExploreCategory.MANGA, UserListSort.TRENDING)
+                                            DashboardRail.ALL_TIME_POPULAR_ANIME ->
+                                                openExploreWith(ExploreCategory.ANIME, UserListSort.POPULARITY)
+                                            DashboardRail.ALL_TIME_POPULAR_MANGA ->
+                                                openExploreWith(ExploreCategory.MANGA, UserListSort.POPULARITY)
+                                            DashboardRail.TOP_ANIME ->
+                                                openExploreWith(ExploreCategory.ANIME, UserListSort.AVERAGE_SCORE)
+                                            DashboardRail.TOP_MANGA ->
+                                                openExploreWith(ExploreCategory.MANGA, UserListSort.AVERAGE_SCORE)
+                                        }
+                                    },
+                                )
                             }
                         }
                         ShellTabSection.ANIME -> AnimeScreen(
@@ -351,6 +349,7 @@ internal fun ShellScreen(
                             profile = shellState.currentProfile,
                             settingsState = settingsState,
                             accountState = accountState,
+                            shellState = shellState,
                             favoritesCategory = shellState.favoritesCategory,
                             favoritesGridStateHolder = favoritesGridState,
                             language = language,
@@ -569,7 +568,7 @@ internal fun ShellScreen(
                 currentOrder = sortOrder,
                 persist = isPersisted,
                 isManga = tab == ShellTabSection.MANGA ||
-                    (tab == ShellTabSection.DISCOVER && exploreState.category == ExploreCategory.MANGA),
+                        (tab == ShellTabSection.DISCOVER && exploreState.category == ExploreCategory.MANGA),
                 onDismiss = { showListFilterSheet = false },
                 onApply = { newSort, newOrder, newPersist ->
                     when (tab) {
@@ -595,6 +594,19 @@ internal fun ShellScreen(
                 stateHolder = exploreState,
                 isSpanish = isSpanish,
                 onDismiss = shellState::closeExploreFilter,
+            )
+        }
+
+        if (shellState.isAccountSettingsOpen) {
+            AccountSettingsSheet(onDismiss = shellState::closeAccountSettings)
+        }
+
+        if (shellState.isShareProfileOpen) {
+            AccountShareProfileSheet(
+                username = shellState.currentProfile.username,
+                displayName = shellState.currentProfile.displayName,
+                avatarUrl = shellState.currentProfile.avatarUrl,
+                onDismiss = shellState::closeShareProfile,
             )
         }
 

@@ -163,52 +163,14 @@ internal fun PlatformListFilterSheet(
                 }
             }
 
-            // Bottom Buttons Bar with same surface container styles as EditorActionBar
-            Surface(
+            // Bottom Buttons Bar: acción compartida de dos botones.
+            PlatformSheetActionBar(
+                leadingLabel = strings.filterResetAction,
+                trailingLabel = strings.filterSaveAction,
+                onLeadingClick = { onApply(UserListSort.FOLLOW_LIST, UserListOrder.DESCENDING, false) },
+                onTrailingClick = { onApply(selectedSort, selectedOrder, persistFilter) },
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                tonalElevation = 0.dp,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            onApply(UserListSort.FOLLOW_LIST, UserListOrder.DESCENDING, false)
-                        },
-                        shape = RoundedCornerShape(24.dp), // Styled exactly like Editor cancel button!
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        modifier = Modifier
-                            .weight(1f),
-                    ) {
-                        Text(
-                            text = strings.filterResetAction,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-
-                    Button(
-                        onClick = { onApply(selectedSort, selectedOrder, persistFilter) },
-                        shape = RoundedCornerShape(24.dp), // Styled exactly like Editor save button!
-                        modifier = Modifier
-                            .weight(1f),
-                    ) {
-                        Text(
-                            text = strings.filterSaveAction,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
-            }
+            )
         }
     }
 }

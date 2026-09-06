@@ -185,8 +185,11 @@ object EnglishLanguageStrings : LanguageStrings {
     override val accountDownloadProfileQrAction = "Download"
     override val accountWebOnlyFieldsNote =
         "Your username, avatar, banner, email, and other settings can only be changed on AniList's website."
-    override val accountEditProfileOnWebAction = "Edit profile on AniList"
-    override val accountEditAccountOnWebAction = "Edit account on AniList"
+    override val accountUpdateProfileOnWebAction = "Edit profile on AniList"
+    override val accountManageAccountOnWebAction = "Manage account on AniList"
+    override val accountSettingsTitle = "Account Settings"
+    override val accountListSettingsOnWebAction = "List Settings"
+    override val accountImportListOnWebAction = "Import List"
     override val accountStatsTitle = "Statistics"
     override val accountStatsOverviewLabel = "Overview"
     override val accountStatsEpisodesWatchedLabel = "Episodes watched"

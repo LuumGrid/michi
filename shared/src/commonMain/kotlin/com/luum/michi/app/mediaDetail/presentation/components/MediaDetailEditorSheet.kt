@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,12 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -42,6 +40,7 @@ import com.luum.michi.app.core.platform.components.PlatformChips
 import com.luum.michi.app.core.platform.components.PlatformDatePickerField
 import com.luum.michi.app.core.platform.components.PlatformModalSheet
 import com.luum.michi.app.core.platform.components.PlatformScoreField
+import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
 import com.luum.michi.app.core.platform.components.PlatformStepperField
 import com.luum.michi.app.core.medialist.MediaListStatus
 import com.luum.michi.app.core.medialist.label
@@ -70,23 +69,30 @@ internal fun MediaDetailEditorSheet(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text(strings.deleteEntryConfirmTitle) },
-            text = { Text(strings.deleteEntryConfirmMessage) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    state.delete(onDeleted)
-                }) {
-                    Text(
-                        text = strings.confirmDeleteAction,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            text = {
+                Column {
+                    Text(strings.deleteEntryConfirmMessage)
+                    Spacer(Modifier.height(20.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        TextButton(onClick = {
+                            showDeleteConfirm = false
+                            state.delete(onDeleted)
+                        }) {
+                            Text(
+                                text = strings.confirmDeleteAction,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        TextButton(onClick = { showDeleteConfirm = false }) {
+                            Text(strings.mediaDetailEditorCancelAction)
+                        }
+                    }
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text(strings.mediaDetailEditorCancelAction)
-                }
-            },
+            confirmButton = {},
         )
     }
 
@@ -124,17 +130,36 @@ internal fun MediaDetailEditorSheet(
                 }
             }
 
-            EditorActionBar(
-                isSaving = state.isSaving,
-                isDeleting = state.isDeleting,
-                isExisting = state.isExisting,
-                enabled = !state.isLoadingDetail && state.loadError == null,
-                error = state.error?.let { strings.networkErrorMessage(it) },
-                onCancel = onDismiss,
-                onRequestDelete = { showDeleteConfirm = true },
-                onSave = { state.save(onSaved) },
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-            )
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (state.error != null) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = strings.mediaDetailEditorSaveErrorLabel + ": " +
+                                (state.error?.let { strings.networkErrorMessage(it) } ?: ""),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+                PlatformSheetActionBar(
+                    leadingLabel = if (state.isExisting) strings.mediaDetailEditorDeleteAction else strings.mediaDetailEditorCancelAction,
+                    trailingLabel = if (state.isSaving) strings.mediaDetailEditorSavingLabel else strings.saveAction,
+                    onLeadingClick = if (state.isExisting) { { showDeleteConfirm = true } } else onDismiss,
+                    onTrailingClick = { state.save(onSaved) },
+                    leadingDestructive = state.isExisting,
+                    leadingEnabled = !state.isSaving && !state.isDeleting,
+                    trailingEnabled = !state.isLoadingDetail && state.loadError == null && !state.isSaving && !state.isDeleting,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
@@ -288,102 +313,6 @@ private fun EditorForm(state: MediaEntryEditorState) {
                 checked = state.hiddenFromStatusLists,
                 onCheckedChange = state::updateHiddenFromStatusLists,
             )
-        }
-    }
-}
-
-@Composable
-private fun EditorActionBar(
-    isSaving: Boolean,
-    isDeleting: Boolean,
-    isExisting: Boolean,
-    enabled: Boolean,
-    error: String?,
-    onCancel: () -> Unit,
-    onRequestDelete: () -> Unit,
-    onSave: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val strings = LanguageProvider.strings
-
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 0.dp,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-                if (error != null) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = strings.mediaDetailEditorSaveErrorLabel + ": " + error,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (isExisting) {
-                    OutlinedButton(
-                        onClick = onRequestDelete,
-                        enabled = !isSaving && !isDeleting,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(20.dp),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.error,
-                        ),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text(
-                            text = strings.mediaDetailEditorDeleteAction,
-                            maxLines = 1,
-                        )
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = onCancel,
-                        enabled = !isSaving && !isDeleting,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(20.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    ) {
-                        Text(
-                            text = strings.mediaDetailEditorCancelAction,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                Button(
-                    onClick = onSave,
-                    enabled = enabled && !isSaving && !isDeleting,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(24.dp),
-                ) {
-                    Text(
-                        text = if (isSaving) strings.mediaDetailEditorSavingLabel else strings.saveAction,
-                        maxLines = 1,
-                    )
-                }
-            }
         }
     }
 }

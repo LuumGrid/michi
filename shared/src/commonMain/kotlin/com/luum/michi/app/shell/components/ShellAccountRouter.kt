@@ -2,10 +2,8 @@ package com.luum.michi.app.shell.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalUriHandler
-import com.luum.michi.app.account.presentation.AccountEditProfileScreen
 import com.luum.michi.app.account.presentation.AccountFavoritesGridScreen
 import com.luum.michi.app.account.presentation.AccountScreen
-import com.luum.michi.app.account.presentation.AccountShareProfileScreen
 import com.luum.michi.app.account.presentation.AccountStatsScreen
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.model.AccountProfileDraft
@@ -16,6 +14,7 @@ import com.luum.michi.app.core.platform.PlatformBackHandler
 import com.luum.michi.app.settings.presentation.SettingsScreen
 import com.luum.michi.app.settings.presentation.state.SettingsState
 import com.luum.michi.app.shell.state.ShellAccountRoute
+import com.luum.michi.app.shell.state.ShellState
 
 @Composable
 internal fun ShellAccountRouter(
@@ -23,6 +22,7 @@ internal fun ShellAccountRouter(
     profile: AccountProfileDraft,
     settingsState: SettingsState,
     accountState: AccountStateHolder,
+    shellState: ShellState,
     favoritesCategory: AccountFavoritesCategory,
     favoritesGridStateHolder: AccountFavoritesGridStateHolder,
     language: AppLanguage,
@@ -54,8 +54,8 @@ internal fun ShellAccountRouter(
                 userBio = profile.bio,
                 joinedLabel = null,
                 onRefresh = accountState::refresh,
-                onEditProfileClick = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
-                onShareProfileClick = { onNavigate(ShellAccountRoute.SHARE_PROFILE) },
+                onEditProfileClick = shellState::openAccountSettings,
+                onShareProfileClick = shellState::openShareProfile,
                 onOpenAnimeList = onOpenAnimeList,
                 onOpenMangaList = onOpenMangaList,
                 onOpenMedia = onOpenMedia,
@@ -76,21 +76,9 @@ internal fun ShellAccountRouter(
                 isDarkMode = isDarkMode,
                 onToggleTheme = onToggleTheme,
                 onLogout = onLogout,
-                onManageAccount = { onNavigate(ShellAccountRoute.EDIT_PROFILE) },
+                onManageAccount = shellState::openAccountSettings,
                 onHelp = { uriHandler.openUri("https://anilist.co/forum/overview") },
                 onBackHandlerChange = onBackHandlerChange,
-            )
-        }
-
-        ShellAccountRoute.EDIT_PROFILE -> {
-            AccountEditProfileScreen(initialDraft = profile)
-        }
-
-        ShellAccountRoute.SHARE_PROFILE -> {
-            AccountShareProfileScreen(
-                username = profile.username,
-                displayName = profile.displayName,
-                avatarUrl = profile.avatarUrl,
             )
         }
 

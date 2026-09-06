@@ -1,11 +1,9 @@
 package com.luum.michi.app.account.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,54 +33,42 @@ import com.luum.michi.app.account.presentation.components.AccountShareAvatar
 import com.luum.michi.app.account.presentation.util.toProfilePathSegment
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.core.platform.components.PlatformModalSheet
 import com.luum.michi.app.core.platform.setPlainText
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun AccountShareProfileScreen(
+internal fun AccountShareProfileSheet(
     username: String,
     displayName: String,
     avatarUrl: String?,
+    onDismiss: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val profileUrl = remember(username) { "https://anilist.co/user/${username.toProfilePathSegment()}" }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(
-                PaddingValues(
-                    start = 20.dp,
-                    top = floatingToolbarClearance(),
-                    end = 20.dp,
-                    bottom = 24.dp,
-                ),
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(8.dp))
-
-        AccountShareCard(
-            username = username,
-            displayName = displayName,
-            avatarUrl = avatarUrl,
-            profileUrl = profileUrl,
-        )
-
-        Spacer(Modifier.height(18.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+    PlatformModalSheet(onDismiss = onDismiss) { modifier ->
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Spacer(Modifier.height(8.dp))
+
+            AccountShareCard(
+                username = username,
+                displayName = displayName,
+                avatarUrl = avatarUrl,
+                profileUrl = profileUrl,
+            )
+
+            Spacer(Modifier.height(18.dp))
+
             Button(
                 onClick = { scope.launch { clipboard.setPlainText(profileUrl) } },
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth(0.5f)
                     .height(48.dp),
                 shape = RoundedCornerShape(24.dp),
             ) {
@@ -94,26 +79,6 @@ internal fun AccountShareProfileScreen(
                 )
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text(strings.accountShareProfileAction, maxLines = 1)
-            }
-
-            // TODO: implement QR export (render AccountQrMatrix to a bitmap and save/share
-            // it via platform storage). Disabled until there is expect/actual plumbing for
-            // image saving, like the existing clipboard helper for plain text.
-            OutlinedButton(
-                onClick = { },
-                enabled = false,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(24.dp),
-            ) {
-                Icon(
-                    painter = PlatformIcons.Download,
-                    contentDescription = strings.accountDownloadProfileQrAction,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(strings.accountDownloadProfileQrAction, maxLines = 1)
             }
         }
     }
@@ -127,10 +92,14 @@ private fun AccountShareCard(
     profileUrl: String,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(0.95f),
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.inverseSurface,
-        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+        color = Color.Transparent,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        ),
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp),
@@ -152,7 +121,7 @@ private fun AccountShareCard(
             Text(
                 text = displayName,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.74f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
 
@@ -182,7 +151,7 @@ private fun AccountShareCard(
             Text(
                 text = profileUrl,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.82f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }

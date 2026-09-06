@@ -18,8 +18,6 @@ import com.luum.michi.app.shell.components.ShellTabSection
 internal enum class ShellAccountRoute {
     ACCOUNT,
     SETTINGS,
-    EDIT_PROFILE,
-    SHARE_PROFILE,
     STATS,
     FAVORITES,
 }
@@ -43,6 +41,8 @@ internal class ShellState(
     var isNotificationsOpen by mutableStateOf(false)
     var isSectionFilterOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
+    var isShareProfileOpen by mutableStateOf(false)
+    var isAccountSettingsOpen by mutableStateOf(false)
     var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
@@ -135,6 +135,22 @@ internal class ShellState(
 
     fun closeExploreFilter() {
         isExploreFilterOpen = false
+    }
+
+    fun openShareProfile() {
+        isShareProfileOpen = true
+    }
+
+    fun closeShareProfile() {
+        isShareProfileOpen = false
+    }
+
+    fun openAccountSettings() {
+        isAccountSettingsOpen = true
+    }
+
+    fun closeAccountSettings() {
+        isAccountSettingsOpen = false
     }
 
     fun handleAccountBack() {

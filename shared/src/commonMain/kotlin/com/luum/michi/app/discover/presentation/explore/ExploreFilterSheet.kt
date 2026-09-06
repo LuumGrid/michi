@@ -4,16 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +26,7 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.components.PlatformChipRow
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.core.platform.components.PlatformModalSheet
+import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
 import com.luum.michi.app.discover.presentation.explore.model.exploreFormats
 import com.luum.michi.app.discover.presentation.explore.model.exploreGenres
 import com.luum.michi.app.discover.presentation.explore.model.exploreSeasonOptions
@@ -160,40 +158,28 @@ internal fun ExploreFilterSheet(
                 }
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        draftCategory = ExploreCategory.ANIME
-                        draftSeason = null
-                        draftGenres = emptyList()
-                        draftFormats = emptyList()
-                        draftYear = null
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(strings.filterResetAction)
-                }
-                Button(
-                    onClick = {
-                        stateHolder.updateFilters(
-                            newCategory = draftCategory,
-                            newSeason = if (draftCategory == ExploreCategory.ANIME) draftSeason else null,
-                            newGenres = draftGenres,
-                            newFormats = draftFormats,
-                            newYear = draftYear,
-                        )
-                        onDismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(strings.filterApplyAction)
-                }
-            }
+            PlatformSheetActionBar(
+                leadingLabel = strings.filterResetAction,
+                trailingLabel = strings.filterApplyAction,
+                onLeadingClick = {
+                    draftCategory = ExploreCategory.ANIME
+                    draftSeason = null
+                    draftGenres = emptyList()
+                    draftFormats = emptyList()
+                    draftYear = null
+                },
+                onTrailingClick = {
+                    stateHolder.updateFilters(
+                        newCategory = draftCategory,
+                        newSeason = if (draftCategory == ExploreCategory.ANIME) draftSeason else null,
+                        newGenres = draftGenres,
+                        newFormats = draftFormats,
+                        newYear = draftYear,
+                    )
+                    onDismiss()
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
