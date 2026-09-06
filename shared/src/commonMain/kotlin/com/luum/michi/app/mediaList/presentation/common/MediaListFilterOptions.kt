@@ -1,0 +1,72 @@
+package com.luum.michi.app.mediaList.presentation.common
+
+import com.luum.michi.app.core.anilist.MediaFormat
+import com.luum.michi.app.core.anilist.label
+import com.luum.michi.app.core.language.LanguageStrings
+import com.luum.michi.app.core.media.currentSeasonAndYear
+import com.luum.michi.app.core.platform.components.PlatformFilterOption
+
+/** Static genre list, mirrored from Explore (kept local: features must not import each other). */
+internal fun mediaListGenres(): List<String> = listOf(
+    "Action", "Adventure", "Comedy", "Drama", "Fantasy",
+    "Horror", "Mecha", "Music", "Mystery", "Romance", "Sci-Fi",
+    "Slice of Life", "Sports", "Supernatural", "Thriller",
+)
+
+/**
+ * Selectable years: next year first (covers next season falling in January),
+ * then backwards, with the classic curated tail. Mirrored from Explore.
+ */
+internal fun mediaListYears(): List<Int?> {
+    val currentYear = currentSeasonAndYear().year
+    return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
+}
+
+internal fun mediaListSeasonOptions(strings: LanguageStrings): List<PlatformFilterOption> {
+    val labels = listOf(
+        strings.exploreSeasonWinterLabel,
+        strings.exploreSeasonSpringLabel,
+        strings.exploreSeasonSummerLabel,
+        strings.exploreSeasonFallLabel,
+    )
+    val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
+    return listOf(PlatformFilterOption("any", strings.exploreAnySeasonLabel)) +
+        ids.zip(labels) { id, label -> PlatformFilterOption(id, label) }
+}
+
+/**
+ * Opciones de formato por tab (jerga AniList sin traducir, igual que en Explore):
+ * anime excluye MANGA/NOVEL/ONE_SHOT, manga solo lleva esos tres.
+ */
+internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<PlatformFilterOption> =
+    MediaFormat.entries
+        .filter {
+            if (isAnimeTab) {
+                it != MediaFormat.MANGA && it != MediaFormat.NOVEL &&
+                    it != MediaFormat.ONE_SHOT && it != MediaFormat.UNKNOWN
+            } else {
+                it == MediaFormat.MANGA || it == MediaFormat.NOVEL || it == MediaFormat.ONE_SHOT
+            }
+        }
+        .map { PlatformFilterOption(it.name, it.label()) }
+
+/**
+ * Client-side predicate shared by both lists (the whole collection is already
+ * loaded, so season/genre/year filter in memory, like Explore's server-side
+ * `season`/`genre_in`/year but over local entries). Genre matches if ANY of
+ * the entry's genres is selected.
+ */
+internal fun matchesMediaListFilters(
+    season: String?,
+    genres: List<String>,
+    seasonYear: Int?,
+    formatName: String,
+    filterSeason: String?,
+    filterGenres: List<String>,
+    filterYear: Int?,
+    filterFormats: List<String>,
+): Boolean =
+    (filterSeason == null || season == filterSeason) &&
+        (filterYear == null || seasonYear == filterYear) &&
+        (filterGenres.isEmpty() || genres.any { it in filterGenres }) &&
+        (filterFormats.isEmpty() || formatName in filterFormats)

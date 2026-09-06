@@ -35,6 +35,9 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
         priority = priority ?: 0,
         nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
         nextEpisodeNumber = media.nextAiringEpisode?.episode,
+        genres = media.genres.orEmpty(),
+        season = media.season,
+        seasonYear = media.seasonYear ?: media.startDate?.year,
     )
 }
 

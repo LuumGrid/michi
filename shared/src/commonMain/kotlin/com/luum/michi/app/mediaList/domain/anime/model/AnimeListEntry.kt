@@ -30,6 +30,9 @@ internal data class AnimeListEntry(
     val priority: Int = 0,
     val nextAiringAt: Long = 0L,
     val nextEpisodeNumber: Int? = null,
+    val genres: List<String> = emptyList(),
+    val season: String? = null,
+    val seasonYear: Int? = null,
 )
 
 internal fun AnimeListEntry.progressLabel(): String {

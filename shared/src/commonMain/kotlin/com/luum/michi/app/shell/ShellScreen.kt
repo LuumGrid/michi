@@ -32,6 +32,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.presentation.anime.state.rememberAnimeListStateHolder
+import com.luum.michi.app.mediaList.presentation.common.MediaListFilterSheet
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.presentation.dashboard.DashboardRail
 import com.luum.michi.app.discover.presentation.dashboard.DashboardScreen
@@ -77,12 +78,10 @@ import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.state.rememberSettingsState
 import com.luum.michi.app.shell.components.ShellAccountRouter
 import com.luum.michi.app.core.platform.SettingsStoreKeys
-import com.luum.michi.app.core.platform.components.PlatformFilterSheet
-import com.luum.michi.app.core.platform.components.PlatformFilterGroup
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.core.platform.rememberPlatformFilterSettings
 import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
-import com.luum.michi.app.core.platform.components.PlatformListFilterSheet
+import com.luum.michi.app.core.platform.components.PlatformSortSheet
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.shell.components.ShellBottomCluster
@@ -564,7 +563,7 @@ internal fun ShellScreen(
                 else -> false
             }
 
-            PlatformListFilterSheet(
+            PlatformSortSheet(
                 currentSort = sortOption,
                 currentOrder = sortOrder,
                 persist = isPersisted,
@@ -610,58 +609,58 @@ internal fun ShellScreen(
         }
 
         if (shellState.isSectionFilterOpen) {
-            val sectionOptions: List<PlatformFilterOption>?
-            val selectedSectionId: String?
             when (shellState.selectedTab) {
                 ShellTabSection.ANIME -> {
-                    sectionOptions = AnimeListSection.entries.map { section ->
-                        PlatformFilterOption(
-                            id = section.name,
-                            label = section.label(strings),
-                            count = animeState.countInSection(section),
-                        )
-                    }
-                    selectedSectionId = shellState.selectedAnimeSection.name
+                    MediaListFilterSheet(
+                        sectionOptions = AnimeListSection.entries.map { section ->
+                            PlatformFilterOption(
+                                id = section.name,
+                                label = section.label(strings),
+                                count = animeState.countInSection(section),
+                            )
+                        },
+                        initialSectionId = shellState.selectedAnimeSection.name,
+                        showSeasonFilter = true,
+                        isAnimeTab = true,
+                        season = animeState.filterSeason,
+                        genres = animeState.filterGenres,
+                        formats = animeState.filterFormats,
+                        year = animeState.filterYear,
+                        onApply = { sectionId, season, genres, formats, year ->
+                            AnimeListSection.entries
+                                .firstOrNull { it.name == sectionId }
+                                ?.let { shellState.selectedAnimeSection = it }
+                            animeState.updateListFilters(season, genres, formats, year)
+                        },
+                        onDismiss = shellState::closeSectionFilter,
+                    )
                 }
                 ShellTabSection.MANGA -> {
-                    sectionOptions = MangaListSection.entries.map { section ->
-                        PlatformFilterOption(
-                            id = section.name,
-                            label = section.label(strings),
-                            count = mangaState.countInSection(section),
-                        )
-                    }
-                    selectedSectionId = shellState.selectedMangaSection.name
-                }
-                else -> {
-                    sectionOptions = null
-                    selectedSectionId = null
-                }
-            }
-            if (sectionOptions != null && selectedSectionId != null) {
-                PlatformFilterSheet(
-                    groups = listOf(
-                        PlatformFilterGroup(
-                            id = "section",
-                            title = null,
-                            options = sectionOptions,
-                            selectedId = selectedSectionId,
-                        ),
-                    ),
-                    onSelect = { _, id ->
-                        when (shellState.selectedTab) {
-                            ShellTabSection.ANIME -> AnimeListSection.entries
-                                .firstOrNull { it.name == id }
-                                ?.let { shellState.selectedAnimeSection = it }
-                            ShellTabSection.MANGA -> MangaListSection.entries
-                                .firstOrNull { it.name == id }
+                    MediaListFilterSheet(
+                        sectionOptions = MangaListSection.entries.map { section ->
+                            PlatformFilterOption(
+                                id = section.name,
+                                label = section.label(strings),
+                                count = mangaState.countInSection(section),
+                            )
+                        },
+                        initialSectionId = shellState.selectedMangaSection.name,
+                        showSeasonFilter = false,
+                        isAnimeTab = false,
+                        season = mangaState.filterSeason,
+                        genres = mangaState.filterGenres,
+                        formats = mangaState.filterFormats,
+                        year = mangaState.filterYear,
+                        onApply = { sectionId, season, genres, formats, year ->
+                            MangaListSection.entries
+                                .firstOrNull { it.name == sectionId }
                                 ?.let { shellState.selectedMangaSection = it }
-                            else -> {}
-                        }
-                        shellState.closeSectionFilter()
-                    },
-                    onDismiss = shellState::closeSectionFilter,
-                )
+                            mangaState.updateListFilters(season, genres, formats, year)
+                        },
+                        onDismiss = shellState::closeSectionFilter,
+                    )
+                }
+                else -> {}
             }
         }
     }

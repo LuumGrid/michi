@@ -41,6 +41,9 @@ query MediaListCollection(${'$'}userId: Int!) {
           popularity
           favourites
           trending
+          genres
+          season
+          seasonYear
           startDate { year month day }
           title { romaji english native userPreferred }
           coverImage { large medium color }

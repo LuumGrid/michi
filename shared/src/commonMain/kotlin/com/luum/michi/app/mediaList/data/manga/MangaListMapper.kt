@@ -37,6 +37,9 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
         trending = media.trending ?: 0,
         priority = priority ?: 0,
         nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
+        genres = media.genres.orEmpty(),
+        season = media.season,
+        seasonYear = media.seasonYear ?: media.startDate?.year,
     )
 }
 

@@ -20,6 +20,7 @@ import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.core.medialist.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.MediaListStatus
 import com.luum.michi.app.mediaList.presentation.common.MediaListLoader
+import com.luum.michi.app.mediaList.presentation.common.matchesMediaListFilters
 
 internal class AnimeListStateHolder(
     repository: AnimeListRepository,
@@ -32,6 +33,11 @@ internal class AnimeListStateHolder(
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
     var isFilterPersisted by mutableStateOf(false)
 
+    var filterSeason by mutableStateOf<String?>(null)
+    var filterGenres by mutableStateOf(emptyList<String>())
+    var filterFormats by mutableStateOf(emptyList<String>())
+    var filterYear by mutableStateOf<Int?>(null)
+
     val entries: List<AnimeListEntry> get() = loader.entries
     val isLoading: Boolean get() = loader.isLoading
     val isRefreshing: Boolean get() = loader.isRefreshing
@@ -41,6 +47,14 @@ internal class AnimeListStateHolder(
         currentSortOption = option
         currentSortOrder = order
         isFilterPersisted = persist
+    }
+
+    /** Client-side filters (the whole list is already loaded): season/genre/format/year. */
+    fun updateListFilters(season: String?, genres: List<String>, formats: List<String>, year: Int?) {
+        filterSeason = season
+        filterGenres = genres
+        filterFormats = formats
+        filterYear = year
     }
 
     fun load(userId: Int, forceRefresh: Boolean = false) = loader.load(userId, forceRefresh)
@@ -69,7 +83,20 @@ internal class AnimeListStateHolder(
     }
 
     fun entriesInSection(section: AnimeListSection): List<AnimeListEntry> {
-        val filtered = loader.entries.filter { it.status == section }
+        val filtered = loader.entries
+            .filter { it.status == section }
+            .filter {
+                matchesMediaListFilters(
+                    season = it.season,
+                    genres = it.genres,
+                    seasonYear = it.seasonYear,
+                    formatName = it.format.name,
+                    filterSeason = filterSeason,
+                    filterGenres = filterGenres,
+                    filterYear = filterYear,
+                    filterFormats = filterFormats,
+                )
+            }
         val sorted = when (currentSortOption) {
             UserListSort.FOLLOW_LIST -> filtered.sortedBy { it.originalIndex }
             UserListSort.TITLE -> filtered.sortedBy { it.title }

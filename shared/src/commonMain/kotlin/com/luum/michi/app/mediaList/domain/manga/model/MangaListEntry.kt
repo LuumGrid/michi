@@ -33,6 +33,9 @@ internal data class MangaListEntry(
     val trending: Int = 0,
     val priority: Int = 0,
     val nextAiringAt: Long = 0L,
+    val genres: List<String> = emptyList(),
+    val season: String? = null,
+    val seasonYear: Int? = null,
 )
 
 internal fun MangaListEntry.chaptersProgressLabel(): String {

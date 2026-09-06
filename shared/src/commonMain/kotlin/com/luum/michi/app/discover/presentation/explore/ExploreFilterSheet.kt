@@ -66,7 +66,10 @@ internal fun ExploreFilterSheet(
         exploreYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
     }
 
-    PlatformModalSheet(onDismiss = onDismiss) { modifier ->
+    PlatformModalSheet(
+        onDismiss = onDismiss,
+        maxHeightFraction = 0.65f,
+    ) { modifier ->
         Column(modifier = modifier) {
             Box(
                 modifier = Modifier

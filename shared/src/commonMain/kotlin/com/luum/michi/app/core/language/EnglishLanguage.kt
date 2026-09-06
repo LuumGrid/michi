@@ -131,7 +131,7 @@ object EnglishLanguageStrings : LanguageStrings {
     override val confirmDeleteAction = "Remove"
     override val sectionAll = "All"
     override val sectionWatching = "Watching"
-    override val sectionCurrent = "Manga"
+    override val sectionCurrent = "Reading"
     override val sectionCompleted = "Completed"
     override val sectionCompletedTv = "Completed TV"
     override val sectionCompletedMovie = "Completed Movie"
@@ -294,7 +294,7 @@ object EnglishLanguageStrings : LanguageStrings {
     // Filter Sheet & Filter/Order Labels
     override val filterPersistLabel = "Persist filter on app restart"
     override val filterOrderDirectionTitle = "Order Direction"
-    override val filterSortCriterionTitle = "Filter Criterion"
+    override val filterSortCriterionTitle = "Sorting Criterion"
     override val filterResetAction = "Reset"
     override val filterApplyAction = "Apply"
     override val filterSaveAction = "Save"

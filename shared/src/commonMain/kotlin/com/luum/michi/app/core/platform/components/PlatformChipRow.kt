@@ -20,13 +20,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+/** Una opción seleccionable dentro de una fila de chips. */
+internal data class PlatformFilterOption(
+    val id: String,
+    val label: String,
+    /** Conteo opcional mostrado entre paréntesis (usado por Anime/Manga). */
+    val count: Int? = null,
+)
+
 /**
  * Fila horizontal de altura fija con [FilterChip] de Material3 y sombra de
  * overflow en ambos bordes (replica `ShadowedOverflowList` + `ChipSelector` /
  * `ChipMultiSelector` de Otraku). Con [multiSelect] en true cada tap alterna
  * esa opción sin afectar las demás; en false el tap reemplaza la selección.
- */
-@OptIn(ExperimentalMaterial3Api::class)
+ */@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PlatformChipRow(
     options: List<PlatformFilterOption>,
@@ -34,11 +41,12 @@ internal fun PlatformChipRow(
     onToggle: (String) -> Unit,
     modifier: Modifier = Modifier,
     multiSelect: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp),
 ) {
     Box(modifier = modifier.height(40.dp)) {
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 20.dp),
+            contentPadding = contentPadding,
             modifier = Modifier.height(40.dp),
         ) {
             items(options, key = { it.id }) { option ->

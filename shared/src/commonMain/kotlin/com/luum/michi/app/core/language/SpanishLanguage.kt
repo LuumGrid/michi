@@ -131,7 +131,7 @@ object SpanishLanguageStrings : LanguageStrings {
     override val confirmDeleteAction = "Eliminar"
     override val sectionAll = "Todo"
     override val sectionWatching = "Viendo"
-    override val sectionCurrent = "Manga"
+    override val sectionCurrent = "Leyendo"
     override val sectionCompleted = "Completado"
     override val sectionCompletedTv = "TV completado"
     override val sectionCompletedMovie = "Pelicula completada"
