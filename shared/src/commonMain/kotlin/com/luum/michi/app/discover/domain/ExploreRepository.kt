@@ -1,7 +1,8 @@
 package com.luum.michi.app.discover.domain
 
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.search.domain.SearchPage
+import com.luum.michi.app.discover.domain.model.ExplorePage
 
 internal interface ExploreRepository {
     suspend fun searchCatalog(
@@ -14,7 +15,8 @@ internal interface ExploreRepository {
         perPage: Int = 30,
         season: String? = null,
         onList: Boolean? = null,
-    ): NetworkResult<SearchPage>
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage>
 
     suspend fun searchManga(
         query: String?,
@@ -25,23 +27,24 @@ internal interface ExploreRepository {
         page: Int = 1,
         perPage: Int = 30,
         onList: Boolean? = null,
-    ): NetworkResult<SearchPage>
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage>
 
     suspend fun searchCharacters(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<SearchPage>
+    ): NetworkResult<ExplorePage>
 
     suspend fun searchStaff(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<SearchPage>
+    ): NetworkResult<ExplorePage>
 
     suspend fun searchStudios(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
-    ): NetworkResult<SearchPage>
+    ): NetworkResult<ExplorePage>
 }

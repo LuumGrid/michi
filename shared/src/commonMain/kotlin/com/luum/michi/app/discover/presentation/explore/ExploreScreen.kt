@@ -25,7 +25,7 @@ import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
 import com.luum.michi.app.core.platform.components.floatingToolbarClearance
 import com.luum.michi.app.core.platform.components.tabBarClearance
-import com.luum.michi.app.discover.presentation.common.SearchResultCard
+import com.luum.michi.app.discover.presentation.common.DiscoverResultCard
 import com.luum.michi.app.discover.presentation.explore.state.ExploreStateHolder
 
 @Composable
@@ -91,7 +91,7 @@ internal fun ExploreScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         items(stateHolder.visibleResults, key = { "${it.id}_${stateHolder.category.name}" }) { result ->
-                            SearchResultCard(
+                            DiscoverResultCard(
                                 result = result,
                                 onClick = { onOpenMedia(result.id) },
                                 onLongClick = { onEditMedia(result.id) },

@@ -12,24 +12,20 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.model.UserListOrder
 import com.luum.michi.app.core.platform.model.UserListSort
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.search.domain.model.SearchResult
-
-internal enum class ExploreCategory {
-    ANIME,
-    MANGA,
-    CHARACTERS,
-    STAFF,
-    STUDIOS
-}
+import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreResult
 
 internal class ExploreStateHolder(
     private val repository: ExploreRepository,
     private val scope: CoroutineScope,
+    private val strings: LanguageStrings,
 ) {
     var query by mutableStateOf("")
     var category by mutableStateOf(ExploreCategory.ANIME)
@@ -44,23 +40,23 @@ internal class ExploreStateHolder(
     var isFilterPersisted by mutableStateOf(false)
     var focusSearchRequested by mutableStateOf(false)
 
-    private val resultsBacking = mutableStateListOf<SearchResult>()
+    private val resultsBacking = mutableStateListOf<ExploreResult>()
     private var loadingState by mutableStateOf(false)
     private var loadingMoreState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
     private var hasNextPageState by mutableStateOf(false)
     private var currentPage by mutableStateOf(1)
 
-    val results: List<SearchResult> get() = resultsBacking
+    val results: List<ExploreResult> get() = resultsBacking
     val isLoading: Boolean get() = loadingState
     val isLoadingMore: Boolean get() = loadingMoreState
     val hasNextPage: Boolean get() = hasNextPageState
     val error: NetworkError? get() = errorState
 
     /** Orden in-app espejo de las listas: solo TITLE/AVERAGE_SCORE/FAVORITES
-     *  tienen dato local en SearchResult; el resto lo ordena el servidor
+     *  tienen dato local en ExploreResult; el resto lo ordena el servidor
      *  vía el MediaSort derivado en [updateSort]. */
-    val visibleResults: List<SearchResult>
+    val visibleResults: List<ExploreResult>
         get() {
             val ordered = when (currentSortOption) {
                 UserListSort.TITLE -> resultsBacking.sortedBy { it.title.lowercase() }
@@ -207,6 +203,7 @@ internal class ExploreStateHolder(
             page = page,
             season = season,
             onList = onList,
+            strings = strings,
         )
         ExploreCategory.MANGA -> repository.searchManga(
             query = query.takeIf { it.isNotBlank() },
@@ -216,6 +213,7 @@ internal class ExploreStateHolder(
             sort = sort,
             page = page,
             onList = onList,
+            strings = strings,
         )
         ExploreCategory.CHARACTERS -> repository.searchCharacters(
             query = query.takeIf { it.isNotBlank() },
@@ -270,7 +268,8 @@ internal fun rememberExploreStateHolder(
     repository: ExploreRepository,
 ): ExploreStateHolder {
     val scope = rememberCoroutineScope()
-    return remember(repository) {
-        ExploreStateHolder(repository, scope)
+    val strings = LanguageProvider.strings
+    return remember(repository, strings) {
+        ExploreStateHolder(repository, scope, strings)
     }
 }

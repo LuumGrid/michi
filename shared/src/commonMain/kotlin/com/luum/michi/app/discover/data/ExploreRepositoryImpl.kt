@@ -10,11 +10,12 @@ import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.search.data.toSearchResult
-import com.luum.michi.app.search.domain.SearchPage
-import com.luum.michi.app.search.domain.model.SearchResult
+import com.luum.michi.app.discover.data.toExploreResult
+import com.luum.michi.app.discover.domain.model.ExplorePage
+import com.luum.michi.app.discover.domain.model.ExploreResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -174,7 +175,8 @@ internal class ExploreRepositoryImpl(
         perPage: Int,
         season: String?,
         onList: Boolean?,
-    ): NetworkResult<SearchPage> {
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -208,8 +210,8 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            SearchPage(
-                results = response.page?.media.orEmpty().map { it.toSearchResult() },
+            ExplorePage(
+                results = response.page?.media.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -224,7 +226,8 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         onList: Boolean?,
-    ): NetworkResult<SearchPage> {
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -258,8 +261,8 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            SearchPage(
-                results = response.page?.media.orEmpty().map { it.toSearchResult() },
+            ExplorePage(
+                results = response.page?.media.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -269,7 +272,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
-    ): NetworkResult<SearchPage> {
+    ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -289,8 +292,8 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(CharacterSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            SearchPage(
-                results = response.page?.characters.orEmpty().map { it.toSearchResult() },
+            ExplorePage(
+                results = response.page?.characters.orEmpty().map { it.toExploreResult() },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -300,7 +303,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
-    ): NetworkResult<SearchPage> {
+    ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -320,8 +323,8 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(StaffSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            SearchPage(
-                results = response.page?.staff.orEmpty().map { it.toSearchResult() },
+            ExplorePage(
+                results = response.page?.staff.orEmpty().map { it.toExploreResult() },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -331,7 +334,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
-    ): NetworkResult<SearchPage> {
+    ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -351,15 +354,15 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(StudioSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            SearchPage(
-                results = response.page?.studios.orEmpty().map { it.toSearchResult() },
+            ExplorePage(
+                results = response.page?.studios.orEmpty().map { it.toExploreResult() },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
     }
 }
 
-private fun CharacterDto.toSearchResult(): SearchResult = SearchResult(
+private fun CharacterDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
     meta = "Character",
@@ -368,7 +371,7 @@ private fun CharacterDto.toSearchResult(): SearchResult = SearchResult(
     averageScore = null
 )
 
-private fun StaffDto.toSearchResult(): SearchResult = SearchResult(
+private fun StaffDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
     meta = "Staff",
@@ -377,7 +380,7 @@ private fun StaffDto.toSearchResult(): SearchResult = SearchResult(
     averageScore = null
 )
 
-private fun StudioDto.toSearchResult(): SearchResult = SearchResult(
+private fun StudioDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name,
     meta = "Studio",
@@ -388,33 +391,33 @@ private fun StudioDto.toSearchResult(): SearchResult = SearchResult(
 
 @Serializable
 internal data class CharacterSearchResponseDto(
-    @SerialName("Page") val page: CharacterSearchPageDto? = null,
+    @SerialName("Page") val page: CharacterExplorePageDto? = null,
 )
 
 @Serializable
-internal data class CharacterSearchPageDto(
+internal data class CharacterExplorePageDto(
     val pageInfo: MediaPageInfoDto? = null,
     val characters: List<CharacterDto> = emptyList(),
 )
 
 @Serializable
 internal data class StaffSearchResponseDto(
-    @SerialName("Page") val page: StaffSearchPageDto? = null,
+    @SerialName("Page") val page: StaffExplorePageDto? = null,
 )
 
 @Serializable
-internal data class StaffSearchPageDto(
+internal data class StaffExplorePageDto(
     val pageInfo: MediaPageInfoDto? = null,
     val staff: List<StaffDto> = emptyList(),
 )
 
 @Serializable
 internal data class StudioSearchResponseDto(
-    @SerialName("Page") val page: StudioSearchPageDto? = null,
+    @SerialName("Page") val page: StudioExplorePageDto? = null,
 )
 
 @Serializable
-internal data class StudioSearchPageDto(
+internal data class StudioExplorePageDto(
     val pageInfo: MediaPageInfoDto? = null,
     val studios: List<StudioDto> = emptyList(),
 )

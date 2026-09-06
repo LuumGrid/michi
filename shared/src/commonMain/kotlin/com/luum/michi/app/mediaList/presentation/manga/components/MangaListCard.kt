@@ -15,6 +15,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.isComplete
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.releaseLabel
 import com.luum.michi.app.mediaList.domain.manga.model.volumesProgressLabel
+import com.luum.michi.app.core.anilist.label
 
 @Composable
 internal fun MangaListCard(
@@ -28,7 +29,7 @@ internal fun MangaListCard(
 
     PlatformMediaListCard(
         title = entry.title,
-        subtitle = entry.format.label(),
+        subtitle = entry.format.label(unknownFallback = "Manga"),
         score = entry.formattedScore(),
         primaryProgressLabel = entry.chaptersProgressLabel(),
         primaryProgressRatio = entry.chaptersProgressRatio(),

@@ -127,37 +127,25 @@ internal fun PlatformListFilterSheet(
                                 modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
                             )
 
-                            UserListSort.values().forEach { sort ->
-                                val rawLabel = sort.label(strings)
-                                val displayLabel = if (sort == UserListSort.PROGRESS && isManga) {
-                                    strings.sortProgressManga
-                                } else {
-                                    rawLabel
-                                }
-
-                                val isSelected = selectedSort == sort
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { selectedSort = sort }
-                                        .padding(vertical = 2.dp, horizontal = 6.dp),
-                                ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = { selectedSort = sort },
-                                        modifier = Modifier.size(36.dp),
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = displayLabel,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                    )
+                            val sortOptions = remember(isManga) {
+                                UserListSort.values().map { sort ->
+                                    val label = if (sort == UserListSort.PROGRESS && isManga) {
+                                        strings.sortProgressManga
+                                    } else {
+                                        sort.label(strings)
+                                    }
+                                    PlatformFilterOption(id = sort.name, label = label)
                                 }
                             }
+
+                            PlatformChipRow(
+                                options = sortOptions,
+                                selectedIds = setOf(selectedSort.name),
+                                onToggle = { id ->
+                                    UserListSort.values().firstOrNull { it.name == id }?.let { selectedSort = it }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     }
                 }

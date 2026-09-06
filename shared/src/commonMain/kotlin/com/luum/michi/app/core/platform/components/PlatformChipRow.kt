@@ -48,7 +48,9 @@ internal fun PlatformChipRow(
                     onClick = {
                         if (multiSelect || !selected) onToggle(option.id)
                     },
-                    label = { Text(option.label) },
+                    label = {
+                        Text(if (option.count != null) "${option.label} (${option.count})" else option.label)
+                    },
                 )
             }
         }

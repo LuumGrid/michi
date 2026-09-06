@@ -1,9 +1,10 @@
-package com.luum.michi.app.discover.presentation.explore.model
+package com.luum.michi.app.discover.domain.model
 
+import com.luum.michi.app.core.anilist.MediaFormat
+import com.luum.michi.app.core.anilist.label
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
-import com.luum.michi.app.discover.presentation.explore.state.ExploreCategory
 
 internal data class ExploreFormatOption(val value: String, val label: String)
 
@@ -23,16 +24,10 @@ internal fun exploreGenres(): List<String> {
     )
 }
 
-internal fun exploreFormats(strings: LanguageStrings): List<ExploreFormatOption> = listOf(
-    ExploreFormatOption("TV", "TV"),
-    ExploreFormatOption("MOVIE", strings.exploreFormatMovieLabel),
-    ExploreFormatOption("OVA", "OVAs"),
-    ExploreFormatOption("ONA", "ONAs"),
-    ExploreFormatOption("SPECIAL", strings.exploreFormatSpecialLabel),
-    ExploreFormatOption("MANGA", strings.exploreFormatMangaLabel),
-    ExploreFormatOption("NOVEL", strings.exploreFormatNovelLabel),
-    ExploreFormatOption("ONE_SHOT", "One-shots"),
-)
+internal fun exploreFormats(): List<ExploreFormatOption> =
+    MediaFormat.entries
+        .filter { it != MediaFormat.UNKNOWN }
+        .map { ExploreFormatOption(it.name, it.label()) }
 
 /**
  * Años seleccionables: del año siguiente al actual (cubre la "próxima temporada"

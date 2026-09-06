@@ -39,7 +39,7 @@ import com.luum.michi.app.discover.presentation.dashboard.state.rememberDashboar
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.presentation.explore.ExploreScreen
 import com.luum.michi.app.discover.presentation.explore.ExploreFilterSheet
-import com.luum.michi.app.discover.presentation.explore.state.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.presentation.explore.state.rememberExploreStateHolder
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.presentation.CalendarScreen
@@ -450,6 +450,7 @@ internal fun ShellScreen(
                 ShellBottomCluster(
                     selectedTab = shellState.selectedTab,
                     onSearchClick = {
+                        shellState.selectTab(ShellTabSection.DISCOVER)
                         exploreState.enterBlankSearch()
                         shellState.openExplore()
                     },

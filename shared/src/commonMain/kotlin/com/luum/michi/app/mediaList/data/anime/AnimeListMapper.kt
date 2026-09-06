@@ -2,20 +2,20 @@ package com.luum.michi.app.mediaList.data.anime
 
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.mediaList.domain.anime.model.AnimeMediaFormat
 import com.luum.michi.app.mediaList.domain.anime.model.completedSection
-import com.luum.michi.app.mediaList.domain.anime.model.parseAnimeMediaFormat
+import com.luum.michi.app.core.anilist.MediaFormat
+import com.luum.michi.app.core.anilist.parseMediaFormat
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.toComparableInt
 import com.luum.michi.app.core.model.toMediaReleaseDateTime
 import com.luum.michi.app.core.platform.hexToPalette
 
 internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry {
-    val section = mapAnimeStatus(status, parseAnimeMediaFormat(media.format))
+    val section = mapAnimeStatus(status, parseMediaFormat(media.format))
     return AnimeListEntry(
         id = media.id,
         title = media.title.bestTitle(),
-        format = parseAnimeMediaFormat(media.format),
+        format = parseMediaFormat(media.format),
         status = section,
         progress = progress,
         totalEpisodes = media.episodes,
@@ -38,7 +38,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
     )
 }
 
-private fun mapAnimeStatus(status: String?, format: AnimeMediaFormat): AnimeListSection {
+private fun mapAnimeStatus(status: String?, format: MediaFormat): AnimeListSection {
     return when (status?.uppercase()) {
         "CURRENT" -> AnimeListSection.WATCHING
         "COMPLETED" -> format.completedSection()

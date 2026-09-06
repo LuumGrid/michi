@@ -1,5 +1,6 @@
 package com.luum.michi.app.discover.domain
 
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
 
@@ -18,5 +19,5 @@ internal interface DashboardRepository {
     /**
      * Fetches trending, seasonal, and popular media in a single GraphQL round trip.
      */
-    suspend fun loadFeed(): NetworkResult<DashboardFeed>
+    suspend fun loadFeed(strings: LanguageStrings): NetworkResult<DashboardFeed>
 }

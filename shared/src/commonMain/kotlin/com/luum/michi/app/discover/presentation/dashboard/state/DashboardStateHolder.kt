@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
@@ -30,6 +32,7 @@ private val EmptyFeed = DashboardFeed(
 internal class DashboardStateHolder(
     private val repository: DashboardRepository,
     private val scope: CoroutineScope,
+    private val strings: LanguageStrings,
 ) {
     private var feedState by mutableStateOf(EmptyFeed)
     private var loadingState by mutableStateOf(false)
@@ -63,7 +66,7 @@ internal class DashboardStateHolder(
         errorState = null
         scope.launch {
             try {
-                when (val result = repository.loadFeed()) {
+                when (val result = repository.loadFeed(strings)) {
                     is NetworkResult.Success -> {
                         feedState = result.value
                         lastLoaded = timeMark.markNow()
@@ -87,7 +90,8 @@ internal fun rememberDashboardStateHolder(
     repository: DashboardRepository,
 ): DashboardStateHolder {
     val scope = rememberCoroutineScope()
-    return remember(repository) {
-        DashboardStateHolder(repository, scope).also { it.load(forceRefresh = false) }
+    val strings = LanguageProvider.strings
+    return remember(repository, strings) {
+        DashboardStateHolder(repository, scope, strings).also { it.load(forceRefresh = false) }
     }
 }

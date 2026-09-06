@@ -20,12 +20,12 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.platform.components.PlatformFavouritesBadge
 import com.luum.michi.app.core.platform.components.PlatformMediaCover
 import com.luum.michi.app.core.platform.components.PlatformRatingBadge
-import com.luum.michi.app.search.domain.model.SearchResult
+import com.luum.michi.app.discover.domain.model.ExploreResult
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun SearchResultCard(
-    result: SearchResult,
+internal fun DiscoverResultCard(
+    result: ExploreResult,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {

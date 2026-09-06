@@ -1,8 +1,8 @@
-package com.luum.michi.app.search.domain.model
+package com.luum.michi.app.discover.domain.model
 
 import androidx.compose.ui.graphics.Color
 
-internal data class SearchResult(
+internal data class ExploreResult(
     val id: Int,
     val title: String,
     val meta: String,

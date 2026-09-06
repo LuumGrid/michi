@@ -2,6 +2,7 @@ package com.luum.michi.app.mediaList.domain.manga.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.luum.michi.app.core.anilist.MediaFormat
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 
@@ -9,7 +10,7 @@ import com.luum.michi.app.core.model.MediaReleaseDateTime
 internal data class MangaListEntry(
     val id: Int,
     val title: String,
-    val format: MangaMediaFormat,
+    val format: MediaFormat,
     val status: MangaListSection,
     val chaptersProgress: Int,
     val totalChapters: Int?,

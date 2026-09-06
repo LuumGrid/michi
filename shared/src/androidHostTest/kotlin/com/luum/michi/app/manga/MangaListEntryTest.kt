@@ -2,7 +2,7 @@ package com.luum.michi.app.manga
 
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.mediaList.domain.manga.model.MangaMediaFormat
+import com.luum.michi.app.core.anilist.MediaFormat
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.formattedScore
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 private fun novelEntry(volumesProgress: Int) = MangaListEntry(
     id = 1,
     title = "Novel",
-    format = MangaMediaFormat.NOVEL,
+    format = MediaFormat.NOVEL,
     status = MangaListSection.CURRENT,
     chaptersProgress = 0,
     totalChapters = 0,
@@ -32,7 +32,7 @@ private fun novelEntry(volumesProgress: Int) = MangaListEntry(
 private fun mangaEntry(chaptersProgress: Int) = MangaListEntry(
     id = 2,
     title = "Manga",
-    format = MangaMediaFormat.MANGA,
+    format = MediaFormat.MANGA,
     status = MangaListSection.CURRENT,
     chaptersProgress = chaptersProgress,
     totalChapters = 8,

@@ -8,10 +8,10 @@ import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
-import com.luum.michi.app.mediaList.domain.manga.model.parseMangaMediaFormat
+import com.luum.michi.app.core.anilist.parseMediaFormat
 
 internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
-    val format = parseMangaMediaFormat(media.format)
+    val format = parseMediaFormat(media.format)
     return MangaListEntry(
         id = media.id,
         title = media.title.bestTitle(),

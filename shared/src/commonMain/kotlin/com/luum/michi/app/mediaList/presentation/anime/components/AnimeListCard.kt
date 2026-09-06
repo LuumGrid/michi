@@ -9,6 +9,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.anime.model.progressLabel
 import com.luum.michi.app.mediaList.domain.anime.model.progressRatio
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
+import com.luum.michi.app.core.anilist.label
 import com.luum.michi.app.core.language.LanguageProvider
 import com.luum.michi.app.core.platform.PlatformIcons
 import com.luum.michi.app.core.platform.components.PlatformMediaListCard
@@ -24,7 +25,7 @@ internal fun AnimeListCard(
 
     PlatformMediaListCard(
         title = entry.title,
-        subtitle = entry.format.label(),
+        subtitle = entry.format.label(unknownFallback = "Anime"),
         score = entry.formattedScore(),
         primaryProgressLabel = entry.progressLabel(),
         primaryProgressRatio = entry.progressRatio(),

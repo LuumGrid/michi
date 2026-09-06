@@ -26,12 +26,12 @@ import com.luum.michi.app.core.platform.components.PlatformChipRow
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.core.platform.components.PlatformModalSheet
 import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
-import com.luum.michi.app.discover.presentation.explore.model.exploreFormats
-import com.luum.michi.app.discover.presentation.explore.model.exploreGenres
-import com.luum.michi.app.discover.presentation.explore.model.exploreSeasonOptions
-import com.luum.michi.app.discover.presentation.explore.model.exploreYears
-import com.luum.michi.app.discover.presentation.explore.model.filterLabel
-import com.luum.michi.app.discover.presentation.explore.state.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.exploreFormats
+import com.luum.michi.app.discover.domain.model.exploreGenres
+import com.luum.michi.app.discover.domain.model.exploreSeasonOptions
+import com.luum.michi.app.discover.domain.model.exploreYears
+import com.luum.michi.app.discover.domain.model.filterLabel
 import com.luum.michi.app.discover.presentation.explore.state.ExploreStateHolder
 
 /**
@@ -59,8 +59,8 @@ internal fun ExploreFilterSheet(
     }
     val seasonOptions = remember(strings) { exploreSeasonOptions(strings) }
     val genreOptions = remember { exploreGenres().map { PlatformFilterOption(it, it) } }
-    val formatOptions = remember(strings) {
-        exploreFormats(strings).map { PlatformFilterOption(it.value, it.label) }
+    val formatOptions = remember {
+        exploreFormats().map { PlatformFilterOption(it.value, it.label) }
     }
     val yearOptions = remember(strings) {
         exploreYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }

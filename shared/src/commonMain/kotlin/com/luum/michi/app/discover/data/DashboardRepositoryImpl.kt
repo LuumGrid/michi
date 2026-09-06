@@ -1,6 +1,7 @@
 package com.luum.michi.app.discover.data
 
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.core.media.MediaSeasonYear
@@ -86,7 +87,7 @@ internal class DashboardRepositoryImpl(
     private val seasonProvider: () -> MediaSeasonYear = { currentSeasonAndYear() },
 ) : DashboardRepository {
 
-    override suspend fun loadFeed(): NetworkResult<DashboardFeed> {
+    override suspend fun loadFeed(strings: LanguageStrings): NetworkResult<DashboardFeed> {
         val current = seasonProvider()
         val next = current.next()
 
@@ -105,6 +106,6 @@ internal class DashboardRepositoryImpl(
 
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(DashboardResponseDto.serializer(), dataJson)
-        }.map { it.toDashboardFeed() }
+        }.map { it.toDashboardFeed(strings) }
     }
 }

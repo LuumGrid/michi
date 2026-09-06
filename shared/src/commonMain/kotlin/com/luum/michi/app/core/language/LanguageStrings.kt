@@ -31,6 +31,8 @@ interface LanguageStrings {
     val exploreAllTimePopularMangaTitle: String
     val exploreTopAnimeTitle: String
     val exploreTopMangaTitle: String
+    fun exploreEpisodeCountLabel(count: Int): String
+    fun exploreChapterCountLabel(count: Int): String
     val exploreCharactersCategoryLabel: String
     val exploreStudiosCategoryLabel: String
     val exploreFilterTypeLabel: String
@@ -44,10 +46,6 @@ interface LanguageStrings {
     val exploreSeasonSpringLabel: String
     val exploreSeasonSummerLabel: String
     val exploreSeasonFallLabel: String
-    val exploreFormatMovieLabel: String
-    val exploreFormatSpecialLabel: String
-    val exploreFormatMangaLabel: String
-    val exploreFormatNovelLabel: String
     val calendarTitle: String
     val calendarEmptyLabel: String
     val tomorrowLabel: String
