@@ -589,10 +589,8 @@ internal fun ShellScreen(
         }
 
         if (shellState.isExploreFilterOpen) {
-            val isSpanish = strings.languageLabel.equals("Idioma", ignoreCase = true)
             ExploreFilterSheet(
                 stateHolder = exploreState,
-                isSpanish = isSpanish,
                 onDismiss = shellState::closeExploreFilter,
             )
         }

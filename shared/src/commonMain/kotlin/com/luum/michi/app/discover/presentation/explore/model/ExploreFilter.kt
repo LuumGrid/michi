@@ -1,17 +1,18 @@
 package com.luum.michi.app.discover.presentation.explore.model
 
+import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.media.currentSeasonAndYear
 import com.luum.michi.app.core.platform.components.PlatformFilterOption
 import com.luum.michi.app.discover.presentation.explore.state.ExploreCategory
 
 internal data class ExploreFormatOption(val value: String, val label: String)
 
-internal fun ExploreCategory.filterLabel(isSpanish: Boolean): String = when (this) {
+internal fun ExploreCategory.filterLabel(strings: LanguageStrings): String = when (this) {
     ExploreCategory.ANIME -> "Anime"
     ExploreCategory.MANGA -> "Manga"
-    ExploreCategory.CHARACTERS -> if (isSpanish) "Personajes" else "Characters"
+    ExploreCategory.CHARACTERS -> strings.exploreCharactersCategoryLabel
     ExploreCategory.STAFF -> "Staff"
-    ExploreCategory.STUDIOS -> if (isSpanish) "Estudios" else "Studios"
+    ExploreCategory.STUDIOS -> strings.exploreStudiosCategoryLabel
 }
 
 internal fun exploreGenres(): List<String> {
@@ -22,29 +23,16 @@ internal fun exploreGenres(): List<String> {
     )
 }
 
-internal fun exploreFormats(isSpanish: Boolean): List<ExploreFormatOption> = if (isSpanish) {
-    listOf(
-        ExploreFormatOption("TV", "TV"),
-        ExploreFormatOption("MOVIE", "Películas"),
-        ExploreFormatOption("OVA", "OVAs"),
-        ExploreFormatOption("ONA", "ONAs"),
-        ExploreFormatOption("SPECIAL", "Especiales"),
-        ExploreFormatOption("MANGA", "Mangas"),
-        ExploreFormatOption("NOVEL", "Novelas"),
-        ExploreFormatOption("ONE_SHOT", "One-shots"),
-    )
-} else {
-    listOf(
-        ExploreFormatOption("TV", "TV"),
-        ExploreFormatOption("MOVIE", "Movies"),
-        ExploreFormatOption("OVA", "OVAs"),
-        ExploreFormatOption("ONA", "ONAs"),
-        ExploreFormatOption("SPECIAL", "Specials"),
-        ExploreFormatOption("MANGA", "Manga"),
-        ExploreFormatOption("NOVEL", "Novels"),
-        ExploreFormatOption("ONE_SHOT", "One-shots"),
-    )
-}
+internal fun exploreFormats(strings: LanguageStrings): List<ExploreFormatOption> = listOf(
+    ExploreFormatOption("TV", "TV"),
+    ExploreFormatOption("MOVIE", strings.exploreFormatMovieLabel),
+    ExploreFormatOption("OVA", "OVAs"),
+    ExploreFormatOption("ONA", "ONAs"),
+    ExploreFormatOption("SPECIAL", strings.exploreFormatSpecialLabel),
+    ExploreFormatOption("MANGA", strings.exploreFormatMangaLabel),
+    ExploreFormatOption("NOVEL", strings.exploreFormatNovelLabel),
+    ExploreFormatOption("ONE_SHOT", "One-shots"),
+)
 
 /**
  * Años seleccionables: del año siguiente al actual (cubre la "próxima temporada"
@@ -55,14 +43,14 @@ internal fun exploreYears(): List<Int?> {
     return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
 }
 
-internal fun exploreSeasonOptions(isSpanish: Boolean): List<PlatformFilterOption> {
-    val any = if (isSpanish) "Cualquier temporada" else "Any season"
-    val labels = if (isSpanish) {
-        listOf("Invierno", "Primavera", "Verano", "Otoño")
-    } else {
-        listOf("Winter", "Spring", "Summer", "Fall")
-    }
+internal fun exploreSeasonOptions(strings: LanguageStrings): List<PlatformFilterOption> {
+    val labels = listOf(
+        strings.exploreSeasonWinterLabel,
+        strings.exploreSeasonSpringLabel,
+        strings.exploreSeasonSummerLabel,
+        strings.exploreSeasonFallLabel,
+    )
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
-    return listOf(PlatformFilterOption("any", any)) +
+    return listOf(PlatformFilterOption("any", strings.exploreAnySeasonLabel)) +
         ids.zip(labels) { id, label -> PlatformFilterOption(id, label) }
 }

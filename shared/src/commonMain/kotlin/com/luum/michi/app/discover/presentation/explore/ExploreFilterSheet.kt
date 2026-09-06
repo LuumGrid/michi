@@ -42,7 +42,6 @@ import com.luum.michi.app.discover.presentation.explore.state.ExploreStateHolder
 @Composable
 internal fun ExploreFilterSheet(
     stateHolder: ExploreStateHolder,
-    isSpanish: Boolean,
     onDismiss: () -> Unit,
 ) {
     val strings = LanguageProvider.strings
@@ -55,17 +54,16 @@ internal fun ExploreFilterSheet(
     val draftIsEntity = draftCategory == ExploreCategory.CHARACTERS ||
         draftCategory == ExploreCategory.STAFF ||
         draftCategory == ExploreCategory.STUDIOS
-    val typeOptions = remember(isSpanish) {
-        ExploreCategory.entries.map { PlatformFilterOption(it.name, it.filterLabel(isSpanish)) }
+    val typeOptions = remember(strings) {
+        ExploreCategory.entries.map { PlatformFilterOption(it.name, it.filterLabel(strings)) }
     }
-    val seasonOptions = remember(isSpanish) { exploreSeasonOptions(isSpanish) }
+    val seasonOptions = remember(strings) { exploreSeasonOptions(strings) }
     val genreOptions = remember { exploreGenres().map { PlatformFilterOption(it, it) } }
-    val formatOptions = remember(isSpanish) {
-        exploreFormats(isSpanish).map { PlatformFilterOption(it.value, it.label) }
+    val formatOptions = remember(strings) {
+        exploreFormats(strings).map { PlatformFilterOption(it.value, it.label) }
     }
-    val anyYearLabel = if (isSpanish) "Cualquier año" else "Any year"
-    val yearOptions = remember(anyYearLabel) {
-        exploreYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: anyYearLabel) }
+    val yearOptions = remember(strings) {
+        exploreYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
     }
 
     PlatformModalSheet(onDismiss = onDismiss) { modifier ->
@@ -92,7 +90,7 @@ internal fun ExploreFilterSheet(
                     .weight(1f),
             ) {
                 item(key = "group_type") {
-                    FilterGroupSection(title = if (isSpanish) "Tipo" else "Type") {
+                    FilterGroupSection(title = strings.exploreFilterTypeLabel) {
                         PlatformChipRow(
                             options = typeOptions,
                             selectedIds = setOf(draftCategory.name),
@@ -108,7 +106,7 @@ internal fun ExploreFilterSheet(
                 if (!draftIsEntity) {
                     if (draftCategory == ExploreCategory.ANIME) {
                         item(key = "group_season") {
-                            FilterGroupSection(title = if (isSpanish) "Temporada" else "Season") {
+                            FilterGroupSection(title = strings.exploreFilterSeasonLabel) {
                                 PlatformChipRow(
                                     options = seasonOptions,
                                     selectedIds = setOf(draftSeason ?: "any"),
@@ -119,7 +117,7 @@ internal fun ExploreFilterSheet(
                         }
                     }
                     item(key = "group_genre") {
-                        FilterGroupSection(title = if (isSpanish) "Género" else "Genre") {
+                        FilterGroupSection(title = strings.exploreFilterGenreLabel) {
                             PlatformChipRow(
                                 options = genreOptions,
                                 selectedIds = draftGenres.toSet(),
@@ -132,7 +130,7 @@ internal fun ExploreFilterSheet(
                         }
                     }
                     item(key = "group_format") {
-                        FilterGroupSection(title = if (isSpanish) "Formato" else "Format") {
+                        FilterGroupSection(title = strings.exploreFilterFormatLabel) {
                             PlatformChipRow(
                                 options = formatOptions,
                                 selectedIds = draftFormats.toSet(),
@@ -145,7 +143,7 @@ internal fun ExploreFilterSheet(
                         }
                     }
                     item(key = "group_year") {
-                        FilterGroupSection(title = if (isSpanish) "Año" else "Year") {
+                        FilterGroupSection(title = strings.exploreFilterYearLabel) {
                             PlatformChipRow(
                                 options = yearOptions,
                                 selectedIds = setOf(draftYear?.toString() ?: "any"),
