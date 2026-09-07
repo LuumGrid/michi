@@ -25,11 +25,11 @@ abstract class GenerateAniListBuildConfigTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/auth")
+        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/domain/auth")
         packageDir.mkdirs()
         packageDir.resolve("AniListBuildConfig.kt").writeText(
             """
-            package com.luum.michi.app.core.auth
+            package com.luum.michi.app.core.domain.auth
 
             /**
              * Generated at build time from `local.properties`.
@@ -102,9 +102,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.coil.network.okhttp)
             implementation(libs.androidx.browser)
             implementation(libs.ktor.client.okhttp)
         }
@@ -116,16 +113,13 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(libs.compose.materialIconsCore)
                 implementation(libs.compose.ui)
-                implementation(libs.compose.components.resources)
-                implementation(libs.compose.uiToolingPreview)
-                implementation(libs.androidx.lifecycle.viewmodelCompose)
-                implementation(libs.androidx.lifecycle.runtimeCompose)
-                implementation(libs.coil.compose)
+                implementation(libs.material.kolor)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinxJson)
+                implementation(libs.qrose)
             }
         }
         iosMain.dependencies {
@@ -135,14 +129,4 @@ kotlin {
             implementation(libs.kotlin.test)
         }
     }
-}
-
-compose.resources {
-    publicResClass = true
-    packageOfResClass = "com.luum.michi.app.resources"
-    generateResClass = always
-}
-
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
 }

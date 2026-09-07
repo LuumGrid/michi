@@ -4,8 +4,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -16,14 +14,8 @@ kotlin {
 dependencies {
     implementation(projects.shared)
 
-    implementation(libs.androidx.activity.compose)
-
-    implementation(libs.compose.uiToolingPreview)
-    debugImplementation(libs.compose.uiTooling)
-
-    // Coil: needed by MichiApplication to configure the singleton ImageLoader
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
+    // Placeholder entry point (no Compose): plain Activity base class.
+    implementation(libs.androidx.activity)
 }
 
 val keystoreProperties = Properties().apply {

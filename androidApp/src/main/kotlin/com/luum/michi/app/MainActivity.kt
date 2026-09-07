@@ -3,22 +3,20 @@ package com.luum.michi.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 
+/**
+ * UI placeholder: keeps the architecture entry point (OAuth deep-link dispatch
+ * against the process-wide [MichiDependencies] owned by [MichiApplication])
+ * without any Compose UI. Screens will be re-added on top of the pure-logic
+ * state holders.
+ */
 class MainActivity : ComponentActivity() {
 
-    private lateinit var dependencies: MichiDependencies
+    private val dependencies: MichiDependencies
+        get() = (application as MichiApplication).dependencies
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        dependencies = createMichiDependencies(this)
-
-        setContent {
-            App(dependencies = dependencies)
-        }
 
         handleOAuthCallback(intent)
     }

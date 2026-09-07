@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaList.domain.anime
 
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
-import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.domain.network.NetworkResult
 
 internal interface AnimeListRepository {
     /**

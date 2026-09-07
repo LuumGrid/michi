@@ -1,0 +1,241 @@
+package com.luum.michi.app.mediaDetail.repository.media
+
+import com.luum.michi.app.core.repository.anilist.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.domain.medialist.MediaListStatus
+import com.luum.michi.app.core.domain.medialist.parseMediaListStatus
+import com.luum.michi.app.core.domain.medialist.toApiValue
+import com.luum.michi.app.core.domain.model.millisToCalendarParts
+import com.luum.michi.app.core.domain.network.AniListGraphQLClient
+import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
+import com.luum.michi.app.core.repository.network.AniListJson
+import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.domain.network.map
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+
+private const val SaveMediaListEntryMutation = """
+mutation SaveMediaListEntry(
+  ${'$'}mediaId: Int!,
+  ${'$'}status: MediaListStatus,
+  ${'$'}progress: Int,
+  ${'$'}progressVolumes: Int,
+  ${'$'}score: Float,
+  ${'$'}notes: String,
+  ${'$'}repeat: Int,
+  ${'$'}priority: Int,
+  ${'$'}private: Boolean,
+  ${'$'}hiddenFromStatusLists: Boolean,
+  ${'$'}startedAt: FuzzyDateInput,
+  ${'$'}completedAt: FuzzyDateInput
+) {
+  SaveMediaListEntry(
+    mediaId: ${'$'}mediaId,
+    status: ${'$'}status,
+    progress: ${'$'}progress,
+    progressVolumes: ${'$'}progressVolumes,
+    score: ${'$'}score,
+    notes: ${'$'}notes,
+    repeat: ${'$'}repeat,
+    priority: ${'$'}priority,
+    private: ${'$'}private,
+    hiddenFromStatusLists: ${'$'}hiddenFromStatusLists,
+    startedAt: ${'$'}startedAt,
+    completedAt: ${'$'}completedAt
+  ) {
+    id status progress progressVolumes score notes repeat priority private hiddenFromStatusLists
+    startedAt { year month day }
+    completedAt { year month day }
+  }
+}
+"""
+
+private fun fuzzyDateInput(millis: Long?): JsonElement {
+    if (millis == null) {
+        return buildJsonObject {
+            put("year", JsonNull)
+            put("month", JsonNull)
+            put("day", JsonNull)
+        }
+    }
+    val parts = millisToCalendarParts(millis)
+    return buildJsonObject {
+        put("year", JsonPrimitive(parts.year))
+        put("month", JsonPrimitive(parts.month))
+        put("day", JsonPrimitive(parts.day))
+    }
+}
+
+@Serializable
+private data class SaveMediaListEntryResponse(
+    @SerialName("SaveMediaListEntry") val entry: MediaViewerListEntryDto? = null,
+)
+
+private const val SaveMediaListProgressMutation = """
+mutation SaveMediaListProgress(
+  ${'$'}mediaId: Int!,
+  ${'$'}progress: Int,
+  ${'$'}progressVolumes: Int,
+  ${'$'}status: MediaListStatus
+) {
+  SaveMediaListEntry(
+    mediaId: ${'$'}mediaId,
+    progress: ${'$'}progress,
+    progressVolumes: ${'$'}progressVolumes,
+    status: ${'$'}status
+  ) {
+    id status progress progressVolumes
+  }
+}
+"""
+
+private const val ToggleFavouriteMutation = """
+mutation ToggleFavourite(${'$'}animeId: Int, ${'$'}mangaId: Int) {
+  ToggleFavourite(animeId: ${'$'}animeId, mangaId: ${'$'}mangaId) {
+    anime { nodes { id } }
+    manga { nodes { id } }
+  }
+}
+"""
+
+@Serializable
+private data class ToggleFavouriteResponse(
+    @SerialName("ToggleFavourite") val payload: JsonElement? = null,
+)
+
+@Serializable
+private data class SaveProgressResponse(
+    @SerialName("SaveMediaListEntry") val entry: JsonElement? = null,
+)
+
+private const val DeleteMediaListEntryMutation = """
+mutation DeleteMediaListEntry(${'$'}id: Int!) {
+  DeleteMediaListEntry(id: ${'$'}id) { deleted }
+}
+"""
+
+@Serializable
+private data class DeleteMediaListEntryResponse(
+    @SerialName("DeleteMediaListEntry") val payload: JsonElement? = null,
+)
+
+internal class MediaListEntryRepositoryImpl(
+    private val graphQLClient: AniListGraphQLClient,
+) : MediaListEntryRepository {
+
+    override suspend fun saveEntry(
+        mediaId: Int,
+        status: MediaListStatus,
+        progress: Int,
+        progressVolumes: Int?,
+        score: Float,
+        notes: String,
+        repeat: Int,
+        priority: Int,
+        isPrivate: Boolean,
+        hiddenFromStatusLists: Boolean,
+        startedAtMillis: Long?,
+        completedAtMillis: Long?,
+    ): NetworkResult<MediaListViewerEntry> {
+        val variables = buildMap<String, JsonElement> {
+            put("mediaId", JsonPrimitive(mediaId))
+            put("status", JsonPrimitive(status.toApiValue()))
+            put("progress", JsonPrimitive(progress))
+            if (progressVolumes != null) put("progressVolumes", JsonPrimitive(progressVolumes))
+            put("score", JsonPrimitive(score))
+            put("notes", JsonPrimitive(notes))
+            put("repeat", JsonPrimitive(repeat))
+            put("priority", JsonPrimitive(priority))
+            put("private", JsonPrimitive(isPrivate))
+            put("hiddenFromStatusLists", JsonPrimitive(hiddenFromStatusLists))
+            put("startedAt", fuzzyDateInput(startedAtMillis))
+            put("completedAt", fuzzyDateInput(completedAtMillis))
+        }
+        val request = AniListGraphQLRequest(
+            query = SaveMediaListEntryMutation,
+            variables = JsonObject(variables),
+            operationName = "SaveMediaListEntry",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(SaveMediaListEntryResponse.serializer(), dataJson)
+        }.map { response ->
+            val entry = response.entry
+            MediaListViewerEntry(
+                id = entry?.id ?: 0,
+                status = parseMediaListStatus(entry?.status) ?: status,
+                progress = entry?.progress ?: progress,
+                progressVolumes = entry?.progressVolumes ?: progressVolumes,
+                score = entry?.score?.toFloat() ?: score,
+                notes = entry?.notes.orEmpty(),
+                repeat = entry?.repeat ?: repeat,
+                priority = entry?.priority ?: priority,
+                isPrivate = entry?.isPrivate ?: isPrivate,
+                hiddenFromStatusLists = entry?.hiddenFromStatusLists ?: hiddenFromStatusLists,
+                startedAtMillis = entry?.startedAt?.toMillisOrNull() ?: startedAtMillis,
+                completedAtMillis = entry?.completedAt?.toMillisOrNull() ?: completedAtMillis,
+            )
+        }
+    }
+
+    override suspend fun saveProgress(
+        mediaId: Int,
+        progress: Int,
+        status: MediaListStatus?,
+        progressVolumes: Int?,
+    ): NetworkResult<Unit> {
+        val variables = buildMap<String, JsonElement> {
+            put("mediaId", JsonPrimitive(mediaId))
+            put("progress", JsonPrimitive(progress))
+            if (status != null) {
+                put("status", JsonPrimitive(status.toApiValue()))
+            }
+            if (progressVolumes != null) {
+                put("progressVolumes", JsonPrimitive(progressVolumes))
+            }
+        }
+        val request = AniListGraphQLRequest(
+            query = SaveMediaListProgressMutation,
+            variables = JsonObject(variables),
+            operationName = "SaveMediaListProgress",
+        )
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(SaveProgressResponse.serializer(), dataJson)
+        }.map { }
+    }
+
+    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> {
+        val variables = buildMap<String, JsonElement> {
+            if (isManga) put("mangaId", JsonPrimitive(mediaId))
+            else put("animeId", JsonPrimitive(mediaId))
+        }
+        val request = AniListGraphQLRequest(
+            query = ToggleFavouriteMutation,
+            variables = JsonObject(variables),
+            operationName = "ToggleFavourite",
+        )
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(ToggleFavouriteResponse.serializer(), dataJson)
+        }.map { }
+    }
+
+    override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> {
+        val variables = buildMap<String, JsonElement> {
+            put("id", JsonPrimitive(entryId))
+        }
+        val request = AniListGraphQLRequest(
+            query = DeleteMediaListEntryMutation,
+            variables = JsonObject(variables),
+            operationName = "DeleteMediaListEntry",
+        )
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(DeleteMediaListEntryResponse.serializer(), dataJson)
+        }.map { }
+    }
+}

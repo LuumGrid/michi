@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaList.domain.anime.model
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.model.MediaReleaseDateTime
+import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.domain.model.MediaReleaseDateTime
 
 internal data class AnimeListEntry(
     val id: Int,

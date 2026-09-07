@@ -1,39 +1,39 @@
 package com.luum.michi.app
 
-import com.luum.michi.app.account.data.AccountRepositoryImpl
+import com.luum.michi.app.account.repository.AccountRepositoryImpl
 import com.luum.michi.app.account.domain.AccountRepository
-import com.luum.michi.app.mediaList.data.anime.AnimeListRepositoryImpl
+import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
-import com.luum.michi.app.calendar.data.CalendarRepositoryImpl
+import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
 import com.luum.michi.app.calendar.domain.CalendarRepository
-import com.luum.michi.app.mediaDetail.data.character.CharacterDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.character.CharacterDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
-import com.luum.michi.app.core.auth.AniListOAuthLauncher
-import com.luum.michi.app.core.auth.AniListTokenStorage
-import com.luum.michi.app.core.auth.parseAniListOAuthCallback
-import com.luum.michi.app.core.anilist.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.network.AniListGraphQLClient
-import com.luum.michi.app.core.network.KtorAniListGraphQLClient
-import com.luum.michi.app.core.network.createAniListHttpClient
-import com.luum.michi.app.core.session.AniListViewerRepository
-import com.luum.michi.app.core.session.AniListViewerRepositoryImpl
-import com.luum.michi.app.core.session.SessionManager
-import com.luum.michi.app.discover.data.DashboardRepositoryImpl
-import com.luum.michi.app.discover.data.ExploreRepositoryImpl
+import com.luum.michi.app.core.domain.auth.AniListOAuthLauncher
+import com.luum.michi.app.core.domain.auth.AniListTokenStorage
+import com.luum.michi.app.core.domain.auth.parseAniListOAuthCallback
+import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.domain.network.AniListGraphQLClient
+import com.luum.michi.app.core.repository.network.KtorAniListGraphQLClient
+import com.luum.michi.app.core.repository.network.createAniListHttpClient
+import com.luum.michi.app.core.domain.session.AniListViewerRepository
+import com.luum.michi.app.core.repository.session.AniListViewerRepositoryImpl
+import com.luum.michi.app.core.domain.session.SessionManager
+import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
+import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.mediaList.data.manga.MangaListRepositoryImpl
+import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
-import com.luum.michi.app.mediaDetail.data.media.MediaDetailRepositoryImpl
-import com.luum.michi.app.mediaDetail.data.media.MediaListEntryRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.notifications.data.NotificationsRepositoryImpl
+import com.luum.michi.app.notifications.repository.NotificationsRepositoryImpl
 import com.luum.michi.app.notifications.domain.NotificationsRepository
-import com.luum.michi.app.settings.data.SettingsRepositoryImpl
+import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.domain.SettingsRepository
-import com.luum.michi.app.mediaDetail.data.staff.StaffDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.staff.StaffDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
-import com.luum.michi.app.mediaDetail.data.studio.StudioDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.studio.StudioDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
@@ -42,9 +42,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * App-level composition root. Constructed by each platform's entry point
- * (`MainActivity` on Android, `MainViewController` on iOS) which provides the
- * platform-specific [tokenStorage] and [oAuthLauncher].
+ * App-level composition root. Lives exactly once per process: owned by
+ * `MichiApplication` on Android and by the `IosMichiDependencies` holder on
+ * iOS, which provide the platform-specific [tokenStorage] and [oAuthLauncher].
+ * Never construct it from a recreated UI entry (Activity / view controller),
+ * or each recreation would leak a CoroutineScope + HttpClient.
  *
  * The Android entry must also dispatch deep links (`michi://oauth/callback`) to
  * [onOAuthCallback]; iOS does the same from its `onOpenURL` handler.

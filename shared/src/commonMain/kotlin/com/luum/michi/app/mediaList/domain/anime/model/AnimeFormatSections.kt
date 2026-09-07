@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaList.domain.anime.model
 
-import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.domain.model.MediaFormat
 
 /** Completed list section matching this format. Exhaustive over the enum. */
 internal fun MediaFormat.completedSection(): AnimeListSection = when (this) {

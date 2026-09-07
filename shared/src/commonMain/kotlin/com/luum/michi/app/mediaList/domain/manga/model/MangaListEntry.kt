@@ -1,8 +1,7 @@
 package com.luum.michi.app.mediaList.domain.manga.model
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.model.MediaReleaseDateTime
+import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.language.LanguageStrings
 
 internal data class MangaListEntry(
     val id: Int,
@@ -16,7 +15,6 @@ internal data class MangaListEntry(
     /** True when progress is tracked by volumes (e.g. novels) instead of chapters. Computed once in the mapper. */
     val tracksByVolume: Boolean = false,
     val score: Double,
-    val nextChapterRelease: MediaReleaseDateTime?,
     val paletteHex: String?,
     val coverUrl: String? = null,
     val originalIndex: Int = 0,
@@ -29,7 +27,6 @@ internal data class MangaListEntry(
     val favouritesCount: Int = 0,
     val trending: Int = 0,
     val priority: Int = 0,
-    val nextAiringAt: Long = 0L,
     val genres: List<String> = emptyList(),
     val season: String? = null,
     val seasonYear: Int? = null,
@@ -70,16 +67,6 @@ internal fun MangaListEntry.canIncrementVolumes(): Boolean {
 /** Whether the entry is fully read, evaluating the chapters or volumes total according to [tracksByVolume]. */
 internal fun MangaListEntry.isComplete(): Boolean =
     if (tracksByVolume) !canIncrementVolumes() else !canIncrementChapters()
-
-internal fun MangaListEntry.releaseLabel(strings: LanguageStrings): String? {
-    return nextChapterRelease?.let { release ->
-        if (tracksByVolume) {
-            strings.nextVolumeReleaseLabel(volumeNumber = volumesProgress + 1, releaseDateTime = release)
-        } else {
-            strings.nextChapterReleaseLabel(chapterNumber = chaptersProgress + 1, releaseDateTime = release)
-        }
-    }
-}
 
 internal fun MangaListEntry.behindLabel(strings: LanguageStrings): String? {
     val total = totalChapters

@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.media.model
 
-import com.luum.michi.app.core.anilist.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 

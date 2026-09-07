@@ -1,10 +1,10 @@
 package com.luum.michi.app.discover.domain.model
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.model.currentSeasonAndYear
-import com.luum.michi.app.ui.components.FilterOption
+import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.model.label
+import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.domain.model.currentSeasonAndYear
+import com.luum.michi.app.core.domain.model.FilterOption
 
 internal data class ExploreFormatOption(val value: String, val label: String)
 

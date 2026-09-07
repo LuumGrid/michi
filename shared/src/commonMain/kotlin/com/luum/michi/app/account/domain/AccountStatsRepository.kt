@@ -1,7 +1,7 @@
 package com.luum.michi.app.account.domain
 
 import com.luum.michi.app.account.domain.model.AccountStats
-import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.domain.network.NetworkResult
 
 internal interface AccountStatsRepository {
     /** Fetches anime/manga counts + follower/following counts for a user. */

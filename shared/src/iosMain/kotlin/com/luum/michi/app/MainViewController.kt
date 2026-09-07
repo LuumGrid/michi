@@ -1,67 +1,18 @@
 package com.luum.michi.app
 
-import androidx.compose.ui.window.ComposeUIViewController
-import coil3.ImageLoader
-import coil3.PlatformContext
-import coil3.SingletonImageLoader
-import coil3.disk.DiskCache
-import coil3.memory.MemoryCache
-import coil3.request.crossfade
-import com.luum.michi.app.core.auth.NSUserDefaultsAniListTokenStorage
-import com.luum.michi.app.core.auth.SafariOAuthLauncher
-import okio.Path.Companion.toPath
-import platform.Foundation.NSCachesDirectory
-import platform.Foundation.NSSearchPathForDirectoriesInDomains
-import platform.Foundation.NSUserDomainMask
+import com.luum.michi.app.core.repository.auth.NSUserDefaultsAniListTokenStorage
+import com.luum.michi.app.core.repository.auth.SafariOAuthLauncher
 import platform.UIKit.UIViewController
 
 /**
- * iOS entry point. Constructs the shared `MichiDependencies` and presents the
- * Compose UI.
- *
- * The OAuth callback (`michi://oauth/callback`) is delivered from SwiftUI via
- * `.onOpenURL { url in MainViewControllerKt.handleIosOAuthCallback(url: url.absoluteString) }`.
- * The matching URL scheme is declared in `Info.plist` under `CFBundleURLTypes`.
+ * UI placeholder: preserves the iOS entry point + OAuth callback contract
+ * used from Swift (`ContentView.swift` / `iOSApp.swift`) without any Compose
+ * UI. Screens will be re-added on top of the pure-logic state holders.
  */
 @Suppress("FunctionName") // referenced from Swift (iOSApp.swift / ContentView.swift)
 fun MainViewController(): UIViewController {
-    configureCoilSingleton()
-    val dependencies = MichiDependencies(
-        tokenStorage = NSUserDefaultsAniListTokenStorage(),
-        oAuthLauncher = SafariOAuthLauncher(),
-    )
-    IosMichiDependencies.bind(dependencies)
-    return ComposeUIViewController { App(dependencies = dependencies) }
-}
-
-/**
- * Configure the Coil singleton ImageLoader with memory + disk cache for iOS.
- * Called once before the first Compose frame.
- */
-private fun configureCoilSingleton() {
-    SingletonImageLoader.setSafe(
-        SingletonImageLoader.Factory { context: PlatformContext ->
-            val cacheDir = (
-                NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
-                    .firstOrNull() as? String
-            )?.let { "$it/michi_image_cache".toPath() }
-
-            ImageLoader.Builder(context)
-                .memoryCache {
-                    MemoryCache.Builder()
-                        .maxSizePercent(context, percent = 0.25)
-                        .build()
-                }
-                .diskCache {
-                    val builder = DiskCache.Builder()
-                        .maxSizeBytes(128L * 1024 * 1024)
-                    if (cacheDir != null) builder.directory(cacheDir) else builder
-                    builder.build()
-                }
-                .crossfade(true)
-                .build()
-        },
-    )
+    IosMichiDependencies.getOrCreate()
+    return UIViewController()
 }
 
 /** Called from Swift via `MainViewControllerKt.handleIosOAuthCallback(url: ...)`. */
@@ -73,7 +24,17 @@ private object IosMichiDependencies {
     var current: MichiDependencies? = null
         private set
 
-    fun bind(dependencies: MichiDependencies) {
-        current = dependencies
-    }
+    /**
+     * Process-lifetime holder: creates the graph once no matter how often
+     * `MainViewController()` is invoked, so repeated calls neither leak the
+     * previous CoroutineScope + HttpClient nor re-trigger bootstrap.
+     */
+    fun getOrCreate(): MichiDependencies =
+        current ?: MichiDependencies(
+            tokenStorage = NSUserDefaultsAniListTokenStorage(),
+            oAuthLauncher = SafariOAuthLauncher(),
+        ).also {
+            current = it
+            it.bootstrap()
+        }
 }

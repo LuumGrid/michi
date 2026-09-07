@@ -1,14 +1,14 @@
 package com.luum.michi.app.mediaList
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.anilist.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.anilist.medialist.MediaListStatus
-import com.luum.michi.app.core.anilist.medialist.MediaListViewerEntry
-import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.domain.medialist.MediaListStatus
+import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.domain.network.NetworkResult
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.mediaList.presentation.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test

@@ -1,19 +1,14 @@
 package com.luum.michi.app.root.state
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.account.presentation.model.AccountProfileDraft
+import com.luum.michi.app.account.domain.model.AccountProfileDraft
+import com.luum.michi.app.core.domain.navigation.DetailDestination
+import com.luum.michi.app.core.domain.navigation.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.ui.BackHandler
-import com.luum.michi.app.core.session.Viewer
-import com.luum.michi.app.core.anilist.medialist.MediaListStatus
+import com.luum.michi.app.core.domain.navigation.BackHandler
+import com.luum.michi.app.core.domain.session.Viewer
+import com.luum.michi.app.core.domain.medialist.MediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.root.components.TabSection
 
 internal enum class AccountRoute {
     ACCOUNT,
@@ -26,24 +21,24 @@ internal class State(
     initialProfile: AccountProfileDraft,
     initialTab: TabSection = TabSection.DISCOVER,
 ) {
-    var selectedTab by mutableStateOf(initialTab)
-    var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
-    var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
-    var accountRoute by mutableStateOf(AccountRoute.ACCOUNT)
-    var toolbarBackHandler by mutableStateOf<BackHandler?>(null)
-    var currentProfile by mutableStateOf(initialProfile)
-    private val detailStack = mutableStateListOf<DetailDestination>()
-    var editorMediaId by mutableStateOf<Int?>(null)
-    var editorInitialStatus by mutableStateOf<MediaListStatus?>(null)
-    var editorInitialProgress by mutableStateOf<Int?>(null)
-    var isExploreOpen by mutableStateOf(false)
-    var isCalendarOpen by mutableStateOf(false)
-    var isNotificationsOpen by mutableStateOf(false)
-    var isSectionFilterOpen by mutableStateOf(false)
-    var isExploreFilterOpen by mutableStateOf(false)
-    var isShareProfileOpen by mutableStateOf(false)
-    var isAccountSettingsOpen by mutableStateOf(false)
-    var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
+    var selectedTab: TabSection = initialTab
+    var selectedAnimeSection = AnimeListSection.ALL
+    var selectedMangaSection = MangaListSection.ALL
+    var accountRoute = AccountRoute.ACCOUNT
+    var toolbarBackHandler: BackHandler? = null
+    var currentProfile: AccountProfileDraft = initialProfile
+    private val detailStack = mutableListOf<DetailDestination>()
+    var editorMediaId: Int? = null
+    var editorInitialStatus: MediaListStatus? = null
+    var editorInitialProgress: Int? = null
+    var isExploreOpen = false
+    var isCalendarOpen = false
+    var isNotificationsOpen = false
+    var isSectionFilterOpen = false
+    var isExploreFilterOpen = false
+    var isShareProfileOpen = false
+    var isAccountSettingsOpen = false
+    var favoritesCategory = AccountFavoritesCategory.ANIME
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
@@ -159,17 +154,15 @@ internal class State(
     }
 }
 
-@Composable
-internal fun rememberState(
+/** Pure-logic factory (placeholder for UI wiring). */
+internal fun createState(
     viewer: Viewer,
     initialTab: TabSection = TabSection.DISCOVER,
 ): State {
-    return remember(viewer.id) {
-        State(
-            initialProfile = viewer.toAccountProfileDraft(),
-            initialTab = initialTab,
-        )
-    }
+    return State(
+        initialProfile = viewer.toAccountProfileDraft(),
+        initialTab = initialTab,
+    )
 }
 
 private fun Viewer.toAccountProfileDraft(): AccountProfileDraft = AccountProfileDraft(

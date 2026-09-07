@@ -1,12 +1,14 @@
 package com.luum.michi.app.mediaDetail.domain.media
 
-import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.domain.network.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.*
 
 internal interface MediaDetailRepository {
     suspend fun loadDetail(
         mediaId: Int,
         voiceLanguage: String = "JAPANESE",
+        strings: LanguageStrings,
     ): NetworkResult<MediaDetail>
 
     suspend fun loadCharactersPage(

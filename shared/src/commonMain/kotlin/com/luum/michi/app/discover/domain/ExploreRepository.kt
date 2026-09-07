@@ -1,7 +1,7 @@
 package com.luum.michi.app.discover.domain
 
-import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.network.NetworkResult
+import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.domain.network.NetworkResult
 import com.luum.michi.app.discover.domain.model.ExplorePage
 
 internal interface ExploreRepository {
