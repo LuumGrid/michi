@@ -11,14 +11,13 @@ import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.AiringSchedulePageDto
 import com.luum.michi.app.core.auth.currentEpochSeconds
-import com.luum.michi.app.core.media.currentSeasonAndYear
-import com.luum.michi.app.core.media.next
-import com.luum.michi.app.core.media.startEpochSeconds
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.model.startEpochSeconds
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
-import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val CalendarQuery = """
 query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {

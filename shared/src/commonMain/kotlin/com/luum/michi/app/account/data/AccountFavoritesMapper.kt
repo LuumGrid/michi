@@ -10,7 +10,6 @@ import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.anilist.dto.StaffDto
 import com.luum.michi.app.core.anilist.dto.StudioDto
-import com.luum.michi.app.core.platform.hexToPalette
 
 internal fun FavouritesDto.toDomain(): AccountFavorites = AccountFavorites(
     anime = anime?.nodes?.map(MediaDto::toAccountFavoriteMedia).orEmpty(),
@@ -24,28 +23,28 @@ internal fun MediaDto.toAccountFavoriteMedia(): AccountFavoriteMedia = AccountFa
     id = id,
     title = title.bestTitle(),
     coverUrl = coverImage?.thumbnailUrl,
-    palette = hexToPalette(coverImage?.color),
+    paletteHex = coverImage?.color,
 )
 
 internal fun CharacterDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
     imageUrl = image?.bestUrl,
-    palette = hexToPalette(null),
+    paletteHex = null,
 )
 
 internal fun StaffDto.toAccountFavoritePerson(): AccountFavoritePerson = AccountFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
     imageUrl = image?.bestUrl,
-    palette = hexToPalette(null),
+    paletteHex = null,
 )
 
 internal fun StudioDto.toAccountFavoriteStudio(): AccountFavoriteStudio = AccountFavoriteStudio(
     id = id,
     name = name,
     coverUrl = latestCoverImage?.thumbnailUrl,
-    palette = hexToPalette(latestCoverImage?.color),
+    paletteHex = latestCoverImage?.color,
 )
 
 private fun MediaTitleDto?.bestTitle(): String {

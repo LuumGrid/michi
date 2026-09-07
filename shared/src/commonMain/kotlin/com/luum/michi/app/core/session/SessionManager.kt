@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
  *  - `logout()` clears the token and returns to `Anonymous`.
  *
  * The state is exposed as a `StateFlow<SessionState>` that `App.kt` observes to
- * route between `AuthLandingScreen` and `ShellScreen`.
+ * route between `AuthLandingScreen` and `Root`.
  */
 internal class SessionManager(
     private val tokenStorage: AniListTokenStorage,

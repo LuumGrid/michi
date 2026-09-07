@@ -6,11 +6,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.PlatformListLoading
-import com.luum.michi.app.core.platform.components.PlatformListMessage
-import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.ui.components.ListLoading
+import com.luum.michi.app.ui.components.ListMessage
+import com.luum.michi.app.ui.components.ListMessageTone
 import com.luum.michi.app.mediaList.presentation.manga.components.MangaListCard
 import com.luum.michi.app.mediaList.presentation.common.MediaListScaffold
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
@@ -68,13 +68,13 @@ private fun MangaContent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
-            isLoading && totalEntries == 0 -> PlatformListLoading(strings.listsLoadingLabel)
-            error != null && totalEntries == 0 -> PlatformListMessage(
+            isLoading && totalEntries == 0 -> ListLoading(strings.listsLoadingLabel)
+            error != null && totalEntries == 0 -> ListMessage(
                 title = strings.listsErrorLabel,
                 subtitle = error,
-                tone = PlatformListMessageTone.Error,
+                tone = ListMessageTone.Error,
             )
-            totalEntries == 0 -> PlatformListMessage(title = strings.listsEmptyLabel)
+            totalEntries == 0 -> ListMessage(title = strings.listsEmptyLabel)
             else -> MangaContentList(
                 entriesInSection = entriesInSection,
                 selectedSection = selectedSection,

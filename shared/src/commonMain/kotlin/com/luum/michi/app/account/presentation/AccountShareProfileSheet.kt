@@ -31,10 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.components.AccountProfileQrCode
 import com.luum.michi.app.account.presentation.components.AccountShareAvatar
 import com.luum.michi.app.account.presentation.util.toProfilePathSegment
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformModalSheet
-import com.luum.michi.app.core.platform.setPlainText
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.Icons
+import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.setPlainText
 import kotlinx.coroutines.launch
 
 @Composable
@@ -49,7 +49,7 @@ internal fun AccountShareProfileSheet(
     val scope = rememberCoroutineScope()
     val profileUrl = remember(username) { "https://anilist.co/user/${username.toProfilePathSegment()}" }
 
-    PlatformModalSheet(onDismiss = onDismiss) { modifier ->
+    ModalSheet(onDismiss = onDismiss) { modifier ->
         Column(
             modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -73,7 +73,7 @@ internal fun AccountShareProfileSheet(
                 shape = RoundedCornerShape(24.dp),
             ) {
                 Icon(
-                    painter = PlatformIcons.Share,
+                    painter = Icons.Share,
                     contentDescription = strings.accountShareProfileAction,
                     modifier = Modifier.size(20.dp),
                 )

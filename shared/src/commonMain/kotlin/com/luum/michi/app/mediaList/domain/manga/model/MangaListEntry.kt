@@ -1,12 +1,9 @@
 package com.luum.michi.app.mediaList.domain.manga.model
 
-import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
-import com.luum.michi.app.core.anilist.MediaFormat
+import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 
-@Immutable
 internal data class MangaListEntry(
     val id: Int,
     val title: String,
@@ -20,7 +17,7 @@ internal data class MangaListEntry(
     val tracksByVolume: Boolean = false,
     val score: Double,
     val nextChapterRelease: MediaReleaseDateTime?,
-    val palette: List<Color>,
+    val paletteHex: String?,
     val coverUrl: String? = null,
     val originalIndex: Int = 0,
     val updatedAt: Long = 0L,

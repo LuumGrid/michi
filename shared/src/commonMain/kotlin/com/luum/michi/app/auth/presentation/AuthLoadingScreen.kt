@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 
 @Composable
 internal fun AuthLoadingScreen() {

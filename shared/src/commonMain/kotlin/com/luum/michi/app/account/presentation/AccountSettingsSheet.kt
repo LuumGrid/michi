@@ -20,9 +20,9 @@ import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformModalSheet
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.Icons
+import com.luum.michi.app.ui.components.ModalSheet
 
 private const val AniListUpdateProfileUrl = "https://anilist.co/settings"
 private const val AniListAccountSettingsUrl = "https://anilist.co/settings/account"
@@ -34,7 +34,7 @@ internal fun AccountSettingsSheet(onDismiss: () -> Unit) {
     val strings = LanguageProvider.strings
     val uriHandler = LocalUriHandler.current
 
-    PlatformModalSheet(onDismiss = onDismiss) { modifier ->
+    ModalSheet(onDismiss = onDismiss) { modifier ->
         Column(
             modifier = modifier.padding(horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -76,7 +76,7 @@ private fun AccountSettingsLinkButton(label: String, url: String, uriHandler: Ur
         modifier = Modifier.fillMaxWidth().height(48.dp),
         shape = RoundedCornerShape(24.dp),
     ) {
-        Icon(painter = PlatformIcons.Language, contentDescription = null, modifier = Modifier.size(20.dp))
+        Icon(painter = Icons.Language, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
         Text(label, maxLines = 1)
     }

@@ -4,9 +4,9 @@ import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
-import com.luum.michi.app.core.media.MediaSeasonYear
-import com.luum.michi.app.core.media.currentSeasonAndYear
-import com.luum.michi.app.core.media.next
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.next
 import com.luum.michi.app.core.network.AniListGraphQLClient
 import com.luum.michi.app.core.network.AniListGraphQLRequest
 import com.luum.michi.app.core.network.AniListJson
@@ -14,7 +14,6 @@ import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val DashboardQuery = """
 query Dashboard(

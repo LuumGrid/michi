@@ -1,26 +1,25 @@
 package com.luum.michi.app.account.domain.model
 
-import androidx.compose.ui.graphics.Color
 
 internal data class AccountFavoriteMedia(
     val id: Int,
     val title: String,
     val coverUrl: String?,
-    val palette: List<Color>,
+    val paletteHex: String?,
 )
 
 internal data class AccountFavoritePerson(
     val id: Int,
     val name: String,
     val imageUrl: String?,
-    val palette: List<Color>,
+    val paletteHex: String?,
 )
 
 internal data class AccountFavoriteStudio(
     val id: Int,
     val name: String,
     val coverUrl: String?,
-    val palette: List<Color>,
+    val paletteHex: String?,
 )
 
 internal data class AccountFavorites(

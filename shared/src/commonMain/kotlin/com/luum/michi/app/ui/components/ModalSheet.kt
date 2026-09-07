@@ -1,0 +1,36 @@
+package com.luum.michi.app.ui.components
+
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ModalSheet(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    maxHeightFraction: Float = 0.78f,
+    content: @Composable (Modifier) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        contentWindowInsets = { WindowInsets(0) },
+    ) {
+        content(
+            modifier
+                .fillMaxWidth()
+                .fillMaxHeight(maxHeightFraction)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        )
+    }
+}

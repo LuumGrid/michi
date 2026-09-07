@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.Icons
 import com.luum.michi.app.settings.presentation.model.NotificationPreferences
 import com.luum.michi.app.settings.presentation.model.SettingsItem
 
@@ -25,7 +25,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifAiringTitle,
-                icon = { PlatformIcons.Anime },
+                icon = { Icons.Anime },
             ),
             checked = preferences.airing,
             onCheckedChange = { onChange(preferences.copy(airing = it)) },
@@ -33,7 +33,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifActivityTitle,
-                icon = { PlatformIcons.UserActivity },
+                icon = { Icons.UserActivity },
             ),
             checked = preferences.activity,
             onCheckedChange = { onChange(preferences.copy(activity = it)) },
@@ -41,7 +41,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifFollowingTitle,
-                icon = { PlatformIcons.SwitchAccount },
+                icon = { Icons.SwitchAccount },
             ),
             checked = preferences.following,
             onCheckedChange = { onChange(preferences.copy(following = it)) },
@@ -49,7 +49,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifForumTitle,
-                icon = { PlatformIcons.Comments },
+                icon = { Icons.Comments },
             ),
             checked = preferences.forum,
             onCheckedChange = { onChange(preferences.copy(forum = it)) },
@@ -57,7 +57,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifMessagesTitle,
-                icon = { PlatformIcons.Mood },
+                icon = { Icons.Mood },
             ),
             checked = preferences.messages,
             onCheckedChange = { onChange(preferences.copy(messages = it)) },
@@ -65,7 +65,7 @@ internal fun SettingsNotificationsDetail(
         SettingsToggleRow(
             item = SettingsItem(
                 title = strings.settingsNotifMediaTitle,
-                icon = { PlatformIcons.ContentPreferences },
+                icon = { Icons.ContentPreferences },
             ),
             checked = preferences.media,
             onCheckedChange = { onChange(preferences.copy(media = it)) },

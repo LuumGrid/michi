@@ -6,12 +6,11 @@ import com.luum.michi.app.calendar.domain.CalendarFeed
 import com.luum.michi.app.core.anilist.dto.AiringScheduleDto
 import com.luum.michi.app.core.anilist.dto.MediaExternalLinkDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
-import com.luum.michi.app.core.media.isoDayOfWeek
-import com.luum.michi.app.core.media.localMidnightEpoch
-import com.luum.michi.app.core.media.toLocalMediaReleaseDateTime
-import com.luum.michi.app.core.platform.components.PlatformDiscoverReleaseItem
-import com.luum.michi.app.core.platform.components.StreamingPlatform
-import com.luum.michi.app.core.platform.hexToPalette
+import com.luum.michi.app.core.model.isoDayOfWeek
+import com.luum.michi.app.core.model.localMidnightEpoch
+import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
+import com.luum.michi.app.calendar.domain.model.ReleaseItem
+import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 
 private const val SecondsPerDay: Long = 86_400L
 
@@ -36,16 +35,16 @@ internal fun List<AiringScheduleDto>.toCalendarFeed(nowEpoch: Long): CalendarFee
     return CalendarFeed(days = days)
 }
 
-private fun AiringScheduleDto.toReleaseItem(): PlatformDiscoverReleaseItem {
+private fun AiringScheduleDto.toReleaseItem(): ReleaseItem {
     val media = media!!
     val hasUserScore = (media.mediaListEntry?.score ?: 0.0) > 0.0
     val totalEpisodes = media.episodes?.takeIf { it > 0 }
     val releaseLabel = totalEpisodes?.let { "Ep $episode / $it" } ?: "Ep $episode"
-    return PlatformDiscoverReleaseItem(
+    return ReleaseItem(
         title = media.title.bestTitle(),
         release = releaseLabel,
         time = formatAiringTime(airingAt),
-        colors = hexToPalette(media.coverImage?.color),
+        paletteHex = media.coverImage?.color,
         id = media.id,
         coverUrl = media.coverImage?.thumbnailUrl,
         averageScore = media.averageScore,

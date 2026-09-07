@@ -21,10 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 import com.luum.michi.app.discover.presentation.common.DiscoverResultCard
 import com.luum.michi.app.discover.presentation.explore.state.ExploreStateHolder
 

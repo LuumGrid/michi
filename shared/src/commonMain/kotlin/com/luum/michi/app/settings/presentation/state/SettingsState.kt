@@ -8,8 +8,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.core.platform.PlatformSettingsStore
-import com.luum.michi.app.core.platform.SettingsStoreKeys
+import com.luum.michi.app.ui.SettingsStore
+import com.luum.michi.app.ui.SettingsStoreKeys
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
@@ -44,7 +44,7 @@ private val SaveDebounce = 600.milliseconds
 
 internal class SettingsState(
     private val repository: SettingsRepository,
-    private val store: PlatformSettingsStore,
+    private val store: SettingsStore,
     private val scope: CoroutineScope,
 ) {
     // Local-only prefs (no AniList equivalent) — persisted to the store but never synced.
@@ -258,7 +258,7 @@ internal class SettingsState(
 @Composable
 internal fun rememberSettingsState(
     repository: SettingsRepository,
-    store: PlatformSettingsStore,
+    store: SettingsStore,
 ): SettingsState {
     val scope = rememberCoroutineScope()
     return remember { SettingsState(repository, store, scope) }

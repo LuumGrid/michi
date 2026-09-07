@@ -15,23 +15,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luum.michi.app.auth.presentation.AuthLandingScreen
 import com.luum.michi.app.auth.presentation.AuthLoadingScreen
 import com.luum.michi.app.core.language.AppLanguage
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.language.ProvideLanguageStrings
-import com.luum.michi.app.core.language.currentPlatformLanguageCode
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.language.ProvideLanguageStrings
+import com.luum.michi.app.core.language.currentLanguageCode
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.SettingsStoreKeys
-import com.luum.michi.app.core.platform.MichiDarkAmoledColorScheme
-import com.luum.michi.app.core.platform.MichiLightColorScheme
-import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
+import com.luum.michi.app.ui.SettingsStoreKeys
+import com.luum.michi.app.ui.MichiDarkAmoledColorScheme
+import com.luum.michi.app.ui.MichiLightColorScheme
+import com.luum.michi.app.ui.rememberSettingsStore
 import com.luum.michi.app.core.session.SessionState
-import com.luum.michi.app.shell.ShellScreen
+import com.luum.michi.app.root.Root
 
 @Composable
 fun App(
     dependencies: MichiDependencies,
-    initialLanguage: AppLanguage = AppLanguage.fromCode(currentPlatformLanguageCode()),
+    initialLanguage: AppLanguage = AppLanguage.fromCode(currentLanguageCode()),
 ) {
-    val store = rememberPlatformSettingsStore()
+    val store = rememberSettingsStore()
     val systemDark = isSystemInDarkTheme()
     // Theme + language are owned here (above the authenticated shell), so they must read their
     // persisted value at startup — SettingsState writes both keys but can't restore them this early.
@@ -71,7 +71,7 @@ fun App(
                         onLoginClick = { dependencies.oAuthLauncher.open() },
                         errorMessage = strings.networkErrorMessage(state.error),
                     )
-                    is SessionState.Authenticated -> ShellScreen(
+                    is SessionState.Authenticated -> Root(
                         viewer = state.viewer,
                         animeListRepository = dependencies.animeListRepository,
                         mangaListRepository = dependencies.mangaListRepository,

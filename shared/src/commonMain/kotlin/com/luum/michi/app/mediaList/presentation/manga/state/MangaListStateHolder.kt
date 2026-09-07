@@ -16,10 +16,10 @@ import com.luum.michi.app.mediaList.domain.manga.model.incrementedVolumes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-import com.luum.michi.app.core.platform.model.UserListSort
-import com.luum.michi.app.core.platform.model.UserListOrder
-import com.luum.michi.app.core.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.medialist.MediaListStatus
+import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.anilist.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.anilist.medialist.MediaListStatus
 import com.luum.michi.app.mediaList.presentation.common.MediaListLoader
 import com.luum.michi.app.mediaList.presentation.common.matchesMediaListFilters
 

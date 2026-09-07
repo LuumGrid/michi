@@ -27,10 +27,10 @@ import com.luum.michi.app.account.presentation.components.AccountFavoritePersonC
 import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioCard
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.presentation.state.AccountFavoritesGridStateHolder
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 
 @Composable
 internal fun AccountFavoritesGridScreen(

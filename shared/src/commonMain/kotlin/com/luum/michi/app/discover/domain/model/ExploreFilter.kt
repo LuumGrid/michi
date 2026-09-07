@@ -1,10 +1,10 @@
 package com.luum.michi.app.discover.domain.model
 
-import com.luum.michi.app.core.anilist.MediaFormat
-import com.luum.michi.app.core.anilist.label
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.media.currentSeasonAndYear
-import com.luum.michi.app.core.platform.components.PlatformFilterOption
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.ui.components.FilterOption
 
 internal data class ExploreFormatOption(val value: String, val label: String)
 
@@ -38,7 +38,7 @@ internal fun exploreYears(): List<Int?> {
     return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
 }
 
-internal fun exploreSeasonOptions(strings: LanguageStrings): List<PlatformFilterOption> {
+internal fun exploreSeasonOptions(strings: LanguageStrings): List<FilterOption> {
     val labels = listOf(
         strings.exploreSeasonWinterLabel,
         strings.exploreSeasonSpringLabel,
@@ -46,6 +46,6 @@ internal fun exploreSeasonOptions(strings: LanguageStrings): List<PlatformFilter
         strings.exploreSeasonFallLabel,
     )
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
-    return listOf(PlatformFilterOption("any", strings.exploreAnySeasonLabel)) +
-        ids.zip(labels) { id, label -> PlatformFilterOption(id, label) }
+    return listOf(FilterOption("any", strings.exploreAnySeasonLabel)) +
+        ids.zip(labels) { id, label -> FilterOption(id, label) }
 }

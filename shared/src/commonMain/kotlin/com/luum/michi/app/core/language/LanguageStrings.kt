@@ -1,9 +1,5 @@
 package com.luum.michi.app.core.language
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.staticCompositionLocalOf
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 
 interface LanguageStrings {
@@ -364,30 +360,10 @@ interface LanguageStrings {
     val seeAllAction: String
 }
 
-val LocalLanguageStrings = staticCompositionLocalOf<LanguageStrings> { SpanishLanguageStrings }
-
 fun getLanguageStrings(language: AppLanguage): LanguageStrings {
     return when (language.code) {
-        "en" -> EnglishLanguageStrings
-        "es" -> SpanishLanguageStrings
-        else -> EnglishLanguageStrings
-    }
-}
-
-object LanguageProvider {
-    val strings: LanguageStrings
-        @Composable
-        @ReadOnlyComposable
-        get() = LocalLanguageStrings.current
-}
-
-@Composable
-fun ProvideLanguageStrings(
-    language: AppLanguage,
-    content: @Composable () -> Unit,
-) {
-    val strings = getLanguageStrings(language)
-    CompositionLocalProvider(LocalLanguageStrings provides strings) {
-        content()
+        "en" -> EnglishStrings
+        "es" -> SpanishStrings
+        else -> EnglishStrings
     }
 }

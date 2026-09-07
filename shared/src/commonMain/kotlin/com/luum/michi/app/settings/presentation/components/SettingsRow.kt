@@ -26,7 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.ui.Icons
 import com.luum.michi.app.settings.presentation.model.SettingsItem
 import com.luum.michi.app.settings.presentation.model.SettingsItemType
 
@@ -105,7 +105,7 @@ internal fun SettingsRow(
                 trailingContent()
             } else if (!isDestructive) {
                 Icon(
-                    painter = PlatformIcons.ChevronRight,
+                    painter = Icons.ChevronRight,
                     contentDescription = item.title,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),

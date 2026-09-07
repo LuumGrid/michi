@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.platform.components.PlatformFavouritesBadge
-import com.luum.michi.app.core.platform.components.PlatformMediaCover
-import com.luum.michi.app.core.platform.components.PlatformRatingBadge
+import com.luum.michi.app.ui.components.FavouritesBadge
+import com.luum.michi.app.ui.components.MediaCover
+import com.luum.michi.app.ui.components.RatingBadge
 import com.luum.michi.app.discover.domain.model.ExploreResult
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -35,19 +35,19 @@ internal fun DiscoverResultCard(
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        PlatformMediaCover(
+        MediaCover(
             coverUrl = result.coverUrl,
-            palette = result.palette,
+            paletteHex = result.paletteHex,
             contentDescription = result.title,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(0.68f),
         ) {
             if (result.averageScore != null) {
-                PlatformRatingBadge(averageScore = result.averageScore, isUserRanked = result.isUserRanked)
+                RatingBadge(averageScore = result.averageScore, isUserRanked = result.isUserRanked)
             }
             if (result.favourites != null && result.favourites > 0) {
-                PlatformFavouritesBadge(favourites = result.favourites, isUserFavorited = result.isUserFavorited)
+                FavouritesBadge(favourites = result.favourites, isUserFavorited = result.isUserFavorited)
             }
         }
         Text(

@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaList.presentation.manga.components
 
 import androidx.compose.runtime.Composable
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformMediaListCard
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.Icons
+import com.luum.michi.app.ui.components.MediaListCard
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.behindLabel
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
@@ -15,7 +15,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.isComplete
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.releaseLabel
 import com.luum.michi.app.mediaList.domain.manga.model.volumesProgressLabel
-import com.luum.michi.app.core.anilist.label
+import com.luum.michi.app.core.model.label
 
 @Composable
 internal fun MangaListCard(
@@ -27,11 +27,10 @@ internal fun MangaListCard(
 ) {
     val strings = LanguageProvider.strings
 
-    PlatformMediaListCard(
+    MediaListCard(
         title = entry.title,
         subtitle = entry.format.label(unknownFallback = "Manga"),
         score = entry.formattedScore(),
-        primaryProgressLabel = entry.chaptersProgressLabel(),
         primaryProgressRatio = entry.chaptersProgressRatio(),
         primaryIncrementLabel = "+1 CH",
         primaryIncrementValueLabel = entry.chaptersProgressLabel(),
@@ -39,9 +38,9 @@ internal fun MangaListCard(
         secondaryIncrementLabel = "+1 VO",
         secondaryIncrementValueLabel = entry.volumesProgressLabel(),
         secondaryIncrementEnabled = entry.canIncrementVolumes(),
-        palette = entry.palette,
+        paletteHex = entry.paletteHex,
         coverUrl = entry.coverUrl,
-        icon = PlatformIcons.Manga,
+        icon = Icons.Manga,
         isComplete = entry.isComplete(),
         releaseLabel = entry.releaseLabel(strings),
         behindLabel = entry.behindLabel(strings),

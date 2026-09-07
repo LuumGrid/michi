@@ -2,11 +2,11 @@ package com.luum.michi.app.calendar.domain
 
 import kotlinx.coroutines.flow.Flow
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.core.platform.components.PlatformDiscoverReleaseItem
+import com.luum.michi.app.calendar.domain.model.ReleaseItem
 
 internal data class CalendarEntry(
     val scheduleId: Int,
-    val item: PlatformDiscoverReleaseItem,
+    val item: ReleaseItem,
 )
 
 internal data class CalendarDay(

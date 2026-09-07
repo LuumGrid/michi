@@ -21,11 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.PlatformChipRow
-import com.luum.michi.app.core.platform.components.PlatformFilterOption
-import com.luum.michi.app.core.platform.components.PlatformModalSheet
-import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.components.ChipRow
+import com.luum.michi.app.ui.components.FilterOption
+import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.components.SheetActionBar
 
 /**
  * Filtro de las listas (Anime/Manga), espejo del de Explore: todo edita un
@@ -36,7 +36,7 @@ import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
  */
 @Composable
 internal fun MediaListFilterSheet(
-    sectionOptions: List<PlatformFilterOption>,
+    sectionOptions: List<FilterOption>,
     initialSectionId: String,
     showSeasonFilter: Boolean,
     isAnimeTab: Boolean,
@@ -61,13 +61,13 @@ internal fun MediaListFilterSheet(
     var draftYear by remember { mutableStateOf(year) }
 
     val seasonOptions = remember(strings) { mediaListSeasonOptions(strings) }
-    val genreOptions = remember { mediaListGenres().map { PlatformFilterOption(it, it) } }
+    val genreOptions = remember { mediaListGenres().map { FilterOption(it, it) } }
     val formatOptions = remember(isAnimeTab) { mediaListFormatOptions(isAnimeTab) }
     val yearOptions = remember(strings) {
-        mediaListYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
+        mediaListYears().map { FilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
     }
 
-    PlatformModalSheet(
+    ModalSheet(
         onDismiss = onDismiss,
         maxHeightFraction = 0.65f,
     ) { modifier ->
@@ -95,7 +95,7 @@ internal fun MediaListFilterSheet(
             ) {
                 item(key = "group_section") {
                     MediaListFilterGroupSection(title = strings.statusLabel) {
-                        PlatformChipRow(
+                        ChipRow(
                             options = sectionOptions,
                             selectedIds = setOf(draftSection),
                             onToggle = { draftSection = it },
@@ -106,7 +106,7 @@ internal fun MediaListFilterSheet(
                 if (showSeasonFilter) {
                     item(key = "group_season") {
                         MediaListFilterGroupSection(title = strings.exploreFilterSeasonLabel) {
-                            PlatformChipRow(
+                            ChipRow(
                                 options = seasonOptions,
                                 selectedIds = setOf(draftSeason ?: "any"),
                                 onToggle = { id -> draftSeason = if (id == "any") null else id },
@@ -117,7 +117,7 @@ internal fun MediaListFilterSheet(
                 }
                 item(key = "group_genre") {
                     MediaListFilterGroupSection(title = strings.exploreFilterGenreLabel) {
-                        PlatformChipRow(
+                        ChipRow(
                             options = genreOptions,
                             selectedIds = draftGenres.toSet(),
                             onToggle = { id ->
@@ -130,7 +130,7 @@ internal fun MediaListFilterSheet(
                 }
                 item(key = "group_format") {
                     MediaListFilterGroupSection(title = strings.exploreFilterFormatLabel) {
-                        PlatformChipRow(
+                        ChipRow(
                             options = formatOptions,
                             selectedIds = draftFormats.toSet(),
                             onToggle = { id ->
@@ -143,7 +143,7 @@ internal fun MediaListFilterSheet(
                 }
                 item(key = "group_year") {
                     MediaListFilterGroupSection(title = strings.exploreFilterYearLabel) {
-                        PlatformChipRow(
+                        ChipRow(
                             options = yearOptions,
                             selectedIds = setOf(draftYear?.toString() ?: "any"),
                             onToggle = { id -> draftYear = if (id == "any") null else id.toIntOrNull() },
@@ -153,7 +153,7 @@ internal fun MediaListFilterSheet(
                 }
             }
 
-            PlatformSheetActionBar(
+            SheetActionBar(
                 leadingLabel = strings.filterResetAction,
                 trailingLabel = strings.filterApplyAction,
                 onLeadingClick = {

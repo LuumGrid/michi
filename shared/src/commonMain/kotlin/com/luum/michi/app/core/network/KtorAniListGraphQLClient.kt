@@ -11,6 +11,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -32,17 +33,12 @@ internal class KtorAniListGraphQLClient(
     private val rateLimiter: AniListRateLimiter = AniListRateLimiter(),
 ) : AniListGraphQLClient {
 
-    private companion object {
-        const val MAX_RATE_LIMIT_RETRIES = 2
-        const val DEFAULT_RETRY_AFTER_SECONDS = 60L
-    }
-
     override suspend fun <T> execute(
         request: AniListGraphQLRequest,
         parseData: (JsonElement) -> T,
     ): NetworkResult<T> {
         return try {
-            executeWithRetry(request, parseData, retriesLeft = MAX_RATE_LIMIT_RETRIES)
+            executeWithRetry(request, parseData, retriesLeft = AniListNetworkPolicy.MAX_RATE_LIMIT_RETRIES)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
@@ -76,11 +72,11 @@ internal class KtorAniListGraphQLClient(
                 401 -> NetworkResult.Failure(NetworkError.Unauthorized(body))
                 429 -> {
                     val retryAfterSeconds = response.headers["Retry-After"]?.toLongOrNull()
-                        ?: DEFAULT_RETRY_AFTER_SECONDS
+                        ?: AniListNetworkPolicy.DEFAULT_RETRY_AFTER_SECONDS
                     // Inform the limiter so concurrent callers also pause.
                     rateLimiter.onRateLimited(retryAfterSeconds)
                     if (retriesLeft > 0) {
-                        delay(retryAfterSeconds * 1_000L)
+                        delay(retryAfterSeconds.seconds)
                         executeWithRetry(request, parseData, retriesLeft - 1)
                     } else {
                         NetworkResult.Failure(NetworkError.RateLimited(retryAfterSeconds.toInt()))

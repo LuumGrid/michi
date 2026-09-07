@@ -15,14 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
-import com.luum.michi.app.core.platform.components.PlatformCoverSize
-import com.luum.michi.app.core.platform.components.PlatformMediaCover
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.MediaCover
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun AccountFavoriteMediaCard(
     media: AccountFavoriteMedia,
-    modifier: Modifier = Modifier.width(PlatformCoverSize.RailPosterWidth),
+    modifier: Modifier = Modifier.width(CoverSize.RailPosterWidth),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
@@ -38,13 +38,13 @@ internal fun AccountFavoriteMediaCard(
         modifier = modifier.then(clickModifier),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PlatformMediaCover(
+        MediaCover(
             coverUrl = media.coverUrl,
-            palette = media.palette,
+            paletteHex = media.paletteHex,
             contentDescription = media.title,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+                .aspectRatio(CoverSize.PosterAspectRatio),
         )
         Text(
             text = media.title,

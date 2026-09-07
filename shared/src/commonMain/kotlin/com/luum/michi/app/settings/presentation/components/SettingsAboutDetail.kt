@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 
 private const val MichiVersion = "0.1.0"
 

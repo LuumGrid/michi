@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 
 private val AvatarSize = 96.dp
 private val BannerHeight = 160.dp
@@ -37,7 +37,6 @@ private val BannerHeight = 160.dp
 @Composable
 internal fun AccountHeader(
     username: String,
-    displayName: String,
     bannerUrl: String?,
     userAvatarUrl: String?,
     userBio: String?,

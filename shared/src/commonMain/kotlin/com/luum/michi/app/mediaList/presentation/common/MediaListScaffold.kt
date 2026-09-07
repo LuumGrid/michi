@@ -13,9 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.platform.components.PlatformSectionHeader
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 
 /**
  * Shared sectioned list for the anime/manga user lists: groups [entriesInSection]
@@ -67,7 +67,7 @@ internal fun <S, T : Any> MediaListScaffold(
         visibleSections.forEach { (section, sectionEntries) ->
             if (showHeaders) {
                 item {
-                    PlatformSectionHeader(
+                    SectionHeader(
                         title = headerTitle(section),
                         count = sectionEntries.size,
                     )

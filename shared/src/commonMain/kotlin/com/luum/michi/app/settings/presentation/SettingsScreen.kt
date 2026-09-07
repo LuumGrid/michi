@@ -16,9 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.AppLanguage
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformBackHandlerSetter
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.BackHandlerSetter
+import com.luum.michi.app.ui.components.floatingToolbarClearance
 import com.luum.michi.app.settings.presentation.components.SettingsDetailContent
 import com.luum.michi.app.settings.presentation.components.SettingsGroupHeader
 import com.luum.michi.app.settings.presentation.components.SettingsRow
@@ -40,7 +40,7 @@ internal fun SettingsScreen(
     onLogout: () -> Unit,
     onManageAccount: () -> Unit,
     onHelp: () -> Unit,
-    onBackHandlerChange: PlatformBackHandlerSetter,
+    onBackHandlerChange: BackHandlerSetter,
 ) {
     val strings = LanguageProvider.strings
     val groups = remember(strings) { settingsGroups(strings) }

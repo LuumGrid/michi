@@ -9,10 +9,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaRail
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.discover.presentation.dashboard.components.DiscoverMediaRail
+import com.luum.michi.app.ui.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 import com.luum.michi.app.discover.presentation.dashboard.state.DashboardStateHolder
 
 /** Identifica cada rail del Dashboard para que el "Ver todo" del header decida su destino. */
@@ -51,7 +51,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.thisSeason.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreThisSeasonTitle,
                         items = stateHolder.thisSeason,
                         onItemClick = onOpenMedia,
@@ -63,7 +63,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.trendingAnime.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.discoverTrendingAnimeTitle,
                         items = stateHolder.trendingAnime,
                         onItemClick = onOpenMedia,
@@ -75,7 +75,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.trendingManga.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.discoverTrendingMangaTitle,
                         items = stateHolder.trendingManga,
                         onItemClick = onOpenMedia,
@@ -87,7 +87,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.upcomingNextSeason.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreUpcomingNextSeasonTitle,
                         items = stateHolder.upcomingNextSeason,
                         onItemClick = onOpenMedia,
@@ -99,7 +99,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.allTimePopularAnime.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreAllTimePopularAnimeTitle,
                         items = stateHolder.allTimePopularAnime,
                         onItemClick = onOpenMedia,
@@ -111,7 +111,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.allTimePopularManga.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreAllTimePopularMangaTitle,
                         items = stateHolder.allTimePopularManga,
                         onItemClick = onOpenMedia,
@@ -123,7 +123,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.topAnime.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreTopAnimeTitle,
                         items = stateHolder.topAnime,
                         onItemClick = onOpenMedia,
@@ -135,7 +135,7 @@ internal fun DashboardScreen(
 
             if (stateHolder.topManga.isNotEmpty()) {
                 item {
-                    PlatformDiscoverMediaRail(
+                    DiscoverMediaRail(
                         title = strings.exploreTopMangaTitle,
                         items = stateHolder.topManga,
                         onItemClick = onOpenMedia,

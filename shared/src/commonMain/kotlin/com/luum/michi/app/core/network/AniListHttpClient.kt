@@ -2,6 +2,7 @@ package com.luum.michi.app.core.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -30,6 +31,12 @@ internal fun createAniListHttpClient(
 ): HttpClient = HttpClient(engine) {
     install(ContentNegotiation) {
         json(AniListJson)
+    }
+    // Ver [AniListNetworkPolicy]: los timeouts viven ahí, no aquí.
+    install(HttpTimeout) {
+        requestTimeoutMillis = AniListNetworkPolicy.REQUEST_TIMEOUT_MILLIS
+        connectTimeoutMillis = AniListNetworkPolicy.CONNECT_TIMEOUT_MILLIS
+        socketTimeoutMillis = AniListNetworkPolicy.SOCKET_TIMEOUT_MILLIS
     }
     install(Logging) {
         level = logLevel

@@ -4,11 +4,10 @@ import com.luum.michi.app.core.model.toMediaReleaseDateTime
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
 import com.luum.michi.app.core.anilist.dto.toComparableInt
-import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
-import com.luum.michi.app.core.anilist.parseMediaFormat
+import com.luum.michi.app.core.model.parseMediaFormat
 
 internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
     val format = parseMediaFormat(media.format)
@@ -24,7 +23,7 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
         tracksByVolume = format.isVolumeBased() || media.chapters == 0,
         score = score,
         nextChapterRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
-        palette = hexToPalette(media.coverImage?.color),
+        paletteHex = media.coverImage?.color,
         coverUrl = media.coverImage?.thumbnailUrl,
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,

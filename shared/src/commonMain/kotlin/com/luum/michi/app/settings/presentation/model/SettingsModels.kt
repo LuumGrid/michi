@@ -3,7 +3,7 @@ package com.luum.michi.app.settings.presentation.model
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.PlatformIcons
+import com.luum.michi.app.ui.Icons
 
 internal data class SettingsGroup(
     val title: String,
@@ -60,19 +60,19 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsThemeTitle,
                 subtitle = strings.settingsThemeSubtitle,
-                icon = { PlatformIcons.Accessibility },
+                icon = { Icons.Accessibility },
                 type = SettingsItemType.THEME,
             ),
             SettingsItem(
                 title = strings.settingsLanguageTitle,
                 subtitle = strings.settingsLanguageSubtitle,
-                icon = { PlatformIcons.Language },
+                icon = { Icons.Language },
                 type = SettingsItemType.LANGUAGE,
             ),
             SettingsItem(
                 title = strings.settingsDiscoverTabTitle,
                 subtitle = strings.settingsDiscoverTabSubtitle,
-                icon = { PlatformIcons.Discover },
+                icon = { Icons.Discover },
                 type = SettingsItemType.HOME_TAB,
             ),
         ),
@@ -83,19 +83,19 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsTitleLanguageTitle,
                 subtitle = strings.settingsTitleLanguageSubtitle,
-                icon = { PlatformIcons.Language },
+                icon = { Icons.Language },
                 type = SettingsItemType.TITLE_LANGUAGE,
             ),
             SettingsItem(
                 title = strings.settingsAdultContentTitle,
                 subtitle = strings.settingsAdultContentSubtitle,
-                icon = { PlatformIcons.Privacy },
+                icon = { Icons.Privacy },
                 type = SettingsItemType.ADULT_CONTENT,
             ),
             SettingsItem(
                 title = strings.settingsScoreFormatTitle,
                 subtitle = strings.settingsScoreFormatSubtitle,
-                icon = { PlatformIcons.Like },
+                icon = { Icons.Like },
                 type = SettingsItemType.SCORE_FORMAT,
             ),
         ),
@@ -106,25 +106,25 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsListSortTitle,
                 subtitle = strings.settingsListSortSubtitle,
-                icon = { PlatformIcons.Sort },
+                icon = { Icons.Sort },
                 type = SettingsItemType.LIST_SORT,
             ),
             SettingsItem(
                 title = strings.settingsSplitCompletedAnimeTitle,
                 subtitle = strings.settingsSplitCompletedAnimeSubtitle,
-                icon = { PlatformIcons.Anime },
+                icon = { Icons.Anime },
                 type = SettingsItemType.SPLIT_COMPLETED_ANIME,
             ),
             SettingsItem(
                 title = strings.settingsSplitCompletedMangaTitle,
                 subtitle = strings.settingsSplitCompletedMangaSubtitle,
-                icon = { PlatformIcons.Manga },
+                icon = { Icons.Manga },
                 type = SettingsItemType.SPLIT_COMPLETED_MANGA,
             ),
             SettingsItem(
                 title = strings.settingsAdvancedScoringTitle,
                 subtitle = strings.settingsAdvancedScoringSubtitle,
-                icon = { PlatformIcons.ContentPreferences },
+                icon = { Icons.ContentPreferences },
                 type = SettingsItemType.ADVANCED_SCORING,
             ),
         ),
@@ -135,7 +135,7 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.notificationsAction,
                 subtitle = strings.settingsNotificationsSubtitle,
-                icon = { PlatformIcons.Notifications },
+                icon = { Icons.Notifications },
                 type = SettingsItemType.NOTIFICATIONS,
             ),
         ),
@@ -146,12 +146,12 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsManageAccountTitle,
                 subtitle = strings.settingsManageAccountSubtitle,
-                icon = { PlatformIcons.ManageAccount },
+                icon = { Icons.ManageAccount },
                 type = SettingsItemType.MANAGE_ACCOUNT,
             ),
             SettingsItem(
                 title = strings.logoutAction,
-                icon = { PlatformIcons.Logout },
+                icon = { Icons.Logout },
                 type = SettingsItemType.LOGOUT,
             ),
         ),
@@ -162,13 +162,13 @@ internal fun settingsGroups(strings: LanguageStrings): List<SettingsGroup> = lis
             SettingsItem(
                 title = strings.settingsHelpTitle,
                 subtitle = strings.settingsHelpSubtitle,
-                icon = { PlatformIcons.HelpSupport },
+                icon = { Icons.HelpSupport },
                 type = SettingsItemType.HELP,
             ),
             SettingsItem(
                 title = strings.settingsAboutTitle,
                 subtitle = strings.settingsAboutSubtitle,
-                icon = { PlatformIcons.Information },
+                icon = { Icons.Information },
                 type = SettingsItemType.ABOUT,
             ),
         ),

@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.AppLanguage
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.components.floatingToolbarClearance
 import com.luum.michi.app.settings.presentation.model.DiscoverTabOption
 import com.luum.michi.app.settings.presentation.model.ListSort
 import com.luum.michi.app.settings.presentation.model.ScoreFormat

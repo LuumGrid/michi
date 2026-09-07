@@ -16,13 +16,13 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.calendar.domain.CalendarDay
 import com.luum.michi.app.calendar.presentation.components.CalendarItemRow
 import com.luum.michi.app.calendar.presentation.state.CalendarStateHolder
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.PlatformListLoading
-import com.luum.michi.app.core.platform.components.PlatformListMessage
-import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.ListLoading
+import com.luum.michi.app.ui.components.ListMessage
+import com.luum.michi.app.ui.components.ListMessageTone
+import com.luum.michi.app.ui.components.floatingToolbarClearance
 
 @Composable
 internal fun CalendarScreen(
@@ -39,13 +39,13 @@ internal fun CalendarScreen(
     }
 
     when {
-        stateHolder.isLoading && stateHolder.days.isEmpty() -> PlatformListLoading(strings.listsLoadingLabel)
-        stateHolder.error != null && stateHolder.days.isEmpty() -> PlatformListMessage(
+        stateHolder.isLoading && stateHolder.days.isEmpty() -> ListLoading(strings.listsLoadingLabel)
+        stateHolder.error != null && stateHolder.days.isEmpty() -> ListMessage(
             title = strings.listsErrorLabel,
             subtitle = stateHolder.error?.let { strings.networkErrorMessage(it) },
-            tone = PlatformListMessageTone.Error,
+            tone = ListMessageTone.Error,
         )
-        stateHolder.days.isEmpty() -> PlatformListMessage(title = strings.calendarEmptyLabel)
+        stateHolder.days.isEmpty() -> ListMessage(title = strings.calendarEmptyLabel)
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(

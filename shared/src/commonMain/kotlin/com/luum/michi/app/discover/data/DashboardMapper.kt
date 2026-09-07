@@ -3,11 +3,10 @@ package com.luum.michi.app.discover.data
 import com.luum.michi.app.core.anilist.dto.DashboardResponseDto
 import com.luum.michi.app.core.anilist.dto.MediaDto
 import com.luum.michi.app.core.anilist.dto.MediaTitleDto
-import com.luum.michi.app.core.anilist.label
-import com.luum.michi.app.core.anilist.parseMediaFormat
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
-import com.luum.michi.app.core.platform.hexToPalette
+import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
 
 internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): DashboardFeed = DashboardFeed(
@@ -37,11 +36,11 @@ internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): Das
         .orEmpty(),
 )
 
-private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): PlatformDiscoverMediaItem =
-    PlatformDiscoverMediaItem(
+private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): MediaItem =
+    MediaItem(
         title = title.bestTitle(),
         meta = metaFor(this),
-        colors = hexToPalette(coverImage?.color),
+        paletteHex = coverImage?.color,
         id = id,
         coverUrl = coverImage?.thumbnailUrl,
         averageScore = averageScore,

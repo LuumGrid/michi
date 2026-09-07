@@ -1,10 +1,10 @@
 package com.luum.michi.app.mediaList.presentation.common
 
-import com.luum.michi.app.core.anilist.MediaFormat
-import com.luum.michi.app.core.anilist.label
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.media.currentSeasonAndYear
-import com.luum.michi.app.core.platform.components.PlatformFilterOption
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.ui.components.FilterOption
 
 /** Static genre list, mirrored from Explore (kept local: features must not import each other). */
 internal fun mediaListGenres(): List<String> = listOf(
@@ -22,7 +22,7 @@ internal fun mediaListYears(): List<Int?> {
     return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
 }
 
-internal fun mediaListSeasonOptions(strings: LanguageStrings): List<PlatformFilterOption> {
+internal fun mediaListSeasonOptions(strings: LanguageStrings): List<FilterOption> {
     val labels = listOf(
         strings.exploreSeasonWinterLabel,
         strings.exploreSeasonSpringLabel,
@@ -30,15 +30,15 @@ internal fun mediaListSeasonOptions(strings: LanguageStrings): List<PlatformFilt
         strings.exploreSeasonFallLabel,
     )
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
-    return listOf(PlatformFilterOption("any", strings.exploreAnySeasonLabel)) +
-        ids.zip(labels) { id, label -> PlatformFilterOption(id, label) }
+    return listOf(FilterOption("any", strings.exploreAnySeasonLabel)) +
+        ids.zip(labels) { id, label -> FilterOption(id, label) }
 }
 
 /**
  * Opciones de formato por tab (jerga AniList sin traducir, igual que en Explore):
  * anime excluye MANGA/NOVEL/ONE_SHOT, manga solo lleva esos tres.
  */
-internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<PlatformFilterOption> =
+internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<FilterOption> =
     MediaFormat.entries
         .filter {
             if (isAnimeTab) {
@@ -48,7 +48,7 @@ internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<PlatformFilterOpt
                 it == MediaFormat.MANGA || it == MediaFormat.NOVEL || it == MediaFormat.ONE_SHOT
             }
         }
-        .map { PlatformFilterOption(it.name, it.label()) }
+        .map { FilterOption(it.name, it.label()) }
 
 /**
  * Client-side predicate shared by both lists (the whole collection is already

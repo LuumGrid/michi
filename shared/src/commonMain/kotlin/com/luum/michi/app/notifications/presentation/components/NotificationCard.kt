@@ -17,11 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.media.toLocalMediaReleaseDateTime
-import com.luum.michi.app.core.platform.components.PlatformCoverSize
-import com.luum.michi.app.core.platform.components.PlatformMediaCover
+import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.MediaCover
 import com.luum.michi.app.notifications.presentation.model.AppNotification
 import com.luum.michi.app.notifications.presentation.model.NotificationCategory
 
@@ -45,13 +45,13 @@ internal fun NotificationCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlatformMediaCover(
+            MediaCover(
                 coverUrl = notification.imageUrl,
-                palette = emptyList(),
+                paletteHex = null,
                 contentDescription = notification.mediaTitle ?: notification.userName,
                 modifier = Modifier
-                    .width(PlatformCoverSize.RowPosterWidth)
-                    .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+                    .width(CoverSize.RowPosterWidth)
+                    .aspectRatio(CoverSize.PosterAspectRatio),
                 cornerRadius = 12.dp,
             )
             Column(

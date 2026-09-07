@@ -3,12 +3,11 @@ package com.luum.michi.app.mediaList.data.anime
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.completedSection
-import com.luum.michi.app.core.anilist.MediaFormat
-import com.luum.michi.app.core.anilist.parseMediaFormat
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.anilist.dto.toComparableInt
 import com.luum.michi.app.core.model.toMediaReleaseDateTime
-import com.luum.michi.app.core.platform.hexToPalette
 
 internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry {
     val section = mapAnimeStatus(status, parseMediaFormat(media.format))
@@ -21,7 +20,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
         totalEpisodes = media.episodes,
         score = score,
         nextEpisodeRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
-        palette = hexToPalette(media.coverImage?.color),
+        paletteHex = media.coverImage?.color,
         coverUrl = media.coverImage?.thumbnailUrl,
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,

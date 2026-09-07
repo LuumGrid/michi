@@ -2,7 +2,7 @@ package com.luum.michi.app.manga
 
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.core.anilist.MediaFormat
+import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.formattedScore
@@ -26,7 +26,7 @@ private fun novelEntry(volumesProgress: Int) = MangaListEntry(
     tracksByVolume = true,
     score = 0.0,
     nextChapterRelease = null,
-    palette = emptyList(),
+    paletteHex = null,
 )
 
 private fun mangaEntry(chaptersProgress: Int) = MangaListEntry(
@@ -41,7 +41,7 @@ private fun mangaEntry(chaptersProgress: Int) = MangaListEntry(
     tracksByVolume = false,
     score = 8.5,
     nextChapterRelease = null,
-    palette = emptyList(),
+    paletteHex = null,
 )
 
 class MangaListEntryTest {

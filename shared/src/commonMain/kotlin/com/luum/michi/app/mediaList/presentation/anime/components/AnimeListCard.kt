@@ -9,10 +9,10 @@ import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.anime.model.progressLabel
 import com.luum.michi.app.mediaList.domain.anime.model.progressRatio
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
-import com.luum.michi.app.core.anilist.label
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformMediaListCard
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.Icons
+import com.luum.michi.app.ui.components.MediaListCard
 
 @Composable
 internal fun AnimeListCard(
@@ -23,18 +23,17 @@ internal fun AnimeListCard(
 ) {
     val strings = LanguageProvider.strings
 
-    PlatformMediaListCard(
+    MediaListCard(
         title = entry.title,
         subtitle = entry.format.label(unknownFallback = "Anime"),
         score = entry.formattedScore(),
-        primaryProgressLabel = entry.progressLabel(),
         primaryProgressRatio = entry.progressRatio(),
         primaryIncrementLabel = "+1 EP",
         primaryIncrementValueLabel = entry.progressLabel(),
         primaryIncrementEnabled = entry.canIncrement(),
-        palette = entry.palette,
+        paletteHex = entry.paletteHex,
         coverUrl = entry.coverUrl,
-        icon = PlatformIcons.Anime,
+        icon = Icons.Anime,
         isComplete = !entry.canIncrement(),
         releaseLabel = entry.releaseLabel(strings),
         behindLabel = entry.behindLabel(strings),

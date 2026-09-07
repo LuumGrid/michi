@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.presentation.components.AccountFavoriteMediaCard
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 import com.luum.michi.app.account.presentation.components.AccountFavoritePersonCard
 import com.luum.michi.app.account.presentation.components.AccountFavoriteSection
 import com.luum.michi.app.account.presentation.components.AccountFavoriteStudioCard
@@ -34,19 +34,18 @@ import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.account.presentation.state.AccountStateHolder
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.PlatformIcons
-import com.luum.michi.app.core.platform.components.PlatformListLoading
-import com.luum.michi.app.core.platform.components.PlatformListMessage
-import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.ui.Icons
+import com.luum.michi.app.ui.components.ListLoading
+import com.luum.michi.app.ui.components.ListMessage
+import com.luum.michi.app.ui.components.ListMessageTone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AccountScreen(
     stateHolder: AccountStateHolder,
     username: String,
-    displayName: String,
     bannerUrl: String?,
     userAvatarUrl: String?,
     userBio: String?,
@@ -72,7 +71,6 @@ internal fun AccountScreen(
     ) {
         AccountContent(
             username = username,
-            displayName = displayName,
             bannerUrl = bannerUrl,
             userAvatarUrl = userAvatarUrl,
             userBio = userBio,
@@ -100,7 +98,6 @@ internal fun AccountScreen(
 @Composable
 private fun AccountContent(
     username: String,
-    displayName: String,
     bannerUrl: String?,
     userAvatarUrl: String?,
     userBio: String?,
@@ -123,17 +120,17 @@ private fun AccountContent(
 ) {
     val strings = LanguageProvider.strings
     // Igual que en Anime/Manga: mientras no haya stats cargadas, no consideramos
-    // que ya tenemos datos que mostrar (ver ShellScreen, que usa el mismo criterio
+    // que ya tenemos datos que mostrar (ver Root, que usa el mismo criterio
     // para decidir si dispara la carga inicial).
     val hasData = stats.animeCount > 0 || stats.mangaCount > 0
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
-            isLoading && !hasData -> PlatformListLoading(strings.listsLoadingLabel)
-            error != null && !hasData -> PlatformListMessage(
+            isLoading && !hasData -> ListLoading(strings.listsLoadingLabel)
+            error != null && !hasData -> ListMessage(
                 title = strings.listsErrorLabel,
                 subtitle = error,
-                tone = PlatformListMessageTone.Error,
+                tone = ListMessageTone.Error,
             )
             else -> LazyColumn(
                 modifier = Modifier
@@ -145,7 +142,6 @@ private fun AccountContent(
                 item {
                     AccountHeader(
                         username = username,
-                        displayName = displayName,
                         bannerUrl = bannerUrl,
                         userAvatarUrl = userAvatarUrl,
                         userBio = userBio,
@@ -172,7 +168,7 @@ private fun AccountContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            painter = PlatformIcons.Stats,
+                            painter = Icons.Stats,
                             contentDescription = strings.accountStatsTitle,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp),
@@ -185,7 +181,7 @@ private fun AccountContent(
                             modifier = Modifier.weight(1f),
                         )
                         Icon(
-                            painter = PlatformIcons.ChevronRight,
+                            painter = Icons.ChevronRight,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

@@ -13,11 +13,11 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeStatusSections
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.presentation.anime.state.AnimeListStateHolder
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.PlatformListLoading
-import com.luum.michi.app.core.platform.components.PlatformListMessage
-import com.luum.michi.app.core.platform.components.PlatformListMessageTone
+import com.luum.michi.app.ui.components.ListLoading
+import com.luum.michi.app.ui.components.ListMessage
+import com.luum.michi.app.ui.components.ListMessageTone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,13 +66,13 @@ private fun AnimeContent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
-            isLoading && totalEntries == 0 -> PlatformListLoading(strings.listsLoadingLabel)
-            error != null && totalEntries == 0 -> PlatformListMessage(
+            isLoading && totalEntries == 0 -> ListLoading(strings.listsLoadingLabel)
+            error != null && totalEntries == 0 -> ListMessage(
                 title = strings.listsErrorLabel,
                 subtitle = error,
-                tone = PlatformListMessageTone.Error,
+                tone = ListMessageTone.Error,
             )
-            totalEntries == 0 -> PlatformListMessage(title = strings.listsEmptyLabel)
+            totalEntries == 0 -> ListMessage(title = strings.listsEmptyLabel)
             else -> AnimeContentList(
                 entriesInSection = entriesInSection,
                 selectedSection = selectedSection,

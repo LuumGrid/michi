@@ -18,13 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.components.PlatformListLoading
-import com.luum.michi.app.core.platform.components.PlatformListMessage
-import com.luum.michi.app.core.platform.components.PlatformListMessageTone
-import com.luum.michi.app.core.platform.components.floatingToolbarClearance
-import com.luum.michi.app.core.platform.components.tabBarClearance
+import com.luum.michi.app.ui.components.ListLoading
+import com.luum.michi.app.ui.components.ListMessage
+import com.luum.michi.app.ui.components.ListMessageTone
+import com.luum.michi.app.ui.components.floatingToolbarClearance
+import com.luum.michi.app.ui.components.tabBarClearance
 import com.luum.michi.app.notifications.presentation.components.NotificationCard
 import com.luum.michi.app.notifications.presentation.model.NotificationTarget
 import com.luum.michi.app.notifications.presentation.state.NotificationsStateHolder
@@ -50,15 +50,15 @@ internal fun NotificationsScreen(
     }
 
     when {
-        stateHolder.isLoading -> PlatformListLoading(label = strings.listsLoadingLabel)
-        stateHolder.error != null -> PlatformListMessage(
+        stateHolder.isLoading -> ListLoading(label = strings.listsLoadingLabel)
+        stateHolder.error != null -> ListMessage(
             title = strings.notificationsErrorLabel,
             subtitle = strings.networkErrorMessage(stateHolder.error!!),
-            tone = PlatformListMessageTone.Error,
+            tone = ListMessageTone.Error,
             actionLabel = strings.mediaDetailLoadMoreAction,
             onAction = { stateHolder.load() },
         )
-        stateHolder.notifications.isEmpty() -> PlatformListMessage(title = strings.notificationsEmptyLabel)
+        stateHolder.notifications.isEmpty() -> ListMessage(title = strings.notificationsEmptyLabel)
         else -> LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),

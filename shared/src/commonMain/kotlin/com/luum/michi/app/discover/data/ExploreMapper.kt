@@ -1,10 +1,9 @@
 package com.luum.michi.app.discover.data
 
 import com.luum.michi.app.core.anilist.dto.MediaSearchItemDto
-import com.luum.michi.app.core.anilist.label
-import com.luum.michi.app.core.anilist.parseMediaFormat
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.discover.domain.model.ExploreResult
 
 internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): ExploreResult {
@@ -14,7 +13,7 @@ internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): Explo
         title = titleText,
         meta = buildMeta(strings),
         coverUrl = coverImage?.thumbnailUrl,
-        palette = hexToPalette(coverImage?.color),
+        paletteHex = coverImage?.color,
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,
         genres = genres.orEmpty(),

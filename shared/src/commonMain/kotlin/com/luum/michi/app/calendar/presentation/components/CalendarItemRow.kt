@@ -22,18 +22,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.components.PlatformCommunityMetaRow
-import com.luum.michi.app.core.platform.components.PlatformCoverSize
-import com.luum.michi.app.core.platform.components.PlatformDiscoverPoster
-import com.luum.michi.app.core.platform.components.PlatformDiscoverReleaseItem
-import com.luum.michi.app.core.platform.components.StreamingPlatform
+import com.luum.michi.app.ui.components.CommunityMetaRow
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.DiscoverPoster
+import com.luum.michi.app.calendar.domain.model.ReleaseItem
+import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun CalendarItemRow(
-    item: PlatformDiscoverReleaseItem,
+    item: ReleaseItem,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -49,13 +49,13 @@ internal fun CalendarItemRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlatformDiscoverPoster(
-                colors = item.colors,
+            DiscoverPoster(
+                paletteHex = item.paletteHex,
                 coverUrl = item.coverUrl,
                 contentDescription = item.title,
                 modifier = Modifier
-                    .width(PlatformCoverSize.RowPosterWidth)
-                    .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+                    .width(CoverSize.RowPosterWidth)
+                    .aspectRatio(CoverSize.PosterAspectRatio),
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -78,7 +78,7 @@ internal fun CalendarItemRow(
                 if (item.userStatus != null) {
                     UserStatusPill(status = item.userStatus, strings = LanguageProvider.strings)
                 }
-                PlatformCommunityMetaRow(
+                CommunityMetaRow(
                     averageScore = item.averageScore,
                     favourites = item.favourites,
                     popularity = item.popularity,

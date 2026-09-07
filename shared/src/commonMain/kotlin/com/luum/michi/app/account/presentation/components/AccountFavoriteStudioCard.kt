@@ -15,8 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.account.domain.model.AccountFavoriteStudio
-import com.luum.michi.app.core.platform.components.PlatformCoverSize
-import com.luum.michi.app.core.platform.components.PlatformMediaCover
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.MediaCover
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -30,16 +30,16 @@ internal fun AccountFavoriteStudioCard(
         Modifier
     }
     Column(
-        modifier = Modifier.width(PlatformCoverSize.RailPosterWidth).then(clickModifier),
+        modifier = Modifier.width(CoverSize.RailPosterWidth).then(clickModifier),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PlatformMediaCover(
+        MediaCover(
             coverUrl = studio.coverUrl,
-            palette = studio.palette,
+            paletteHex = studio.paletteHex,
             contentDescription = studio.name,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(PlatformCoverSize.PosterAspectRatio),
+                .aspectRatio(CoverSize.PosterAspectRatio),
         )
         Text(
             text = studio.name,

@@ -21,11 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.components.PlatformChipRow
-import com.luum.michi.app.core.platform.components.PlatformFilterOption
-import com.luum.michi.app.core.platform.components.PlatformModalSheet
-import com.luum.michi.app.core.platform.components.PlatformSheetActionBar
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.components.ChipRow
+import com.luum.michi.app.ui.components.FilterOption
+import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.components.SheetActionBar
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.exploreFormats
 import com.luum.michi.app.discover.domain.model.exploreGenres
@@ -55,18 +55,18 @@ internal fun ExploreFilterSheet(
         draftCategory == ExploreCategory.STAFF ||
         draftCategory == ExploreCategory.STUDIOS
     val typeOptions = remember(strings) {
-        ExploreCategory.entries.map { PlatformFilterOption(it.name, it.filterLabel(strings)) }
+        ExploreCategory.entries.map { FilterOption(it.name, it.filterLabel(strings)) }
     }
     val seasonOptions = remember(strings) { exploreSeasonOptions(strings) }
-    val genreOptions = remember { exploreGenres().map { PlatformFilterOption(it, it) } }
+    val genreOptions = remember { exploreGenres().map { FilterOption(it, it) } }
     val formatOptions = remember {
-        exploreFormats().map { PlatformFilterOption(it.value, it.label) }
+        exploreFormats().map { FilterOption(it.value, it.label) }
     }
     val yearOptions = remember(strings) {
-        exploreYears().map { PlatformFilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
+        exploreYears().map { FilterOption(it?.toString() ?: "any", it?.toString() ?: strings.exploreAnyYearLabel) }
     }
 
-    PlatformModalSheet(
+    ModalSheet(
         onDismiss = onDismiss,
         maxHeightFraction = 0.65f,
     ) { modifier ->
@@ -94,7 +94,7 @@ internal fun ExploreFilterSheet(
             ) {
                 item(key = "group_type") {
                     FilterGroupSection(title = strings.exploreFilterTypeLabel) {
-                        PlatformChipRow(
+                        ChipRow(
                             options = typeOptions,
                             selectedIds = setOf(draftCategory.name),
                             onToggle = { id ->
@@ -110,7 +110,7 @@ internal fun ExploreFilterSheet(
                     if (draftCategory == ExploreCategory.ANIME) {
                         item(key = "group_season") {
                             FilterGroupSection(title = strings.exploreFilterSeasonLabel) {
-                                PlatformChipRow(
+                                ChipRow(
                                     options = seasonOptions,
                                     selectedIds = setOf(draftSeason ?: "any"),
                                     onToggle = { id -> draftSeason = if (id == "any") null else id },
@@ -121,7 +121,7 @@ internal fun ExploreFilterSheet(
                     }
                     item(key = "group_genre") {
                         FilterGroupSection(title = strings.exploreFilterGenreLabel) {
-                            PlatformChipRow(
+                            ChipRow(
                                 options = genreOptions,
                                 selectedIds = draftGenres.toSet(),
                                 onToggle = { id ->
@@ -134,7 +134,7 @@ internal fun ExploreFilterSheet(
                     }
                     item(key = "group_format") {
                         FilterGroupSection(title = strings.exploreFilterFormatLabel) {
-                            PlatformChipRow(
+                            ChipRow(
                                 options = formatOptions,
                                 selectedIds = draftFormats.toSet(),
                                 onToggle = { id ->
@@ -147,7 +147,7 @@ internal fun ExploreFilterSheet(
                     }
                     item(key = "group_year") {
                         FilterGroupSection(title = strings.exploreFilterYearLabel) {
-                            PlatformChipRow(
+                            ChipRow(
                                 options = yearOptions,
                                 selectedIds = setOf(draftYear?.toString() ?: "any"),
                                 onToggle = { id -> draftYear = if (id == "any") null else id.toIntOrNull() },
@@ -158,7 +158,7 @@ internal fun ExploreFilterSheet(
                 }
             }
 
-            PlatformSheetActionBar(
+            SheetActionBar(
                 leadingLabel = strings.filterResetAction,
                 trailingLabel = strings.filterApplyAction,
                 onLeadingClick = {

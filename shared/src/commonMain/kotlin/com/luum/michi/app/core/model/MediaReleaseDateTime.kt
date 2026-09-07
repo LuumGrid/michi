@@ -1,8 +1,5 @@
 package com.luum.michi.app.core.model
 
-import androidx.compose.runtime.Immutable
-
-@Immutable
 data class MediaReleaseDateTime(
     val day: Int,
     val month: Int,
@@ -10,10 +7,6 @@ data class MediaReleaseDateTime(
     val hour: Int,
     val minute: Int,
 ) {
-    fun formatDateTime(): String {
-        return "${day.twoDigits()}/${month.twoDigits()}/$year ${hour.twoDigits()}:${minute.twoDigits()}"
-    }
-
     fun formatReadableDateTime(monthName: (Int) -> String): String {
         return "$day ${monthName(month)} $year, ${hour.twoDigits()}:${minute.twoDigits()}"
     }

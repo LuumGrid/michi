@@ -83,9 +83,18 @@ internal class AccountFavoritesGridStateHolder(
     private suspend fun fetchPage(userId: Int, category: AccountFavoritesCategory, page: Int) {
         when (val result = repository.loadFavoritesPage(userId, category, page)) {
             is NetworkResult.Success -> {
-                mediaItemsState.addAll(result.value.mediaItems)
-                personItemsState.addAll(result.value.personItems)
-                studioItemsState.addAll(result.value.studioItems)
+                // Las páginas pueden solaparse (el orden por favourites cambia entre
+                // requests) o llegar un fetch viejo tras cambiar de categoría: solo
+                // se agrega lo que no esté ya, o el grid revienta por keys duplicadas.
+                mediaItemsState.addAll(result.value.mediaItems.filter { fresh ->
+                    mediaItemsState.none { it.id == fresh.id }
+                })
+                personItemsState.addAll(result.value.personItems.filter { fresh ->
+                    personItemsState.none { it.id == fresh.id }
+                })
+                studioItemsState.addAll(result.value.studioItems.filter { fresh ->
+                    studioItemsState.none { it.id == fresh.id }
+                })
                 hasNextPageState = result.value.hasNextPage
                 currentPage = page
             }

@@ -6,13 +6,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.platform.components.PlatformDiscoverSection
+import com.luum.michi.app.ui.components.DiscoverSection
 
 /** Rail preview cap; the rest are reached via the "See all" affordance. */
 private const val RailPreviewLimit = 10
 
 /**
- * Favorites section sharing Discover's [PlatformDiscoverSection] header ("See all").
+ * Favorites section sharing Discover's [DiscoverSection] header ("See all").
  *
  * Always renders a horizontal rail ([LazyRow]) showing the first
  * [RailPreviewLimit] items, like Discover's rails.
@@ -27,7 +27,7 @@ internal fun <T : Any> AccountFavoriteSection(
 ) {
     if (items.isEmpty()) return
 
-    PlatformDiscoverSection(title = title, onSeeAll = onSeeAll) {
+    DiscoverSection(title = title, onSeeAll = onSeeAll) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),

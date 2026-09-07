@@ -11,9 +11,7 @@ import com.luum.michi.app.core.network.AniListJson
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.core.network.map
 import com.luum.michi.app.core.language.LanguageStrings
-import com.luum.michi.app.core.platform.hexToPalette
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.discover.data.toExploreResult
 import com.luum.michi.app.discover.domain.model.ExplorePage
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import kotlinx.serialization.SerialName
@@ -22,7 +20,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val AnimeCatalogQuery = """
 query AnimeCatalog(
@@ -367,7 +364,7 @@ private fun CharacterDto.toExploreResult(): ExploreResult = ExploreResult(
     title = name?.bestName ?: "",
     meta = "Character",
     coverUrl = image?.bestUrl,
-    palette = hexToPalette(null),
+    paletteHex = null,
     averageScore = null
 )
 
@@ -376,7 +373,7 @@ private fun StaffDto.toExploreResult(): ExploreResult = ExploreResult(
     title = name?.bestName ?: "",
     meta = "Staff",
     coverUrl = image?.bestUrl,
-    palette = hexToPalette(null),
+    paletteHex = null,
     averageScore = null
 )
 
@@ -385,7 +382,7 @@ private fun StudioDto.toExploreResult(): ExploreResult = ExploreResult(
     title = name,
     meta = "Studio",
     coverUrl = latestCoverImage?.thumbnailUrl,
-    palette = hexToPalette(latestCoverImage?.color),
+    paletteHex = latestCoverImage?.color,
     averageScore = null
 )
 

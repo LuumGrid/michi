@@ -27,8 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.auth.AniListOAuthConfig
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.platform.MichiAppName
+import com.luum.michi.app.ui.language.LanguageProvider
+import com.luum.michi.app.ui.MichiAppName
 
 private val MichiBrandColors = listOf(
     Color(0xFFFFC857),

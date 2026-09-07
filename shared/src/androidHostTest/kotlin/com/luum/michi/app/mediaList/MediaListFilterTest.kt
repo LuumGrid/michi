@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaList
 
-import com.luum.michi.app.core.anilist.MediaFormat
-import com.luum.michi.app.core.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.medialist.MediaListStatus
-import com.luum.michi.app.core.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.anilist.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.anilist.medialist.MediaListStatus
+import com.luum.michi.app.core.anilist.medialist.MediaListViewerEntry
 import com.luum.michi.app.core.network.NetworkResult
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
@@ -30,7 +30,7 @@ private fun animeEntry(
     totalEpisodes = 12,
     score = 8.0,
     nextEpisodeRelease = null,
-    palette = emptyList(),
+    paletteHex = null,
     genres = genres,
     season = season,
     seasonYear = seasonYear,

@@ -6,11 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.core.language.LanguageProvider
+import com.luum.michi.app.ui.language.LanguageProvider
 import com.luum.michi.app.core.language.LanguageStrings
 import com.luum.michi.app.core.network.NetworkError
 import com.luum.michi.app.core.network.NetworkResult
-import com.luum.michi.app.core.platform.components.PlatformDiscoverMediaItem
+import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
 import kotlinx.coroutines.CoroutineScope
@@ -41,14 +41,14 @@ internal class DashboardStateHolder(
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
 
-    val trendingAnime: List<PlatformDiscoverMediaItem> get() = feedState.trendingAnime
-    val trendingManga: List<PlatformDiscoverMediaItem> get() = feedState.trendingManga
-    val thisSeason: List<PlatformDiscoverMediaItem> get() = feedState.thisSeason
-    val upcomingNextSeason: List<PlatformDiscoverMediaItem> get() = feedState.upcomingNextSeason
-    val allTimePopularAnime: List<PlatformDiscoverMediaItem> get() = feedState.allTimePopularAnime
-    val allTimePopularManga: List<PlatformDiscoverMediaItem> get() = feedState.allTimePopularManga
-    val topAnime: List<PlatformDiscoverMediaItem> get() = feedState.topAnime
-    val topManga: List<PlatformDiscoverMediaItem> get() = feedState.topManga
+    val trendingAnime: List<MediaItem> get() = feedState.trendingAnime
+    val trendingManga: List<MediaItem> get() = feedState.trendingManga
+    val thisSeason: List<MediaItem> get() = feedState.thisSeason
+    val upcomingNextSeason: List<MediaItem> get() = feedState.upcomingNextSeason
+    val allTimePopularAnime: List<MediaItem> get() = feedState.allTimePopularAnime
+    val allTimePopularManga: List<MediaItem> get() = feedState.allTimePopularManga
+    val topAnime: List<MediaItem> get() = feedState.topAnime
+    val topManga: List<MediaItem> get() = feedState.topManga
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
     val error: NetworkError? get() = errorState
