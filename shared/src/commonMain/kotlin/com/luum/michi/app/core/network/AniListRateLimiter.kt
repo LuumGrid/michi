@@ -6,6 +6,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
@@ -68,7 +70,7 @@ internal class AniListRateLimiter {
         while (true) {
             val waitMs = mutex.withLock { computeWaitMs() }
             if (waitMs <= 0L) break
-            delay(waitMs)
+            delay(waitMs.milliseconds)
         }
 
         // Phase 2: hold a concurrency permit for the round-trip; released in finally.
@@ -94,7 +96,7 @@ internal class AniListRateLimiter {
             // Convert server epoch to a monotonic delay duration.
             val nowEpoch = currentEpochSeconds()
             val secondsUntilReset = (resetEpochSeconds - nowEpoch).coerceAtLeast(0L)
-            secondsUntilReset * 1_000L
+            secondsUntilReset.seconds.inWholeMilliseconds
         } else {
             FIXED_BACKOFF_MILLIS
         }
@@ -107,7 +109,7 @@ internal class AniListRateLimiter {
      * for (at least) the server-mandated retry-after interval.
      */
     suspend fun onRateLimited(retryAfterSeconds: Long) {
-        extendPause(retryAfterSeconds * 1_000L)
+        extendPause(retryAfterSeconds.seconds.inWholeMilliseconds)
     }
 
     // Only extends the pause window, never shortens an existing one. Guarded by
