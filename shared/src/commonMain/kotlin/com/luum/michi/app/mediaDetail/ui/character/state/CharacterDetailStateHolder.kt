@@ -48,7 +48,7 @@ internal class CharacterDetailStateHolder(
     private var currentCharacterId: Int? = null
     private var currentJob: Job? = null
 
-    private val detailCache = LruCache<Pair<Int, LanguageStrings>, CharacterDetailSnapshot>(maxSize = 5)
+    private val detailCache = LruCache<Int, CharacterDetailSnapshot>(maxSize = 5)
 
     var mediaItems: List<CharacterMediaItem> = emptyList()
         private set
@@ -72,7 +72,7 @@ internal class CharacterDetailStateHolder(
     fun load(id: Int) {
         if (currentCharacterId == id && (detailState != null || loadingState)) return
 
-        val cached = detailCache.get(id to strings)
+        val cached = detailCache.get(id)
         if (cached != null) {
             currentCharacterId = id
             currentJob?.cancel()
@@ -107,7 +107,7 @@ internal class CharacterDetailStateHolder(
                     currentPage = value.media.currentPage
                     isFavourite = value.isFavourite
                     detailCache.put(
-                        id to strings,
+                        id,
                         CharacterDetailSnapshot(
                             detail = value,
                             mediaItems = mediaItems,
@@ -136,7 +136,7 @@ internal class CharacterDetailStateHolder(
                     currentPage = result.value.currentPage
                     detailState?.let { d ->
                         detailCache.put(
-                            id to strings,
+                            id,
                             CharacterDetailSnapshot(
                                 detail = d,
                                 mediaItems = mediaItems,
@@ -157,7 +157,7 @@ internal class CharacterDetailStateHolder(
         if (newSort == sort) return
         sort = newSort
         val id = currentCharacterId ?: return
-        detailCache.remove(id to strings)
+        detailCache.remove(id)
         currentJob?.cancel()
         mediaItems = emptyList()
         hasNextPage = false
@@ -175,7 +175,7 @@ internal class CharacterDetailStateHolder(
                     currentPage = value.media.currentPage
                     isFavourite = value.isFavourite
                     detailCache.put(
-                        id to strings,
+                        id,
                         CharacterDetailSnapshot(
                             detail = value,
                             mediaItems = mediaItems,
@@ -204,7 +204,7 @@ internal class CharacterDetailStateHolder(
                         val updated = d.copy(isFavourite = isFavourite)
                         detailState = updated
                         detailCache.put(
-                            id to strings,
+                            id,
                             CharacterDetailSnapshot(
                                 detail = updated,
                                 mediaItems = mediaItems,

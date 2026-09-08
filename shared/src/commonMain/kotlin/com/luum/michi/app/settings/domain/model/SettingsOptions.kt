@@ -43,7 +43,7 @@ internal enum class ListSort {
 }
 
 internal fun ListSort.label(strings: LanguageStrings): String = when (this) {
-    ListSort.TITLE -> strings.settingsListSortByTitle
+    ListSort.TITLE -> strings.sortTitle
     ListSort.SCORE -> strings.settingsListSortByScore
     ListSort.UPDATED -> strings.settingsListSortByUpdated
     ListSort.ADDED -> strings.settingsListSortByAdded
@@ -53,10 +53,10 @@ internal fun ListSort.label(strings: LanguageStrings): String = when (this) {
 internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, ACCOUNT }
 
 internal fun DiscoverTabOption.label(strings: LanguageStrings): String = when (this) {
-    DiscoverTabOption.DISCOVER -> strings.tabDiscover
-    DiscoverTabOption.ANIME -> strings.tabAnime
-    DiscoverTabOption.MANGA -> strings.tabManga
-    DiscoverTabOption.ACCOUNT -> strings.tabAccount
+    DiscoverTabOption.DISCOVER -> strings.discoverLabel
+    DiscoverTabOption.ANIME -> strings.animeLabel
+    DiscoverTabOption.MANGA -> strings.mangaLabel
+    DiscoverTabOption.ACCOUNT -> strings.accountLabel
 }
 
 internal data class NotificationPreferences(

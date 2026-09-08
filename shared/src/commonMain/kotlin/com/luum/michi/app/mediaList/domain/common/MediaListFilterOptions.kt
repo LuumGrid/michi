@@ -25,10 +25,10 @@ internal fun mediaListYears(): List<Int?> {
 
 internal fun mediaListSeasonOptions(strings: LanguageStrings): List<FilterOption> {
     val labels = listOf(
-        strings.exploreSeasonWinterLabel,
-        strings.exploreSeasonSpringLabel,
-        strings.exploreSeasonSummerLabel,
-        strings.exploreSeasonFallLabel,
+        strings.seasonWinterLabel,
+        strings.seasonSpringLabel,
+        strings.seasonSummerLabel,
+        strings.seasonFallLabel,
     )
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
     return listOf(FilterOption("any", strings.exploreAnySeasonLabel)) +

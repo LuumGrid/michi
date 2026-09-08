@@ -23,17 +23,17 @@ internal enum class UserListSort {
         FOLLOW_LIST -> strings.sortFollowList
         TITLE -> strings.sortTitle
         SCORE -> strings.sortScore
-        PROGRESS -> strings.sortProgress
+        PROGRESS -> strings.progressLabel
         LAST_UPDATED -> strings.sortLastUpdated
         LAST_ADDED -> strings.sortLastAdded
         START_DATE -> strings.sortStartDate
         COMPLETED_DATE -> strings.sortCompletedDate
         RELEASE_DATE -> strings.sortReleaseDate
         AVERAGE_SCORE -> strings.sortAverageScore
-        POPULARITY -> strings.sortPopularity
-        FAVORITES -> strings.sortFavorites
+        POPULARITY -> strings.popularityLabel
+        FAVORITES -> strings.favoritesLabel
         TRENDING -> strings.sortTrending
-        PRIORITY -> strings.sortPriority
+        PRIORITY -> strings.priorityLabel
         NEXT_AIRING -> strings.sortNextAiring
     }
 }

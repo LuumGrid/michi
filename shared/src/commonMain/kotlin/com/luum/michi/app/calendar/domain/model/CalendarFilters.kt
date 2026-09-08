@@ -19,7 +19,7 @@ internal fun CalendarSeasonFilter.label(strings: LanguageStrings): String = when
     CalendarSeasonFilter.PREVIOUS -> strings.calendarSeasonPrevious
     CalendarSeasonFilter.CURRENT -> strings.calendarSeasonCurrent
     CalendarSeasonFilter.NEXT -> strings.calendarSeasonNext
-    CalendarSeasonFilter.OTHER -> strings.calendarSeasonOther
+    CalendarSeasonFilter.OTHER -> strings.otherLabel
 }
 
 internal fun CalendarSeasonFilter.matches(
@@ -49,7 +49,7 @@ internal fun CalendarStatusFilter.label(strings: LanguageStrings): String = when
     CalendarStatusFilter.ALL -> strings.calendarStatusAll
     CalendarStatusFilter.WATCHING_PLANNING -> strings.calendarStatusWatchingPlanning
     CalendarStatusFilter.NOT_IN_LIST -> strings.calendarStatusNotInList
-    CalendarStatusFilter.OTHER -> strings.calendarStatusOther
+    CalendarStatusFilter.OTHER -> strings.otherLabel
 }
 
 internal fun CalendarStatusFilter.matches(

@@ -12,7 +12,9 @@ import com.luum.michi.app.core.repository.anilist.dto.MediaVoiceActorDto
 import com.luum.michi.app.core.repository.anilist.dto.bestTitle
 import com.luum.michi.app.core.repository.anilist.dto.toTitleCase
 import com.luum.michi.app.core.domain.model.CalendarDateParts
+import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.model.calendarPartsToMillis
+import com.luum.michi.app.core.domain.model.parseMediaSeason
 import com.luum.michi.app.core.domain.language.LanguageStrings
 import com.luum.michi.app.core.domain.util.stripHtml
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
@@ -49,7 +51,7 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
     genres = genres,
     studios = studios?.nodes?.map { StudioRef(it.id, it.name) }.orEmpty(),
     source = source?.toTitleCase(),
-    season = formatSeason(season, seasonYear),
+    season = formatSeason(season, seasonYear, strings),
     startedLabel = startDate?.format(strings),
     endedLabel = endDate?.format(strings),
     averageScore = averageScore?.takeIf { it > 0 },
@@ -200,14 +202,21 @@ private fun parseType(raw: String?): MediaDetailType = when (raw) {
     else -> MediaDetailType.UNKNOWN
 }
 
-private fun formatSeason(season: String?, year: Int?): String? {
+private fun formatSeason(season: String?, year: Int?, strings: LanguageStrings): String? {
     if (season == null && year == null) return null
-    val seasonLabel = season?.toTitleCase()
+    val seasonLabel = parseMediaSeason(season)?.let { seasonLabel(it, strings) }
     return when {
         seasonLabel != null && year != null -> "$seasonLabel $year"
         seasonLabel != null -> seasonLabel
         else -> year?.toString()
     }
+}
+
+private fun seasonLabel(season: MediaSeason, strings: LanguageStrings): String = when (season) {
+    MediaSeason.WINTER -> strings.seasonWinterLabel
+    MediaSeason.SPRING -> strings.seasonSpringLabel
+    MediaSeason.SUMMER -> strings.seasonSummerLabel
+    MediaSeason.FALL -> strings.seasonFallLabel
 }
 
 private fun FuzzyDateDto.format(strings: LanguageStrings): String? {

@@ -7,9 +7,9 @@ internal enum class NotificationFilter { ALL, AIRING, ACTIVITY, REPLIES, FORUM, 
 internal fun NotificationFilter.label(strings: LanguageStrings): String = when (this) {
     NotificationFilter.ALL -> strings.notificationFilterAll
     NotificationFilter.AIRING -> strings.notificationFilterAiring
-    NotificationFilter.ACTIVITY -> strings.notificationFilterActivity
+    NotificationFilter.ACTIVITY -> strings.activityLabel
     NotificationFilter.REPLIES -> strings.notificationFilterReplies
-    NotificationFilter.FORUM -> strings.notificationFilterForum
+    NotificationFilter.FORUM -> strings.forumLabel
     NotificationFilter.FOLLOWS -> strings.notificationFilterFollows
     NotificationFilter.MEDIA -> strings.notificationFilterMedia
 }

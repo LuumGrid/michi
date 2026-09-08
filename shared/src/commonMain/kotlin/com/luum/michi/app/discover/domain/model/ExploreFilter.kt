@@ -11,9 +11,9 @@ internal data class ExploreFormatOption(val value: String, val label: String)
 internal fun ExploreCategory.filterLabel(strings: LanguageStrings): String = when (this) {
     ExploreCategory.ANIME -> "Anime"
     ExploreCategory.MANGA -> "Manga"
-    ExploreCategory.CHARACTERS -> strings.exploreCharactersCategoryLabel
+    ExploreCategory.CHARACTERS -> strings.charactersLabel
     ExploreCategory.STAFF -> "Staff"
-    ExploreCategory.STUDIOS -> strings.exploreStudiosCategoryLabel
+    ExploreCategory.STUDIOS -> strings.studiosLabel
 }
 
 internal fun exploreGenres(): List<String> {
@@ -40,10 +40,10 @@ internal fun exploreYears(): List<Int?> {
 
 internal fun exploreSeasonOptions(strings: LanguageStrings): List<FilterOption> {
     val labels = listOf(
-        strings.exploreSeasonWinterLabel,
-        strings.exploreSeasonSpringLabel,
-        strings.exploreSeasonSummerLabel,
-        strings.exploreSeasonFallLabel,
+        strings.seasonWinterLabel,
+        strings.seasonSpringLabel,
+        strings.seasonSummerLabel,
+        strings.seasonFallLabel,
     )
     val ids = listOf("WINTER", "SPRING", "SUMMER", "FALL")
     return listOf(FilterOption("any", strings.exploreAnySeasonLabel)) +

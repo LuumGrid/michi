@@ -15,7 +15,9 @@ import com.luum.michi.app.core.domain.model.MediaSeasonYear
 import com.luum.michi.app.core.domain.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -75,6 +77,24 @@ class CalendarFilterTest {
         assertTrue(CalendarStatusFilter.NOT_IN_LIST.matches(null, MediaSeason.SPRING, 2025))
         assertFalse(CalendarStatusFilter.OTHER.matches(null, MediaSeason.SPRING, 2025))
         assertTrue(CalendarStatusFilter.ALL.matches(MediaListStatus.CURRENT, MediaSeason.SPRING, 2025))
+    }
+
+    @Test
+    fun overlappingLoadIssuesASingleFetch() {
+        val gate = CompletableDeferred<Unit>()
+        var fetches = 0
+        val repository = object : CalendarRepository {
+            override fun loadFeed(): Flow<NetworkResult<CalendarFeed>> = flow {
+                fetches++
+                gate.await()
+                emit(NetworkResult.Success(CalendarFeed(emptyList())))
+            }
+        }
+        val holder = CalendarStateHolder(repository, CoroutineScope(Dispatchers.Unconfined))
+        holder.load()
+        holder.load()
+        gate.complete(Unit)
+        assertEquals(1, fetches)
     }
 
     private fun holderWith(vararg days: CalendarDay): CalendarStateHolder {

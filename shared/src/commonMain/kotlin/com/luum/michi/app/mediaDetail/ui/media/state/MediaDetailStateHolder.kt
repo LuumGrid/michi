@@ -59,9 +59,8 @@ internal class MediaDetailStateHolder(
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
 
-    /** LRU cache of up to 5 recently-visited detail pages, keyed by (id, language)
-     *  so formatted date labels never leak across a language change. */
-    private val detailCache = LruCache<Pair<Int, LanguageStrings>, MediaDetailSnapshot>(maxSize = 5)
+    /** LRU cache of up to 5 recently-visited detail pages. */
+    private val detailCache = LruCache<Int, MediaDetailSnapshot>(maxSize = 5)
 
     var voiceLanguage = "JAPANESE"
         private set
@@ -96,7 +95,7 @@ internal class MediaDetailStateHolder(
         if (currentMediaId == mediaId && (detailState != null || loadingState)) return
 
         // Restore from LRU cache if available (avoids a full network round-trip).
-        val cached = detailCache.get(mediaId to strings)
+        val cached = detailCache.get(mediaId)
         if (cached != null) {
             currentMediaId = mediaId
             currentJob?.cancel()
@@ -140,7 +139,7 @@ internal class MediaDetailStateHolder(
                     staffCurrentPage = result.value.staff.currentPage
                     // Store in LRU cache for fast back-navigation
                     detailCache.put(
-                        mediaId to strings,
+                        mediaId,
                         MediaDetailSnapshot(
                             detail = result.value,
                             characters = characters,
@@ -161,7 +160,7 @@ internal class MediaDetailStateHolder(
     fun refresh() {
         val id = currentMediaId ?: return
         // Invalidate cached entry so next load() re-fetches from network.
-        detailCache.remove(id to strings)
+        detailCache.remove(id)
         currentJob?.cancel()
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
@@ -174,7 +173,7 @@ internal class MediaDetailStateHolder(
                     staffHasNextPage = result.value.staff.hasNextPage
                     staffCurrentPage = result.value.staff.currentPage
                     detailCache.put(
-                        id to strings,
+                        id,
                         MediaDetailSnapshot(
                             detail = result.value,
                             characters = characters,

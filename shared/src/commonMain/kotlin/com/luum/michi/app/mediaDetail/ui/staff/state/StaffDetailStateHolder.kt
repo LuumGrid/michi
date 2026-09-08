@@ -58,7 +58,7 @@ internal class StaffDetailStateHolder(
     private var currentStaffId: Int? = null
     private var currentJob: Job? = null
 
-    private val detailCache = LruCache<Pair<Int, LanguageStrings>, StaffDetailSnapshot>(maxSize = 5)
+    private val detailCache = LruCache<Int, StaffDetailSnapshot>(maxSize = 5)
 
     // ── media list ──
     var mediaItems: List<StaffMediaItem> = emptyList()
@@ -95,7 +95,7 @@ internal class StaffDetailStateHolder(
     fun load(id: Int) {
         if (currentStaffId == id && (detailState != null || loadingState)) return
 
-        val cached = detailCache.get(id to strings)
+        val cached = detailCache.get(id)
         if (cached != null) {
             currentStaffId = id
             currentJob?.cancel()
@@ -137,7 +137,7 @@ internal class StaffDetailStateHolder(
                     charactersHasNextPage = value.characters.hasNextPage
                     charactersCurrentPage = value.characters.currentPage
                     isFavourite = value.isFavourite
-                    detailCache.put(id to strings, buildSnapshot(value))
+                    detailCache.put(id, buildSnapshot(value))
                 }
                 is NetworkResult.Failure -> errorState = result.error
             }
@@ -157,7 +157,7 @@ internal class StaffDetailStateHolder(
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     mediaHasNextPage = result.value.hasNextPage
                     mediaCurrentPage = result.value.currentPage
-                    detailState?.let { d -> detailCache.put(id to strings, buildSnapshot(d)) }
+                    detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
                 is NetworkResult.Failure -> errorState = result.error
             }
@@ -177,7 +177,7 @@ internal class StaffDetailStateHolder(
                     characterItems = (characterItems + result.value.items).distinctRoles()
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
-                    detailState?.let { d -> detailCache.put(id to strings, buildSnapshot(d)) }
+                    detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
                 is NetworkResult.Failure -> errorState = result.error
             }
@@ -194,7 +194,7 @@ internal class StaffDetailStateHolder(
         sort = newSort
         val id = currentStaffId ?: return
         // Invalidate only the media portion; don't wipe the character list from cache
-        detailCache.remove(id to strings)
+        detailCache.remove(id)
         currentJob?.cancel()
         mediaItems = emptyList()
         mediaHasNextPage = false
@@ -218,7 +218,7 @@ internal class StaffDetailStateHolder(
                         charactersCurrentPage = value.characters.currentPage
                     }
                     isFavourite = value.isFavourite
-                    detailCache.put(id to strings, buildSnapshot(value))
+                    detailCache.put(id, buildSnapshot(value))
                 }
                 is NetworkResult.Failure -> errorState = result.error
             }
@@ -238,7 +238,7 @@ internal class StaffDetailStateHolder(
                     detailState?.let { d ->
                         val updated = d.copy(isFavourite = isFavourite)
                         detailState = updated
-                        detailCache.put(id to strings, buildSnapshot(updated))
+                        detailCache.put(id, buildSnapshot(updated))
                     }
                 }
                 is NetworkResult.Failure -> {

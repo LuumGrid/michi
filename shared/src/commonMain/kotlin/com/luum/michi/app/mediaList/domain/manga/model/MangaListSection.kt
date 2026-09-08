@@ -24,7 +24,7 @@ internal val MangaStatusSections: List<MangaListSection> = listOf(
 internal fun MangaListSection.label(strings: LanguageStrings): String = when (this) {
     MangaListSection.ALL -> strings.sectionAll
     MangaListSection.CURRENT -> strings.sectionCurrent
-    MangaListSection.COMPLETED -> strings.sectionCompleted
+    MangaListSection.COMPLETED -> strings.completedLabel
     MangaListSection.PAUSED -> strings.sectionPaused
     MangaListSection.DROPPED -> strings.sectionDropped
     MangaListSection.PLANNING -> strings.sectionPlanning

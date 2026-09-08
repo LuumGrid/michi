@@ -64,8 +64,8 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
     characterMedia(page: ${'$'}charPage, perPage: ${'$'}perPage, sort: [START_DATE_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
-        node { id title { userPreferred } }
-        characters { id name { userPreferred } image { large } }
+        node { id title { userPreferred romaji english native } }
+        characters { id name { userPreferred native } image { large } }
       }
     }
   }
@@ -103,8 +103,8 @@ query StaffCharacterPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) 
     characterMedia(page: ${'$'}page, perPage: ${'$'}perPage, sort: [START_DATE_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
-        node { id title { userPreferred } }
-        characters { id name { userPreferred } image { large } }
+        node { id title { userPreferred romaji english native } }
+        characters { id name { userPreferred native } image { large } }
       }
     }
   }
@@ -238,6 +238,7 @@ private data class StaffCharacterNodeDto(
 @Serializable
 private data class StaffCharacterNameDto(
     val userPreferred: String? = null,
+    val native: String? = null,
 )
 
 @Serializable
@@ -288,7 +289,7 @@ private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
     return characters.map { char ->
         StaffCharacterItem(
             characterId = char.id,
-            name = char.name?.userPreferred ?: "",
+            name = char.name?.userPreferred ?: char.name?.native ?: "",
             imageUrl = char.image?.large,
             mediaTitle = mediaTitle,
         )
@@ -359,7 +360,7 @@ internal class StaffDetailRepositoryImpl(
                             birthday = staff.dateOfBirth?.formatDate(strings),
                             death = staff.dateOfDeath?.formatDate(strings),
                             yearsActiveStart = yearsActive.getOrNull(0)?.takeIf { it > 0 },
-                            yearsActiveEnd = yearsActive.getOrNull(1),
+                            yearsActiveEnd = yearsActive.getOrNull(1)?.takeIf { it > 0 },
                             homeTown = staff.homeTown?.takeIf { it.isNotBlank() },
                             occupations = staff.primaryOccupations
                                 .filter { it.isNotBlank() }
