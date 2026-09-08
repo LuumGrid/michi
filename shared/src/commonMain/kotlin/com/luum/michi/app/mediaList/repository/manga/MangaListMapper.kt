@@ -7,6 +7,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
 import com.luum.michi.app.core.domain.model.parseMediaFormat
+import com.luum.michi.app.core.domain.model.parseMediaSeason
 
 internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
     val format = parseMediaFormat(media.format)
@@ -34,7 +35,7 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
         trending = media.trending ?: 0,
         priority = priority ?: 0,
         genres = media.genres.orEmpty(),
-        season = media.season,
+        season = parseMediaSeason(media.season),
         seasonYear = media.seasonYear ?: media.startDate?.year,
     )
 }

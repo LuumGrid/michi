@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList.domain.common
 
 import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.model.label
 import com.luum.michi.app.core.domain.language.LanguageStrings
 import com.luum.michi.app.core.domain.model.currentSeasonAndYear
@@ -57,11 +58,11 @@ internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<FilterOption> =
  * the entry's genres is selected.
  */
 internal fun matchesMediaListFilters(
-    season: String?,
+    season: MediaSeason?,
     genres: List<String>,
     seasonYear: Int?,
     formatName: String,
-    filterSeason: String?,
+    filterSeason: MediaSeason?,
     filterGenres: List<String>,
     filterYear: Int?,
     filterFormats: List<String>,

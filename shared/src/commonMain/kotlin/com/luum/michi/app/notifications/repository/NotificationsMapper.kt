@@ -15,14 +15,21 @@ private fun MediaTitleDto?.bestTitle(): String? {
     return userPreferred ?: english ?: romaji ?: native
 }
 
-private fun categoryFor(type: String): NotificationCategory = when (notificationBucketFor(type)) {
-    NotificationBucket.AIRING -> NotificationCategory.AIRING
-    NotificationBucket.FOLLOWING -> NotificationCategory.FOLLOWING
-    NotificationBucket.ACTIVITY -> NotificationCategory.ACTIVITY
-    NotificationBucket.MESSAGE -> NotificationCategory.MESSAGE
-    NotificationBucket.FORUM -> NotificationCategory.FORUM
-    NotificationBucket.MEDIA -> NotificationCategory.MEDIA_CHANGE
-    null -> NotificationCategory.OTHER
+/** Reply types, shown under their own category and filter. Single definition:
+ *  both categoryFor() and toAniListTypes() derive from here so they cannot drift. */
+private val ReplyTypes = listOf("ACTIVITY_REPLY", "ACTIVITY_REPLY_LIKE", "THREAD_COMMENT_REPLY")
+
+private fun categoryFor(type: String): NotificationCategory = when {
+    type in ReplyTypes -> NotificationCategory.REPLIES
+    else -> when (notificationBucketFor(type)) {
+        NotificationBucket.AIRING -> NotificationCategory.AIRING
+        NotificationBucket.FOLLOWING -> NotificationCategory.FOLLOWING
+        NotificationBucket.ACTIVITY -> NotificationCategory.ACTIVITY
+        NotificationBucket.MESSAGE -> NotificationCategory.MESSAGE
+        NotificationBucket.FORUM -> NotificationCategory.FORUM
+        NotificationBucket.MEDIA -> NotificationCategory.MEDIA_CHANGE
+        null -> NotificationCategory.OTHER
+    }
 }
 
 internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
@@ -36,6 +43,7 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
     val target: NotificationTarget = when {
         media?.id != null -> NotificationTarget.Media(media.id)
         category == NotificationCategory.ACTIVITY ||
+            category == NotificationCategory.REPLIES ||
             category == NotificationCategory.FORUM ||
             category == NotificationCategory.MESSAGE ||
             category == NotificationCategory.FOLLOWING -> NotificationTarget.Web("https://anilist.co/notifications")
@@ -58,8 +66,13 @@ internal fun NotificationFilter.toAniListTypes(): List<String>? = when (this) {
     NotificationFilter.ALL -> null
     NotificationFilter.AIRING -> NotificationBucket.AIRING.apiTypes
     // The activity filter historically includes direct messages as well; preserved.
-    NotificationFilter.ACTIVITY -> NotificationBucket.ACTIVITY.apiTypes + NotificationBucket.MESSAGE.apiTypes
-    NotificationFilter.FORUM -> NotificationBucket.FORUM.apiTypes
+    // Reply types live under REPLIES now, so they are excluded here (and
+    // THREAD_COMMENT_REPLY from FORUM below) to keep filters exclusive.
+    NotificationFilter.ACTIVITY -> NotificationBucket.ACTIVITY.apiTypes +
+        NotificationBucket.MESSAGE.apiTypes -
+        ReplyTypes.toSet()
+    NotificationFilter.REPLIES -> ReplyTypes
+    NotificationFilter.FORUM -> NotificationBucket.FORUM.apiTypes - ReplyTypes.toSet()
     NotificationFilter.FOLLOWS -> NotificationBucket.FOLLOWING.apiTypes
     NotificationFilter.MEDIA -> NotificationBucket.MEDIA.apiTypes
 }

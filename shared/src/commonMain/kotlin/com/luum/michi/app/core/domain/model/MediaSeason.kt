@@ -2,6 +2,14 @@ package com.luum.michi.app.core.domain.model
 
 internal enum class MediaSeason { WINTER, SPRING, SUMMER, FALL }
 
+internal fun parseMediaSeason(raw: String?): MediaSeason? = when (raw?.uppercase()) {
+    "WINTER" -> MediaSeason.WINTER
+    "SPRING" -> MediaSeason.SPRING
+    "SUMMER" -> MediaSeason.SUMMER
+    "FALL" -> MediaSeason.FALL
+    else -> null
+}
+
 internal data class MediaSeasonYear(val season: MediaSeason, val year: Int)
 
 internal fun MediaSeasonYear.next(): MediaSeasonYear = when (season) {
@@ -9,6 +17,13 @@ internal fun MediaSeasonYear.next(): MediaSeasonYear = when (season) {
     MediaSeason.SPRING -> MediaSeasonYear(MediaSeason.SUMMER, year)
     MediaSeason.SUMMER -> MediaSeasonYear(MediaSeason.FALL, year)
     MediaSeason.FALL -> MediaSeasonYear(MediaSeason.WINTER, year + 1)
+}
+
+internal fun MediaSeasonYear.previous(): MediaSeasonYear = when (season) {
+    MediaSeason.WINTER -> MediaSeasonYear(MediaSeason.FALL, year - 1)
+    MediaSeason.SPRING -> MediaSeasonYear(MediaSeason.WINTER, year)
+    MediaSeason.SUMMER -> MediaSeasonYear(MediaSeason.SPRING, year)
+    MediaSeason.FALL -> MediaSeasonYear(MediaSeason.SUMMER, year)
 }
 
 internal fun seasonForMonth(month: Int): MediaSeason = when (month) {

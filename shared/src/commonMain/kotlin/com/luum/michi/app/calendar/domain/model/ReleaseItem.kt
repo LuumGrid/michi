@@ -1,6 +1,9 @@
 package com.luum.michi.app.calendar.domain.model
 
-data class ReleaseItem(
+import com.luum.michi.app.core.domain.medialist.MediaListStatus
+import com.luum.michi.app.core.domain.model.MediaSeason
+
+internal data class ReleaseItem(
     val title: String,
     val release: String,
     val time: String,
@@ -12,11 +15,13 @@ data class ReleaseItem(
     val popularity: Int? = null,
     val isUserFavorited: Boolean = false,
     val isUserRanked: Boolean = false,
-    val userStatus: String? = null,
+    val userStatus: MediaListStatus? = null,
+    val season: MediaSeason? = null,
+    val seasonYear: Int? = null,
     val streamingPlatforms: List<StreamingPlatform> = emptyList(),
 )
 
-data class StreamingPlatform(
+internal data class StreamingPlatform(
     val site: String,
     val url: String,
     val iconUrl: String? = null,

@@ -1,10 +1,10 @@
 package com.luum.michi.app.mediaList.domain.common
 
+import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
 import com.luum.michi.app.core.domain.network.NetworkError
 import com.luum.michi.app.core.domain.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
 /**
@@ -36,7 +36,7 @@ internal class MediaListLoader<T>(
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
         if (!forceRefresh && lastUserId == userId && mark != null
-            && mark.elapsedNow() < CACHE_TTL && entriesBacking.isNotEmpty()
+            && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && entriesBacking.isNotEmpty()
         ) return
         // Drop overlapping loads: two in-flight fetches race on
         // entriesBacking.clear()/addAll() and the slower (stale) one can win.
@@ -70,9 +70,5 @@ internal class MediaListLoader<T>(
 
     operator fun set(index: Int, value: T) {
         entriesBacking[index] = value
-    }
-
-    companion object {
-        private val CACHE_TTL = 5.minutes
     }
 }

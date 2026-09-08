@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList
 
 import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
 import com.luum.michi.app.core.domain.medialist.MediaListStatus
 import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
@@ -18,7 +19,7 @@ import kotlin.test.assertTrue
 private fun animeEntry(
     id: Int,
     genres: List<String> = emptyList(),
-    season: String? = null,
+    season: MediaSeason? = null,
     seasonYear: Int? = null,
     format: MediaFormat = MediaFormat.TV,
 ) = AnimeListEntry(
@@ -88,8 +89,8 @@ class MediaListFilterTest {
     @Test
     fun noFiltersShowsEverything() {
         val holder = holderWith(
-            animeEntry(1, genres = listOf("Action"), season = "WINTER", seasonYear = 2024),
-            animeEntry(2, genres = listOf("Drama"), season = "SPRING", seasonYear = 2023),
+            animeEntry(1, genres = listOf("Action"), season = MediaSeason.WINTER, seasonYear = 2024),
+            animeEntry(2, genres = listOf("Drama"), season = MediaSeason.SPRING, seasonYear = 2023),
         )
         assertEquals(listOf(1, 2), holder.entriesInSection(AnimeListSection.WATCHING).map { it.id }.sorted())
     }
@@ -107,11 +108,11 @@ class MediaListFilterTest {
     @Test
     fun seasonAndYearFilterCombine() {
         val holder = holderWith(
-            animeEntry(1, season = "WINTER", seasonYear = 2024),
-            animeEntry(2, season = "WINTER", seasonYear = 2023),
-            animeEntry(3, season = "SPRING", seasonYear = 2024),
+            animeEntry(1, season = MediaSeason.WINTER, seasonYear = 2024),
+            animeEntry(2, season = MediaSeason.WINTER, seasonYear = 2023),
+            animeEntry(3, season = MediaSeason.SPRING, seasonYear = 2024),
         )
-        holder.updateListFilters(season = "WINTER", genres = emptyList(), formats = emptyList(), year = 2024)
+        holder.updateListFilters(season = MediaSeason.WINTER, genres = emptyList(), formats = emptyList(), year = 2024)
         assertEquals(listOf(1), holder.entriesInSection(AnimeListSection.WATCHING).map { it.id }.sorted())
     }
 
@@ -142,7 +143,7 @@ class MediaListFilterTest {
     fun entriesWithoutDataAreExcludedOnlyWhenFiltering() {
         val holder = holderWith(animeEntry(1))
         assertTrue(holder.entriesInSection(AnimeListSection.WATCHING).isNotEmpty())
-        holder.updateListFilters(season = "WINTER", genres = emptyList(), formats = emptyList(), year = null)
+        holder.updateListFilters(season = MediaSeason.WINTER, genres = emptyList(), formats = emptyList(), year = null)
         assertTrue(holder.entriesInSection(AnimeListSection.WATCHING).isEmpty())
     }
 }

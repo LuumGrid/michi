@@ -30,6 +30,8 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {
       media {
         id
         format
+        season
+        seasonYear
         episodes
         averageScore
         favourites

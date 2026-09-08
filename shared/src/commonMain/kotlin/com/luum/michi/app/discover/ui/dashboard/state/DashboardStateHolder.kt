@@ -1,6 +1,7 @@
 package com.luum.michi.app.discover.ui.dashboard.state
 
 import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
 import com.luum.michi.app.core.domain.network.NetworkError
 import com.luum.michi.app.core.domain.network.NetworkResult
 import com.luum.michi.app.discover.domain.model.MediaItem
@@ -8,7 +9,6 @@ import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
 private val EmptyFeed = DashboardFeed(
@@ -49,7 +49,9 @@ internal class DashboardStateHolder(
     /** Load dashboard sections, skipping the network call if data was fetched within the TTL. */
     fun load(forceRefresh: Boolean = false) {
         val mark = lastLoaded
-        if (!forceRefresh && mark != null && mark.elapsedNow() < CACHE_TTL && feedState != EmptyFeed) return
+        if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && feedState != EmptyFeed) return
+        // Drop overlapping loads so a slower (stale) response cannot overwrite a newer one.
+        if (loadingState || refreshingState) return
         val isRefresh = forceRefresh && feedState != EmptyFeed
         if (isRefresh) {
             refreshingState = true
@@ -71,10 +73,6 @@ internal class DashboardStateHolder(
                 refreshingState = false
             }
         }
-    }
-
-    companion object {
-        private val CACHE_TTL = 5.minutes
     }
 }
 

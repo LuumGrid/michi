@@ -11,10 +11,12 @@ import kotlinx.coroutines.launch
 
 import com.luum.michi.app.core.domain.model.UserListSort
 import com.luum.michi.app.core.domain.model.UserListOrder
+import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
 import com.luum.michi.app.core.domain.medialist.MediaListStatus
 import com.luum.michi.app.mediaList.domain.common.MediaListLoader
 import com.luum.michi.app.mediaList.domain.common.matchesMediaListFilters
+import com.luum.michi.app.mediaList.domain.common.sortMediaListEntries
 
 internal class AnimeListStateHolder(
     repository: AnimeListRepository,
@@ -27,7 +29,7 @@ internal class AnimeListStateHolder(
     var currentSortOrder = UserListOrder.DESCENDING
     var isFilterPersisted = false
 
-    var filterSeason: String? = null
+    var filterSeason: MediaSeason? = null
     var filterGenres = emptyList<String>()
     var filterFormats = emptyList<String>()
     var filterYear: Int? = null
@@ -44,7 +46,7 @@ internal class AnimeListStateHolder(
     }
 
     /** Client-side filters (the whole list is already loaded): season/genre/format/year. */
-    fun updateListFilters(season: String?, genres: List<String>, formats: List<String>, year: Int?) {
+    fun updateListFilters(season: MediaSeason?, genres: List<String>, formats: List<String>, year: Int?) {
         filterSeason = season
         filterGenres = genres
         filterFormats = formats
@@ -91,28 +93,13 @@ internal class AnimeListStateHolder(
                     filterFormats = filterFormats,
                 )
             }
-        val sorted = when (currentSortOption) {
-            UserListSort.FOLLOW_LIST -> filtered.sortedBy { it.originalIndex }
-            UserListSort.TITLE -> filtered.sortedBy { it.title }
-            UserListSort.SCORE -> filtered.sortedBy { it.score }
-            UserListSort.PROGRESS -> filtered.sortedBy { it.progress }
-            UserListSort.LAST_UPDATED -> filtered.sortedBy { it.updatedAt }
-            UserListSort.LAST_ADDED -> filtered.sortedBy { it.id }
-            UserListSort.START_DATE -> filtered.sortedBy { it.startedAtInt }
-            UserListSort.COMPLETED_DATE -> filtered.sortedBy { it.completedAtInt }
-            UserListSort.RELEASE_DATE -> filtered.sortedBy { it.releaseDateInt }
-            UserListSort.AVERAGE_SCORE -> filtered.sortedBy { it.averageScore }
-            UserListSort.POPULARITY -> filtered.sortedBy { it.popularity }
-            UserListSort.FAVORITES -> filtered.sortedBy { it.favouritesCount }
-            UserListSort.TRENDING -> filtered.sortedBy { it.trending }
-            UserListSort.PRIORITY -> filtered.sortedBy { it.priority }
-            UserListSort.NEXT_AIRING -> filtered.sortedBy { it.nextAiringAt }
-        }
-        return if (currentSortOrder == UserListOrder.DESCENDING) {
-            sorted.reversed()
-        } else {
-            sorted
-        }
+        return sortMediaListEntries(
+            entries = filtered,
+            sort = currentSortOption,
+            order = currentSortOrder,
+            progressOrder = compareBy { it.progress },
+            airingOrder = compareBy { it.nextAiringAt },
+        )
     }
 
     fun countInSection(section: AnimeListSection): Int =

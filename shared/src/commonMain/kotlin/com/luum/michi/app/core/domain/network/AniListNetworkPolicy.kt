@@ -1,5 +1,7 @@
 package com.luum.michi.app.core.domain.network
 
+import kotlin.time.Duration.Companion.minutes
+
 /**
  * Única fuente de verdad para los tiempos de red contra AniList.
  * Todo timeout/reintento se configura aquí, no en cada cliente o llamada.
@@ -16,4 +18,9 @@ internal object AniListNetworkPolicy {
 
     /** Espera cuando el 429 llega sin header `Retry-After`. */
     const val DEFAULT_RETRY_AFTER_SECONDS = 60L
+
+    /** Frescura de listas/cuenta/dashboard en memoria entre recargas.
+     *  Es `Duration` (no `Long` + sufijo como los timeouts de socket) porque se
+     *  compara contra `TimeMark.elapsedNow()`, no contra APIs que pidan millis. */
+    val CACHE_TTL = 5.minutes
 }

@@ -8,9 +8,11 @@ import com.luum.michi.app.core.repository.anilist.dto.MediaExternalLinkDto
 import com.luum.michi.app.core.repository.anilist.dto.bestTitle
 import com.luum.michi.app.core.domain.model.isoDayOfWeek
 import com.luum.michi.app.core.domain.model.localMidnightEpoch
+import com.luum.michi.app.core.domain.model.parseMediaSeason
 import com.luum.michi.app.core.domain.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
+import com.luum.michi.app.core.domain.medialist.parseMediaListStatus
 
 private const val SecondsPerDay: Long = 86_400L
 
@@ -56,7 +58,9 @@ private fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
         popularity = media.popularity,
         isUserFavorited = media.isFavourite ?: false,
         isUserRanked = hasUserScore,
-        userStatus = media.mediaListEntry?.status,
+        userStatus = parseMediaListStatus(media.mediaListEntry?.status),
+        season = parseMediaSeason(media.season),
+        seasonYear = media.seasonYear,
         streamingPlatforms = media.externalLinks
             ?.mapNotNull { it.toStreamingPlatform() }
             ?.distinctBy { it.site }

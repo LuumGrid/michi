@@ -1,12 +1,14 @@
 package com.luum.michi.app.mediaList.domain.manga.model
 
 import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 
 internal data class MangaListEntry(
-    val id: Int,
-    val title: String,
-    val format: MediaFormat,
+    override val id: Int,
+    override val title: String,
+    override val format: MediaFormat,
     val status: MangaListSection,
     val chaptersProgress: Int,
     val totalChapters: Int?,
@@ -14,23 +16,23 @@ internal data class MangaListEntry(
     val totalVolumes: Int?,
     /** True when progress is tracked by volumes (e.g. novels) instead of chapters. Computed once in the mapper. */
     val tracksByVolume: Boolean = false,
-    val score: Double,
+    override val score: Double,
     val paletteHex: String?,
     val coverUrl: String? = null,
-    val originalIndex: Int = 0,
-    val updatedAt: Long = 0L,
-    val startedAtInt: Int = 0,
-    val completedAtInt: Int = 0,
-    val releaseDateInt: Int = 0,
-    val averageScore: Int = 0,
-    val popularity: Int = 0,
-    val favouritesCount: Int = 0,
-    val trending: Int = 0,
-    val priority: Int = 0,
-    val genres: List<String> = emptyList(),
-    val season: String? = null,
-    val seasonYear: Int? = null,
-)
+    override val originalIndex: Int = 0,
+    override val updatedAt: Long = 0L,
+    override val startedAtInt: Int = 0,
+    override val completedAtInt: Int = 0,
+    override val releaseDateInt: Int = 0,
+    override val averageScore: Int = 0,
+    override val popularity: Int = 0,
+    override val favouritesCount: Int = 0,
+    override val trending: Int = 0,
+    override val priority: Int = 0,
+    override val genres: List<String> = emptyList(),
+    override val season: MediaSeason? = null,
+    override val seasonYear: Int? = null,
+) : SortableMediaListEntry
 
 internal fun MangaListEntry.chaptersProgressLabel(): String {
     val total = totalChapters?.toString() ?: "?"

@@ -3,11 +3,11 @@ package com.luum.michi.app.account.ui.state
 import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.account.domain.model.AccountStats
+import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
 import com.luum.michi.app.core.domain.network.NetworkError
 import com.luum.michi.app.core.domain.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 
 internal val EmptyStats = AccountStats(
@@ -47,7 +47,7 @@ internal class AccountStateHolder(
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
         if (!forceRefresh && lastUserId == userId && mark != null
-            && mark.elapsedNow() < CACHE_TTL && statsState != EmptyStats
+            && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && statsState != EmptyStats
         ) return
         // Drop overlapping loads so a slower (stale) response cannot overwrite a newer one.
         if (loadingState || refreshingState) return
@@ -74,10 +74,6 @@ internal class AccountStateHolder(
 
     fun refresh() {
         lastUserId?.let { load(it, forceRefresh = true) }
-    }
-
-    companion object {
-        private val CACHE_TTL = 5.minutes
     }
 }
 

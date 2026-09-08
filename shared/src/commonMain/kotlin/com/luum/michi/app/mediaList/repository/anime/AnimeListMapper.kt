@@ -5,6 +5,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.completedSection
 import com.luum.michi.app.core.domain.model.MediaFormat
 import com.luum.michi.app.core.domain.model.parseMediaFormat
+import com.luum.michi.app.core.domain.model.parseMediaSeason
 import com.luum.michi.app.core.repository.anilist.dto.MediaListEntryDto
 import com.luum.michi.app.core.repository.anilist.dto.bestTitle
 import com.luum.michi.app.core.repository.anilist.dto.toComparableInt
@@ -36,7 +37,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
         nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
         nextEpisodeNumber = media.nextAiringEpisode?.episode,
         genres = media.genres.orEmpty(),
-        season = media.season,
+        season = parseMediaSeason(media.season),
         seasonYear = media.seasonYear ?: media.startDate?.year,
     )
 }

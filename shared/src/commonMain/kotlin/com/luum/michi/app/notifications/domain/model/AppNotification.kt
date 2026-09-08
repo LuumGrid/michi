@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications.domain.model
 
-internal enum class NotificationCategory { AIRING, FOLLOWING, ACTIVITY, FORUM, MESSAGE, MEDIA_CHANGE, OTHER }
+internal enum class NotificationCategory { AIRING, FOLLOWING, ACTIVITY, FORUM, MESSAGE, MEDIA_CHANGE, REPLIES, OTHER }
 
 internal sealed interface NotificationTarget {
     data class Media(val id: Int) : NotificationTarget

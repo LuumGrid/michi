@@ -311,9 +311,19 @@ interface LanguageStrings {
     val notificationFilterAll: String
     val notificationFilterAiring: String
     val notificationFilterActivity: String
+    val notificationFilterReplies: String
     val notificationFilterForum: String
     val notificationFilterFollows: String
     val notificationFilterMedia: String
+    val calendarSeasonAll: String
+    val calendarSeasonPrevious: String
+    val calendarSeasonCurrent: String
+    val calendarSeasonNext: String
+    val calendarSeasonOther: String
+    val calendarStatusAll: String
+    val calendarStatusWatchingPlanning: String
+    val calendarStatusNotInList: String
+    val calendarStatusOther: String
     val notifAiringPrefix: String
     val notifAiringAired: String
     val notifFollowingLabel: String
