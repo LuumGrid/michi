@@ -1,5 +1,12 @@
 package com.luum.michi.app.core.domain.model
 
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+
 internal enum class MediaSeason { WINTER, SPRING, SUMMER, FALL }
 
 internal fun parseMediaSeason(raw: String?): MediaSeason? = when (raw?.uppercase()) {
@@ -43,10 +50,16 @@ internal fun MediaSeason.startMonth(): Int = when (this) {
 internal fun MediaSeasonYear.startEpochSeconds(): Long =
     calendarPartsToMillis(CalendarDateParts(year, season.startMonth(), 1)) / 1000L
 
-internal expect fun currentSeasonAndYear(): MediaSeasonYear
+/** Implemented with kotlinx-datetime (always ISO): identical on every platform. */
+internal fun currentSeasonAndYear(): MediaSeasonYear {
+    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return MediaSeasonYear(season = seasonForMonth(today.month.number), year = today.year)
+}
 
 /**
  * Returns the ISO day-of-week for the given epoch seconds in the device's local
  * time zone. 1 = Monday, ..., 7 = Sunday.
  */
-internal expect fun isoDayOfWeek(epochSeconds: Long): Int
+internal fun isoDayOfWeek(epochSeconds: Long): Int =
+    Instant.fromEpochSeconds(epochSeconds)
+        .toLocalDateTime(TimeZone.currentSystemDefault()).dayOfWeek.isoDayNumber

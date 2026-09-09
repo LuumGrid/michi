@@ -39,7 +39,7 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {
         title { romaji english native userPreferred }
         coverImage { extraLarge large medium color }
         isFavourite
-        mediaListEntry { id status progress score }
+        mediaListEntry { status progress score }
         externalLinks {
           id
           site

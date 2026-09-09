@@ -40,7 +40,7 @@ private const val StudioFavoriteNodeFields = """
   id
   name
   media(sort: [START_DATE_DESC], perPage: 10) {
-    nodes { status coverImage { extraLarge large medium color } }
+    nodes { coverImage { extraLarge large medium color } }
   }
 """
 
@@ -68,7 +68,7 @@ query UserAccount(${'$'}userId: Int!) {
         scores { score count meanScore }
         formats { format count }
         statuses { status count }
-        genres(sort: COUNT_DESC, limit: 10) { genre count meanScore minutesWatched }
+        genres(sort: COUNT_DESC, limit: 10) { genre count meanScore }
       }
     }
     favourites {
@@ -185,14 +185,7 @@ internal class AccountRepositoryImpl(
                 anime = response.user?.statistics?.anime.toAccountMediaTypeStats(isManga = false),
                 manga = response.user?.statistics?.manga.toAccountMediaTypeStats(isManga = true),
             )
-            val favorites = response.user?.favourites?.toDomain()
-                ?: AccountFavorites(
-                    anime = emptyList(),
-                    manga = emptyList(),
-                    characters = emptyList(),
-                    staff = emptyList(),
-                    studios = emptyList(),
-                )
+            val favorites = response.user?.favourites?.toDomain() ?: AccountFavorites.EMPTY
             AccountData(stats = stats, favorites = favorites)
         }
     }

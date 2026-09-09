@@ -20,9 +20,8 @@ internal data class AccountFavoritesPage(
 )
 
 /**
- * Single-query alternative to the two separate [AccountStatsRepository] and
- * [AccountFavoritesRepository] calls. Fetches statistics + favourites in one
- * HTTP round-trip.
+ * Account data in a single HTTP round-trip: statistics + favourites together,
+ * plus one paged favourites category at a time for the "see more" grid.
  */
 internal interface AccountRepository {
     suspend fun loadAccount(userId: Int): NetworkResult<AccountData>

@@ -17,20 +17,12 @@ internal val EmptyStats = AccountStats(
     followersCount = 0,
 )
 
-internal val EmptyFavorites = AccountFavorites(
-    anime = emptyList(),
-    manga = emptyList(),
-    characters = emptyList(),
-    staff = emptyList(),
-    studios = emptyList(),
-)
-
 internal class AccountStateHolder(
     private val repository: AccountRepository,
     private val scope: CoroutineScope,
 ) {
     private var statsState = EmptyStats
-    private var favoritesState = EmptyFavorites
+    private var favoritesState = AccountFavorites.EMPTY
     private var loadingState = false
     private var refreshingState = false
     private var errorState: NetworkError? = null

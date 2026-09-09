@@ -8,12 +8,13 @@ import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.core.domain.network.NetworkError
 import com.luum.michi.app.core.domain.network.NetworkResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
  * Paginated state for the "see more" favourites grid screen. One instance is
  * scoped to a single (userId, category) pair; the screen recreates it via
- * [rememberAccountFavoritesGridStateHolder] whenever the category changes.
+ * [createAccountFavoritesGridStateHolder] whenever the category changes.
  */
 internal class AccountFavoritesGridStateHolder(
     private val repository: AccountRepository,
@@ -29,6 +30,7 @@ internal class AccountFavoritesGridStateHolder(
     private var currentPage = 0
     private var loadedUserId: Int? = null
     private var loadedCategory: AccountFavoritesCategory? = null
+    private var fetchJob: Job? = null
 
     val mediaItems: List<AccountFavoriteMedia> get() = mediaItemsState
     val personItems: List<AccountFavoritePerson> get() = personItemsState
@@ -40,6 +42,8 @@ internal class AccountFavoritesGridStateHolder(
 
     fun load(userId: Int, category: AccountFavoritesCategory) {
         if (loadedUserId == userId && loadedCategory == category) return
+        // Drop overlapping loads so a slower (stale) page cannot overwrite a newer one.
+        if (isLoadingState) return
         loadedUserId = userId
         loadedCategory = category
         currentPage = 1
@@ -49,7 +53,8 @@ internal class AccountFavoritesGridStateHolder(
         hasNextPageState = false
         errorState = null
         isLoadingState = true
-        scope.launch {
+        fetchJob?.cancel()
+        fetchJob = scope.launch {
             try {
                 fetchPage(userId, category, page = 1)
             } finally {
@@ -61,10 +66,10 @@ internal class AccountFavoritesGridStateHolder(
     fun loadMore() {
         val userId = loadedUserId ?: return
         val category = loadedCategory ?: return
-        if (isLoadingMoreState || !hasNextPageState) return
+        if (isLoadingMoreState || isLoadingState || !hasNextPageState) return
         isLoadingMoreState = true
         val nextPage = currentPage + 1
-        scope.launch {
+        fetchJob = scope.launch {
             try {
                 fetchPage(userId, category, page = nextPage)
             } finally {
@@ -91,7 +96,15 @@ internal class AccountFavoritesGridStateHolder(
                 hasNextPageState = result.value.hasNextPage
                 currentPage = page
             }
-            is NetworkResult.Failure -> errorState = result.error
+            is NetworkResult.Failure -> {
+                errorState = result.error
+                // A failed first page leaves nothing to page from: forget the
+                // markers so a retry via load() is not swallowed by the early-return.
+                if (page == 1) {
+                    loadedUserId = null
+                    loadedCategory = null
+                }
+            }
         }
     }
 }

@@ -9,7 +9,9 @@ internal data class AccountStats(
     val manga: AccountMediaTypeStats = AccountMediaTypeStats(),
 )
 
-/** A single labeled bucket in a distribution (score / format / status / genre). */
+/** A single labeled bucket in a distribution (score / format / status / genre).
+ *  Labels are raw API values ("TV", "CURRENT"); the stats UI formats them at
+ *  display time. */
 internal data class AccountStatDistributionEntry(
     val label: String,
     val count: Int,

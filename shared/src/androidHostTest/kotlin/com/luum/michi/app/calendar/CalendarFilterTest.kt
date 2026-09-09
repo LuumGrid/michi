@@ -8,17 +8,25 @@ import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.matches
+import com.luum.michi.app.calendar.repository.toCalendarFeed
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
 import com.luum.michi.app.core.domain.medialist.MediaListStatus
 import com.luum.michi.app.core.domain.model.MediaSeason
 import com.luum.michi.app.core.domain.model.MediaSeasonYear
 import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.repository.anilist.dto.AiringScheduleDto
+import com.luum.michi.app.core.repository.anilist.dto.MediaDto
+import com.luum.michi.app.core.repository.anilist.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.repository.anilist.dto.MediaTitleDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -117,9 +125,158 @@ class CalendarFilterTest {
         items = items.mapIndexed { index, item -> CalendarEntry(scheduleId = index, item = item) },
     )
 
+    private val Santiago = TimeZone.of("America/Santiago")
+
+    private fun epoch(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long =
+        LocalDateTime(year, month, day, hour, minute).toInstant(Santiago).epochSeconds
+
+    private fun schedule(
+        id: Int,
+        airingAt: Long,
+        episode: Int = 1,
+        media: MediaDto? = MediaDto(id = id),
+    ) = AiringScheduleDto(
+        id = id,
+        airingAt = airingAt,
+        episode = episode,
+        media = media,
+    )
+
     @Test
-    fun stepDayClampsToLoadedRange() {
+    fun springForwardWeekendOffsetsStayExact() {
+        // Chile springs forward on 2025-09-07 00:00 (-> 01:00): a 23h day.
+        // Epoch division would report offset 0 for Sep 7 (82800/86400 truncates).
+        val feed = listOf(
+            schedule(1, epoch(2025, 9, 6, 20, 0)),
+            schedule(2, epoch(2025, 9, 7, 10, 0)),
+        ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+        assertEquals(2, feed.days.size)
+        assertEquals(0, feed.days[0].offsetFromToday)
+        assertEquals(1, feed.days[1].offsetFromToday)
+        assertEquals(1, feed.days[0].items.size)
+        assertEquals(1, feed.days[1].items.size)
+    }
+
+    @Test
+    fun fallBackRepeatedHourStaysInOneBucket() {
+        // Chile falls back on 2026-04-05 00:00: 00:00-01:00 happens twice (25h day).
+        val feed = listOf(
+            schedule(1, epoch(2026, 4, 5, 0, 30)),
+            schedule(2, epoch(2026, 4, 5, 12, 0)),
+            schedule(3, epoch(2026, 4, 6, 10, 0)),
+        ).toCalendarFeed(epoch(2026, 4, 4, 12, 0)) { Santiago }
+        assertEquals(2, feed.days.size)
+        assertEquals(2, feed.days[0].items.size)
+        assertEquals(1, feed.days[0].offsetFromToday)
+        assertEquals(2, feed.days[1].offsetFromToday)
+    }
+
+    @Test
+    fun sameDayGroupsIntoOneBucketPreservingIds() {
+        val feed = listOf(
+            schedule(1, epoch(2025, 9, 6, 20, 0)),
+            schedule(2, epoch(2025, 9, 6, 22, 0)),
+        ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+        assertEquals(1, feed.days.size)
+        assertEquals(listOf(1, 2), feed.days.single().items.map { it.scheduleId })
+    }
+
+    @Test
+    fun nullMediaSchedulesAreSkipped() {
+        val feed = listOf(
+            schedule(1, epoch(2025, 9, 6, 20, 0), media = null),
+            schedule(2, epoch(2025, 9, 6, 22, 0)),
+        ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+        assertEquals(1, feed.days.size)
+        assertEquals(listOf(2), feed.days.single().items.map { it.scheduleId })
+    }
+
+    @Test
+    fun releaseLabelUsesTotalWhenKnown() {
+        fun label(episodes: Int?): String {
+            val feed = listOf(
+                schedule(
+                    1,
+                    epoch(2025, 9, 6, 20, 0),
+                    episode = 5,
+                    media = MediaDto(id = 1, episodes = episodes),
+                ),
+            ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+            return feed.days.single().items.single().item.release
+        }
+        assertEquals("Ep 5 / 12", label(12))
+        assertEquals("Ep 5", label(null))
+        assertEquals("Ep 5", label(0))
+    }
+
+    @Test
+    fun airingTimeIsZeroPadded() {
+        val feed = listOf(
+            schedule(1, epoch(2025, 9, 6, 9, 5)),
+        ).toCalendarFeed(epoch(2025, 9, 6, 8, 0)) { Santiago }
+        // Wall time follows the device zone by design; only the shape is pinned.
+        assertTrue(Regex("\\d{2}:\\d{2}").matches(feed.days.single().items.single().item.time))
+    }
+
+    @Test
+    fun titleFallsBackThroughChain() {
+        fun title(title: MediaTitleDto?): String {
+            val feed = listOf(
+                schedule(1, epoch(2025, 9, 6, 20, 0), media = MediaDto(id = 1, title = title)),
+            ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+            return feed.days.single().items.single().item.title
+        }
+        assertEquals("Preferred", title(MediaTitleDto(userPreferred = "Preferred", english = "EN")))
+        assertEquals("Nativo", title(MediaTitleDto(native = "Nativo")))
+        assertEquals("", title(null))
+    }
+
+    @Test
+    fun streamingPlatformsKeepOnlyEnabledStreamingWithUrl() {
+        fun link(site: String?, url: String?, type: String?, disabled: Boolean?) =
+            MediaExternalLinkDto(site = site, url = url, type = type, isDisabled = disabled)
+        val feed = listOf(
+            schedule(
+                1,
+                epoch(2025, 9, 6, 20, 0),
+                media = MediaDto(
+                    id = 1,
+                    externalLinks = listOf(
+                        link("Crunchyroll", "https://x/1", "STREAMING", null),
+                        link("Crunchyroll", "https://x/2", "STREAMING", null),
+                        link("Dead", "https://x/3", "STREAMING", true),
+                        link("Info", "https://x/4", "INFO", null),
+                        link("", "https://x/5", "STREAMING", null),
+                        link("NoUrl", "", "STREAMING", null),
+                    ),
+                ),
+            ),
+        ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+        assertEquals(
+            listOf("Crunchyroll"),
+            feed.days.single().items.single().item.streamingPlatforms.map { it.site },
+        )
+    }
+
+    @Test
+    fun stepDayMovesOnlyWithinVisibleDays() {
         val holder = holderWith(
+            day(10, offset = -1, item(season = MediaSeason.SPRING, seasonYear = 2025)),
+            day(20, offset = 0, item(season = null, seasonYear = null)),
+            day(30, offset = 1, item(season = null, seasonYear = null)),
+        )
+        holder.updateSeasonFilter(CalendarSeasonFilter.OTHER)
+        assertEquals(20, holder.selectedDayBucket)
+        holder.stepDay(1)
+        assertEquals(30, holder.selectedDayBucket)
+        holder.stepDay(1)
+        assertEquals(30, holder.selectedDayBucket)
+        holder.stepDay(-5)
+        assertEquals(20, holder.selectedDayBucket)
+    }
+
+    @Test
+    fun stepDayClampsToLoadedRange() {        val holder = holderWith(
             day(10, offset = -1, item()),
             day(20, offset = 0, item()),
             day(30, offset = 1, item()),

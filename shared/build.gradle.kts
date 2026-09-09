@@ -115,6 +115,7 @@ kotlin {
                 implementation(libs.compose.ui)
                 implementation(libs.material.kolor)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)

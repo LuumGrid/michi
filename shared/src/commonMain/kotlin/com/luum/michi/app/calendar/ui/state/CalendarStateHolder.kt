@@ -63,9 +63,9 @@ internal class CalendarStateHolder(
         selectedDayBucket = dayBucket
     }
 
-    /** Moves the day selection, clamped to the loaded range; no-op when empty. */
+    /** Moves the day selection within the *visible* days, clamped to range; no-op when empty. */
     fun stepDay(delta: Int) {
-        val buckets = daysState.map { it.dayBucket }.sorted()
+        val buckets = visibleDays.map { it.dayBucket }.sorted()
         if (buckets.isEmpty()) return
         val current = selectedDayBucket?.takeIf { it in buckets } ?: buckets.first()
         val next = (buckets.indexOf(current) + delta).coerceIn(buckets.indices)
