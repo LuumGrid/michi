@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaList.domain.anime.model
 
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.language.domain.LanguageStrings
 
 internal enum class AnimeListSection {
     ALL,

@@ -1,7 +1,7 @@
 package com.luum.michi.app.core
 
-import com.luum.michi.app.core.domain.language.EnglishStrings
-import com.luum.michi.app.core.domain.language.SpanishStrings
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.SpanishStrings
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals

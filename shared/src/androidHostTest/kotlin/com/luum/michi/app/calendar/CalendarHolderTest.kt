@@ -6,8 +6,8 @@ import com.luum.michi.app.calendar.domain.CalendarFeed
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -115,5 +115,22 @@ class CalendarHolderTest {
         assertEquals(10, holder.selectedDayBucket)
         holder.selectDay(null)
         assertNull(holder.selectedDayBucket)
+    }
+
+    @Test
+    fun sequentialReloadRefetchesWithoutTtl() {
+        var fetches = 0
+        val feed = CalendarFeed(listOf(day(10, offset = 0, "A")))
+        val repository = object : CalendarRepository {
+            override fun loadFeed(): Flow<NetworkResult<CalendarFeed>> {
+                fetches++
+                return flowOf(NetworkResult.Success(feed))
+            }
+        }
+        val holder = CalendarStateHolder(repository, CoroutineScope(Dispatchers.Unconfined))
+        holder.load()
+        holder.load()
+        assertEquals(2, fetches)
+        assertEquals(1, holder.days.size)
     }
 }

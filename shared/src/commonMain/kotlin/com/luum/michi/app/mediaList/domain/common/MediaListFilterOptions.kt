@@ -1,11 +1,11 @@
 package com.luum.michi.app.mediaList.domain.common
 
-import com.luum.michi.app.core.domain.model.MediaFormat
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.model.label
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.model.currentSeasonAndYear
-import com.luum.michi.app.core.domain.model.FilterOption
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.FilterOption
 
 /** Static genre list, mirrored from Explore (kept local: features must not import each other). */
 internal fun mediaListGenres(): List<String> = listOf(

@@ -5,8 +5,8 @@ import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
 import com.luum.michi.app.account.domain.model.AccountFavoritePerson
 import com.luum.michi.app.account.domain.model.AccountFavoriteStudio
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

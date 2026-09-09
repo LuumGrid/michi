@@ -5,8 +5,8 @@ import com.luum.michi.app.account.domain.AccountFavoritesPage
 import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.account.ui.state.AccountFavoritesGridStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -71,6 +71,16 @@ class AccountFavoritesGridTest {
         holder.loadMore()
         assertEquals(listOf(100, 200), holder.mediaItems.map { it.id })
         assertEquals(false, holder.hasNextPage)
+    }
+
+    @Test
+    fun categorySwitchReloads() {
+        val repository = FakeGridRepository()
+        val holder = AccountFavoritesGridStateHolder(repository, CoroutineScope(Dispatchers.Unconfined))
+        holder.load(1, AccountFavoritesCategory.ANIME)
+        holder.load(1, AccountFavoritesCategory.MANGA)
+        assertEquals(1, holder.mediaItems.size)
+        assertEquals(2, repository.calls.size)
     }
 
     @Test

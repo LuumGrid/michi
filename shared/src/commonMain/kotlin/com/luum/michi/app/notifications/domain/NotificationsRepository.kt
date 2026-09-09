@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications.domain
 
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 

@@ -5,11 +5,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.model.UserListOrder
-import com.luum.michi.app.core.domain.model.UserListSort
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreResult

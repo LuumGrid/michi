@@ -1,9 +1,9 @@
 package com.luum.michi.app.account
 
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
@@ -49,13 +49,13 @@ internal fun accountData() = buildJsonObject {
     })
 }
 
-internal fun favouritesPage(category: String, title: String, hasNextPage: Boolean) =
+internal fun favouritesPage(category: String, title: String, hasNextPage: Boolean, id: Int = 2) =
     buildJsonObject {
         put("User", buildJsonObject {
             put("favourites", buildJsonObject {
                 put(category, buildJsonObject {
                     put("nodes", JsonArray(listOf(buildJsonObject {
-                        put("id", 2)
+                        put("id", id)
                         if (category == "studios") {
                             put("name", title)
                         } else if (category == "characters" || category == "staff") {

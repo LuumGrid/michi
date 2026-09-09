@@ -1,13 +1,13 @@
 package com.luum.michi.app.mediaDetail.ui.media.state
 
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

@@ -9,17 +9,17 @@ import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.domain.model.AccountStats
-import com.luum.michi.app.core.repository.anilist.dto.CharacterDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaDto
-import com.luum.michi.app.core.repository.anilist.dto.StaffDto
-import com.luum.michi.app.core.repository.anilist.dto.StudioDto
-import com.luum.michi.app.core.repository.anilist.dto.UserAccountResponseDto
-import com.luum.michi.app.core.repository.anilist.dto.UserFavouritesResponseDto
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.network.map
+import com.luum.michi.app.core.network.repository.dto.CharacterDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.StaffDto
+import com.luum.michi.app.core.network.repository.dto.StudioDto
+import com.luum.michi.app.core.network.repository.dto.UserAccountResponseDto
+import com.luum.michi.app.core.network.repository.dto.UserFavouritesResponseDto
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
 
 /** Shared node fields for anime/manga favourites. Single source of truth for both account queries. */
 private const val MediaFavoriteNodeFields = """

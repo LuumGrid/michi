@@ -1,4 +1,4 @@
-import org.gradle.api.DefaultTask
+    import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -25,11 +25,11 @@ abstract class GenerateAniListBuildConfigTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/domain/auth")
+        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/auth/domain")
         packageDir.mkdirs()
         packageDir.resolve("AniListBuildConfig.kt").writeText(
             """
-            package com.luum.michi.app.core.domain.auth
+            package com.luum.michi.app.core.auth.domain
 
             /**
              * Generated at build time from `local.properties`.
@@ -128,6 +128,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.ktor.client.mock)
         }
     }
 }

@@ -9,10 +9,10 @@ import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.calendar.domain.model.matches
-import com.luum.michi.app.core.domain.model.MediaSeasonYear
-import com.luum.michi.app.core.domain.model.currentSeasonAndYear
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 
 internal class CalendarStateHolder(
     private val repository: CalendarRepository,

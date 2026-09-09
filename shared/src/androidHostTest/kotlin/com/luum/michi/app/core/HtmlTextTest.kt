@@ -1,6 +1,6 @@
 package com.luum.michi.app.core
 
-import com.luum.michi.app.core.domain.util.stripHtml
+import com.luum.michi.app.core.util.stripHtml
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

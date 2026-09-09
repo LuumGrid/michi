@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaDetail
 
-import com.luum.michi.app.core.domain.language.EnglishStrings
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import com.luum.michi.app.mediaDetail.repository.staff.StaffDetailRepositoryImpl

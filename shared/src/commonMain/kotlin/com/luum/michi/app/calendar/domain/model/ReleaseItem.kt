@@ -1,7 +1,7 @@
 package com.luum.michi.app.calendar.domain.model
 
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
-import com.luum.michi.app.core.domain.model.MediaSeason
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.model.MediaSeason
 
 internal data class ReleaseItem(
     val title: String,

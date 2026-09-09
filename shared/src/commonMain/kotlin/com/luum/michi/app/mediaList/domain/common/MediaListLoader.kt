@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaList.domain.common
 
-import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource

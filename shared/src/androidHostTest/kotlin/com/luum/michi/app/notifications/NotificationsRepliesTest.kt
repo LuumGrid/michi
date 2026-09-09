@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications
 
-import com.luum.michi.app.core.repository.anilist.dto.NotificationNodeDto
+import com.luum.michi.app.core.network.repository.dto.NotificationNodeDto
 import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.repository.toAniListTypes

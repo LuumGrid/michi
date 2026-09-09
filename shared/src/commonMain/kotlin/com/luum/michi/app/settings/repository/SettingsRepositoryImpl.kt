@@ -1,18 +1,18 @@
 package com.luum.michi.app.settings.repository
 
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.SettingsData
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.network.map
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.TitleLanguage
-import com.luum.michi.app.core.domain.model.NotificationBucket
-import com.luum.michi.app.core.domain.model.apiTypes
+import com.luum.michi.app.core.model.NotificationBucket
+import com.luum.michi.app.core.model.apiTypes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject

@@ -4,12 +4,12 @@ import com.luum.michi.app.account.domain.model.AccountFavoriteMedia
 import com.luum.michi.app.account.domain.model.AccountFavoritePerson
 import com.luum.michi.app.account.domain.model.AccountFavoriteStudio
 import com.luum.michi.app.account.domain.model.AccountFavorites
-import com.luum.michi.app.core.repository.anilist.dto.CharacterDto
-import com.luum.michi.app.core.repository.anilist.dto.FavouritesDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaDto
-import com.luum.michi.app.core.repository.anilist.dto.StaffDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.StudioDto
+import com.luum.michi.app.core.network.repository.dto.CharacterDto
+import com.luum.michi.app.core.network.repository.dto.FavouritesDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.StaffDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.network.repository.dto.StudioDto
 
 internal fun FavouritesDto.toDomain(): AccountFavorites = AccountFavorites(
     anime = anime?.nodes?.map(MediaDto::toAccountFavoriteMedia).orEmpty(),

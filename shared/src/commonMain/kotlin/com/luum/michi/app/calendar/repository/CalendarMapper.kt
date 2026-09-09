@@ -3,12 +3,12 @@ package com.luum.michi.app.calendar.repository
 import com.luum.michi.app.calendar.domain.CalendarDay
 import com.luum.michi.app.calendar.domain.CalendarEntry
 import com.luum.michi.app.calendar.domain.CalendarFeed
-import com.luum.michi.app.core.repository.anilist.dto.AiringScheduleDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaExternalLinkDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.domain.model.localMidnightEpoch
-import com.luum.michi.app.core.domain.model.parseMediaSeason
-import com.luum.michi.app.core.domain.model.toLocalMediaReleaseDateTime
+import com.luum.michi.app.core.network.repository.dto.AiringScheduleDto
+import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.localMidnightEpoch
+import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import kotlin.time.Instant
@@ -19,7 +19,7 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
-import com.luum.michi.app.core.domain.medialist.parseMediaListStatus
+import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 
 internal fun List<AiringScheduleDto>.toCalendarFeed(
     nowEpoch: Long,

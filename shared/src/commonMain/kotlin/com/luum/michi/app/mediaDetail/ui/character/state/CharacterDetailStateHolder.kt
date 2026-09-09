@@ -4,9 +4,9 @@ import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

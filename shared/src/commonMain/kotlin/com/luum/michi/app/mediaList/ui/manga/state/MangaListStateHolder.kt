@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaList.ui.manga.state
 
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
@@ -10,11 +10,11 @@ import com.luum.michi.app.mediaList.domain.manga.model.incrementedVolumes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-import com.luum.michi.app.core.domain.model.UserListSort
-import com.luum.michi.app.core.domain.model.UserListOrder
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
+import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.common.MediaListLoader
 import com.luum.michi.app.mediaList.domain.common.matchesMediaListFilters
 import com.luum.michi.app.mediaList.domain.common.sortMediaListEntries

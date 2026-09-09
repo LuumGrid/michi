@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaList
 
-import com.luum.michi.app.core.domain.model.MediaFormat
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.model.UserListOrder
-import com.luum.michi.app.core.domain.model.UserListSort
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 import com.luum.michi.app.mediaList.domain.common.sortMediaListEntries
 import kotlin.test.Test

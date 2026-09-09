@@ -3,7 +3,7 @@ package com.luum.michi.app.calendar
 import com.luum.michi.app.calendar.domain.CalendarFeed
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -13,6 +13,9 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -77,13 +80,29 @@ class CalendarRepositoryTest {
     }
 
     @Test
-    fun nullPageYieldsEmptyFeed() {
-        val repo = CalendarRepositoryImpl(
+    fun nullPageYieldsEmptyFeed() {        val repo = CalendarRepositoryImpl(
             FakeGraphQL(listOf(buildJsonObject { put("Page", JsonNull) })),
         )
         val emissions = collect(repo)
         assertEquals(1, emissions.size)
         val success = emissions[0] as NetworkResult.Success
         assertTrue(success.value.days.isEmpty())
+    }
+
+    @Test
+    fun queryVariablesCarryWindowAndPaging() {
+        val now = 1_700_000_000L
+        val fake = FakeGraphQL(
+            listOf(
+                pageData(true, sched(1, now)),
+                pageData(false, sched(2, now + 72 * 3600)),
+            ),
+        )
+        collect(CalendarRepositoryImpl(fake) { now })
+        assertEquals(2, fake.requests.size)
+        assertEquals(now, fake.requests[0].variables!!["from"]?.jsonPrimitive?.long)
+        assertEquals(1, fake.requests[0].variables!!["page"]?.jsonPrimitive?.int)
+        assertEquals(2, fake.requests[1].variables!!["page"]?.jsonPrimitive?.int)
+        assertTrue("to" in fake.requests[0].variables!!)
     }
 }

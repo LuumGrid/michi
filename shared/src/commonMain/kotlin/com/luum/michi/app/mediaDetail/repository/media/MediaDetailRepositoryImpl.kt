@@ -1,17 +1,17 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.repository.anilist.dto.MediaCharacterConnectionDto
+import com.luum.michi.app.core.network.repository.dto.MediaCharacterConnectionDto
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.core.repository.anilist.dto.MediaDetailResponseDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaStaffConnectionDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.toTitleCase
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.repository.dto.MediaDetailResponseDto
+import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.toTitleCase
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
@@ -198,8 +198,8 @@ private data class MediaRecommendationListEntryDto(
 @Serializable
 private data class MediaRecommendationMediaDto(
     val id: Int,
-    val title: com.luum.michi.app.core.repository.anilist.dto.MediaTitleDto? = null,
-    val coverImage: com.luum.michi.app.core.repository.anilist.dto.MediaCoverImageDto? = null,
+    val title: com.luum.michi.app.core.network.repository.dto.MediaTitleDto? = null,
+    val coverImage: com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto? = null,
     val format: String? = null,
     val seasonYear: Int? = null,
     val episodes: Int? = null,

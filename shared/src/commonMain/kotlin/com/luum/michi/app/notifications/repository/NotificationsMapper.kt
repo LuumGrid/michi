@@ -1,10 +1,10 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.MediaTitleDto
-import com.luum.michi.app.core.repository.anilist.dto.NotificationNodeDto
-import com.luum.michi.app.core.domain.model.NotificationBucket
-import com.luum.michi.app.core.domain.model.apiTypes
-import com.luum.michi.app.core.domain.model.notificationBucketFor
+import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.NotificationNodeDto
+import com.luum.michi.app.core.model.NotificationBucket
+import com.luum.michi.app.core.model.apiTypes
+import com.luum.michi.app.core.model.notificationBucketFor
 import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter

@@ -2,12 +2,12 @@ package com.luum.michi.app.root.state
 
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.domain.model.AccountProfileDraft
-import com.luum.michi.app.core.domain.navigation.DetailDestination
-import com.luum.michi.app.core.domain.navigation.TabSection
+import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.core.domain.navigation.BackHandler
-import com.luum.michi.app.core.domain.session.Viewer
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
+import com.luum.michi.app.core.navigation.domain.BackHandler
+import com.luum.michi.app.core.session.domain.Viewer
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
 internal enum class AccountRoute {

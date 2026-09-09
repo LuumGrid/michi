@@ -3,7 +3,7 @@ package com.luum.michi.app.account.domain
 import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.domain.model.AccountStats
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 
 /** Combined result of a single account data fetch. */
 internal data class AccountData(

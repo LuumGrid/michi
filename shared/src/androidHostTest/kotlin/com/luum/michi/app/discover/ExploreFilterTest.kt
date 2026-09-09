@@ -1,11 +1,11 @@
 package com.luum.michi.app.discover
 
-import com.luum.michi.app.core.domain.language.EnglishStrings
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.model.UserListSort
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
@@ -57,7 +57,7 @@ private class FakeExploreRepository : ExploreRepository {
         perPage: Int,
         season: String?,
         onList: Boolean?,
-        strings: com.luum.michi.app.core.domain.language.LanguageStrings,
+        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
     ): NetworkResult<ExplorePage> {
         catalogCalls += CatalogCall(query, genres, formats, year, sort, season)
         return empty()
@@ -72,7 +72,7 @@ private class FakeExploreRepository : ExploreRepository {
         page: Int,
         perPage: Int,
         onList: Boolean?,
-        strings: com.luum.michi.app.core.domain.language.LanguageStrings,
+        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
     ): NetworkResult<ExplorePage> {
         mangaCalls += CatalogCall(query, genres, formats, year, sort, season = null)
         return empty()

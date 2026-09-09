@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaDetail
 
-import com.luum.michi.app.core.domain.language.EnglishStrings
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail

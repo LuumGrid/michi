@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaList.domain.common
 
-import com.luum.michi.app.core.domain.model.MediaFormat
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.model.UserListOrder
-import com.luum.michi.app.core.domain.model.UserListSort
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 
 /**
  * Sort/filter fields shared verbatim by the anime and manga list entries.

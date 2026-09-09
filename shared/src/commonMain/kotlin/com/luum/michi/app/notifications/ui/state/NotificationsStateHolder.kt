@@ -1,7 +1,7 @@
 package com.luum.michi.app.notifications.ui.state
 
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationFilter

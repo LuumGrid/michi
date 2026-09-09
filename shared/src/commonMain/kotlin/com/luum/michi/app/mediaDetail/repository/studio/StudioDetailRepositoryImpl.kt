@@ -1,15 +1,15 @@
 package com.luum.michi.app.mediaDetail.repository.studio
 
-import com.luum.michi.app.core.repository.anilist.dto.MediaCoverImageDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.toTitleCase
+import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
-import com.luum.michi.app.core.repository.anilist.dto.MediaTitleDto
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage

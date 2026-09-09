@@ -1,17 +1,17 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.DashboardResponseDto
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
-import com.luum.michi.app.core.domain.model.MediaSeasonYear
-import com.luum.michi.app.core.domain.model.currentSeasonAndYear
-import com.luum.michi.app.core.domain.model.next
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.network.map
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 

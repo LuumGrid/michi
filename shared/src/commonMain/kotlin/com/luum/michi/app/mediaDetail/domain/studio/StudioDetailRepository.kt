@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.studio
 
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort

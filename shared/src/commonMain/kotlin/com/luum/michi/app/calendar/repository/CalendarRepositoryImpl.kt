@@ -8,16 +8,16 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.calendar.domain.CalendarFeed
 import com.luum.michi.app.calendar.domain.CalendarRepository
-import com.luum.michi.app.core.repository.anilist.dto.AiringScheduleDto
-import com.luum.michi.app.core.repository.anilist.dto.AiringSchedulePageDto
-import com.luum.michi.app.core.domain.auth.currentEpochSeconds
-import com.luum.michi.app.core.domain.model.currentSeasonAndYear
-import com.luum.michi.app.core.domain.model.next
-import com.luum.michi.app.core.domain.model.startEpochSeconds
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.repository.dto.AiringScheduleDto
+import com.luum.michi.app.core.network.repository.dto.AiringSchedulePageDto
+import com.luum.michi.app.core.auth.domain.currentEpochSeconds
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.model.startEpochSeconds
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
 
 private const val CalendarQuery = """
 query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {

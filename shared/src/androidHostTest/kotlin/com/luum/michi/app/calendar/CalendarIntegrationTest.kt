@@ -6,10 +6,12 @@ import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
-import com.luum.michi.app.core.domain.model.MediaSeasonYear
-import com.luum.michi.app.core.domain.model.currentSeasonAndYear
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.model.previous
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -178,5 +180,59 @@ class CalendarIntegrationTest {
         holder.stepDay(1)
         assertTrue(holder.selectedDayBucket != first)
         assertEquals(2, holder.visibleDays.size)
+    }
+
+    @Test
+    fun previousAndNextSeasonFiltersMatchEndToEnd() {
+        val current = currentSeasonAndYear()
+        val previous = current.previous()
+        val next = current.next()
+        val graphQL = FakeGraphQL(
+            listOf(
+                pageJson(
+                    false,
+                    schedJson(
+                        1,
+                        Now,
+                        mediaJson(10, season = previous.season.name, seasonYear = previous.year),
+                    ),
+                    schedJson(
+                        2,
+                        Now + 72 * 3600,
+                        mediaJson(20, season = next.season.name, seasonYear = next.year),
+                    ),
+                ),
+            ),
+        )
+        val (holder) = wiredHolder(graphQL)
+        holder.load()
+        assertEquals(2, holder.days.size)
+        holder.updateSeasonFilter(CalendarSeasonFilter.PREVIOUS)
+        assertEquals(1, holder.visibleDays.size)
+        holder.updateSeasonFilter(CalendarSeasonFilter.NEXT)
+        assertEquals(1, holder.visibleDays.size)
+        holder.updateSeasonFilter(CalendarSeasonFilter.CURRENT)
+        assertEquals(0, holder.visibleDays.size)
+    }
+
+    @Test
+    fun watchingPlanningFilterMatchesEndToEnd() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                pageJson(
+                    false,
+                    schedJson(1, Now, mediaJson(10, listStatus = "CURRENT")),
+                    schedJson(2, Now + 72 * 3600, mediaJson(20, listStatus = "PAUSED")),
+                ),
+            ),
+        )
+        val (holder) = wiredHolder(graphQL)
+        holder.load()
+        holder.updateStatusFilter(CalendarStatusFilter.WATCHING_PLANNING)
+        assertEquals(1, holder.visibleDays.size)
+        assertEquals(
+            10,
+            holder.visibleDays.single().items.single().item.id,
+        )
     }
 }

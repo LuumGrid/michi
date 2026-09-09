@@ -3,9 +3,9 @@ package com.luum.michi.app.account.ui.state
 import com.luum.michi.app.account.domain.AccountRepository
 import com.luum.michi.app.account.domain.model.AccountFavorites
 import com.luum.michi.app.account.domain.model.AccountStats
-import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource

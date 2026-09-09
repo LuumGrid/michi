@@ -1,13 +1,13 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.NotificationsResponseDto
+import com.luum.michi.app.core.network.repository.dto.NotificationsResponseDto
 import com.luum.michi.app.notifications.domain.NotificationsPage
 import com.luum.michi.app.notifications.domain.NotificationsRepository
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.network.map
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray

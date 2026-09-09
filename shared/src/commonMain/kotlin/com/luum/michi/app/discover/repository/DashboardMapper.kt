@@ -1,11 +1,11 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.DashboardResponseDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.domain.model.label
-import com.luum.michi.app.core.domain.model.parseMediaFormat
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
 

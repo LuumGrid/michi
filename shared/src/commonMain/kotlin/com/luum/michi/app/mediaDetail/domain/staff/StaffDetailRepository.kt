@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.staff
 
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage

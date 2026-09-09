@@ -3,13 +3,13 @@ package com.luum.michi.app.mediaList.repository.anime
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.completedSection
-import com.luum.michi.app.core.domain.model.MediaFormat
-import com.luum.michi.app.core.domain.model.parseMediaFormat
-import com.luum.michi.app.core.domain.model.parseMediaSeason
-import com.luum.michi.app.core.repository.anilist.dto.MediaListEntryDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.toComparableInt
-import com.luum.michi.app.core.repository.anilist.toMediaReleaseDateTime
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.network.repository.dto.toComparableInt
+import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
 
 internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry {
     val section = mapAnimeStatus(status, parseMediaFormat(media.format))

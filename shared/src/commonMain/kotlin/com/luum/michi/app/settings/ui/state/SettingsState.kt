@@ -1,9 +1,9 @@
 package com.luum.michi.app.settings.ui.state
 
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.storage.SettingsStore
-import com.luum.michi.app.core.domain.storage.SettingsStoreKeys
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.DiscoverTabOption

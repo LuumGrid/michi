@@ -2,7 +2,7 @@ package com.luum.michi.app.account.repository
 
 import com.luum.michi.app.account.domain.model.AccountMediaTypeStats
 import com.luum.michi.app.account.domain.model.AccountStatDistributionEntry
-import com.luum.michi.app.core.repository.anilist.dto.UserStatisticsDto
+import com.luum.michi.app.core.network.repository.dto.UserStatisticsDto
 
 /**
  * Maps a single anime/manga [UserStatisticsDto] block into the domain

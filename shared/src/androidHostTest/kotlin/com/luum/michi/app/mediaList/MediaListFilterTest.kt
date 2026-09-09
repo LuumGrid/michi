@@ -1,11 +1,11 @@
 package com.luum.michi.app.mediaList
 
-import com.luum.michi.app.core.domain.model.MediaFormat
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.medialist.MediaListEntryRepository
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
-import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection

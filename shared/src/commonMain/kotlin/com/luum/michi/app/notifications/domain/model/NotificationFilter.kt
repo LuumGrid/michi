@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications.domain.model
 
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.language.domain.LanguageStrings
 
 internal enum class NotificationFilter { ALL, AIRING, ACTIVITY, REPLIES, FORUM, FOLLOWS, MEDIA }
 

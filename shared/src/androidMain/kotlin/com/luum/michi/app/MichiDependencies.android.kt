@@ -1,8 +1,8 @@
 package com.luum.michi.app
 
 import android.content.Context
-import com.luum.michi.app.core.repository.auth.ChromeCustomTabsOAuthLauncher
-import com.luum.michi.app.core.repository.auth.SharedPreferencesAniListTokenStorage
+import com.luum.michi.app.core.auth.repository.ChromeCustomTabsOAuthLauncher
+import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStorage
 
 /**
  * Constructs the app's shared dependencies for Android. Called from

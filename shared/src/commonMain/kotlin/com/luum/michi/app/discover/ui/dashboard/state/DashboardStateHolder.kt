@@ -1,9 +1,9 @@
 package com.luum.michi.app.discover.ui.dashboard.state
 
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.network.AniListNetworkPolicy
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository

@@ -1,13 +1,13 @@
 package com.luum.michi.app.mediaList.repository.manga
 
-import com.luum.michi.app.core.repository.anilist.dto.MediaListEntryDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.toComparableInt
+import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.network.repository.dto.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
-import com.luum.michi.app.core.domain.model.parseMediaFormat
-import com.luum.michi.app.core.domain.model.parseMediaSeason
+import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.model.parseMediaSeason
 
 internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
     val format = parseMediaFormat(media.format)

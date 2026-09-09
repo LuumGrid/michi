@@ -1,16 +1,16 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.CharacterDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaPageInfoDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaSearchResponseDto
-import com.luum.michi.app.core.repository.anilist.dto.StaffDto
-import com.luum.michi.app.core.repository.anilist.dto.StudioDto
-import com.luum.michi.app.core.domain.network.AniListGraphQLClient
-import com.luum.michi.app.core.domain.network.AniListGraphQLRequest
-import com.luum.michi.app.core.repository.network.AniListJson
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.domain.network.map
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.repository.dto.CharacterDto
+import com.luum.michi.app.core.network.repository.dto.MediaPageInfoDto
+import com.luum.michi.app.core.network.repository.dto.MediaSearchResponseDto
+import com.luum.michi.app.core.network.repository.dto.StaffDto
+import com.luum.michi.app.core.network.repository.dto.StudioDto
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExplorePage
 import com.luum.michi.app.discover.domain.model.ExploreResult

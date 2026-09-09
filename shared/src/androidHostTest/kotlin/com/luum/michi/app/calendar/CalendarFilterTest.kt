@@ -10,14 +10,16 @@ import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.matches
 import com.luum.michi.app.calendar.repository.toCalendarFeed
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
-import com.luum.michi.app.core.domain.medialist.MediaListStatus
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.model.MediaSeasonYear
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.repository.anilist.dto.AiringScheduleDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaExternalLinkDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaTitleDto
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.repository.dto.AiringScheduleDto
+import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
@@ -273,6 +275,33 @@ class CalendarFilterTest {
         assertEquals(30, holder.selectedDayBucket)
         holder.stepDay(-5)
         assertEquals(20, holder.selectedDayBucket)
+    }
+
+    @Test
+    fun userFieldsMapThrough() {
+        val feed = listOf(
+            schedule(
+                1,
+                epoch(2025, 9, 6, 20, 0),
+                media = MediaDto(
+                    id = 1,
+                    isFavourite = true,
+                    averageScore = 85,
+                    favourites = 100,
+                    popularity = 200,
+                    coverImage = MediaCoverImageDto(large = "cover", color = "#fff"),
+                    mediaListEntry = MediaViewerListEntryDto(id = 9, score = 7.5),
+                ),
+            ),
+        ).toCalendarFeed(epoch(2025, 9, 6, 15, 0)) { Santiago }
+        val item = feed.days.single().items.single().item
+        assertEquals(true, item.isUserFavorited)
+        assertEquals(true, item.isUserRanked)
+        assertEquals(85, item.averageScore)
+        assertEquals(100, item.favourites)
+        assertEquals(200, item.popularity)
+        assertEquals("cover", item.coverUrl)
+        assertEquals("#fff", item.paletteHex)
     }
 
     @Test

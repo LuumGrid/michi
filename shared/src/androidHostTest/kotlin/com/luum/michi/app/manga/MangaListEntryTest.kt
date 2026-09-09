@@ -2,7 +2,7 @@ package com.luum.michi.app.manga
 
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.core.domain.model.MediaFormat
+import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.formattedScore

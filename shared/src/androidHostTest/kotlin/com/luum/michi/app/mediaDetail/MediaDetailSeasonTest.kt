@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaDetail
 
-import com.luum.michi.app.core.domain.language.EnglishStrings
-import com.luum.michi.app.core.domain.language.SpanishStrings
-import com.luum.michi.app.core.repository.anilist.dto.MediaDetailDto
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.SpanishStrings
+import com.luum.michi.app.core.network.repository.dto.MediaDetailDto
 import com.luum.michi.app.mediaDetail.repository.media.toDomain
 import kotlin.test.Test
 import kotlin.test.assertEquals

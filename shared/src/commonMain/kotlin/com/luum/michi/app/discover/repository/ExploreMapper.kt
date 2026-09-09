@@ -1,9 +1,9 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.repository.anilist.dto.MediaSearchItemDto
-import com.luum.michi.app.core.domain.model.label
-import com.luum.michi.app.core.domain.model.parseMediaFormat
-import com.luum.michi.app.core.domain.language.LanguageStrings
+import com.luum.michi.app.core.network.repository.dto.MediaSearchItemDto
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.ExploreResult
 
 internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): ExploreResult {

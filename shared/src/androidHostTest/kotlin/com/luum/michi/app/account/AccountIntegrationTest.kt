@@ -4,7 +4,7 @@ import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.repository.AccountRepositoryImpl
 import com.luum.michi.app.account.ui.state.AccountFavoritesGridStateHolder
 import com.luum.michi.app.account.ui.state.AccountStateHolder
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.buildJsonObject
@@ -81,6 +81,67 @@ class AccountIntegrationTest {
         holder.refresh()
         assertEquals(2, graphQL.calls)
         assertEquals(10, holder.stats.animeCount)
+    }
+    @Test
+    fun gridSliceLoadsMangaBranch() {
+        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("manga", "M", false)))
+        val holder = AccountFavoritesGridStateHolder(
+            AccountRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, AccountFavoritesCategory.MANGA)
+        assertEquals("M", holder.mediaItems.single().title)
+    }
+
+    @Test
+    fun gridSliceLoadsCharactersBranch() {
+        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("characters", "C", false)))
+        val holder = AccountFavoritesGridStateHolder(
+            AccountRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, AccountFavoritesCategory.CHARACTERS)
+        assertEquals("C", holder.personItems.single().name)
+    }
+
+    @Test
+    fun gridSliceLoadsStaffBranch() {
+        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("staff", "S", false)))
+        val holder = AccountFavoritesGridStateHolder(
+            AccountRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, AccountFavoritesCategory.STAFF)
+        assertEquals("S", holder.personItems.single().name)
+    }
+
+    @Test
+    fun gridSliceLoadsStudiosBranch() {
+        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("studios", "T", false)))
+        val holder = AccountFavoritesGridStateHolder(
+            AccountRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, AccountFavoritesCategory.STUDIOS)
+        assertEquals("T", holder.studioItems.single().name)
+    }
+
+    @Test
+    fun gridPaginationAppendsSecondPage() {
+        val graphQL = FakeAccountGraphQL(
+            listOf(
+                favouritesPage("anime", "A", hasNextPage = true, id = 2),
+                favouritesPage("anime", "B", hasNextPage = false, id = 3),
+            ),
+        )
+        val holder = AccountFavoritesGridStateHolder(
+            AccountRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, AccountFavoritesCategory.ANIME)
+        holder.loadMore()
+        assertEquals(listOf("A", "B"), holder.mediaItems.map { it.title })
+        assertEquals(false, holder.hasNextPage)
     }
 
     @Test

@@ -2,7 +2,7 @@ package com.luum.michi.app.account
 
 import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.repository.AccountRepositoryImpl
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlin.test.Test
@@ -56,8 +56,27 @@ class AccountRepositoryLoadTest {
     }
 
     @Test
-    fun loadFavoritesPageMapsStudioBranch() {
+    fun loadFavoritesPageMapsMangaBranch() {
         val result = runBlocking {
+            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("manga", "M", false))))
+                .loadFavoritesPage(1, AccountFavoritesCategory.MANGA, 1)
+        }
+        assertTrue(result is NetworkResult.Success)
+        assertEquals("M", result.value.mediaItems.single().title)
+    }
+
+    @Test
+    fun loadFavoritesPageMapsStaffBranch() {
+        val result = runBlocking {
+            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("staff", "S", false))))
+                .loadFavoritesPage(1, AccountFavoritesCategory.STAFF, 1)
+        }
+        assertTrue(result is NetworkResult.Success)
+        assertEquals("S", result.value.personItems.single().name)
+    }
+
+    @Test
+    fun loadFavoritesPageMapsStudioBranch() {        val result = runBlocking {
             AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("studios", "S", false))))
                 .loadFavoritesPage(1, AccountFavoritesCategory.STUDIOS, 1)
         }

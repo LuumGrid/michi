@@ -1,22 +1,22 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.repository.anilist.dto.FuzzyDateDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaCharacterConnectionDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaCharacterEdgeDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaDetailDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaRelationEdgeDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaStaffConnectionDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaStaffEdgeDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaViewerListEntryDto
-import com.luum.michi.app.core.repository.anilist.dto.MediaVoiceActorDto
-import com.luum.michi.app.core.repository.anilist.dto.bestTitle
-import com.luum.michi.app.core.repository.anilist.dto.toTitleCase
-import com.luum.michi.app.core.domain.model.CalendarDateParts
-import com.luum.michi.app.core.domain.model.MediaSeason
-import com.luum.michi.app.core.domain.model.calendarPartsToMillis
-import com.luum.michi.app.core.domain.model.parseMediaSeason
-import com.luum.michi.app.core.domain.language.LanguageStrings
-import com.luum.michi.app.core.domain.util.stripHtml
+import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.network.repository.dto.MediaCharacterConnectionDto
+import com.luum.michi.app.core.network.repository.dto.MediaCharacterEdgeDto
+import com.luum.michi.app.core.network.repository.dto.MediaDetailDto
+import com.luum.michi.app.core.network.repository.dto.MediaRelationEdgeDto
+import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
+import com.luum.michi.app.core.network.repository.dto.MediaStaffEdgeDto
+import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.network.repository.dto.MediaVoiceActorDto
+import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.toTitleCase
+import com.luum.michi.app.core.model.CalendarDateParts
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.calendarPartsToMillis
+import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
@@ -24,7 +24,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
-import com.luum.michi.app.core.domain.medialist.MediaListViewerEntry
+import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaScoreBucket
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
@@ -32,7 +32,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStatsStatus
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStatusBucket
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaVoiceActor
-import com.luum.michi.app.core.domain.medialist.parseMediaListStatus
+import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 
 internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = MediaDetail(
     id = id,

@@ -1,7 +1,7 @@
 package com.luum.michi.app
 
-import com.luum.michi.app.core.repository.auth.NSUserDefaultsAniListTokenStorage
-import com.luum.michi.app.core.repository.auth.SafariOAuthLauncher
+import com.luum.michi.app.core.auth.repository.NSUserDefaultsAniListTokenStorage
+import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
 import platform.UIKit.UIViewController
 
 /**

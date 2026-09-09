@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.studio.state
 
-import com.luum.michi.app.core.domain.network.NetworkError
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem

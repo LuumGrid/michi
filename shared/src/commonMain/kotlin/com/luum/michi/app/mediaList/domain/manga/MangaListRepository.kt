@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaList.domain.manga
 
-import com.luum.michi.app.core.domain.network.NetworkResult
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 
 internal interface MangaListRepository {

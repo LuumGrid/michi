@@ -1,8 +1,8 @@
 package com.luum.michi.app.notifications
 
-import com.luum.michi.app.core.domain.model.NotificationBucket
-import com.luum.michi.app.core.domain.model.apiTypes
-import com.luum.michi.app.core.domain.model.notificationBucketFor
+import com.luum.michi.app.core.model.NotificationBucket
+import com.luum.michi.app.core.model.apiTypes
+import com.luum.michi.app.core.model.notificationBucketFor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

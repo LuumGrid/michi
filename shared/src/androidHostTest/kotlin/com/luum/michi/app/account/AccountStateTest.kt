@@ -9,8 +9,8 @@ import com.luum.michi.app.account.domain.model.AccountStats
 import com.luum.michi.app.account.repository.toAccountMediaTypeStats
 import com.luum.michi.app.account.domain.model.toCompactCountLabel
 import com.luum.michi.app.account.ui.state.AccountStateHolder
-import com.luum.michi.app.core.domain.network.NetworkResult
-import com.luum.michi.app.core.repository.anilist.dto.UserStatisticsDto
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.repository.dto.UserStatisticsDto
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
