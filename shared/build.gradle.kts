@@ -5,6 +5,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -51,6 +52,13 @@ val anilistClientIdValue: String =
     (localProperties["anilistClientId"] as? String)
         ?.takeIf { it.isNotBlank() }
         ?: System.getenv("ANILIST_CLIENT_ID").orEmpty()
+
+// Test-only AniList token for the opt-in live suite (see `live` test package).
+// local.properties is gitignored; never commit or log this value.
+val anilistTestTokenValue: String =
+    (localProperties["anilistTestToken"] as? String)
+        ?.takeIf { it.isNotBlank() }
+        ?: System.getenv("ANILIST_TEST_TOKEN").orEmpty()
 
 // Fail fast when packaging a release without a client id, otherwise the shipped
 // binary would bake in an empty ClientId and every user would hit the
@@ -131,4 +139,8 @@ kotlin {
             implementation(libs.ktor.client.mock)
         }
     }
+}
+
+tasks.withType<Test> {
+    environment("ANILIST_TEST_TOKEN", anilistTestTokenValue)
 }
