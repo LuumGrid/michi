@@ -1,4 +1,4 @@
-package com.luum.michi.app.core.ui.theme
+package com.luum.michi.app.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color

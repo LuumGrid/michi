@@ -4,6 +4,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -14,8 +15,8 @@ kotlin {
 dependencies {
     implementation(projects.shared)
 
-    // Placeholder entry point (no Compose): plain Activity base class.
-    implementation(libs.androidx.activity)
+    // Compose entry point: setContent + activity-compose APIs.
+    implementation(libs.androidx.activity.compose)
 }
 
 val keystoreProperties = Properties().apply {

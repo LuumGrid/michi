@@ -1,18 +1,19 @@
 package com.luum.michi.app
 
+import androidx.compose.ui.window.ComposeUIViewController
 import com.luum.michi.app.core.auth.repository.NSUserDefaultsAniListTokenStorage
 import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
 import platform.UIKit.UIViewController
 
 /**
- * UI placeholder: preserves the iOS entry point + OAuth callback contract
- * used from Swift (`ContentView.swift` / `iOSApp.swift`) without any Compose
- * UI. Screens will be re-added on top of the pure-logic state holders.
+ * Compose entry: renders the shared [App] (auth landing vs shell routing).
+ * Preserves the iOS entry point + OAuth callback contract used from Swift
+ * (`ContentView.swift` / `iOSApp.swift`).
  */
 @Suppress("FunctionName") // referenced from Swift (iOSApp.swift / ContentView.swift)
 fun MainViewController(): UIViewController {
-    IosMichiDependencies.getOrCreate()
-    return UIViewController()
+    val dependencies = IosMichiDependencies.getOrCreate()
+    return ComposeUIViewController { App(dependencies = dependencies) }
 }
 
 /** Called from Swift via `MainViewControllerKt.handleIosOAuthCallback(url: ...)`. */

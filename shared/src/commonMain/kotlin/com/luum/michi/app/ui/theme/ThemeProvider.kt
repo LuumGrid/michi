@@ -1,4 +1,4 @@
-package com.luum.michi.app.core.ui.theme
+package com.luum.michi.app.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf

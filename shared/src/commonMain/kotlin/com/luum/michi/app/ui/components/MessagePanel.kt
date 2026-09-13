@@ -1,4 +1,4 @@
-package com.luum.michi.app.core.ui.components
+package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

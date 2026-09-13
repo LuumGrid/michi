@@ -240,8 +240,10 @@ interface LanguageStrings {
     val authWelcomeTitle: String
     val authWelcomeSubtitle: String
     val authLoginAction: String
+    val authContinueAsGuestAction: String
     val authConfigurationMissing: String
     val authLoadingLabel: String
+    val retryAction: String
     val listsLoadingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
