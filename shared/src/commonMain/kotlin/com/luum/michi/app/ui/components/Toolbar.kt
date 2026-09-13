@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -137,11 +138,23 @@ internal fun Toolbar(
                     }
                     Spacer(modifier = Modifier.size(12.dp))
                 }
-                Text(
-                    text = title,
-                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                // Same fade as bubble + content (see TabMotion.kt): one rhythm.
+                AnimatedContent(
+                    targetState = title,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tabFadeSpec()) togetherWith
+                            fadeOut(animationSpec = tabFadeSpec())) using
+                            SizeTransform(clip = false)
+                    },
+                    label = "toolbar-title",
                     modifier = Modifier.weight(1f),
-                )
+                ) { activeTitle ->
+                    Text(
+                        text = activeTitle,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                    )
+                }
                 if (actions.size == 1) {
                     val action = actions.first()
                     Surface(

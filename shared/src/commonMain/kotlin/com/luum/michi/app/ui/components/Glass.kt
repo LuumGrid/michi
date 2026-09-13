@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -36,9 +37,9 @@ internal fun glassBorder(): BorderStroke =
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
     )
 
-internal fun Modifier.glass(shape: Shape): Modifier =
+internal fun Modifier.glass(shape: Shape, elevation: Dp = 8.dp): Modifier =
     this
-        .shadow(elevation = 8.dp, shape = shape)
+        .shadow(elevation = elevation, shape = shape)
         .clip(shape)
 
 internal fun Modifier.glass(): Modifier = glass(GlassShape)

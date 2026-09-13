@@ -96,7 +96,7 @@ private fun TabBarItem(
         } else {
             Color.Transparent
         },
-        animationSpec = tabFadeSpec(),
+        animationSpec = tabBubbleSpec(),
         label = "tab-bubble",
     )
     val content by animateColorAsState(
@@ -105,9 +105,10 @@ private fun TabBarItem(
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         },
-        animationSpec = tabFadeSpec(),
+        animationSpec = tabBubbleSpec(),
         label = "tab-content",
     )
+    // Bubble only: color crossfade, no scale — growing on select looks cheap.
     Surface(
         shape = GlassCircle,
         color = bubble,
@@ -118,7 +119,7 @@ private fun TabBarItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 7.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val icon = if (selected) tab.selectedIcon ?: tab.icon else tab.icon
@@ -128,7 +129,7 @@ private fun TabBarItem(
                         imageVector = icon,
                         contentDescription = null,
                         tint = content,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(26.dp),
                     )
                 }
             } else {
@@ -136,7 +137,7 @@ private fun TabBarItem(
                     imageVector = icon,
                     contentDescription = null,
                     tint = content,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(26.dp),
                 )
             }
             Text(

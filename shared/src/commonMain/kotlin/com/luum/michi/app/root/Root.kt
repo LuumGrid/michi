@@ -1,8 +1,11 @@
 package com.luum.michi.app.root
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -116,13 +119,20 @@ internal fun Root(
                 // Top only: content scrolls behind the floating tab bar.
                 .padding(top = padding.calculateTopPadding()),
         ) {
-            // Same fade as the tab bubble (see TabMotion.kt): tab state drives
-            // the transition, never data loads — real screens stream in after.
+            // Swipe-like directional swap: sign of the tab order only, fixed
+            // magnitude — direct initial -> target, never through middle tabs.
+            // Tab state drives the transition, never data loads.
             AnimatedContent(
                 targetState = tab,
                 transitionSpec = {
-                    fadeIn(animationSpec = tabFadeSpec()) togetherWith
-                        fadeOut(animationSpec = tabFadeSpec())
+                    val forward = TabSection.entries.indexOf(targetState) >
+                        TabSection.entries.indexOf(initialState)
+                    val enterFrom = if (forward) 1 else -1
+                    (fadeIn(animationSpec = tabFadeSpec()) +
+                        slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 * enterFrom } togetherWith
+                        fadeOut(animationSpec = tabFadeSpec()) +
+                        slideOutHorizontally(animationSpec = tabFadeSpec()) { -it / 4 * enterFrom }) using
+                        SizeTransform(clip = false)
                 },
                 label = "tab-content",
             ) { activeTab ->
