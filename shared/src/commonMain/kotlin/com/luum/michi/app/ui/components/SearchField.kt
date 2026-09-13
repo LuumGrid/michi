@@ -1,10 +1,7 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -16,12 +13,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
-import com.luum.michi.app.ui.icons.AppIcons
 
 /**
- * Expanded in-context search field. Occupies the full toolbar width:
- * back affordance on the left (cancels search), clear "X" on the right
- * (visible only when [query] is non-empty).
+ * Expanded in-context search field: pure text input. The back (chevron)
+ * and clear (X) affordances live OUTSIDE, as separate floating glass
+ * circles composed by [Toolbar] — three loose pieces, never merged.
  *
  * Takes only primitives so no feature model leaks into shared UI.
  */
@@ -30,12 +26,8 @@ internal fun SearchField(
     query: String,
     hint: String,
     autoFocus: Boolean,
-    backContentDescription: String?,
-    clearContentDescription: String?,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    onClear: () -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -45,28 +37,8 @@ internal fun SearchField(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
+        modifier = modifier.focusRequester(focusRequester),
         placeholder = { Text(text = hint) },
-        leadingIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = AppIcons.Back,
-                    contentDescription = backContentDescription,
-                )
-            }
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = onClear) {
-                    Icon(
-                        imageVector = AppIcons.Clear,
-                        contentDescription = clearContentDescription,
-                    )
-                }
-            }
-        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { onSubmit() }),

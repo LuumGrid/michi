@@ -9,6 +9,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -16,16 +18,19 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.IntOffset
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.root.state.AccountRoute
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
+import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.SearchScrim
 import com.luum.michi.app.ui.components.TabBar
 import com.luum.michi.app.ui.components.TabItem
+import com.luum.michi.app.ui.components.TopEdgeFade
 import com.luum.michi.app.ui.components.Toolbar
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.components.ToolbarNavigation
@@ -34,6 +39,7 @@ import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.language.searchHintFor
+import kotlin.math.roundToInt
 
 /**
  * Slim app orchestrator: owns the [State], derives the topbar per tab and
@@ -65,11 +71,19 @@ internal fun Root(
     val showScrim = search != null && activeQuery.isEmpty()
 
     // Enter-always: the floating toolbar hides on scroll down, returns on scroll up.
+    // The veil rides the same offset so it stays glued to the toolbar.
     val toolbarScroll = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val veilOffsetPx = toolbarScroll.state.heightOffset.roundToInt()
 
     Scaffold(
         modifier = Modifier.nestedScroll(toolbarScroll.nestedScrollConnection),
         topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(x = 0, y = veilOffsetPx) },
+            ) {
+                TopEdgeFade(modifier = Modifier.matchParentSize())
             Toolbar(
                 title = toolbarTitle(state, tab, strings),
                 navigation = if (search != null || state.isDetailOpen || state.isAccountDetail) {
@@ -98,13 +112,17 @@ internal fun Root(
                 },
                 scrollBehavior = toolbarScroll,
             )
+            }
         },
         bottomBar = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomEdgeFade(modifier = Modifier.matchParentSize())
             TabBar(
                 selected = tab,
                 tabs = tabs(strings),
                 onSelect = { state.selectTab(it) },
             )
+            }
         },
     ) { padding ->
         Box(

@@ -90,15 +90,12 @@ private fun TabBarItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val bubble by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f)
-        } else {
-            Color.Transparent
-        },
-        animationSpec = tabBubbleSpec(),
-        label = "tab-bubble",
-    )
+    // Fixed bubble: no opacity fade, it just appears. Tint still breathes.
+    val bubble = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f)
+    } else {
+        Color.Transparent
+    }
     val content by animateColorAsState(
         targetValue = if (selected) {
             MaterialTheme.colorScheme.onSecondaryContainer

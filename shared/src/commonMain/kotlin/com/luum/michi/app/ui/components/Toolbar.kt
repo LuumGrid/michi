@@ -27,7 +27,6 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
@@ -94,12 +93,12 @@ internal fun Toolbar(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
-    val barColors = TopAppBarDefaults.topAppBarColors(
-        containerColor = Color.Transparent,
-        scrolledContainerColor = Color.Transparent,
-    )
     AnimatedContent(
+        // Full object as state (so open/close keeps the last query), but the
+        // transition key is just open/closed: typing updates the text in
+        // place instead of restarting the animation (lost focus otherwise).
         targetState = search,
+        contentKey = { it != null },
         transitionSpec = {
             (fadeIn() + slideInHorizontally { it / 4 }) togetherWith
                 (fadeOut() + slideOutHorizontally { -it / 4 })
@@ -109,33 +108,20 @@ internal fun Toolbar(
     ) { activeSearch ->
         if (activeSearch == null) {
             // Own row (not TopAppBar): exact 16dp edges matching the tab capsule.
-            // Collapse is driven manually from the shared scroll behavior.
-            val offsetPx = scrollBehavior?.state?.heightOffset?.roundToInt() ?: 0
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                    .onSizeChanged { size ->
-                        scrollBehavior?.state?.heightOffsetLimit = -size.height.toFloat()
-                    }
-                    .offset { IntOffset(x = 0, y = offsetPx) }
+                    .toolbarCollapse(scrollBehavior)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (navigation is ToolbarNavigation.Back) {
-                    Surface(
-                        shape = GlassCircle,
-                        color = glassContainerColor(),
-                        border = glassBorder(),
-                        modifier = Modifier.glass(GlassCircle),
-                    ) {
-                        IconButton(onClick = onNavigation) {
-                            Icon(
-                                imageVector = AppIcons.Back,
-                                contentDescription = navigation.label,
-                            )
-                        }
-                    }
+                    GlassCircleButton(
+                        icon = AppIcons.Back,
+                        contentDescription = navigation.label,
+                        onClick = onNavigation,
+                    )
                     Spacer(modifier = Modifier.size(12.dp))
                 }
                 // Same fade as bubble + content (see TabMotion.kt): one rhythm.
@@ -155,17 +141,15 @@ internal fun Toolbar(
                         maxLines = 1,
                     )
                 }
-                if (actions.size == 1) {
-                    val action = actions.first()
-                    Surface(
-                        shape = GlassCircle,
-                        color = glassContainerColor(),
-                        border = glassBorder(),
-                        modifier = Modifier.glass(GlassCircle),
-                    ) {
-                        ToolbarActionButton(action = action, onAction = onAction)
-                    }
-                } else if (actions.size > 1) {
+                    if (actions.size == 1) {
+                        val action = actions.first()
+                        GlassCircleButton(
+                            icon = action.icon,
+                            contentDescription = action.contentDescription,
+                            onClick = { onAction(action.id) },
+                            badgeCount = action.badgeCount,
+                        )
+                    } else if (actions.size > 1) {
                     Surface(
                         shape = GlassShape,
                         color = glassContainerColor(),
@@ -181,35 +165,66 @@ internal fun Toolbar(
                 }
             }
         } else {
-    Surface(
-        modifier = Modifier
-            .glassPadding(top = true)
-            .glass(),
-        shape = GlassShape,
-        color = glassContainerColor(),
-        border = glassBorder(),
-    ) {
-            TopAppBar(
-                title = {
+            // Three loose glass pieces (never merged): chevron circle mirroring
+            // the search action position, expanding text pill, X circle where
+            // the magnifier was. Borders may touch, surfaces stay separate.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .toolbarCollapse(scrollBehavior)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassCircleButton(
+                    icon = AppIcons.Back,
+                    contentDescription = backContentDescription,
+                    onClick = onSearchClose,
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Surface(
+                    shape = GlassShape,
+                    color = glassContainerColor(),
+                    border = glassBorder(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .glass(),
+                ) {
+                    // Lambda param (not the closure): during the close fade the
+                    // outgoing side still sees the last query instead of null.
                     SearchField(
                         query = activeSearch.query,
                         hint = activeSearch.hint,
                         autoFocus = activeSearch.autoFocus,
-                        backContentDescription = backContentDescription,
-                        clearContentDescription = clearContentDescription,
                         onQueryChange = onSearchChange,
                         onSubmit = onSearchSubmit,
-                        onClear = onSearchClear,
-                        onBack = onSearchClose,
                     )
-                },
-                navigationIcon = {},
-                colors = barColors,
-                scrollBehavior = scrollBehavior,
-            )
-    }
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+                // Always visible, even with an empty query (clear is a no-op then).
+                GlassCircleButton(
+                    icon = AppIcons.Clear,
+                    contentDescription = clearContentDescription.orEmpty(),
+                    onClick = { onSearchClear() },
+                )
+            }
         }
     }
+}
+
+/**
+ * Manual enter-always collapse shared by both toolbar states: reports its
+ * own height as the scroll limit and offsets by the shared behavior.
+ * Read inside composition so scroll updates recompose.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Modifier.toolbarCollapse(scrollBehavior: TopAppBarScrollBehavior?): Modifier {
+    val offsetPx = scrollBehavior?.state?.heightOffset?.roundToInt() ?: 0
+    return this
+        .onSizeChanged { size ->
+            scrollBehavior?.state?.heightOffsetLimit = -size.height.toFloat()
+        }
+        .offset { IntOffset(x = 0, y = offsetPx) }
 }
 
 @Composable
@@ -218,9 +233,10 @@ private fun ToolbarActionButton(
     onAction: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Fixed 48dp target, same as GlassCircleButton: uniform everywhere.
     IconButton(
         onClick = { onAction(action.id) },
-        modifier = modifier.size(40.dp),
+        modifier = modifier,
     ) {
         if (action.badgeCount != null && action.badgeCount > 0) {
             BadgedBox(badge = { Text(text = action.badgeCount.toString()) }) {
