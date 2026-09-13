@@ -17,6 +17,13 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+// Pin the generated Res package: without this it falls back to a
+// name-derived default that has already drifted once (stale outputs under
+// a different package broke incremental builds).
+compose.resources {
+    packageOfResClass = "com.luum.michi.app.resources"
+}
+
 abstract class GenerateAniListBuildConfigTask : DefaultTask() {
     @get:Input
     abstract val clientId: Property<String>
@@ -82,6 +89,13 @@ val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>(
 }
 
 kotlin {
+    // NOTE: `Res.drawable.*` accessors are generated into
+    // `commonMainResourceAccessors` by the compose-resources plugin, but under
+    // androidMultiplatformLibrary that source set never reaches the Android
+    // compilation (verified via build logs: compileAndroidMain only looks
+    // for `androidMainResourceAccessors`, which is never generated). Do NOT
+    // re-register that dir into another source set: K2 fragments reject a
+    // file belonging to two modules. See Icons.kt for the workaround.
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -121,6 +135,7 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(libs.compose.materialIconsCore)
                 implementation(libs.compose.ui)
+                implementation(libs.compose.components.resources)
                 implementation(libs.material.kolor)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
@@ -144,3 +159,4 @@ kotlin {
 tasks.withType<Test> {
     environment("ANILIST_TEST_TOKEN", anilistTestTokenValue)
 }
+

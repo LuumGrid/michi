@@ -10,12 +10,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
@@ -163,32 +157,34 @@ internal fun Root(
 }
 
 /** The 4 top-level destinations. Root chooses the icons; ui stays dumb. */
+@Composable
 internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
     TabItem(
         section = TabSection.DISCOVER,
         label = TabSection.DISCOVER.label(strings),
-        icon = Icons.Filled.Home,
+        icon = AppIcons.Discover,
     ),
     TabItem(
         section = TabSection.ANIME,
         label = TabSection.ANIME.label(strings),
-        icon = Icons.Filled.PlayArrow,
+        icon = AppIcons.Anime,
     ),
     TabItem(
         section = TabSection.MANGA,
         label = TabSection.MANGA.label(strings),
-        icon = Icons.AutoMirrored.Filled.List,
+        icon = AppIcons.Manga,
     ),
     TabItem(
         section = TabSection.ACCOUNT,
         label = TabSection.ACCOUNT.label(strings),
-        icon = Icons.Filled.Person,
+        icon = AppIcons.Account,
     ),
 )
 
 private const val ACTION_SEARCH = "search"
 private const val ACTION_SETTINGS = "settings"
 
+@Composable
 private fun toolbarActions(
     tab: TabSection,
     isSearching: Boolean,
@@ -208,7 +204,7 @@ private fun toolbarActions(
             add(
                 ToolbarAction(
                     id = ACTION_SETTINGS,
-                    icon = Icons.Filled.Settings,
+                    icon = AppIcons.Settings,
                     contentDescription = strings.settingsAction,
                 ),
             )
