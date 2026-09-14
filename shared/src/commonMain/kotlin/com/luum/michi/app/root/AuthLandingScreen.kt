@@ -99,11 +99,13 @@ internal fun AuthLandingScreen(
                         id = ACTION_LANGUAGE,
                         icon = AppIcons.Language,
                         contentDescription = strings.languageLabel,
+                        group = GROUP_AUTH_TOOLS,
                     ),
                     ToolbarAction(
                         id = ACTION_THEME,
                         icon = AppIcons.Theme,
                         contentDescription = strings.settingsThemeTitle,
+                        group = GROUP_AUTH_TOOLS,
                     ),
                 ),
                 search = null,
@@ -181,6 +183,7 @@ internal fun AuthLandingScreen(
     if (languageSheet) {
         ModalSheet(
             title = strings.languageLabel,
+            dismissLabel = strings.dismissAction,
             onDismiss = { languageSheet = false },
         ) {
             OptionGroup(title = null) {
@@ -201,6 +204,7 @@ internal fun AuthLandingScreen(
     if (themeSheet) {
         ModalSheet(
             title = strings.settingsThemeTitle,
+            dismissLabel = strings.dismissAction,
             onDismiss = { themeSheet = false },
         ) {
             OptionGroup(title = strings.themePaletteSection) {
@@ -263,6 +267,9 @@ internal fun AuthLandingScreen(
 
 private const val ACTION_LANGUAGE = "language"
 private const val ACTION_THEME = "theme"
+
+/** Shared capsule group for the auth switches (language + theme). */
+private const val GROUP_AUTH_TOOLS = "auth-tools"
 
 /** Brand palette names travel raw on purpose (like "Michi"): not copy. */
 private val ThemePalettes: List<Pair<String, ThemeColors>> = listOf(

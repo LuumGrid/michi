@@ -44,12 +44,19 @@ internal sealed interface ToolbarNavigation {
     data class Back(val label: String) : ToolbarNavigation
 }
 
-/** Trailing action. Keep to max 2 (+search); the primary action goes last. */
+/**
+ * Trailing action. Consecutive actions sharing a non-null [group] merge
+ * into one glass capsule (e.g. filter + sort); a null group always stands
+ * alone as its own circle — merging is explicit, never by omission.
+ * Search always stays ungrouped: lone circle in its place.
+ * The primary action goes last.
+ */
 internal data class ToolbarAction(
     val id: String,
     val icon: ImageVector,
     val contentDescription: String,
     val badgeCount: Int? = null,
+    val group: String? = null,
 )
 
 /**
@@ -67,14 +74,18 @@ internal data class ToolbarSearch(
  * App toolbar with two states (Apple HIG toolbar pattern, in-context search
  * like WhatsApp/Gmail/Play Store):
  * - normal: plain title (no pill, like Netflix) + floating glass actions —
- *   a lone action is its own glass circle, same-side actions merge into one
- *   glass capsule (iOS Liquid Glass grouping).
+ *   consecutive same-group actions merge into one glass capsule (iOS Liquid
+ *   Glass grouping), a lone action is its own glass circle. Reference shape:
+ *   [filter + sort] capsule with the search circle standing apart.
  * - search: full-width glass [SearchField] pill with back-to-cancel on the
  *   left and clear-X on the right; system back must also map to [onSearchClose].
  *
  * Collapses on scroll via [scrollBehavior] (wired by `root` with enter-always).
  *
  * Only primitives cross this boundary; results/scrim are drawn by `root`.
+ *
+ * Set [applyWindowInsets] = false when hosting inside a sheet: the status-bar
+ * insets only make sense at the top level.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +104,13 @@ internal fun Toolbar(
     onSearchClear: () -> Unit,
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    applyWindowInsets: Boolean = true,
 ) {
+    val insets = if (applyWindowInsets) {
+        Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
+    } else {
+        Modifier
+    }
     AnimatedContent(
         // Full object as state (so open/close keeps the last query), but the
         // transition key is just open/closed: typing updates the text in
@@ -112,7 +129,7 @@ internal fun Toolbar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .then(insets)
                     .toolbarCollapse(scrollBehavior)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -151,15 +168,30 @@ internal fun Toolbar(
                         badgeCount = action.badgeCount,
                     )
                 } else if (actions.size > 1) {
-                    Surface(
-                        shape = GlassShape,
-                        color = glassContainerColor(),
-                        border = glassBorder(),
-                        modifier = Modifier.glass(),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            actions.forEach { action ->
-                                ToolbarActionButton(action = action, onAction = onAction)
+                    actionRuns(actions).forEachIndexed { index, run ->
+                        if (index > 0) {
+                            Spacer(modifier = Modifier.size(8.dp))
+                        }
+                        if (run.size == 1) {
+                            val action = run.first()
+                            GlassCircleButton(
+                                icon = action.icon,
+                                contentDescription = action.contentDescription,
+                                onClick = { onAction(action.id) },
+                                badgeCount = action.badgeCount,
+                            )
+                        } else {
+                            Surface(
+                                shape = GlassShape,
+                                color = glassContainerColor(),
+                                border = glassBorder(),
+                                modifier = Modifier.glass(),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    run.forEach { action ->
+                                        ToolbarActionButton(action = action, onAction = onAction)
+                                    }
+                                }
                             }
                         }
                     }
@@ -172,7 +204,7 @@ internal fun Toolbar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .then(insets)
                     .toolbarCollapse(scrollBehavior)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -218,6 +250,24 @@ internal fun Toolbar(
  * own height as the scroll limit and offsets by the shared behavior.
  * Read inside composition so scroll updates recompose.
  */
+/**
+ * Consecutive runs sharing the same non-null [ToolbarAction.group]. Null
+ * never merges: every ungrouped action is its own run (lone circle).
+ * Each run renders as one floating piece: lone circle or merged capsule.
+ */
+private fun actionRuns(actions: List<ToolbarAction>): List<List<ToolbarAction>> {
+    val runs = mutableListOf<MutableList<ToolbarAction>>()
+    actions.forEach { action ->
+        val current = runs.lastOrNull()
+        if (action.group != null && current != null && current.first().group == action.group) {
+            current.add(action)
+        } else {
+            runs.add(mutableListOf(action))
+        }
+    }
+    return runs
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 private fun Modifier.toolbarCollapse(scrollBehavior: TopAppBarScrollBehavior?): Modifier {
     val offsetPx = scrollBehavior?.state?.heightOffset?.roundToInt() ?: 0

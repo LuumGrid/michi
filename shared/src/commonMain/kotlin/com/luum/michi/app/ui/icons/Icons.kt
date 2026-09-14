@@ -2,17 +2,24 @@ package com.luum.michi.app.ui.icons
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.luum.michi.app.ui.icons.generated.Anilist
-import com.luum.michi.app.ui.icons.generated.AutoAwesomeMosaic
+import com.luum.michi.app.ui.icons.generated.CalendarMonth
 import com.luum.michi.app.ui.icons.generated.Close
+import com.luum.michi.app.ui.icons.generated.Edit
 import com.luum.michi.app.ui.icons.generated.Explore
+import com.luum.michi.app.ui.icons.generated.Favorite
+import com.luum.michi.app.ui.icons.generated.FavoriteFilled
+import com.luum.michi.app.ui.icons.generated.FilterList
 import com.luum.michi.app.ui.icons.generated.KeyboardArrowLeft
 import com.luum.michi.app.ui.icons.generated.Language
 import com.luum.michi.app.ui.icons.generated.Manga
 import com.luum.michi.app.ui.icons.generated.IconPack
+import com.luum.michi.app.ui.icons.generated.MoreVert
+import com.luum.michi.app.ui.icons.generated.Notifications
 import com.luum.michi.app.ui.icons.generated.Palette
 import com.luum.michi.app.ui.icons.generated.Person
 import com.luum.michi.app.ui.icons.generated.Search
 import com.luum.michi.app.ui.icons.generated.Settings
+import com.luum.michi.app.ui.icons.generated.SortList
 import com.luum.michi.app.ui.icons.generated.Tv
 
 /**
@@ -69,4 +76,39 @@ internal object AppIcons {
     /** AniList mark. Tint it for mono use (e.g. white on the brand button). */
     val AniList: ImageVector
         get() = IconPack.Anilist
+
+    // ---- Lists: filter + sort share one capsule (lone search circle aside) ----
+    /** Funnel-list: opens the list filter sheet (anime/manga rails). */
+    val Filter: ImageVector
+        get() = IconPack.FilterList
+
+    /** Up-down arrows: opens list sort (anime/manga rails). */
+    val Sort: ImageVector
+        get() = IconPack.SortList
+
+    // ---- Detail: back is ToolbarNavigation, these are trailing actions ----
+    /** Pencil: opens the list-entry editor. */
+    val Edit: ImageVector
+        get() = IconPack.Edit
+
+    /** Heart outline: adds to favorites (see FavoriteFilled for the on-state). */
+    val Favorite: ImageVector
+        get() = IconPack.Favorite
+
+    /** Heart filled: the favorited on-state (toggle with Favorite). */
+    val FavoriteFilled: ImageVector
+        get() = IconPack.FavoriteFilled
+
+    /** Vertical ellipsis: detail overflow menu. */
+    val More: ImageVector
+        get() = IconPack.MoreVert
+
+    // ---- Misc: catalogued, wired when their surface lands ----
+    /** Calendar: seasonal/schedule surfaces. */
+    val Calendar: ImageVector
+        get() = IconPack.CalendarMonth
+
+    /** Bell: opens the notifications overlay (trigger lives in account). */
+    val Notifications: ImageVector
+        get() = IconPack.Notifications
 }

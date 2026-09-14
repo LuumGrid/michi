@@ -100,6 +100,13 @@ internal fun Root(
                     when (id) {
                         ACTION_SEARCH -> state.openSearch(tab)
                         ACTION_SETTINGS -> state.openAccountSettings()
+                        // TODO: wire to the list filter/sort sheets when the
+                        // anime/manga list screens land. Visible but inert today.
+                        ACTION_FILTER,
+                        ACTION_SORT,
+                        // TODO: wire to the schedule surface when it lands.
+                        ACTION_CALENDAR,
+                        -> Unit
                     }
                 },
                 onSearchChange = { query ->
@@ -201,6 +208,12 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
 
 private const val ACTION_SEARCH = "search"
 private const val ACTION_SETTINGS = "settings"
+private const val ACTION_FILTER = "filter"
+private const val ACTION_SORT = "sort"
+private const val ACTION_CALENDAR = "calendar"
+
+/** Shared capsule group for the list tools (reference: one capsule, lone search). */
+private const val GROUP_LIST_TOOLS = "list-tools"
 
 @Composable
 private fun toolbarActions(
@@ -210,6 +223,34 @@ private fun toolbarActions(
 ): List<ToolbarAction> {
     if (isSearching) return emptyList()
     return buildList {
+        if (tab != TabSection.ACCOUNT) {
+            // Ungrouped on purpose: lone circle left of the tools capsule.
+            add(
+                ToolbarAction(
+                    id = ACTION_CALENDAR,
+                    icon = AppIcons.Calendar,
+                    contentDescription = strings.calendarAction,
+                ),
+            )
+        }
+        if (tab == TabSection.ANIME || tab == TabSection.MANGA) {
+            add(
+                ToolbarAction(
+                    id = ACTION_FILTER,
+                    icon = AppIcons.Filter,
+                    contentDescription = strings.filterAction,
+                    group = GROUP_LIST_TOOLS,
+                ),
+            )
+            add(
+                ToolbarAction(
+                    id = ACTION_SORT,
+                    icon = AppIcons.Sort,
+                    contentDescription = strings.sortAction,
+                    group = GROUP_LIST_TOOLS,
+                ),
+            )
+        }
         if (tab != TabSection.ACCOUNT) {
             add(
                 ToolbarAction(

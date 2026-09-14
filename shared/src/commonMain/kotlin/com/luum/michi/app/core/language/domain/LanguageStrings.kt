@@ -17,6 +17,10 @@ interface LanguageStrings {
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
     val searchTitle: String
+    val filterAction: String
+    val sortAction: String
+    val calendarAction: String
+    val dismissAction: String
     val clearSearchAction: String
     val searchTypeAll: String
     val searchEmptyQueryHint: String
