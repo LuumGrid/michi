@@ -9,6 +9,7 @@ import com.luum.michi.app.ui.icons.generated.KeyboardArrowLeft
 import com.luum.michi.app.ui.icons.generated.Language
 import com.luum.michi.app.ui.icons.generated.Manga
 import com.luum.michi.app.ui.icons.generated.IconPack
+import com.luum.michi.app.ui.icons.generated.Palette
 import com.luum.michi.app.ui.icons.generated.Person
 import com.luum.michi.app.ui.icons.generated.Search
 import com.luum.michi.app.ui.icons.generated.Settings
@@ -44,9 +45,9 @@ internal object AppIcons {
     val Language: ImageVector
         get() = IconPack.Language
 
-    /** Style mosaic: theme (palette + mode) switch. */
+    /** Palette: theme (palette + mode + font) switch. */
     val Theme: ImageVector
-        get() = IconPack.AutoAwesomeMosaic
+        get() = IconPack.Palette
 
     // ---- TabBar: the 4 top-level destinations ----
     // Vectors live in the generated pack, but the section->icon MAPPING
