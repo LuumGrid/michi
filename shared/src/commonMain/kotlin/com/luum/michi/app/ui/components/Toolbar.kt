@@ -19,6 +19,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -137,19 +138,19 @@ internal fun Toolbar(
                 ) { activeTitle ->
                     Text(
                         text = activeTitle,
-                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
                     )
                 }
-                    if (actions.size == 1) {
-                        val action = actions.first()
-                        GlassCircleButton(
-                            icon = action.icon,
-                            contentDescription = action.contentDescription,
-                            onClick = { onAction(action.id) },
-                            badgeCount = action.badgeCount,
-                        )
-                    } else if (actions.size > 1) {
+                if (actions.size == 1) {
+                    val action = actions.first()
+                    GlassCircleButton(
+                        icon = action.icon,
+                        contentDescription = action.contentDescription,
+                        onClick = { onAction(action.id) },
+                        badgeCount = action.badgeCount,
+                    )
+                } else if (actions.size > 1) {
                     Surface(
                         shape = GlassShape,
                         color = glassContainerColor(),

@@ -32,10 +32,15 @@ internal object LocalDrawables {
     val keyboardArrowLeft: DrawableResource by lazy { drawable("keyboard_arrow_left") }
     val close: DrawableResource by lazy { drawable("close") }
     val settings: DrawableResource by lazy { drawable("settings") }
+    val language: DrawableResource by lazy { drawable("language") }
+    val autoAwesomeMosaic: DrawableResource by lazy { drawable("auto_awesome_mosaic") }
 
     // ---- TabBar ----
     val explore: DrawableResource by lazy { drawable("explore") }
     val tv: DrawableResource by lazy { drawable("tv") }
     val manga: DrawableResource by lazy { drawable("manga") }
     val person: DrawableResource by lazy { drawable("person") }
+
+    // ---- Brand ----
+    val anilist: DrawableResource by lazy { drawable("anilist") }
 }

@@ -84,7 +84,7 @@ internal fun Root(
                     .offset { IntOffset(x = 0, y = veilOffsetPx) },
             ) {
                 TopEdgeFade(modifier = Modifier.matchParentSize())
-            Toolbar(
+                Toolbar(
                 title = toolbarTitle(state, tab, strings),
                 navigation = if (search != null || state.isDetailOpen || state.isAccountDetail) {
                     ToolbarNavigation.Back(strings.backButton)
@@ -94,7 +94,7 @@ internal fun Root(
                 actions = toolbarActions(tab, search != null, strings),
                 search = search,
                 backContentDescription = strings.backButton,
-                clearContentDescription = null,
+                clearContentDescription = strings.clearSearchAction,
                 onNavigation = { state.applyBackStep() },
                 onAction = { id ->
                     when (id) {
@@ -117,7 +117,7 @@ internal fun Root(
         bottomBar = {
             Box(modifier = Modifier.fillMaxWidth()) {
                 BottomEdgeFade(modifier = Modifier.matchParentSize())
-            TabBar(
+                TabBar(
                 selected = tab,
                 tabs = tabs(strings),
                 onSelect = { state.selectTab(it) },
@@ -148,24 +148,24 @@ internal fun Root(
                 },
                 label = "tab-content",
             ) { activeTab ->
-            if (search != null && activeQuery.isNotEmpty()) {
-                MessagePanel(
-                    title = strings.searchNoResultsLabel,
-                    message = null,
-                    icon = AppIcons.Search,
-                    actionLabel = null,
-                    onAction = {},
-                )
-            } else {
-                val tabItem = tabs(strings).first { it.section == activeTab }
-                MessagePanel(
-                    title = activeTab.label(strings),
-                    message = null,
-                    icon = tabItem.icon,
-                    actionLabel = null,
-                    onAction = {},
-                )
-            }
+                if (search != null && activeQuery.isNotEmpty()) {
+                    MessagePanel(
+                        title = strings.searchNoResultsLabel,
+                        message = null,
+                        icon = AppIcons.Search,
+                        actionLabel = null,
+                        onAction = {},
+                    )
+                } else {
+                    val tabItem = tabs(strings).first { it.section == activeTab }
+                    MessagePanel(
+                        title = activeTab.label(strings),
+                        message = null,
+                        icon = tabItem.icon,
+                        actionLabel = null,
+                        onAction = {},
+                    )
+                }
             }
             if (showScrim) {
                 SearchScrim(onDismiss = { state.applyBackStep() })

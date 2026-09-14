@@ -1,6 +1,5 @@
 package com.luum.michi.app
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,27 +30,32 @@ import com.luum.michi.app.core.language.domain.getLanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.root.AuthLandingScreen
+import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
 import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.LocalStrings
+import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.DefaultTheme
 import com.luum.michi.app.ui.theme.Theme
+import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
 import kotlinx.coroutines.launch
 
 /**
- * App entry: owns theme + language state and routes between the auth
- * landing and the shell based on [SessionState]. Called once from each
- * platform entry (MainActivity.setContent, ComposeUIViewController).
+ * App entry: owns theme (palette + mode + font) + language state and routes
+ * between the auth landing and the shell based on [SessionState].
+ * Called once from each platform entry.
  */
 @Composable
 fun App(
     dependencies: MichiDependencies,
 ) {
-    val systemDark = isSystemInDarkTheme()
-    // v1: follow the system until the settings screen drives this state.
-    var isDarkMode by remember(systemDark) { mutableStateOf(systemDark) }
     var language by remember { mutableStateOf(AppLanguage.default) }
     var guestMode by remember { mutableStateOf(false) }
+    var palette: ThemeColors by remember { mutableStateOf(DefaultTheme()) }
+    var themeType by remember { mutableStateOf(ThemeType.SYSTEM) }
+    var font by remember { mutableStateOf(AppFont.JAKARTA) }
 
     val strings = getLanguageStrings(language)
     val session by dependencies.sessionManager.state.collectAsState()
@@ -59,7 +63,9 @@ fun App(
 
     CompositionLocalProvider(LocalStrings provides strings) {
         Theme(
-            type = if (isDarkMode) ThemeType.DARK else ThemeType.LIGHT,
+            palette = palette,
+            type = themeType,
+            font = font,
         ) {
             when (val current = session) {
                 SessionState.Loading -> {
@@ -83,13 +89,27 @@ fun App(
                         Root()
                     } else {
                         AuthLandingScreen(
-                            title = strings.authWelcomeTitle,
-                            subtitle = strings.authWelcomeSubtitle,
-                            loginLabel = strings.authLoginAction,
+                            strings = strings,
+                            services = listOf(
+                                AuthService(
+                                    id = "anilist",
+                                    label = strings.authLoginAction,
+                                    onLogin = { dependencies.oAuthLauncher.open() },
+                                    icon = AppIcons.AniList,
+                                    brandHex = ANILIST_BRAND_HEX,
+                                ),
+                            ),
+                            language = language,
+                            onLanguageChange = { language = it },
+                            palette = palette,
+                            onPaletteChange = { palette = it },
+                            themeType = themeType,
+                            onThemeTypeChange = { themeType = it },
+                            font = font,
+                            onFontChange = { font = it },
                             guestLabel = strings.authContinueAsGuestAction,
                             isConfigured = AniListOAuthConfig.isConfigured,
                             configMissingLabel = strings.authConfigurationMissing,
-                            onLogin = { dependencies.oAuthLauncher.open() },
                             onGuest = { guestMode = true },
                         )
                     }
@@ -127,3 +147,6 @@ fun App(
         }
     }
 }
+
+/** AniList brand blue, raw hex (converted at the UI boundary). */
+private const val ANILIST_BRAND_HEX = "#02A9FF"

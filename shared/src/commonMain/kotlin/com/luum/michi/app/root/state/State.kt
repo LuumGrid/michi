@@ -69,7 +69,7 @@ internal class State(
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
-    // Compat: muchos sitios comparan con el id de la obra abierta
+    // Compat: several places compare against the open media id
     val selectedMediaId: Int? get() = (currentDetail as? DetailDestination.Media)?.id
 
     val isEditorOpen: Boolean

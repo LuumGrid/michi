@@ -6,7 +6,8 @@ data class AppLanguage(val code: String, val displayName: String) {
             AppLanguage(code = "es", displayName = "Español"),
             AppLanguage(code = "en", displayName = "English"),
         )
-        val default: AppLanguage = available.first()
+        // Explicit by code (not position): default app language is English.
+        val default: AppLanguage = available.first { it.code == "en" }
 
         fun fromCode(code: String?): AppLanguage {
             return available.firstOrNull { language ->

@@ -17,6 +17,7 @@ interface LanguageStrings {
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
     val searchTitle: String
+    val clearSearchAction: String
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
@@ -193,6 +194,9 @@ interface LanguageStrings {
     val settingsThemeSystem: String
     val settingsThemeLight: String
     val settingsThemeDark: String
+    val themePaletteSection: String
+    val themeModeSection: String
+    val themeFontSection: String
     val settingsLanguageSubtitle: String
     val settingsDiscoverTabTitle: String
     val settingsDiscoverTabSubtitle: String

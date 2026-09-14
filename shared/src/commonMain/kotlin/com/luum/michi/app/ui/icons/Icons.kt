@@ -28,6 +28,14 @@ internal object AppIcons {
     val Settings: ImageVector
         @Composable get() = vectorResource(LocalDrawables.settings)
 
+    /** Globe: app-language switch. */
+    val Language: ImageVector
+        @Composable get() = vectorResource(LocalDrawables.language)
+
+    /** Style mosaic: theme (palette + mode) switch. */
+    val Theme: ImageVector
+        @Composable get() = vectorResource(LocalDrawables.autoAwesomeMosaic)
+
     // ---- TabBar: the 4 top-level destinations ----
     // Vectors live here, but the section->icon MAPPING belongs to
     // root/Root.kt::tabs() — ui holds the catalog, never decides destinations.
@@ -42,4 +50,9 @@ internal object AppIcons {
 
     val Account: ImageVector
         @Composable get() = vectorResource(LocalDrawables.person)
+
+    // ---- Brand ----
+    /** AniList mark. Tint it for mono use (e.g. white on the brand button). */
+    val AniList: ImageVector
+        @Composable get() = vectorResource(LocalDrawables.anilist)
 }

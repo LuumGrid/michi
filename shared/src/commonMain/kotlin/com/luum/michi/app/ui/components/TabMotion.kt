@@ -4,7 +4,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 
 /**
- * Motion sources for tab switching (250ms everywhere, zero springs).
+ * Motion sources for tab switching (300ms everywhere, zero springs).
  *
  * One organic language: symmetric ease-in-out (slow out, slow in) on
  * content, title and bubble alike — slow and fluid by choice.

@@ -1,7 +1,6 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -111,7 +111,7 @@ private fun TabBarItem(
         color = bubble,
         modifier = modifier
             .clip(GlassCircle)
-            .clickable(role = Role.Tab, onClick = onClick),
+            .selectable(selected = selected, onClick = onClick, role = Role.Tab),
     ) {
         Column(
             modifier = Modifier
