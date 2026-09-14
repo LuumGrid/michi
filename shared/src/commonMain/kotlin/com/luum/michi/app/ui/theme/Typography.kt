@@ -31,8 +31,9 @@ private fun font(name: String): FontResource = FontResource(
 /**
  * Hand-written mirror of the generated `Res.font.*` accessors (same ids,
  * same packaged paths) — under `androidMultiplatformLibrary` the generated
- * accessors never reach the Android compilation, same as drawables
- * (see `LocalDrawables`). Swapping back is mechanical if wiring is fixed.
+ * accessors never reach the Android compilation (icons avoid this entirely:
+ * they are Valkyrie-generated `ImageVector` code, no resource system).
+ * Swapping back is mechanical if wiring is fixed.
  */
 internal object LocalFonts {
     val regular: FontResource by lazy { font("plus_jakarta_sans_regular") }

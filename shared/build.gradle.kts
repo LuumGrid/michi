@@ -89,13 +89,15 @@ val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>(
 }
 
 kotlin {
-    // NOTE: `Res.drawable.*` accessors are generated into
+    // NOTE: resource accessors (`Res.*`) are generated into
     // `commonMainResourceAccessors` by the compose-resources plugin, but under
     // androidMultiplatformLibrary that source set never reaches the Android
     // compilation (verified via build logs: compileAndroidMain only looks
     // for `androidMainResourceAccessors`, which is never generated). Do NOT
     // re-register that dir into another source set: K2 fragments reject a
-    // file belonging to two modules. See Icons.kt for the workaround.
+    // file belonging to two modules. Icons avoid this entirely (Valkyrie
+    // `ImageVector` code, see ui/icons); fonts use a hand-written mirror
+    // (see LocalFonts in ui/theme/Typography.kt).
     listOf(
         iosArm64(),
         iosSimulatorArm64()

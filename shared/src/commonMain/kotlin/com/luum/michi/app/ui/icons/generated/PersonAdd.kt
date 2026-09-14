@@ -1,0 +1,84 @@
+package com.luum.michi.app.ui.icons.generated
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.unit.dp
+
+val IconPack.PersonAdd: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
+    ImageVector.Builder(
+        name = "PersonAdd",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 960f,
+        viewportHeight = 960f,
+    ).apply {
+        path(fill = SolidColor(Color(0xFFE3E3E3))) {
+            moveTo(720f, 560f)
+            verticalLineToRelative(-120f)
+            lineTo(600f, 440f)
+            verticalLineToRelative(-80f)
+            horizontalLineToRelative(120f)
+            verticalLineToRelative(-120f)
+            horizontalLineToRelative(80f)
+            verticalLineToRelative(120f)
+            horizontalLineToRelative(120f)
+            verticalLineToRelative(80f)
+            lineTo(800f, 440f)
+            verticalLineToRelative(120f)
+            horizontalLineToRelative(-80f)
+            close()
+            moveTo(247f, 433f)
+            quadToRelative(-47f, -47f, -47f, -113f)
+            reflectiveQuadToRelative(47f, -113f)
+            quadToRelative(47f, -47f, 113f, -47f)
+            reflectiveQuadToRelative(113f, 47f)
+            quadToRelative(47f, 47f, 47f, 113f)
+            reflectiveQuadToRelative(-47f, 113f)
+            quadToRelative(-47f, 47f, -113f, 47f)
+            reflectiveQuadToRelative(-113f, -47f)
+            close()
+            moveTo(40f, 800f)
+            verticalLineToRelative(-112f)
+            quadToRelative(0f, -34f, 17.5f, -62.5f)
+            reflectiveQuadTo(104f, 582f)
+            quadToRelative(62f, -31f, 126f, -46.5f)
+            reflectiveQuadTo(360f, 520f)
+            quadToRelative(66f, 0f, 130f, 15.5f)
+            reflectiveQuadTo(616f, 582f)
+            quadToRelative(29f, 15f, 46.5f, 43.5f)
+            reflectiveQuadTo(680f, 688f)
+            verticalLineToRelative(112f)
+            lineTo(40f, 800f)
+            close()
+            moveTo(120f, 720f)
+            horizontalLineToRelative(480f)
+            verticalLineToRelative(-32f)
+            quadToRelative(0f, -11f, -5.5f, -20f)
+            reflectiveQuadTo(580f, 654f)
+            quadToRelative(-54f, -27f, -109f, -40.5f)
+            reflectiveQuadTo(360f, 600f)
+            quadToRelative(-56f, 0f, -111f, 13.5f)
+            reflectiveQuadTo(140f, 654f)
+            quadToRelative(-9f, 5f, -14.5f, 14f)
+            reflectiveQuadToRelative(-5.5f, 20f)
+            verticalLineToRelative(32f)
+            close()
+            moveTo(416.5f, 376.5f)
+            quadTo(440f, 353f, 440f, 320f)
+            reflectiveQuadToRelative(-23.5f, -56.5f)
+            quadTo(393f, 240f, 360f, 240f)
+            reflectiveQuadToRelative(-56.5f, 23.5f)
+            quadTo(280f, 287f, 280f, 320f)
+            reflectiveQuadToRelative(23.5f, 56.5f)
+            quadTo(327f, 400f, 360f, 400f)
+            reflectiveQuadToRelative(56.5f, -23.5f)
+            close()
+            moveTo(360f, 320f)
+            close()
+            moveTo(360f, 720f)
+            close()
+        }
+    }.build()
+}
