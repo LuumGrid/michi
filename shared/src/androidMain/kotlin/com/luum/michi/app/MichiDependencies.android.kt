@@ -3,6 +3,7 @@ package com.luum.michi.app
 import android.content.Context
 import com.luum.michi.app.core.auth.repository.ChromeCustomTabsOAuthLauncher
 import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStorage
+import com.luum.michi.app.core.storage.repository.SharedPreferencesSettingsStore
 
 /**
  * Constructs the app's shared dependencies for Android. Called from
@@ -12,4 +13,5 @@ import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStor
 fun createMichiDependencies(context: Context): MichiDependencies = MichiDependencies(
     tokenStorage = SharedPreferencesAniListTokenStorage(context.applicationContext),
     oAuthLauncher = ChromeCustomTabsOAuthLauncher(context.applicationContext),
+    settingsStore = SharedPreferencesSettingsStore(context.applicationContext),
 )

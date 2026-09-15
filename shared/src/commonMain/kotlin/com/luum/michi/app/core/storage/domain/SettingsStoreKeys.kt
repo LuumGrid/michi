@@ -7,6 +7,8 @@ package com.luum.michi.app.core.storage.domain
  */
 internal object SettingsStoreKeys {
     const val ThemeMode = "theme_mode"
+    const val ThemePalette = "theme_palette"
+    const val Font = "app_font"
     const val Language = "app_language"
     const val DefaultDiscoverTab = "default_home_tab"
 }

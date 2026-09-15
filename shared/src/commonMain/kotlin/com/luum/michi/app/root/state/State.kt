@@ -7,34 +7,24 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
 import com.luum.michi.app.account.domain.model.AccountProfileDraft
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.core.navigation.domain.BackHandler
 import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
-internal enum class AccountRoute {
-    ACCOUNT,
-    SETTINGS,
-    STATS,
-    FAVORITES,
-}
-
 /**
  * Progressive back order shared by the toolbar back affordance, the search
  * scrim and (once entries are wired) the system back handler:
- * search -> sheet -> overlay -> detail -> account subroute -> system.
+ * search -> sheet -> overlay -> detail -> system.
  */
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
     data object CloseSheet : BackStep
     data object CloseOverlay : BackStep
     data object CloseDetail : BackStep
-    data object AccountBack : BackStep
     data object SystemDefault : BackStep
 }
 
@@ -45,8 +35,6 @@ internal class State(
     var selectedTab: TabSection by mutableStateOf(initialTab)
     var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
     var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
-    var accountRoute by mutableStateOf(AccountRoute.ACCOUNT)
-    var toolbarBackHandler: BackHandler? by mutableStateOf(null)
     var currentProfile: AccountProfileDraft by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
     var editorMediaId: Int? by mutableStateOf(null)
@@ -58,8 +46,7 @@ internal class State(
     var isSectionFilterOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
-    var isAccountSettingsOpen by mutableStateOf(false)
-    var favoritesCategory by mutableStateOf(AccountFavoritesCategory.ANIME)
+    var isSettingsOpen by mutableStateOf(false)
 
     /** In-context search: one active tab at a time, query preserved per tab. */
     var searchActiveTab: TabSection? by mutableStateOf(null)
@@ -74,9 +61,6 @@ internal class State(
 
     val isEditorOpen: Boolean
         get() = editorMediaId != null
-
-    val isAccountDetail: Boolean
-        get() = selectedTab == TabSection.ACCOUNT && accountRoute != AccountRoute.ACCOUNT
 
     /** Only ACCOUNT has no search surface; every other tab searches its own scope. */
     fun supportsSearch(tab: TabSection): Boolean = tab != TabSection.ACCOUNT
@@ -101,10 +85,6 @@ internal class State(
 
     fun selectTab(tab: TabSection) {
         selectedTab = tab
-        if (tab != TabSection.ACCOUNT) {
-            accountRoute = AccountRoute.ACCOUNT
-            toolbarBackHandler = null
-        }
         // Queries are preserved per tab; the search surface only stays open
         // where it is supported.
         if (!supportsSearch(tab)) searchActiveTab = null
@@ -114,9 +94,8 @@ internal class State(
         isSearchActive -> BackStep.CloseSearch
         isExploreFilterOpen || isSectionFilterOpen -> BackStep.CloseSheet
         isExploreOpen || isCalendarOpen || isNotificationsOpen || isEditorOpen ||
-            isShareProfileOpen || isAccountSettingsOpen -> BackStep.CloseOverlay
+            isShareProfileOpen || isSettingsOpen -> BackStep.CloseOverlay
         isDetailOpen -> BackStep.CloseDetail
-        isAccountDetail -> BackStep.AccountBack
         else -> BackStep.SystemDefault
     }
 
@@ -140,15 +119,11 @@ internal class State(
             closeNotifications()
             closeEditor()
             closeShareProfile()
-            closeAccountSettings()
+            closeSettings()
             true
         }
         BackStep.CloseDetail -> {
             closeDetail()
-            true
-        }
-        BackStep.AccountBack -> {
-            handleAccountBack()
             true
         }
         BackStep.SystemDefault -> false
@@ -163,11 +138,6 @@ internal class State(
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
     fun closeDetail() { if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex) }
-
-    fun openFavoritesGrid(category: AccountFavoritesCategory) {
-        favoritesCategory = category
-        accountRoute = AccountRoute.FAVORITES
-    }
 
     fun openEditor(id: Int) {
         editorMediaId = id
@@ -235,17 +205,12 @@ internal class State(
         isShareProfileOpen = false
     }
 
-    fun openAccountSettings() {
-        isAccountSettingsOpen = true
+    fun openSettings() {
+        isSettingsOpen = true
     }
 
-    fun closeAccountSettings() {
-        isAccountSettingsOpen = false
-    }
-
-    fun handleAccountBack() {
-        val handler = toolbarBackHandler
-        if (handler != null) handler() else accountRoute = AccountRoute.ACCOUNT
+    fun closeSettings() {
+        isSettingsOpen = false
     }
 }
 

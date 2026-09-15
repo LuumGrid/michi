@@ -18,6 +18,7 @@ import com.luum.michi.app.core.network.repository.createAniListHttpClient
 import com.luum.michi.app.core.session.domain.AniListViewerRepository
 import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
+import com.luum.michi.app.core.storage.domain.SettingsStore
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.DashboardRepository
@@ -54,6 +55,7 @@ import kotlinx.coroutines.launch
 class MichiDependencies internal constructor(
     internal val tokenStorage: AniListTokenStorage,
     internal val oAuthLauncher: AniListOAuthLauncher,
+    internal val settingsStore: SettingsStore,
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 

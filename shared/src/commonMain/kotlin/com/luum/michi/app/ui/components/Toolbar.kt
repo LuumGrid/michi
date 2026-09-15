@@ -80,7 +80,8 @@ internal data class ToolbarSearch(
  * - search: full-width glass [SearchField] pill with back-to-cancel on the
  *   left and clear-X on the right; system back must also map to [onSearchClose].
  *
- * Collapses on scroll via [scrollBehavior] (wired by `root` with enter-always).
+ * Collapses on scroll via [scrollBehavior] (wired by `root` only for
+ * explicitly opted-in surfaces; null keeps it pinned).
  *
  * Only primitives cross this boundary; results/scrim are drawn by `root`.
  *

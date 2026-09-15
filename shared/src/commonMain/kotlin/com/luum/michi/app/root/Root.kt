@@ -1,11 +1,14 @@
 package com.luum.michi.app.root
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,12 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
+import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
-import com.luum.michi.app.root.state.AccountRoute
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
+import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.SearchScrim
@@ -39,6 +43,9 @@ import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.language.searchHintFor
+import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.ThemeColors
+import com.luum.michi.app.ui.theme.ThemeType
 import kotlin.math.roundToInt
 
 /**
@@ -55,6 +62,14 @@ import kotlin.math.roundToInt
 internal fun Root(
     state: State = rememberState(),
     strings: LanguageStrings = Strings.current,
+    language: AppLanguage,
+    onLanguageChange: (AppLanguage) -> Unit,
+    palette: ThemeColors,
+    onPaletteChange: (ThemeColors) -> Unit,
+    themeType: ThemeType,
+    onThemeTypeChange: (ThemeType) -> Unit,
+    font: AppFont,
+    onFontChange: (AppFont) -> Unit,
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -70,13 +85,23 @@ internal fun Root(
     val activeQuery = searchTab?.let { state.searchQuery(it) }.orEmpty()
     val showScrim = search != null && activeQuery.isEmpty()
 
-    // Enter-always: the floating toolbar hides on scroll down, returns on scroll up.
-    // The veil rides the same offset so it stays glued to the toolbar.
+    // Pinned by default: the toolbar only hides on scroll for surfaces that
+    // explicitly opt in via [hidesToolbarOnScroll]. The veil rides the same
+    // offset so it stays glued to the toolbar when collapsing.
     val toolbarScroll = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val veilOffsetPx = toolbarScroll.state.heightOffset.roundToInt()
+    val hideToolbarOnScroll = hidesToolbarOnScroll(tab, state)
+    val veilOffsetPx = if (hideToolbarOnScroll) {
+        toolbarScroll.state.heightOffset.roundToInt()
+    } else {
+        0
+    }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(toolbarScroll.nestedScrollConnection),
+        modifier = if (hideToolbarOnScroll) {
+            Modifier.nestedScroll(toolbarScroll.nestedScrollConnection)
+        } else {
+            Modifier
+        },
         topBar = {
             Box(
                 modifier = Modifier
@@ -86,12 +111,12 @@ internal fun Root(
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
                 title = toolbarTitle(state, tab, strings),
-                navigation = if (search != null || state.isDetailOpen || state.isAccountDetail) {
+                navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen) {
                     ToolbarNavigation.Back(strings.backButton)
                 } else {
                     ToolbarNavigation.None
                 },
-                actions = toolbarActions(tab, search != null, strings),
+                actions = toolbarActions(tab, search != null, state.isSettingsOpen, strings),
                 search = search,
                 backContentDescription = strings.backButton,
                 clearContentDescription = strings.clearSearchAction,
@@ -99,7 +124,7 @@ internal fun Root(
                 onAction = { id ->
                     when (id) {
                         ACTION_SEARCH -> state.openSearch(tab)
-                        ACTION_SETTINGS -> state.openAccountSettings()
+                        ACTION_SETTINGS -> state.openSettings()
                         // TODO: wire to the list filter/sort sheets when the
                         // anime/manga list screens land. Visible but inert today.
                         ACTION_FILTER,
@@ -117,18 +142,27 @@ internal fun Root(
                 onSearchClear = {
                     searchTab?.let { state.clearSearch(it) }
                 },
-                scrollBehavior = toolbarScroll,
+                scrollBehavior = toolbarScroll.takeIf { hideToolbarOnScroll },
             )
             }
         },
         bottomBar = {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                BottomEdgeFade(modifier = Modifier.matchParentSize())
-                TabBar(
-                selected = tab,
-                tabs = tabs(strings),
-                onSelect = { state.selectTab(it) },
-            )
+            AnimatedVisibility(
+                visible = showsTabBar(tab, state),
+                enter = slideInVertically(animationSpec = tabFadeSpec()) { it } +
+                    fadeIn(animationSpec = tabFadeSpec()),
+                exit = slideOutVertically(animationSpec = tabFadeSpec()) { it } +
+                    fadeOut(animationSpec = tabFadeSpec()),
+                label = "tab-bar-visibility",
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    BottomEdgeFade(modifier = Modifier.matchParentSize())
+                    TabBar(
+                    selected = tab,
+                    tabs = tabs(strings),
+                    onSelect = { state.selectTab(it) },
+                )
+                }
             }
         },
     ) { padding ->
@@ -155,7 +189,18 @@ internal fun Root(
                 },
                 label = "tab-content",
             ) { activeTab ->
-                if (search != null && activeQuery.isNotEmpty()) {
+                if (state.isSettingsOpen) {
+                    SettingsScreen(
+                        language = language,
+                        onLanguageChange = onLanguageChange,
+                        palette = palette,
+                        onPaletteChange = onPaletteChange,
+                        themeType = themeType,
+                        onThemeTypeChange = onThemeTypeChange,
+                        font = font,
+                        onFontChange = onFontChange,
+                    )
+                } else if (search != null && activeQuery.isNotEmpty()) {
                     MessagePanel(
                         title = strings.searchNoResultsLabel,
                         message = null,
@@ -219,9 +264,10 @@ private const val GROUP_LIST_TOOLS = "list-tools"
 private fun toolbarActions(
     tab: TabSection,
     isSearching: Boolean,
+    isSettingsOpen: Boolean,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
-    if (isSearching) return emptyList()
+    if (isSearching || isSettingsOpen) return emptyList()
     return buildList {
         if (tab != TabSection.ACCOUNT) {
             // Ungrouped on purpose: lone circle left of the tools capsule.
@@ -271,12 +317,25 @@ private fun toolbarActions(
     }
 }
 
+/**
+ * Explicit opt-in per surface: the toolbar stays pinned unless a surface
+ * asks to hide it on scroll (like action groups: explicit, never by
+ * omission). No surface opts in yet; the first long list will add its case.
+ */
+private fun hidesToolbarOnScroll(tab: TabSection, state: State): Boolean = false
+
+/**
+ * Explicit opt-in per surface: the tab bar shows unless a surface asks to
+ * hide it (full-screen surfaces like Settings). Default is visible.
+ */
+private fun showsTabBar(tab: TabSection, state: State): Boolean = !state.isSettingsOpen
+
 private fun toolbarTitle(
     state: State,
     tab: TabSection,
     strings: LanguageStrings,
-): String = when {
-    state.isAccountDetail && state.accountRoute == AccountRoute.SETTINGS -> strings.accountSettingsTitle
-    state.isAccountDetail && state.accountRoute == AccountRoute.STATS -> strings.accountStatsTitle
-    else -> tab.label(strings)
+): String = if (state.isSettingsOpen) {
+    strings.settingsTitle
+} else {
+    tab.label(strings)
 }

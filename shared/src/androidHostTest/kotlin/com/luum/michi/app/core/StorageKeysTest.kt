@@ -10,9 +10,11 @@ class StorageKeysTest {
     fun storeKeysAreUnique() {
         val keys = setOf(
             SettingsStoreKeys.ThemeMode,
+            SettingsStoreKeys.ThemePalette,
+            SettingsStoreKeys.Font,
             SettingsStoreKeys.Language,
             SettingsStoreKeys.DefaultDiscoverTab,
         )
-        assertEquals(3, keys.size)
+        assertEquals(5, keys.size)
     }
 }

@@ -1,5 +1,13 @@
 package com.luum.michi.app
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,14 +37,17 @@ import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.getLanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
+import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.root.AuthLandingScreen
 import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
 import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.theme.paletteForId
+import com.luum.michi.app.ui.theme.paletteIdOf
 import com.luum.michi.app.ui.language.LocalStrings
 import com.luum.michi.app.ui.theme.AppFont
-import com.luum.michi.app.ui.theme.DefaultTheme
 import com.luum.michi.app.ui.theme.Theme
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
@@ -51,11 +62,32 @@ import kotlinx.coroutines.launch
 fun App(
     dependencies: MichiDependencies,
 ) {
-    var language by remember { mutableStateOf(AppLanguage.default) }
+    // Local prefs: hydrated from the store once, persisted on every change.
+    // Unknown/corrupt values fall back to defaults, never crash.
+    val store = dependencies.settingsStore
+    var language by remember {
+        mutableStateOf(AppLanguage.fromCode(store.getString(SettingsStoreKeys.Language)))
+    }
     var guestMode by remember { mutableStateOf(false) }
-    var palette: ThemeColors by remember { mutableStateOf(DefaultTheme()) }
-    var themeType by remember { mutableStateOf(ThemeType.SYSTEM) }
-    var font by remember { mutableStateOf(AppFont.JAKARTA) }
+    var palette: ThemeColors by remember {
+        mutableStateOf(paletteForId(store.getString(SettingsStoreKeys.ThemePalette)))
+    }
+    var themeType by remember {
+        mutableStateOf(
+            ThemeType.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.ThemeMode) }
+                ?: ThemeType.SYSTEM,
+        )
+    }
+    var font by remember {
+        mutableStateOf(
+            AppFont.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.Font) }
+                ?: AppFont.JAKARTA,
+        )
+    }
+    val onLanguageChange: (AppLanguage) -> Unit = {
+        language = it
+        store.putString(SettingsStoreKeys.Language, it.code)
+    }
 
     val strings = getLanguageStrings(language)
     val session by dependencies.sessionManager.state.collectAsState()
@@ -67,27 +99,54 @@ fun App(
             type = themeType,
             font = font,
         ) {
-            when (val current = session) {
-                SessionState.Loading -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = strings.authLoadingLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+            val current = session
+            val route = when (current) {
+                SessionState.Loading -> AppRoute.LOADING
+                SessionState.Anonymous -> if (guestMode) AppRoute.SHELL else AppRoute.LANDING
+                is SessionState.Authenticated -> AppRoute.SHELL
+                is SessionState.Error -> AppRoute.ERROR
+            }
+            // Same motion language as the tab switch: fade + quarter slide
+            // with tabFadeSpec. Entering the shell is forward, everything
+            // else is backward.
+            // Opaque theme backdrop: this AnimatedContent sits outside every
+            // Scaffold, so the crossfade alpha overlap would otherwise bleed
+            // the (light) window background through. (Tab switches don't need
+            // this: they compose inside Root's opaque Scaffold.)
+            AnimatedContent(
+                targetState = route,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                transitionSpec = {
+                    val forward = initialState == AppRoute.LANDING && targetState == AppRoute.SHELL
+                    val enterFrom = if (forward) 1 else -1
+                    (fadeIn(animationSpec = tabFadeSpec()) +
+                        slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 * enterFrom } togetherWith
+                        fadeOut(animationSpec = tabFadeSpec()) +
+                        slideOutHorizontally(animationSpec = tabFadeSpec()) { -it / 4 * enterFrom }) using
+                        SizeTransform(clip = false)
+                },
+                label = "session-route",
+            ) { activeRoute ->
+                when (activeRoute) {
+                    AppRoute.LOADING -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = strings.authLoadingLabel,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
-                }
-                SessionState.Anonymous -> {
-                    if (guestMode) {
-                        Root()
-                    } else {
+                    AppRoute.LANDING -> {
                         AuthLandingScreen(
                             strings = strings,
                             services = listOf(
@@ -100,52 +159,75 @@ fun App(
                                 ),
                             ),
                             language = language,
-                            onLanguageChange = { language = it },
-                            palette = palette,
-                            onPaletteChange = { palette = it },
-                            themeType = themeType,
-                            onThemeTypeChange = { themeType = it },
-                            font = font,
-                            onFontChange = { font = it },
+                            onLanguageChange = onLanguageChange,
                             guestLabel = strings.authContinueAsGuestAction,
                             isConfigured = AniListOAuthConfig.isConfigured,
                             configMissingLabel = strings.authConfigurationMissing,
                             onGuest = { guestMode = true },
                         )
                     }
-                }
-                is SessionState.Authenticated -> Root()
-                is SessionState.Error -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        MessagePanel(
-                            title = strings.errorUnknownLabel,
-                            message = strings.networkErrorMessage(current.error),
-                            icon = Icons.Filled.Warning,
-                            actionLabel = strings.retryAction,
-                            onAction = {
-                                scope.launch { dependencies.sessionManager.bootstrap() }
+                    AppRoute.SHELL -> {
+                        Root(
+                            language = language,
+                            onLanguageChange = onLanguageChange,
+                            palette = palette,
+                            onPaletteChange = {
+                                palette = it
+                                store.putString(SettingsStoreKeys.ThemePalette, paletteIdOf(it))
+                            },
+                            themeType = themeType,
+                            onThemeTypeChange = {
+                                themeType = it
+                                store.putString(SettingsStoreKeys.ThemeMode, it.name)
+                            },
+                            font = font,
+                            onFontChange = {
+                                font = it
+                                store.putString(SettingsStoreKeys.Font, it.name)
                             },
                         )
-                        TextButton(
-                            onClick = {
-                                guestMode = false
-                                dependencies.logout()
-                            },
+                    }
+                    AppRoute.ERROR -> {
+                        val sessionError = (current as? SessionState.Error)?.error
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
                         ) {
-                            Text(
-                                text = strings.logoutAction,
-                                textAlign = TextAlign.Center,
+                            MessagePanel(
+                                title = strings.errorUnknownLabel,
+                                message = sessionError?.let { strings.networkErrorMessage(it) },
+                                icon = Icons.Filled.Warning,
+                                actionLabel = strings.retryAction,
+                                onAction = {
+                                    scope.launch { dependencies.sessionManager.bootstrap() }
+                                },
                             )
+                            TextButton(
+                                onClick = {
+                                    guestMode = false
+                                    dependencies.logout()
+                                },
+                            ) {
+                                Text(
+                                    text = strings.logoutAction,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+/** Session routing key: drives the landing/shell transition, never the session itself. */
+private enum class AppRoute {
+    LOADING,
+    LANDING,
+    SHELL,
+    ERROR,
 }
 
 /** AniList brand blue, raw hex (converted at the UI boundary). */

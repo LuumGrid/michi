@@ -38,15 +38,8 @@ import com.luum.michi.app.ui.components.Toolbar
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.components.ToolbarNavigation
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.AppFont
-import com.luum.michi.app.ui.theme.DefaultTheme
-import com.luum.michi.app.ui.theme.OceanTheme
-import com.luum.michi.app.ui.theme.SakuraTheme
-import com.luum.michi.app.ui.theme.ThemeColors
-import com.luum.michi.app.ui.theme.ThemeType
 import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.theme.displayName
-import com.luum.michi.app.ui.theme.fontFamilyFor
 
 /**
  * One login entry per service (AniList today; MAL and others tomorrow by
@@ -74,12 +67,6 @@ internal fun AuthLandingScreen(
     services: List<AuthService>,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
-    palette: ThemeColors,
-    onPaletteChange: (ThemeColors) -> Unit,
-    themeType: ThemeType,
-    onThemeTypeChange: (ThemeType) -> Unit,
-    font: AppFont,
-    onFontChange: (AppFont) -> Unit,
     guestLabel: String,
     isConfigured: Boolean,
     configMissingLabel: String,
@@ -87,7 +74,6 @@ internal fun AuthLandingScreen(
     modifier: Modifier = Modifier,
 ) {
     var languageSheet by remember { mutableStateOf(false) }
-    var themeSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -95,17 +81,12 @@ internal fun AuthLandingScreen(
                 title = "Michi",
                 navigation = ToolbarNavigation.None,
                 actions = listOf(
+                    // Lone circle on purpose: the only switch left here.
+                    // Theme (palette/mode/font) lives in Settings now.
                     ToolbarAction(
                         id = ACTION_LANGUAGE,
                         icon = AppIcons.Language,
                         contentDescription = strings.languageLabel,
-                        group = GROUP_AUTH_TOOLS,
-                    ),
-                    ToolbarAction(
-                        id = ACTION_THEME,
-                        icon = AppIcons.Theme,
-                        contentDescription = strings.settingsThemeTitle,
-                        group = GROUP_AUTH_TOOLS,
                     ),
                 ),
                 search = null,
@@ -115,7 +96,6 @@ internal fun AuthLandingScreen(
                 onAction = { id ->
                     when (id) {
                         ACTION_LANGUAGE -> languageSheet = true
-                        ACTION_THEME -> themeSheet = true
                     }
                 },
                 onSearchChange = {},
@@ -201,85 +181,6 @@ internal fun AuthLandingScreen(
         }
     }
 
-    if (themeSheet) {
-        ModalSheet(
-            title = strings.settingsThemeTitle,
-            dismissLabel = strings.dismissAction,
-            onDismiss = { themeSheet = false },
-        ) {
-            OptionGroup(title = strings.themePaletteSection) {
-                ThemePalettes.forEachIndexed { index, (name, option) ->
-                    OptionRow(
-                        label = name,
-                        selected = option::class == palette::class,
-                    onClick = {
-                        onPaletteChange(option)
-                    },
-                        divider = index > 0,
-                        leading = {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .background(option.seed),
-                            )
-                        },
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            OptionGroup(title = strings.themeModeSection) {
-                ThemeType.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == themeType,
-                    onClick = {
-                        onThemeTypeChange(option)
-                    },
-                        divider = index > 0,
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            OptionGroup(title = strings.themeFontSection) {
-                AppFont.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.displayName,
-                        selected = option == font,
-                    onClick = {
-                        onFontChange(option)
-                    },
-                        divider = index > 0,
-                        leading = {
-                            Text(
-                                text = "Ag",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontFamily = fontFamilyFor(option),
-                                ),
-                            )
-                        },
-                    )
-                }
-            }
-        }
-    }
 }
 
 private const val ACTION_LANGUAGE = "language"
-private const val ACTION_THEME = "theme"
-
-/** Shared capsule group for the auth switches (language + theme). */
-private const val GROUP_AUTH_TOOLS = "auth-tools"
-
-/** Brand palette names travel raw on purpose (like "Michi"): not copy. */
-private val ThemePalettes: List<Pair<String, ThemeColors>> = listOf(
-    "Default" to DefaultTheme(),
-    "Ocean" to OceanTheme(),
-    "Sakura" to SakuraTheme(),
-)
-
-private fun ThemeType.label(strings: LanguageStrings): String = when (this) {
-    ThemeType.SYSTEM -> strings.settingsThemeSystem
-    ThemeType.LIGHT -> strings.settingsThemeLight
-    ThemeType.DARK -> strings.settingsThemeDark
-}

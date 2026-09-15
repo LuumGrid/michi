@@ -174,10 +174,9 @@ interface LanguageStrings {
     val accountWebOnlyFieldsNote: String
     val accountUpdateProfileOnWebAction: String
     val accountManageAccountOnWebAction: String
-    val accountSettingsTitle: String
     val accountListSettingsOnWebAction: String
     val accountImportListOnWebAction: String
-    val accountStatsTitle: String
+    val settingsTitle: String
     val accountStatsEpisodesWatchedLabel: String
     val accountStatsChaptersReadLabel: String
     val accountStatsDaysWatchedLabel: String
@@ -189,7 +188,7 @@ interface LanguageStrings {
     val accountStatsTopGenresTitle: String
     val accountStatsEmptyLabel: String
     val accountFavoritesGridEmptyLabel: String
-    val settingsAppSection: String
+    val settingsGeneralSection: String
     val settingsAniListSection: String
     val settingsListsSection: String
     val settingsAboutSection: String
