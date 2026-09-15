@@ -10,6 +10,7 @@ import com.luum.michi.app.ui.icons.generated.Favorite
 import com.luum.michi.app.ui.icons.generated.FavoriteFilled
 import com.luum.michi.app.ui.icons.generated.FilterList
 import com.luum.michi.app.ui.icons.generated.KeyboardArrowLeft
+import com.luum.michi.app.ui.icons.generated.KeyboardArrowRight
 import com.luum.michi.app.ui.icons.generated.Language
 import com.luum.michi.app.ui.icons.generated.Manga
 import com.luum.michi.app.ui.icons.generated.IconPack
@@ -104,6 +105,10 @@ internal object AppIcons {
         get() = IconPack.MoreVert
 
     // ---- Misc: catalogued, wired when their surface lands ----
+    /** Chevron-right: rows that open a picker sheet. */
+    val ChevronRight: ImageVector
+        get() = IconPack.KeyboardArrowRight
+
     /** Calendar: seasonal/schedule surfaces. */
     val Calendar: ImageVector
         get() = IconPack.CalendarMonth
