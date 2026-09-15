@@ -231,7 +231,6 @@ object EnglishStrings : LanguageStrings {
     override val settingsListSortByScore = "Score"
     override val settingsListSortByUpdated = "Last updated"
     override val settingsListSortByAdded = "Last added"
-    override val settingsListSortByRelease = "Release"
     override val settingsSplitCompletedAnimeTitle = "Split completed anime"
     override val settingsSplitCompletedAnimeSubtitle = "Separate TV, movies, OVAs, ONAs, and specials"
     override val settingsSplitCompletedMangaTitle = "Split completed manga"

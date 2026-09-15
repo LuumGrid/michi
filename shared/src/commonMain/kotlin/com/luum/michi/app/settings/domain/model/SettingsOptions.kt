@@ -39,7 +39,6 @@ internal enum class ListSort {
     SCORE,
     UPDATED,
     ADDED,
-    RELEASE,
 }
 
 internal fun ListSort.label(strings: LanguageStrings): String = when (this) {
@@ -47,7 +46,6 @@ internal fun ListSort.label(strings: LanguageStrings): String = when (this) {
     ListSort.SCORE -> strings.settingsListSortByScore
     ListSort.UPDATED -> strings.settingsListSortByUpdated
     ListSort.ADDED -> strings.settingsListSortByAdded
-    ListSort.RELEASE -> strings.settingsListSortByRelease
 }
 
 internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, ACCOUNT }

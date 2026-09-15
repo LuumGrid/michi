@@ -121,13 +121,6 @@ internal class SettingsState(
             errorState.value = value
         }
 
-    private val isSavingState = mutableStateOf(false)
-    var isSaving: Boolean
-        get() = isSavingState.value
-        private set(value) {
-            isSavingState.value = value
-        }
-
     private var saveJob: Job? = null
 
     /** True after the first successful load. Plain var: no UI reads it, only gating. */
@@ -256,14 +249,9 @@ internal class SettingsState(
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(SaveDebounce)
-            isSaving = true
-            try {
-                when (val result = repository.saveSettings(currentData())) {
-                    is NetworkResult.Success -> error = null
-                    is NetworkResult.Failure -> error = result.error
-                }
-            } finally {
-                isSaving = false
+            when (val result = repository.saveSettings(currentData())) {
+                is NetworkResult.Success -> error = null
+                is NetworkResult.Failure -> error = result.error
             }
         }
     }

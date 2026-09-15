@@ -222,7 +222,6 @@ interface LanguageStrings {
     val settingsListSortByScore: String
     val settingsListSortByUpdated: String
     val settingsListSortByAdded: String
-    val settingsListSortByRelease: String
     val settingsSplitCompletedAnimeTitle: String
     val settingsSplitCompletedAnimeSubtitle: String
     val settingsSplitCompletedMangaTitle: String

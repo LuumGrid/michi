@@ -117,14 +117,13 @@ private fun String?.toScoreFormat(): ScoreFormat = when (this) {
     else -> ScoreFormat.POINT_10_DECIMAL
 }
 
-// AniList has no dedicated "release date" rowOrder, so RELEASE falls back to the
-// same rowOrder as UPDATED on save; on load, an unrecognized rowOrder maps to UPDATED.
+// AniList offers no "release date" rowOrder, so it is not offered in the UI;
+// an unrecognized rowOrder from the server maps to UPDATED on load.
 private fun ListSort.toApiRowOrder(): String = when (this) {
     ListSort.TITLE -> "title"
     ListSort.SCORE -> "score"
     ListSort.UPDATED -> "updatedAt"
     ListSort.ADDED -> "id"
-    ListSort.RELEASE -> "updatedAt"
 }
 
 private fun String?.toListSort(): ListSort = when (this) {

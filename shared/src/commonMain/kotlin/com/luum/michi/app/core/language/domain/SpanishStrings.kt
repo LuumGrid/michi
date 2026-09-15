@@ -233,7 +233,6 @@ object SpanishStrings : LanguageStrings {
     override val settingsListSortByScore = "Puntaje"
     override val settingsListSortByUpdated = "Actualizado"
     override val settingsListSortByAdded = "Agregado"
-    override val settingsListSortByRelease = "Lanzamiento"
     override val settingsSplitCompletedAnimeTitle = "Separar anime completado"
     override val settingsSplitCompletedAnimeSubtitle = "TV, peliculas, OVAs, ONAs y especiales por separado"
     override val settingsSplitCompletedMangaTitle = "Separar manga completado"
