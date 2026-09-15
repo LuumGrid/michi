@@ -229,12 +229,12 @@ interface LanguageStrings {
     val settingsSplitCompletedMangaSubtitle: String
     val settingsAdvancedScoringTitle: String
     val settingsAdvancedScoringSubtitle: String
-    val settingsNotificationsSubtitle: String
-    val settingsNotifAiringTitle: String
+    val notificationsSection: String
+    val notificationsAiringTitle: String
     val activityLabel: String
     val forumLabel: String
-    val settingsNotifMessagesTitle: String
-    val settingsNotifMediaTitle: String
+    val notificationsMessagesTitle: String
+    val notificationsMediaTitle: String
     val settingsManageAccountTitle: String
     val settingsManageAccountSubtitle: String
     val settingsHelpTitle: String
@@ -243,6 +243,8 @@ interface LanguageStrings {
     val settingsAboutSubtitle: String
     val settingsAboutVersionLabel: String
     val settingsAboutCreditsLabel: String
+    val settingsAboutDataByText: String
+    val settingsAboutUnofficialText: String
     val backButton: String
     val authWelcomeTitle: String
     val authWelcomeSubtitle: String

@@ -88,6 +88,43 @@ val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>(
     outputDir.set(layout.buildDirectory.dir("generated/source/authConfig/commonMain/kotlin"))
 }
 
+abstract class GenerateMichiBuildConfigTask : DefaultTask() {
+    @get:Input
+    abstract val appVersion: Property<String>
+
+    @get:Input
+    abstract val appVersionCode: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app")
+        packageDir.mkdirs()
+        packageDir.resolve("MichiBuildConfig.kt").writeText(
+            """
+            package com.luum.michi.app
+
+            /**
+             * Generated at build time from `gradle.properties`
+             * (`michiVersionName` / `michiVersionCode`). Do not edit by hand.
+             */
+            internal object MichiBuildConfig {
+                const val Version: String = "${appVersion.get()}"
+                const val VersionCode: Int = ${appVersionCode.get()}
+            }
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
+val generateMichiBuildConfig = tasks.register<GenerateMichiBuildConfigTask>("generateMichiBuildConfig") {
+    appVersion.set((project.findProperty("michiVersionName") as? String) ?: "1.0")
+    appVersionCode.set((project.findProperty("michiVersionCode") as? String) ?: "1")
+    outputDir.set(layout.buildDirectory.dir("generated/source/michiConfig/commonMain/kotlin"))
+}
+
 kotlin {
     // NOTE: resource accessors (`Res.*`) are generated into
     // `commonMainResourceAccessors` by the compose-resources plugin, but under
@@ -131,6 +168,7 @@ kotlin {
         }
         commonMain {
             kotlin.srcDir(generateAniListBuildConfig)
+            kotlin.srcDir(generateMichiBuildConfig)
             dependencies {
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.foundation)

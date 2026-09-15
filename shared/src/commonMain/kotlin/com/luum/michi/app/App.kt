@@ -41,6 +41,7 @@ import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.root.AuthLandingScreen
 import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
+import com.luum.michi.app.settings.ui.state.rememberSettingsState
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.icons.AppIcons
@@ -92,6 +93,15 @@ fun App(
     val strings = getLanguageStrings(language)
     val session by dependencies.sessionManager.state.collectAsState()
     val scope = rememberCoroutineScope()
+
+    // Synced settings holder: one per session. Guests get canSync = false
+    // (local-only, never touches the network); login/logout recreates it.
+    val settingsState = rememberSettingsState(
+        repository = dependencies.settingsRepository,
+        store = dependencies.settingsStore,
+        scope = scope,
+        canSync = session is SessionState.Authenticated,
+    )
 
     CompositionLocalProvider(LocalStrings provides strings) {
         Theme(
@@ -168,6 +178,7 @@ fun App(
                     }
                     AppRoute.SHELL -> {
                         Root(
+                            settingsState = settingsState,
                             language = language,
                             onLanguageChange = onLanguageChange,
                             palette = palette,

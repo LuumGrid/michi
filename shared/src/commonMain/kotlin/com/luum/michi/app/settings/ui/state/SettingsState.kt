@@ -1,16 +1,16 @@
 package com.luum.michi.app.settings.ui.state
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SettingsStore
-import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
-import com.luum.michi.app.settings.domain.model.DiscoverTabOption
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
-import com.luum.michi.app.settings.domain.model.ThemeMode
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -18,8 +18,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val KeyThemeMode = SettingsStoreKeys.ThemeMode
-private const val KeyDefaultDiscoverTab = SettingsStoreKeys.DefaultDiscoverTab
 private const val KeyTitleLanguage = "title_language"
 private const val KeyDisplayAdultContent = "display_adult_content"
 private const val KeyScoreFormat = "score_format"
@@ -40,162 +38,183 @@ internal class SettingsState(
     private val repository: SettingsRepository,
     private val store: SettingsStore,
     private val scope: CoroutineScope,
+    val canSync: Boolean = true,
 ) {
-    // Local-only prefs (no AniList equivalent) — persisted to the store but never synced.
-    private var _themeMode = ThemeMode.SYSTEM
-    var themeMode: ThemeMode
-        get() = _themeMode
-        set(value) {
-            _themeMode = value
-            store.putString(KeyThemeMode, value.name)
-        }
-
-    private var _defaultDiscoverTab = DiscoverTabOption.DISCOVER
-    var defaultDiscoverTab: DiscoverTabOption
-        get() = _defaultDiscoverTab
-        set(value) {
-            _defaultDiscoverTab = value
-            store.putString(KeyDefaultDiscoverTab, value.name)
-        }
-
-    // AniList-synced prefs.
-    private var _titleLanguage = TitleLanguage.ROMAJI
+    // AniList-synced prefs. Backed by state so the UI recomposes on
+    // load/save; public setters persist locally and schedule the save.
+    private val titleLanguageState = mutableStateOf(TitleLanguage.ROMAJI)
     var titleLanguage: TitleLanguage
-        get() = _titleLanguage
+        get() = titleLanguageState.value
         set(value) {
-            _titleLanguage = value
+            titleLanguageState.value = value
             persistTitleLanguage(value)
             scheduleSave()
         }
 
-    private var _displayAdultContent = false
+    private val displayAdultContentState = mutableStateOf(false)
     var displayAdultContent: Boolean
-        get() = _displayAdultContent
+        get() = displayAdultContentState.value
         set(value) {
-            _displayAdultContent = value
+            displayAdultContentState.value = value
             store.putBoolean(KeyDisplayAdultContent, value)
             scheduleSave()
         }
 
-    private var _scoreFormat = ScoreFormat.POINT_10_DECIMAL
+    private val scoreFormatState = mutableStateOf(ScoreFormat.POINT_10_DECIMAL)
     var scoreFormat: ScoreFormat
-        get() = _scoreFormat
+        get() = scoreFormatState.value
         set(value) {
-            _scoreFormat = value
+            scoreFormatState.value = value
             persistScoreFormat(value)
             scheduleSave()
         }
 
-    private var _listSort = ListSort.UPDATED
+    private val listSortState = mutableStateOf(ListSort.UPDATED)
     var listSort: ListSort
-        get() = _listSort
+        get() = listSortState.value
         set(value) {
-            _listSort = value
+            listSortState.value = value
             persistListSort(value)
             scheduleSave()
         }
 
-    private var _splitCompletedAnime = true
+    private val splitCompletedAnimeState = mutableStateOf(true)
     var splitCompletedAnime: Boolean
-        get() = _splitCompletedAnime
+        get() = splitCompletedAnimeState.value
         set(value) {
-            _splitCompletedAnime = value
+            splitCompletedAnimeState.value = value
             store.putBoolean(KeySplitCompletedAnime, value)
             scheduleSave()
         }
 
-    private var _splitCompletedManga = false
+    private val splitCompletedMangaState = mutableStateOf(false)
     var splitCompletedManga: Boolean
-        get() = _splitCompletedManga
+        get() = splitCompletedMangaState.value
         set(value) {
-            _splitCompletedManga = value
+            splitCompletedMangaState.value = value
             store.putBoolean(KeySplitCompletedManga, value)
             scheduleSave()
         }
 
-    private var _advancedScoring = false
+    private val advancedScoringState = mutableStateOf(false)
     var advancedScoring: Boolean
-        get() = _advancedScoring
+        get() = advancedScoringState.value
         set(value) {
-            _advancedScoring = value
+            advancedScoringState.value = value
             store.putBoolean(KeyAdvancedScoring, value)
             scheduleSave()
         }
 
-    private var _notifications = NotificationPreferences()
+    private val notificationsState = mutableStateOf(NotificationPreferences())
     var notifications: NotificationPreferences
-        get() = _notifications
+        get() = notificationsState.value
         set(value) {
-            _notifications = value
+            notificationsState.value = value
             persistNotifications(value)
             scheduleSave()
         }
 
-    var error: NetworkError? = null
-        private set
+    private val errorState = mutableStateOf<NetworkError?>(null)
+    var error: NetworkError?
+        get() = errorState.value
+        private set(value) {
+            errorState.value = value
+        }
 
-    var isSaving: Boolean = false
-        private set
+    private val isSavingState = mutableStateOf(false)
+    var isSaving: Boolean
+        get() = isSavingState.value
+        private set(value) {
+            isSavingState.value = value
+        }
 
     private var saveJob: Job? = null
 
+    /** True after the first successful load. Plain var: no UI reads it, only gating. */
+    private var hasLoaded = false
+
+    /** In-flight load, if any. Same Job idiom as saveJob. */
+    private var loadJob: Job? = null
+
     init {
         hydrateFromStore()
-        scope.launch {
+    }
+
+    /**
+     * Loads the server values (and clears [error] on success).
+     * No-op when [canSync] is false (guests never touch the network),
+     * and skipped when already loaded or already loading unless [force].
+     * Called from Settings' first open — a failed load retries itself
+     * on the next open; an explicit retry passes force = true.
+     */
+    fun refresh(force: Boolean = false) {
+        if (!canSync || (!force && hasLoaded)) return
+        if (!force && loadJob?.isActive == true) return
+        loadJob?.cancel()
+        loadJob = scope.launch {
             when (val result = repository.loadSettings()) {
-                is NetworkResult.Success -> applyLoaded(result.value)
+                is NetworkResult.Success -> {
+                    applyLoaded(result.value)
+                    hasLoaded = true
+                }
                 is NetworkResult.Failure -> error = result.error
             }
         }
     }
 
     private fun hydrateFromStore() {
-        store.getString(KeyThemeMode)?.let { saved ->
-            ThemeMode.entries.firstOrNull { it.name == saved }?.let { _themeMode = it }
-        }
-        store.getString(KeyDefaultDiscoverTab)?.let { saved ->
-            DiscoverTabOption.entries.firstOrNull { it.name == saved }?.let { _defaultDiscoverTab = it }
-        }
         store.getString(KeyTitleLanguage)?.let { saved ->
-            TitleLanguage.entries.firstOrNull { it.name == saved }?.let { _titleLanguage = it }
+            TitleLanguage.entries.firstOrNull { it.name == saved }?.let {
+                titleLanguageState.value = it
+            }
         }
-        _displayAdultContent = store.getBoolean(KeyDisplayAdultContent, _displayAdultContent)
+        displayAdultContentState.value =
+            store.getBoolean(KeyDisplayAdultContent, displayAdultContentState.value)
         store.getString(KeyScoreFormat)?.let { saved ->
-            ScoreFormat.entries.firstOrNull { it.name == saved }?.let { _scoreFormat = it }
+            ScoreFormat.entries.firstOrNull { it.name == saved }?.let {
+                scoreFormatState.value = it
+            }
         }
         store.getString(KeyListSort)?.let { saved ->
-            ListSort.entries.firstOrNull { it.name == saved }?.let { _listSort = it }
+            ListSort.entries.firstOrNull { it.name == saved }?.let { listSortState.value = it }
         }
-        _splitCompletedAnime = store.getBoolean(KeySplitCompletedAnime, _splitCompletedAnime)
-        _splitCompletedManga = store.getBoolean(KeySplitCompletedManga, _splitCompletedManga)
-        _advancedScoring = store.getBoolean(KeyAdvancedScoring, _advancedScoring)
-        _notifications = NotificationPreferences(
-            airing = store.getBoolean(KeyNotificationAiring, _notifications.airing),
-            activity = store.getBoolean(KeyNotificationActivity, _notifications.activity),
-            following = store.getBoolean(KeyNotificationFollowing, _notifications.following),
-            forum = store.getBoolean(KeyNotificationForum, _notifications.forum),
-            messages = store.getBoolean(KeyNotificationMessages, _notifications.messages),
-            media = store.getBoolean(KeyNotificationMedia, _notifications.media),
+        splitCompletedAnimeState.value =
+            store.getBoolean(KeySplitCompletedAnime, splitCompletedAnimeState.value)
+        splitCompletedMangaState.value =
+            store.getBoolean(KeySplitCompletedManga, splitCompletedMangaState.value)
+        advancedScoringState.value =
+            store.getBoolean(KeyAdvancedScoring, advancedScoringState.value)
+        notificationsState.value = NotificationPreferences(
+            airing = store.getBoolean(KeyNotificationAiring, notificationsState.value.airing),
+            activity = store.getBoolean(KeyNotificationActivity, notificationsState.value.activity),
+            following = store.getBoolean(KeyNotificationFollowing, notificationsState.value.following),
+            forum = store.getBoolean(KeyNotificationForum, notificationsState.value.forum),
+            messages = store.getBoolean(KeyNotificationMessages, notificationsState.value.messages),
+            media = store.getBoolean(KeyNotificationMedia, notificationsState.value.media),
         )
     }
 
-    /** Applies server-loaded values directly to the backing fields, bypassing the save scheduler. */
+    /**
+     * Applies server-loaded values directly to the backing states,
+     * bypassing the save scheduler (what we just loaded must not be
+     * sent straight back).
+     */
     private fun applyLoaded(data: SettingsData) {
-        _titleLanguage = data.titleLanguage
+        titleLanguageState.value = data.titleLanguage
         persistTitleLanguage(data.titleLanguage)
-        _displayAdultContent = data.displayAdultContent
+        displayAdultContentState.value = data.displayAdultContent
         store.putBoolean(KeyDisplayAdultContent, data.displayAdultContent)
-        _scoreFormat = data.scoreFormat
+        scoreFormatState.value = data.scoreFormat
         persistScoreFormat(data.scoreFormat)
-        _listSort = data.listSort
+        listSortState.value = data.listSort
         persistListSort(data.listSort)
-        _splitCompletedAnime = data.splitCompletedAnime
+        splitCompletedAnimeState.value = data.splitCompletedAnime
         store.putBoolean(KeySplitCompletedAnime, data.splitCompletedAnime)
-        _splitCompletedManga = data.splitCompletedManga
+        splitCompletedMangaState.value = data.splitCompletedManga
         store.putBoolean(KeySplitCompletedManga, data.splitCompletedManga)
-        _advancedScoring = data.advancedScoring
+        advancedScoringState.value = data.advancedScoring
         store.putBoolean(KeyAdvancedScoring, data.advancedScoring)
-        _notifications = data.notifications
+        notificationsState.value = data.notifications
         persistNotifications(data.notifications)
         error = null
     }
@@ -222,17 +241,18 @@ internal class SettingsState(
     }
 
     private fun currentData(): SettingsData = SettingsData(
-        titleLanguage = _titleLanguage,
-        scoreFormat = _scoreFormat,
-        displayAdultContent = _displayAdultContent,
-        listSort = _listSort,
-        splitCompletedAnime = _splitCompletedAnime,
-        splitCompletedManga = _splitCompletedManga,
-        advancedScoring = _advancedScoring,
-        notifications = _notifications,
+        titleLanguage = titleLanguage,
+        scoreFormat = scoreFormat,
+        displayAdultContent = displayAdultContent,
+        listSort = listSort,
+        splitCompletedAnime = splitCompletedAnime,
+        splitCompletedManga = splitCompletedManga,
+        advancedScoring = advancedScoring,
+        notifications = notifications,
     )
 
     private fun scheduleSave() {
+        if (!canSync) return
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(SaveDebounce)
@@ -249,11 +269,26 @@ internal class SettingsState(
     }
 }
 
+/**
+ * Composition factory, keyed by [canSync] so login/logout recreates the
+ * holder (different user, different data).
+ */
+@Composable
+internal fun rememberSettingsState(
+    repository: SettingsRepository,
+    store: SettingsStore,
+    scope: CoroutineScope,
+    canSync: Boolean,
+): SettingsState = remember(canSync) {
+    SettingsState(repository, store, scope, canSync)
+}
+
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createSettingsState(
     repository: SettingsRepository,
     store: SettingsStore,
     scope: CoroutineScope,
+    canSync: Boolean = true,
 ): SettingsState {
-    return SettingsState(repository, store, scope)
+    return SettingsState(repository, store, scope, canSync)
 }

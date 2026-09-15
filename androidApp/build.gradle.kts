@@ -32,8 +32,8 @@ android {
         applicationId = "com.luum.michi.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (project.findProperty("michiVersionCode") as? String)?.toInt() ?: 1
+        versionName = (project.findProperty("michiVersionName") as? String) ?: "1.0"
     }
     packaging {
         resources {

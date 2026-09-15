@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
@@ -29,6 +30,7 @@ import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
+import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.SearchScrim
@@ -60,6 +62,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun Root(
+    settingsState: SettingsState,
     state: State = rememberState(),
     strings: LanguageStrings = Strings.current,
     language: AppLanguage,
@@ -84,6 +87,12 @@ internal fun Root(
     // replaced by the result list on the first letter.
     val activeQuery = searchTab?.let { state.searchQuery(it) }.orEmpty()
     val showScrim = search != null && activeQuery.isEmpty()
+
+    // Synced settings load once per session, on first open — never on
+    // composition, never for guests (canSync). The holder dedups repeats.
+    LaunchedEffect(state.isSettingsOpen) {
+        if (state.isSettingsOpen) settingsState.refresh()
+    }
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
     // explicitly opt in via [hidesToolbarOnScroll]. The veil rides the same
@@ -191,6 +200,7 @@ internal fun Root(
             ) { activeTab ->
                 if (state.isSettingsOpen) {
                     SettingsScreen(
+                        settingsState = settingsState,
                         language = language,
                         onLanguageChange = onLanguageChange,
                         palette = palette,
