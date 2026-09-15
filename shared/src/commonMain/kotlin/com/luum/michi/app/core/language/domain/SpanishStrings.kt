@@ -202,7 +202,7 @@ object SpanishStrings : LanguageStrings {
     override val settingsGeneralSection = "General"
     override val settingsAniListSection = "AniList"
     override val settingsListsSection = "Listas"
-    override val settingsAboutSection = "Acerca de"
+    override val settingsInformationSection = "Información"
     override val settingsThemeTitle = "Tema"
     override val settingsThemeSubtitle = "Sistema, claro u oscuro"
     override val settingsThemeSystem = "Sistema"
@@ -252,9 +252,12 @@ object SpanishStrings : LanguageStrings {
     override val settingsAboutTitle = "Acerca de Michi"
     override val settingsAboutSubtitle = "Version y creditos"
     override val settingsAboutVersionLabel = "Version"
-    override val settingsAboutCreditsLabel = "Creditos"
     override val settingsAboutDataByText = "Datos por AniList"
     override val settingsAboutUnofficialText = "Cliente no oficial"
+    override val settingsAboutDescriptionFirst =
+        "Michi reúne tu anime y manga en un solo lugar limpio y rápido, siempre sincronizado con AniList."
+    override val settingsAboutDescriptionSecond =
+        "Independiente, gratis y en tu idioma. Sin anuncios, sin estorbos, solo tus listas."
     override val backButton = "Volver"
     override val authWelcomeTitle = "Bienvenido a Michi"
     override val authWelcomeSubtitle = "Tu cliente de AniList para anime, manga, listas y favoritos."

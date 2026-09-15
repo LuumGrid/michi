@@ -191,7 +191,7 @@ interface LanguageStrings {
     val settingsGeneralSection: String
     val settingsAniListSection: String
     val settingsListsSection: String
-    val settingsAboutSection: String
+    val settingsInformationSection: String
     val settingsThemeTitle: String
     val settingsThemeSubtitle: String
     val settingsThemeSystem: String
@@ -241,9 +241,10 @@ interface LanguageStrings {
     val settingsAboutTitle: String
     val settingsAboutSubtitle: String
     val settingsAboutVersionLabel: String
-    val settingsAboutCreditsLabel: String
     val settingsAboutDataByText: String
     val settingsAboutUnofficialText: String
+    val settingsAboutDescriptionFirst: String
+    val settingsAboutDescriptionSecond: String
     val backButton: String
     val authWelcomeTitle: String
     val authWelcomeSubtitle: String

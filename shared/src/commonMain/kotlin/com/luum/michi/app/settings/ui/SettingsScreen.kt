@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.MichiBuildConfig
 import com.luum.michi.app.core.language.domain.AppLanguage
@@ -78,6 +79,7 @@ internal fun SettingsScreen(
     var titleLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
     var sortSheet by remember { mutableStateOf(false) }
+    var aboutSheet by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -198,15 +200,18 @@ internal fun SettingsScreen(
             }
         }
         item {
-            OptionGroup(title = strings.settingsAboutSection) {
+            OptionGroup(title = strings.settingsInformationSection) {
                 SettingsRow(
                     label = strings.settingsAboutVersionLabel,
                     value = MichiBuildConfig.Version,
                     onClick = null,
                     divider = false,
                 )
-                SettingsInfoRow(text = strings.settingsAboutDataByText)
-                SettingsInfoRow(text = strings.settingsAboutUnofficialText)
+                SettingsRow(
+                    label = strings.settingsAboutTitle,
+                    value = strings.settingsAboutSubtitle,
+                    onClick = { aboutSheet = true },
+                )
             }
         }
     }
@@ -343,6 +348,63 @@ internal fun SettingsScreen(
             }
         }
     }
+
+    if (aboutSheet) {
+        ModalSheet(
+            title = strings.settingsAboutTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { aboutSheet = false },
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Michi",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = "${strings.settingsAboutVersionLabel} ${MichiBuildConfig.Version}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            OptionGroup(title = null) {
+                Text(
+                    text = strings.settingsAboutDescriptionFirst,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = strings.settingsAboutDescriptionSecond,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = strings.settingsAboutDataByText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = strings.settingsAboutUnofficialText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 /** Mode group first: the frequent change sits on top, no scroll needed. */
@@ -471,26 +533,6 @@ private fun SettingsErrorRow(
         TextButton(onClick = onRetry) {
             Text(text = retryLabel)
         }
-    }
-}
-
-/** Static info line inside a group frame: no value, no interaction. */
-@Composable
-private fun SettingsInfoRow(
-    text: String,
-    modifier: Modifier = Modifier,
-    divider: Boolean = true,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (divider) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 12.dp),
-        )
     }
 }
 
