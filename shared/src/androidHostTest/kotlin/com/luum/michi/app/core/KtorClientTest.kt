@@ -23,6 +23,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 private fun client(
@@ -99,7 +100,38 @@ class KtorClientTest {
     fun malformedBodyBecomesUnknown() {
         val engine = MockEngine { respond("not json", HttpStatusCode.OK) }
         val result = runExecute(client(engine)) { data -> data.toString() }
-        assertTrue(result is NetworkResult.Failure)
-        assertTrue((result as NetworkResult.Failure).error is NetworkError.Unknown)
+        val failure = assertIs<NetworkResult.Failure>(result)
+        assertTrue(failure.error is NetworkError.Unknown)
+    }
+
+    @Test
+    fun connectivityFailureBecomesNoConnection() {
+        val engine = MockEngine { throw UnknownHostException() }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.NoConnection), result)
+    }
+
+    @Test
+    fun wrappedConnectivityFailureBecomesNoConnection() {
+        val engine = MockEngine { throw RuntimeException("wrap", ConnectException()) }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.NoConnection), result)
+    }
+
+    @Test
+    fun unexpectedFailureStaysUnknown() {
+        val engine = MockEngine { throw RuntimeException("boom") }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        val failure = assertIs<NetworkResult.Failure>(result)
+        assertTrue(failure.error is NetworkError.Unknown)
     }
 }
+
+/**
+ * Local stubs mirroring the JDK/Ktor connectivity names. The mapper matches
+ * by simple name (common-safe, no `java.net` imports), so these exercise
+ * the same path the real engine errors take.
+ */
+private class UnknownHostException : Exception("offline")
+
+private class ConnectException : Exception("refused")

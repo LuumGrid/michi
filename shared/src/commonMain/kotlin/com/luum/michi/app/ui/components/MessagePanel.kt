@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 /**
  * Generic centered message panel for empty/error/info states. Takes only
  * primitives (strings, icon, optional action) so no feature `ui/` layer
- * leaks its models into the global UI.
+ * leaks its models into the global UI. Text colors are explicit theme
+ * colors (never LocalContentColor) so the panel stays readable outside
+ * any Scaffold/Surface too.
  */
 @Composable
 internal fun MessagePanel(
@@ -46,6 +48,7 @@ internal fun MessagePanel(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
         if (message != null) {
@@ -53,6 +56,7 @@ internal fun MessagePanel(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }

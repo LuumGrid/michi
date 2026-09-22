@@ -200,6 +200,7 @@ fun App(
                     }
                     AppRoute.ERROR -> {
                         val sessionError = (current as? SessionState.Error)?.error
+                        val detail = sessionError?.let { strings.networkErrorMessage(it) }
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -207,7 +208,9 @@ fun App(
                         ) {
                             MessagePanel(
                                 title = strings.errorUnknownLabel,
-                                message = sessionError?.let { strings.networkErrorMessage(it) },
+                                // Unknown maps to the same copy as the title; hiding
+                                // it avoids showing the same line twice.
+                                message = detail?.takeIf { it != strings.errorUnknownLabel },
                                 icon = Icons.Filled.Warning,
                                 actionLabel = strings.retryAction,
                                 onAction = {

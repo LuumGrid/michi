@@ -23,6 +23,34 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
 /**
+ * Maps transport throwables to [NetworkError]. Connectivity signals become
+ * [NetworkError.NoConnection]; everything else stays [NetworkError.Unknown].
+ *
+ * Matching is by class simple name (no `java.net` imports) so this stays
+ * common-safe across Android and iOS engines; the cause chain is walked
+ * because engines wrap the root socket error. Deliberately narrow:
+ * TLS/auth failures are not connectivity issues.
+ */
+internal fun throwableToNetworkError(throwable: Throwable): NetworkError {
+    var current: Throwable? = throwable
+    while (current != null) {
+        when (current::class.simpleName) {
+            "UnknownHostException",
+            "ConnectException",
+            "NoRouteToHostException",
+            "SocketTimeoutException",
+            "ConnectTimeoutException",
+            "TimeoutException",
+            "HttpRequestTimeoutException",
+            "HttpConnectTimeoutException",
+            -> return NetworkError.NoConnection
+        }
+        current = current.cause
+    }
+    return NetworkError.Unknown(throwable)
+}
+
+/**
  * Real Ktor-backed implementation of [AniListGraphQLClient]. Authenticates each
  * request with the current token (when present) via a Bearer header.
  *
@@ -49,7 +77,7 @@ internal class KtorAniListGraphQLClient(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
-            NetworkResult.Failure(NetworkError.Unknown(throwable))
+            NetworkResult.Failure(throwableToNetworkError(throwable))
         }
     }
 

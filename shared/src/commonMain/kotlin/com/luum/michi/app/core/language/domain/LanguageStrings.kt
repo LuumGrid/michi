@@ -193,32 +193,25 @@ interface LanguageStrings {
     val settingsListsSection: String
     val settingsInformationSection: String
     val settingsThemeTitle: String
-    val settingsThemeSubtitle: String
     val settingsThemeSystem: String
     val settingsThemeLight: String
     val settingsThemeDark: String
     val themePaletteSection: String
     val themeModeSection: String
     val themeFontSection: String
-    val settingsLanguageSubtitle: String
-    val settingsDiscoverTabTitle: String
-    val settingsDiscoverTabSubtitle: String
     val settingsTitleLanguageTitle: String
-    val settingsTitleLanguageSubtitle: String
     val settingsTitleLanguageRomaji: String
     val settingsTitleLanguageEnglish: String
     val settingsTitleLanguageNative: String
     val settingsAdultContentTitle: String
     val settingsAdultContentSubtitle: String
     val settingsScoreFormatTitle: String
-    val settingsScoreFormatSubtitle: String
     val settingsScoreFormatPoint100: String
     val settingsScoreFormatPoint10Decimal: String
     val settingsScoreFormatPoint10: String
     val settingsScoreFormatPoint5Stars: String
     val settingsScoreFormatPoint3Smileys: String
     val settingsListSortTitle: String
-    val settingsListSortSubtitle: String
     val settingsListSortByScore: String
     val settingsListSortByUpdated: String
     val settingsListSortByAdded: String
@@ -234,10 +227,6 @@ interface LanguageStrings {
     val forumLabel: String
     val notificationsMessagesTitle: String
     val notificationsMediaTitle: String
-    val settingsManageAccountTitle: String
-    val settingsManageAccountSubtitle: String
-    val settingsHelpTitle: String
-    val settingsHelpSubtitle: String
     val settingsAboutTitle: String
     val settingsAboutSubtitle: String
     val settingsAboutVersionLabel: String
