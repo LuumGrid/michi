@@ -51,6 +51,7 @@ import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionGroupShape
+import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.GlassButton
 import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.icons.AppIcons
@@ -531,8 +532,10 @@ private fun ThemePaletteSection(
     }
 }
 
-/** Session card, first in Settings (identity before prefs). Guests get a sign-in
- * row instead; the account sheet (second level) holds sign-out. */
+/** Session card, first in Settings (identity before prefs). Plain [OptionGroup]:
+ * the glass pilot (sep-2026) proved content cards read worse in light mode
+ * (translucency washes out, shadow + 40% border render a ghost edge), so
+ * glass stays reserved for floating surfaces and actions. */
 @Composable
 private fun SettingsAccountCard(
     viewer: Viewer?,
@@ -552,19 +555,11 @@ private fun SettingsAccountCard(
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = initialsFor(viewer.name),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
+                Avatar(
+                    imageUrl = viewer.avatarUrl,
+                    initials = initialsFor(viewer.name),
+                    size = 48.dp,
+                )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = viewer.name,

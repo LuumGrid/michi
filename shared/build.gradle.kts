@@ -165,6 +165,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.browser)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.coil.network.okhttp)
         }
         commonMain {
             kotlin.srcDir(generateAniListBuildConfig)
@@ -184,6 +185,7 @@ kotlin {
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinxJson)
                 implementation(libs.qrose)
+                implementation(libs.coil.compose)
             }
         }
         iosMain.dependencies {

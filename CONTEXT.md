@@ -276,6 +276,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
   - Spanish: `Descubrir`, `Anime`, `Manga`, `Cuenta`.
   - English: `Discover`, `Anime`, `Manga`, `Account`.
 - Home has no banner/avatar and no embedded search row. Search belongs in the topbar.
+- **Glass rule (validated sep-2026):** glass (`glassContainerColor`, `glassBorder`, shadow) is reserved for floating surfaces and actions (Toolbar, TabBar, buttons). Content cards stay opaque `surface` — a glass pilot on the session card washed out in light mode (translucency flattened, shadow + 40% border rendered a ghost edge).
 - **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.Star`) and popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). `Icons.Like` (heart) is reserved for user favorites only.
 - Reading: separate `+1 CH` and `+1 VO` buttons (manga has chapters and volumes). Animation: `+1 EP`.
 - Counters are numeric-only next to their buttons, styled with stronger weight.
