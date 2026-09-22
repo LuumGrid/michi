@@ -311,4 +311,4 @@ State holders do NOT load automatically inside constructor `remember` blocks:
   - `./gradlew :shared:compileAndroidMain --offline` — shared code changes.
   - `./gradlew :androidApp:compileDebugKotlin --offline` — when root/feature signatures change.
   - Enforce the `core/` boundary with grep after structural moves: no `androidx.compose` imports under `core/`, and no `core.*` imports of `ui.*`.
-  - Gradle may need `GRADLE_USER_HOME=/tmp/michi-gradle` in this environment.
+  - Build offline with the default Gradle home (`~/.gradle`). An isolated home (`GRADLE_USER_HOME=/tmp/...`) only works if pre-populated online first, and `/tmp` is wiped on reboot — never rely on it as a persistent cache.
