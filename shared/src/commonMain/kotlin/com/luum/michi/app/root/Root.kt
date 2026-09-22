@@ -27,6 +27,7 @@ import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
@@ -73,6 +74,9 @@ internal fun Root(
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
     onFontChange: (AppFont) -> Unit,
+    viewer: Viewer? = null,
+    onLogin: () -> Unit = {},
+    onLogout: () -> Unit = {},
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -209,6 +213,9 @@ internal fun Root(
                         onThemeTypeChange = onThemeTypeChange,
                         font = font,
                         onFontChange = onFontChange,
+                        viewer = viewer,
+                        onLogin = onLogin,
+                        onLogout = onLogout,
                     )
                 } else if (search != null && activeQuery.isNotEmpty()) {
                     MessagePanel(

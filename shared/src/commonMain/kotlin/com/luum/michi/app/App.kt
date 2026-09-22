@@ -196,6 +196,12 @@ fun App(
                                 font = it
                                 store.putString(SettingsStoreKeys.Font, it.name)
                             },
+                            viewer = (current as? SessionState.Authenticated)?.viewer,
+                            onLogin = { dependencies.oAuthLauncher.open() },
+                            onLogout = {
+                                guestMode = false
+                                dependencies.logout()
+                            },
                         )
                     }
                     AppRoute.ERROR -> {

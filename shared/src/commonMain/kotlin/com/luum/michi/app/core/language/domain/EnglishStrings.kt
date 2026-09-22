@@ -245,6 +245,13 @@ object EnglishStrings : LanguageStrings {
         "Michi keeps your anime and manga together in one clean, fast place, always in sync with AniList."
     override val settingsAboutDescriptionSecond =
         "Independent, free, and in your language. No ads, no clutter, just your lists."
+    override val settingsAccountTitle = "Account"
+    override val settingsAccountSettingsTitle = "Account settings"
+    override val settingsSignInTitle = "Sign in"
+    override val settingsSignOutTitle = "Sign out"
+    override val settingsSignOutConfirmAction = "Sign out"
+    override val settingsSignOutConfirmMessage =
+        "You will sign out on this device. Your lists stay safe on AniList."
     override val backButton = "Back"
     override val authWelcomeTitle = "Welcome to Michi"
     override val authWelcomeSubtitle = "Your AniList client for anime, manga, lists, and favorites."

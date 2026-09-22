@@ -247,6 +247,13 @@ object SpanishStrings : LanguageStrings {
         "Michi reúne tu anime y manga en un solo lugar limpio y rápido, siempre sincronizado con AniList."
     override val settingsAboutDescriptionSecond =
         "Independiente, gratis y en tu idioma. Sin anuncios, sin estorbos, solo tus listas."
+    override val settingsAccountTitle = "Cuenta"
+    override val settingsAccountSettingsTitle = "Configuración de la cuenta"
+    override val settingsSignInTitle = "Iniciar sesión"
+    override val settingsSignOutTitle = "Cerrar sesión"
+    override val settingsSignOutConfirmAction = "Cerrar sesión"
+    override val settingsSignOutConfirmMessage =
+        "Cerrarás sesión en este dispositivo. Tus listas están a salvo en AniList."
     override val backButton = "Volver"
     override val authWelcomeTitle = "Bienvenido a Michi"
     override val authWelcomeSubtitle = "Tu cliente de AniList para anime, manga, listas y favoritos."

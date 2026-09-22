@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,14 +46,17 @@ import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.label
+import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionGroupShape
+import com.luum.michi.app.ui.components.GlassButton
 import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.LocalWarning
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemePalettes
 import com.luum.michi.app.ui.theme.ThemeType
@@ -77,6 +81,9 @@ internal fun SettingsScreen(
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
     onFontChange: (AppFont) -> Unit,
+    viewer: Viewer?,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
@@ -87,12 +94,22 @@ internal fun SettingsScreen(
     var scoreFormatSheet by remember { mutableStateOf(false) }
     var sortSheet by remember { mutableStateOf(false) }
     var aboutSheet by remember { mutableStateOf(false) }
+    var accountSheet by remember { mutableStateOf(false) }
+    var signOutConfirmSheet by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item {
+            SettingsAccountCard(
+                viewer = viewer,
+                strings = strings,
+                onSignIn = onLogin,
+                onAccountSettings = { accountSheet = true },
+            )
+        }
         item {
             OptionGroup(title = strings.settingsGeneralSection) {
                 SettingsRow(
@@ -412,6 +429,49 @@ internal fun SettingsScreen(
             }
         }
     }
+
+    if (accountSheet && viewer != null) {
+        ModalSheet(
+            title = strings.settingsAccountSettingsTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { accountSheet = false },
+        ) {
+            OptionGroup(title = null) {
+                SettingsRow(
+                    label = viewer.name,
+                    value = strings.settingsSignOutTitle,
+                    onClick = { signOutConfirmSheet = true },
+                    divider = false,
+                    valueColor = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+
+    if (signOutConfirmSheet) {
+        ModalSheet(
+            title = strings.settingsSignOutTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { signOutConfirmSheet = false },
+        ) {
+            Text(
+                text = strings.settingsSignOutConfirmMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            GlassButton(
+                label = strings.settingsSignOutConfirmAction,
+                onClick = {
+                    signOutConfirmSheet = false
+                    accountSheet = false
+                    onLogout()
+                },
+                containerColor = null,
+                contentColor = MaterialTheme.colorScheme.error,
+            )
+        }
+    }
 }
 
 /** Mode group first: the frequent change sits on top, no scroll needed. */
@@ -469,6 +529,72 @@ private fun ThemePaletteSection(
             )
         }
     }
+}
+
+/** Session card, first in Settings (identity before prefs). Guests get a sign-in
+ * row instead; the account sheet (second level) holds sign-out. */
+@Composable
+private fun SettingsAccountCard(
+    viewer: Viewer?,
+    strings: LanguageStrings,
+    onSignIn: () -> Unit,
+    onAccountSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OptionGroup(
+        title = strings.settingsAccountTitle,
+        modifier = modifier,
+    ) {
+        if (viewer != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = initialsFor(viewer.name),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = viewer.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            SettingsRow(
+                label = strings.settingsAccountSettingsTitle,
+                value = "",
+                onClick = onAccountSettings,
+            )
+        } else {
+            SettingsRow(
+                label = strings.settingsSignInTitle,
+                value = "",
+                onClick = onSignIn,
+                divider = false,
+            )
+        }
+    }
+}
+
+/** Up to two uppercase initials ("Fernando Hurtado" -> "FH", "Michi" -> "M"). */
+private fun initialsFor(name: String): String {
+    val parts = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (parts.isEmpty()) return "?"
+    val first = parts.first().first().uppercaseChar()
+    val second = parts.getOrNull(1)?.first()?.uppercaseChar()
+    return if (second != null) "$first$second" else "$first"
 }
 
 /** Inline toggle row: title + optional subtitle with a trailing Switch. */
@@ -535,7 +661,7 @@ private fun SettingsErrorRow(
         shape = OptionGroupShape,
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.error,
+            color = LocalWarning.current,
         ),
         color = MaterialTheme.colorScheme.surface,
     ) {
@@ -548,14 +674,14 @@ private fun SettingsErrorRow(
             Icon(
                 imageVector = Icons.Filled.Warning,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
+                tint = LocalWarning.current,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                color = LocalWarning.current,
                 modifier = Modifier.weight(1f),
             )
             // Same metrics as SettingsRow (12dp vertical, 4dp gap, 20dp
@@ -569,13 +695,13 @@ private fun SettingsErrorRow(
                 Text(
                     text = retryLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                    color = LocalWarning.current,
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = AppIcons.ChevronRight,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = LocalWarning.current,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -591,6 +717,7 @@ private fun SettingsRow(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     divider: Boolean = true,
+    valueColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
@@ -611,7 +738,7 @@ private fun SettingsRow(
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = valueColor,
             )
             if (onClick != null) {
                 Spacer(modifier = Modifier.width(4.dp))

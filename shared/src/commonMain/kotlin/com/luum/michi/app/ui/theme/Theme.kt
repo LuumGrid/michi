@@ -32,7 +32,10 @@ internal fun Theme(
     content: @Composable () -> Unit,
 ) {
     val dark = type.resolveDarkTheme(isSystemInDarkTheme())
-    CompositionLocalProvider(LocalThemeColors provides palette) {
+    CompositionLocalProvider(
+        LocalThemeColors provides palette,
+        LocalWarning provides warningScheme(dark).primary,
+    ) {
         MaterialTheme(
             colorScheme = palette.scheme(dark),
             typography = appTypography(font),

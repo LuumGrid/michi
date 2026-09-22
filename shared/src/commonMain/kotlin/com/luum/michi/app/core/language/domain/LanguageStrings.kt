@@ -234,6 +234,12 @@ interface LanguageStrings {
     val settingsAboutUnofficialText: String
     val settingsAboutDescriptionFirst: String
     val settingsAboutDescriptionSecond: String
+    val settingsAccountTitle: String
+    val settingsAccountSettingsTitle: String
+    val settingsSignInTitle: String
+    val settingsSignOutTitle: String
+    val settingsSignOutConfirmAction: String
+    val settingsSignOutConfirmMessage: String
     val backButton: String
     val authWelcomeTitle: String
     val authWelcomeSubtitle: String
