@@ -251,6 +251,9 @@ interface LanguageStrings {
     val listsLoadingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
+    val listsIncrementEpisodeAction: String
+    val listsIncrementChapterAction: String
+    val listsIncrementVolumeAction: String
     val errorNoConnectionLabel: String
     val errorUnauthorizedLabel: String
     val errorRateLimitedLabel: String

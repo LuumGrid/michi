@@ -20,6 +20,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
@@ -28,6 +30,10 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
+import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
+import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
@@ -77,6 +83,8 @@ internal fun Root(
     viewer: Viewer? = null,
     onLogin: () -> Unit = {},
     onLogout: () -> Unit = {},
+    animeListRepository: AnimeListRepository,
+    mediaListEntryRepository: MediaListEntryRepository,
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -96,6 +104,21 @@ internal fun Root(
     // composition, never for guests (canSync). The holder dedups repeats.
     LaunchedEffect(state.isSettingsOpen) {
         if (state.isSettingsOpen) settingsState.refresh()
+    }
+
+    // Anime list holder, recreated per viewer. Loads are explicit and the
+    // loader dedups repeats via TTL; guests never load (no user id).
+    val listScope = rememberCoroutineScope()
+    val viewerId = viewer?.id
+    val animeHolder = remember(viewerId, animeListRepository, mediaListEntryRepository) {
+        viewerId?.let {
+            AnimeListStateHolder(animeListRepository, mediaListEntryRepository, listScope)
+        }
+    }
+    LaunchedEffect(tab, viewerId) {
+        if (tab == TabSection.ANIME && viewerId != null) {
+            animeHolder?.load(viewerId)
+        }
     }
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
@@ -224,6 +247,14 @@ internal fun Root(
                         icon = AppIcons.Search,
                         actionLabel = null,
                         onAction = {},
+                    )
+                } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
+                    AnimeListScreen(
+                        holder = animeHolder,
+                        selected = state.selectedAnimeSection,
+                        onSelectSection = { state.selectedAnimeSection = it },
+                        onRetry = { animeHolder.load(viewerId, forceRefresh = true) },
+                        bottomPadding = padding.calculateBottomPadding(),
                     )
                 } else {
                     val tabItem = tabs(strings).first { it.section == activeTab }

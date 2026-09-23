@@ -3,6 +3,10 @@ package com.luum.michi.app.mediaList.domain.common
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
@@ -15,15 +19,20 @@ import kotlin.time.TimeSource
  *
  * Composition, not inheritance: each `*ListStateHolder` owns one of these
  * typed by its entry. The TTL mirrors the previous per-holder logic 1:1.
+ *
+ * UI-visible state (entries, loading, refreshing, error) is snapshot-backed
+ * so async completions recompose on their own — plain vars would leave the
+ * screen stale until an unrelated state change re-reads them. TTL bookkeeping
+ * stays plain: the UI never reads it.
  */
 internal class MediaListLoader<T>(
     private val scope: CoroutineScope,
     private val fetch: suspend (userId: Int) -> NetworkResult<List<T>>,
 ) {
-    private val entriesBacking = mutableListOf<T>()
-    private var loadingState = false
-    private var refreshingState = false
-    private var errorState: NetworkError? = null
+    private val entriesBacking = mutableStateListOf<T>()
+    private var loadingState by mutableStateOf(false)
+    private var refreshingState by mutableStateOf(false)
+    private var errorState by mutableStateOf<NetworkError?>(null)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null

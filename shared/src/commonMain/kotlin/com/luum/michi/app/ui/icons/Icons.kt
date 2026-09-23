@@ -21,6 +21,7 @@ import com.luum.michi.app.ui.icons.generated.Person
 import com.luum.michi.app.ui.icons.generated.Search
 import com.luum.michi.app.ui.icons.generated.Settings
 import com.luum.michi.app.ui.icons.generated.SortList
+import com.luum.michi.app.ui.icons.generated.StarFilled
 import com.luum.michi.app.ui.icons.generated.Tv
 
 /**
@@ -108,6 +109,10 @@ internal object AppIcons {
     /** Chevron-right: rows that open a picker sheet. */
     val ChevronRight: ImageVector
         get() = IconPack.KeyboardArrowRight
+
+    /** Filled star: the user's own rating (global averages use the outline twin). */
+    val Star: ImageVector
+        get() = IconPack.StarFilled
 
     /** Calendar: seasonal/schedule surfaces. */
     val Calendar: ImageVector

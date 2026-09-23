@@ -164,7 +164,7 @@ object SpanishStrings : LanguageStrings {
         return "$count $unit $adjective"
     }
     override fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
-        return "Ep. $episodeNumber ${releaseDateTime.formatReadableDateTime(::monthName)}"
+        return "Ep. $episodeNumber - ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
     override fun notificationDateLabel(dateTime: MediaReleaseDateTime): String {
         return dateTime.formatReadableDateTime(::monthName)
@@ -265,6 +265,9 @@ object SpanishStrings : LanguageStrings {
     override val listsLoadingLabel = "Cargando tu lista..."
     override val listsEmptyLabel = "Tu lista esta vacia"
     override val listsErrorLabel = "No se pudo cargar tu lista"
+    override val listsIncrementEpisodeAction = "+1 EP"
+    override val listsIncrementChapterAction = "+1 CH"
+    override val listsIncrementVolumeAction = "+1 VO"
     override val errorNoConnectionLabel = "Sin conexión a internet."
     override val errorUnauthorizedLabel = "Tu sesión expiró. Inicia sesión de nuevo."
     override val errorRateLimitedLabel = "Demasiadas solicitudes. Espera un momento."

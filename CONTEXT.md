@@ -194,7 +194,7 @@ com.luum.michi.app
   account/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder (no screens yet)
   discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet)
-  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (no screens yet)
+  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (anime screen live, manga holder-only)
   mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (no screens yet)
   notifications/          domain(+model)/repository/ui/state holder (no screens yet)
   settings/
@@ -226,7 +226,7 @@ appear only when real behavior justifies them.
 - `root` is a slim orchestrator. It wires the session `SettingsState` and composes `Toolbar` + `TabBar`. Root-scoped state lives in `root/state/State.kt`.
 - Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `ACCOUNT`.
 - Settings is independent of account (the old account-route concept is gone). The gear in the ACCOUNT toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `account/`.
-- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaList/` (`AnimeListStateHolder`, `MangaListStateHolder`) and `mediaDetail/` (media/character/studio/staff holders). Screens land later without restructuring (see feature-group exceptions).
+- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` (media/character/studio/staff holders). `mediaList/` has the first real list UI: `AnimeListScreen` (section rail + `MediaCoverCard` rows over `AnimeListStateHolder`, wired in `Root`'s ANIME tab) while manga stays holder-only. Screens land later without restructuring (see feature-group exceptions).
 - `account/` has domain + repository (+mappers) + state holders (`AccountStateHolder`, `AccountFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/media surfaces exist yet.
 - `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`) and font rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the landing edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
 - Notifications feed is parked as a future `account` subfeature (sheet from the Account toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `account/` when its UI lands.

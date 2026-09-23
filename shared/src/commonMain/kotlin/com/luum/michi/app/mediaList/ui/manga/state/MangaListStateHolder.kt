@@ -105,7 +105,10 @@ internal class MangaListStateHolder(
 
     fun entriesInSection(section: MangaListSection): List<MangaListEntry> {
         val filtered = loader.entries
-            .filter { it.status == section }
+            // ALL has no status of its own: no entry carries it, so filtering
+            // by it would always come back empty (counts already treat ALL
+            // as the whole list).
+            .filter { section == MangaListSection.ALL || it.status == section }
             .filter {
                 matchesMediaListFilters(
                     season = it.season,

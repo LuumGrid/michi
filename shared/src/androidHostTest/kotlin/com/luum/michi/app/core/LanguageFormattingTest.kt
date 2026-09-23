@@ -49,7 +49,7 @@ class LanguageFormattingTest {
     @Test
     fun releaseDateLabelsFormat() {
         val dateTime = MediaReleaseDateTime(day = 5, month = 3, year = 2025, hour = 9, minute = 5)
-        assertEquals("Ep. 12 5 Mar 2025, 09:05", EnglishStrings.nextEpisodeReleaseLabel(12, dateTime))
+        assertEquals("Ep. 12 - 5 Mar 2025, 09:05", EnglishStrings.nextEpisodeReleaseLabel(12, dateTime))
         assertEquals("5 Mar 2025, 09:05", EnglishStrings.notificationDateLabel(dateTime))
     }
 }

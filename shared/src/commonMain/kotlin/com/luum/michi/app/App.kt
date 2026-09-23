@@ -202,6 +202,8 @@ fun App(
                                 guestMode = false
                                 dependencies.logout()
                             },
+                            animeListRepository = dependencies.animeListRepository,
+                            mediaListEntryRepository = dependencies.mediaListEntryRepository,
                         )
                     }
                     AppRoute.ERROR -> {
