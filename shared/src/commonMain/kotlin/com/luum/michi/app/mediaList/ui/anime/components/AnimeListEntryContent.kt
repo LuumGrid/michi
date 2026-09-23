@@ -1,11 +1,7 @@
 package com.luum.michi.app.mediaList.ui.anime.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -23,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +48,20 @@ internal fun ColumnScope.AnimeListEntryContent(
         modifier = modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
+        // Behind only: release info already lives in the card subtitle, so
+        // falling back to it here would print the date twice.
+        val note = entry.behindLabel(strings)
+        if (note != null) {
+            Text(
+                text = note,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        } else {
+            Spacer(modifier = Modifier)
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -63,29 +72,7 @@ internal fun ColumnScope.AnimeListEntryContent(
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
-            EditPill(editLabel = strings.editEntryAction)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Behind only: release info already lives in the card subtitle, so
-            // falling back to it here would print the date twice.
-            val note = entry.behindLabel(strings)
-            if (note != null) {
-                Text(
-                    text = note,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-            ProgressCapsule(
+            ProgressGroup(
                 progress = entry.progressLabel(),
                 action = strings.listsIncrementEpisodeAction,
                 showAction = entry.status == AnimeListSection.WATCHING,
@@ -93,36 +80,6 @@ internal fun ColumnScope.AnimeListEntryContent(
                 onIncrement = onIncrement,
             )
         }
-    }
-}
-
-/**
- * Edit affordance beside the score pill. Ghost pencil, same 32dp height as
- * the bottom pills. The tap wires to the quick-edit sheet batch (TODO) —
- * until then it is intentionally inert.
- */
-@Composable
-internal fun EditPill(
-    editLabel: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        // TODO: open the quick-edit sheet (mini-step B).
-        onClick = {},
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        ),
-        modifier = modifier,
-    ) {
-        Icon(
-            imageVector = AppIcons.Edit,
-            contentDescription = editLabel,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-        )
     }
 }
 
@@ -168,15 +125,15 @@ private fun ScorePill(
 }
 
 /**
- * Counter + increment in one capsule with a split fill: outlined static
- * counter on the left, filled +1 on the right. The fill change is the
- * divider — no bar needed. Without +1 (outside Watching) the counter
- * stands alone as a ghost pill.
+ * Counter + increment as two sibling pills: the counter is a static ghost,
+ * only +1 acts. The 8dp air between pills is the separator — no divider
+ * needed. Card taps open the editor (AL-chan pattern: implicit edit, no
+ * button); cover/title taps will navigate to detail.
  * Anime-scoped for now; if the manga twin matches, it extracts to
  * `mediaList/ui/common/` like the rail.
  */
 @Composable
-private fun ProgressCapsule(
+private fun ProgressGroup(
     progress: String,
     action: String,
     showAction: Boolean,
@@ -184,9 +141,11 @@ private fun ProgressCapsule(
     onIncrement: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (!showAction) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Surface(
-            modifier = modifier,
             shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(
@@ -203,49 +162,31 @@ private fun ProgressCapsule(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             )
         }
-        return
-    }
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
+        // +1 only where progress can move (Watching): elsewhere the counter
+        // stands alone — showing a dead action would imply it works.
+        if (showAction) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(
+                onClick = onIncrement,
+                enabled = enabled,
                 shape = RoundedCornerShape(24.dp),
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = progress,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 16.dp, top = 6.dp, bottom = 6.dp),
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .background(
-                    if (enabled) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-                )
-                .clickable(enabled = enabled, onClick = onIncrement),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = action,
-                style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                    MaterialTheme.colorScheme.primaryContainer
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    MaterialTheme.colorScheme.surfaceVariant
                 },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            )
+            ) {
+                Text(
+                    text = action,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                )
+            }
         }
     }
 }

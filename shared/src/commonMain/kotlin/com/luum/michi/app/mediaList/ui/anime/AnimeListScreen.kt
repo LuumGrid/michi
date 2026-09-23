@@ -126,7 +126,8 @@ internal fun AnimeListScreen(
                             coverUrl = entry.coverUrl,
                             title = entry.title,
                             subtitle = meta,
-                            // TODO: navigate to media detail.
+                            // TODO: open the quick-edit sheet (mini-step B);
+                            // cover/title taps will navigate to media detail.
                             onClick = {},
                         ) {
                             AnimeListEntryContent(
