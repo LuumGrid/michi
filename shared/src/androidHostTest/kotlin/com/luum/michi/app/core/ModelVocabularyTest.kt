@@ -1,14 +1,17 @@
 package com.luum.michi.app.core
 
+import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.model.CalendarDateParts
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.calendarPartsToMillis
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.millisToCalendarParts
 import com.luum.michi.app.core.model.next
 import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.previous
 import com.luum.michi.app.core.model.seasonForMonth
 import com.luum.michi.app.core.model.startEpochSeconds
@@ -83,5 +86,27 @@ class ModelVocabularyTest {
         assertEquals(CalendarDateParts(1970, 1, 1), millisToCalendarParts(0L))
         val parts = CalendarDateParts(2025, 3, 15)
         assertEquals(parts, millisToCalendarParts(calendarPartsToMillis(parts)))
+    }
+
+    @Test
+    fun workStatusParsesCaseInsensitively() {
+        assertEquals(MediaWorkStatus.FINISHED, parseMediaWorkStatus("finished"))
+        assertEquals(MediaWorkStatus.RELEASING, parseMediaWorkStatus("RELEASING"))
+        assertEquals(MediaWorkStatus.NOT_YET_RELEASED, parseMediaWorkStatus("not_yet_released"))
+        assertNull(parseMediaWorkStatus("BOGUS"))
+        assertNull(parseMediaWorkStatus(null))
+    }
+
+    @Test
+    fun workStatusReleasingSplitsByType() {
+        assertEquals("Airing", MediaWorkStatus.RELEASING.label(EnglishStrings, isManga = false))
+        assertEquals("Publishing", MediaWorkStatus.RELEASING.label(EnglishStrings, isManga = true))
+        assertEquals("Finished", MediaWorkStatus.FINISHED.label(EnglishStrings, isManga = false))
+    }
+
+    @Test
+    fun seasonLabelsTranslate() {
+        assertEquals("Winter", MediaSeason.WINTER.label(EnglishStrings))
+        assertEquals("Fall", MediaSeason.FALL.label(EnglishStrings))
     }
 }

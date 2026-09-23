@@ -18,9 +18,14 @@ internal interface MediaListEntryRepository {
         completedAtMillis: Long?,
     ): NetworkResult<MediaListViewerEntry>
 
+    /**
+     * Partial progress save: null fields are omitted from the mutation, so
+     * the server leaves them intact. Novels ([tracksByVolume]-style entries)
+     * send volumes only, with [progress] null.
+     */
     suspend fun saveProgress(
         mediaId: Int,
-        progress: Int,
+        progress: Int?,
         status: MediaListStatus? = null,
         progressVolumes: Int? = null,
     ): NetworkResult<Unit>

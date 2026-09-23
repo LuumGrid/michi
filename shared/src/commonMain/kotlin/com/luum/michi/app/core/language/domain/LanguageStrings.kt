@@ -254,6 +254,12 @@ interface LanguageStrings {
     val listsIncrementEpisodeAction: String
     val listsIncrementChapterAction: String
     val listsIncrementVolumeAction: String
+    val workStatusFinished: String
+    val workStatusAiring: String
+    val workStatusPublishing: String
+    val workStatusUpcoming: String
+    val workStatusCancelled: String
+    val workStatusHiatus: String
     val errorNoConnectionLabel: String
     val errorUnauthorizedLabel: String
     val errorRateLimitedLabel: String

@@ -6,6 +6,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.completedSection
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.toComparableInt
@@ -17,6 +18,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
         id = media.id,
         title = media.title.bestTitle(),
         format = parseMediaFormat(media.format),
+        mediaStatus = parseMediaWorkStatus(media.status),
         status = section,
         progress = progress,
         totalEpisodes = media.episodes,

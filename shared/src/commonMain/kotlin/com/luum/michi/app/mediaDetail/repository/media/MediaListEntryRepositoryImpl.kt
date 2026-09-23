@@ -186,13 +186,15 @@ internal class MediaListEntryRepositoryImpl(
 
     override suspend fun saveProgress(
         mediaId: Int,
-        progress: Int,
+        progress: Int?,
         status: MediaListStatus?,
         progressVolumes: Int?,
     ): NetworkResult<Unit> {
         val variables = buildMap<String, JsonElement> {
             put("mediaId", JsonPrimitive(mediaId))
-            put("progress", JsonPrimitive(progress))
+            if (progress != null) {
+                put("progress", JsonPrimitive(progress))
+            }
             if (status != null) {
                 put("status", JsonPrimitive(status.toApiValue()))
             }

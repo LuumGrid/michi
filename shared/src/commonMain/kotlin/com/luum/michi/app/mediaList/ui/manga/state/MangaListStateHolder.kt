@@ -90,7 +90,9 @@ internal class MangaListStateHolder(
         scope.launch {
             val result = entryRepository.saveProgress(
                 mediaId = entry.id,
-                progress = updatedEntry.chaptersProgress,
+                // Novels track volumes only: chapters stay omitted so the
+                // server leaves them intact instead of resetting to stale 0.
+                progress = if (updatedEntry.tracksByVolume) null else updatedEntry.chaptersProgress,
                 status = updatedEntry.status.toMediaListStatus(),
                 progressVolumes = updatedEntry.volumesProgress,
             )

@@ -1,5 +1,6 @@
 package com.luum.michi.app.core.model
 
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.isoDayNumber
@@ -15,6 +16,15 @@ internal fun parseMediaSeason(raw: String?): MediaSeason? = when (raw?.uppercase
     "SUMMER" -> MediaSeason.SUMMER
     "FALL" -> MediaSeason.FALL
     else -> null
+}
+
+/** Shared season label (mediaDetail had a private twin — scopes must not
+ *  import each other, so the neutral one lives here). */
+internal fun MediaSeason.label(strings: LanguageStrings): String = when (this) {
+    MediaSeason.WINTER -> strings.seasonWinterLabel
+    MediaSeason.SPRING -> strings.seasonSpringLabel
+    MediaSeason.SUMMER -> strings.seasonSummerLabel
+    MediaSeason.FALL -> strings.seasonFallLabel
 }
 
 internal data class MediaSeasonYear(val season: MediaSeason, val year: Int)

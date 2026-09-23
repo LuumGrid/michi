@@ -2,6 +2,7 @@ package com.luum.michi.app.mediaList.domain.manga.model
 
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 
@@ -9,6 +10,7 @@ internal data class MangaListEntry(
     override val id: Int,
     override val title: String,
     override val format: MediaFormat,
+    val mediaStatus: MediaWorkStatus? = null,
     val status: MangaListSection,
     val chaptersProgress: Int,
     val totalChapters: Int?,

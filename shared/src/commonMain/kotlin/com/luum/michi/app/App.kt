@@ -203,6 +203,7 @@ fun App(
                                 dependencies.logout()
                             },
                             animeListRepository = dependencies.animeListRepository,
+                            mangaListRepository = dependencies.mangaListRepository,
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
                         )
                     }

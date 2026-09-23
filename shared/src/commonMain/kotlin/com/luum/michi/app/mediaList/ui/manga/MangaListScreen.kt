@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaList.ui.anime
+package com.luum.michi.app.mediaList.ui.manga
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,14 +24,13 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.label
-import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.mediaList.domain.anime.model.AnimeStatusSections
-import com.luum.michi.app.mediaList.domain.anime.model.label
-import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
-import com.luum.michi.app.mediaList.ui.anime.components.AnimeListEntryContent
-import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.MangaStatusSections
+import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionRail
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionTab
+import com.luum.michi.app.mediaList.ui.manga.components.MangaListEntryContent
+import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
@@ -39,15 +38,15 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * Anime list: section rail + entry cards. States reuse the app-wide
- * vocabulary (spinner, [MessagePanel] with retry, empty label). Search,
- * filters and sort land in later steps; the holder already supports them.
+ * Manga list: section rail + entry cards. Mirrors [AnimeListScreen]: same
+ * states, same card language, manga content (chapters, volumes for novels).
+ * Manga exposes no airing dates, so the subtitle is the format alone.
  */
 @Composable
-internal fun AnimeListScreen(
-    holder: AnimeListStateHolder,
-    selected: AnimeListSection,
-    onSelectSection: (AnimeListSection) -> Unit,
+internal fun MangaListScreen(
+    holder: MangaListStateHolder,
+    selected: MangaListSection,
+    onSelectSection: (MangaListSection) -> Unit,
     onRetry: () -> Unit,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
@@ -57,7 +56,7 @@ internal fun AnimeListScreen(
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
 ) {
-    val sections = listOf(AnimeListSection.ALL) + AnimeStatusSections
+    val sections = listOf(MangaListSection.ALL) + MangaStatusSections
     val tabs = sections.map { section ->
         MediaListSectionTab(
             value = section,
@@ -102,7 +101,7 @@ internal fun AnimeListScreen(
                 MessagePanel(
                     title = strings.listsEmptyLabel,
                     message = null,
-                    icon = AppIcons.Anime,
+                    icon = AppIcons.Manga,
                     actionLabel = null,
                     onAction = {},
                 )
@@ -123,29 +122,26 @@ internal fun AnimeListScreen(
                             items = entries,
                             key = { it.id },
                     ) { entry ->
-                        val seasonYear = entry.season?.let { season ->
-                            val year = entry.seasonYear?.toString()
-                            if (year != null) "${season.label(strings)} $year" else season.label(strings)
-                        } ?: entry.seasonYear?.toString()
                         val meta = listOfNotNull(
                             entry.format.label(),
-                            seasonYear,
-                            entry.mediaStatus?.label(strings, isManga = false),
+                            entry.seasonYear?.toString(),
+                            entry.mediaStatus?.label(strings, isManga = true),
                         ).joinToString(" · ")
                         MediaCoverCard(
                             coverUrl = entry.coverUrl,
                             title = entry.title,
                             subtitle = meta,
-                            // TODO: open the quick-edit sheet (mini-step B);
-                            // cover/title taps will navigate to media detail.
-                            onClick = {},
-                        ) {
-                            AnimeListEntryContent(
-                                entry = entry,
-                                onIncrement = { holder.incrementProgress(entry) },
-                                strings = strings,
-                            )
-                        }
+                                // TODO: open the quick-edit sheet (mini-step B);
+                                // cover/title taps will navigate to media detail.
+                                onClick = {},
+                            ) {
+                                MangaListEntryContent(
+                                    entry = entry,
+                                    onIncrementChapters = { holder.incrementChapters(entry) },
+                                    onIncrementVolumes = { holder.incrementVolumes(entry) },
+                                    strings = strings,
+                                )
+                            }
                         }
                     }
                 }

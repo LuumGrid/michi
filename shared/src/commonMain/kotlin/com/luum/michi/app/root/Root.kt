@@ -31,9 +31,12 @@ import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
+import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
+import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
@@ -84,6 +87,7 @@ internal fun Root(
     onLogin: () -> Unit = {},
     onLogout: () -> Unit = {},
     animeListRepository: AnimeListRepository,
+    mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
 ) {
     val tab = state.selectedTab
@@ -115,9 +119,17 @@ internal fun Root(
             AnimeListStateHolder(animeListRepository, mediaListEntryRepository, listScope)
         }
     }
+    val mangaHolder = remember(viewerId, mangaListRepository, mediaListEntryRepository) {
+        viewerId?.let {
+            MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope)
+        }
+    }
     LaunchedEffect(tab, viewerId) {
         if (tab == TabSection.ANIME && viewerId != null) {
             animeHolder?.load(viewerId)
+        }
+        if (tab == TabSection.MANGA && viewerId != null) {
+            mangaHolder?.load(viewerId)
         }
     }
 
@@ -255,6 +267,18 @@ internal fun Root(
                         onSelectSection = { state.selectedAnimeSection = it },
                         onRetry = { animeHolder.load(viewerId, forceRefresh = true) },
                         bottomPadding = padding.calculateBottomPadding(),
+                        isRefreshing = animeHolder.isRefreshing,
+                        onRefresh = { animeHolder.load(viewerId, forceRefresh = true) },
+                    )
+                } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
+                    MangaListScreen(
+                        holder = mangaHolder,
+                        selected = state.selectedMangaSection,
+                        onSelectSection = { state.selectedMangaSection = it },
+                        onRetry = { mangaHolder.load(viewerId, forceRefresh = true) },
+                        bottomPadding = padding.calculateBottomPadding(),
+                        isRefreshing = mangaHolder.isRefreshing,
+                        onRefresh = { mangaHolder.load(viewerId, forceRefresh = true) },
                     )
                 } else {
                     val tabItem = tabs(strings).first { it.section == activeTab }

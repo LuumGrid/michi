@@ -8,6 +8,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.model.parseMediaWorkStatus
 
 internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
     val format = parseMediaFormat(media.format)
@@ -15,6 +16,7 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
         id = media.id,
         title = media.title.bestTitle(),
         format = format,
+        mediaStatus = parseMediaWorkStatus(media.status),
         status = mapMangaStatus(status),
         chaptersProgress = progress,
         totalChapters = media.chapters,
