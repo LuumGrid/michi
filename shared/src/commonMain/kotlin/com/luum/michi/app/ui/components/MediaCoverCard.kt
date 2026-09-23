@@ -77,28 +77,32 @@ internal fun MediaCoverCard(
                     .aspectRatio(3f / 4f),
             )
             Spacer(modifier = Modifier.width(12.dp))
-            // Top-anchored: short titles never drop. fillMaxHeight lets scope
-            // content pin blocks to the bottom (SpaceBetween).
+            // Header top-anchored, slot filling the rest: bottom pills
+            // terminate flush with the cover bottom. Bounded by the fixed Row
+            // height, so weight distributes (in wrap content it would collapse
+            // and float the pills, as before).
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.Top,
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (subtitle != null) {
+                Column {
                     Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 content?.invoke(this)
             }

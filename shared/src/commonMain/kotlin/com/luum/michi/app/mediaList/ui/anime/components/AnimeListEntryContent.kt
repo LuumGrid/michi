@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,8 +43,12 @@ internal fun ColumnScope.AnimeListEntryContent(
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
 ) {
+    // weight(1f), not fillMaxHeight: inside the card's bounded column it
+    // takes the remainder, so SpaceBetween pins the bottom row flush with
+    // the cover bottom. fillMaxHeight here would fill everything and push
+    // the header out.
     Column(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.weight(1f),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         // Behind only: release info already lives in the card subtitle, so
@@ -115,7 +118,7 @@ private fun ScorePill(
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = score,
-                style = MaterialTheme.typography.bodyLarge.copy(
+                style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -155,7 +158,7 @@ private fun ProgressGroup(
         ) {
             Text(
                 text = progress,
-                style = MaterialTheme.typography.bodyLarge.copy(
+                style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -178,7 +181,9 @@ private fun ProgressGroup(
             ) {
                 Text(
                     text = action,
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
                     color = if (enabled) {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
