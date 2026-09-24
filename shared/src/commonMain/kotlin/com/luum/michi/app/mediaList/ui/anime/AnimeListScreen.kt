@@ -23,15 +23,26 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeStatusSections
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
+import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
+import com.luum.michi.app.mediaList.domain.common.mediaListGenres
+import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
+import com.luum.michi.app.mediaList.domain.common.mediaListYears
 import com.luum.michi.app.mediaList.ui.anime.components.AnimeListEntryContent
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.ui.common.ANY_SEASON_ID
+import com.luum.michi.app.mediaList.ui.common.MediaListFilterSheet
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionRail
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionTab
+import com.luum.michi.app.mediaList.ui.common.MediaListSortSheet
+import com.luum.michi.app.mediaList.ui.common.toggled
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
@@ -59,6 +70,12 @@ internal fun AnimeListScreen(
     // In-context search: filters the current section by title (bestTitle
     // only — v1 limitation). Empty query shows the section untouched.
     query: String = "",
+    // List tools (toolbar filter/sort): Root owns the open flags so the
+    // toolbar back affordance and system back close the sheets.
+    isFilterOpen: Boolean = false,
+    onDismissFilter: () -> Unit = {},
+    isSortOpen: Boolean = false,
+    onDismissSort: () -> Unit = {},
 ) {
     val sections = listOf(AnimeListSection.ALL) + AnimeStatusSections
     val tabs = sections.map { section ->
@@ -166,5 +183,72 @@ internal fun AnimeListScreen(
                 }
             }
         }
+    }
+    if (isFilterOpen) {
+        MediaListFilterSheet(
+            seasonOptions = mediaListSeasonOptions(strings),
+            selectedSeasonId = holder.filterSeason?.name ?: ANY_SEASON_ID,
+            onSelectSeason = { id ->
+                holder.updateListFilters(
+                    season = if (id == ANY_SEASON_ID) null else parseMediaSeason(id),
+                    genres = holder.filterGenres,
+                    formats = holder.filterFormats,
+                    year = holder.filterYear,
+                )
+            },
+            yearOptions = mediaListYears(),
+            selectedYear = holder.filterYear,
+            onSelectYear = { year ->
+                holder.updateListFilters(
+                    season = holder.filterSeason,
+                    genres = holder.filterGenres,
+                    formats = holder.filterFormats,
+                    year = year,
+                )
+            },
+            genres = mediaListGenres(),
+            selectedGenres = holder.filterGenres,
+            onToggleGenre = { genre ->
+                holder.updateListFilters(
+                    season = holder.filterSeason,
+                    genres = holder.filterGenres.toggled(genre),
+                    formats = holder.filterFormats,
+                    year = holder.filterYear,
+                )
+            },
+            formatOptions = mediaListFormatOptions(isAnimeTab = true),
+            selectedFormatIds = holder.filterFormats,
+            onToggleFormat = { formatId ->
+                holder.updateListFilters(
+                    season = holder.filterSeason,
+                    genres = holder.filterGenres,
+                    formats = holder.filterFormats.toggled(formatId),
+                    year = holder.filterYear,
+                )
+            },
+            onReset = {
+                holder.updateListFilters(
+                    season = null,
+                    genres = emptyList(),
+                    formats = emptyList(),
+                    year = null,
+                )
+            },
+            onDismiss = onDismissFilter,
+        )
+    }
+    if (isSortOpen) {
+        MediaListSortSheet(
+            options = UserListSort.entries,
+            selected = holder.currentSortOption,
+            onSelect = { option ->
+                holder.updateSort(option, holder.currentSortOrder, persist = false)
+            },
+            order = holder.currentSortOrder,
+            onSelectOrder = { order ->
+                holder.updateSort(holder.currentSortOption, order, persist = false)
+            },
+            onDismiss = onDismissSort,
+        )
     }
 }

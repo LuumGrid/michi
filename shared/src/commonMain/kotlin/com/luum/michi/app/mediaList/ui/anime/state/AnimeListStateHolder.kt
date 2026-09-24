@@ -6,6 +6,9 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.incremented
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -25,14 +28,16 @@ internal class AnimeListStateHolder(
 ) {
     private val loader = MediaListLoader(scope) { userId -> repository.loadList(userId) }
 
-    var currentSortOption = UserListSort.FOLLOW_LIST
-    var currentSortOrder = UserListOrder.DESCENDING
-    var isFilterPersisted = false
+    // Snapshot-backed so filter/sort sheets recompose the list on every
+    // intent (plain vars would apply silently until the next load).
+    var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
+    var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
+    var isFilterPersisted by mutableStateOf(false)
 
-    var filterSeason: MediaSeason? = null
-    var filterGenres = emptyList<String>()
-    var filterFormats = emptyList<String>()
-    var filterYear: Int? = null
+    var filterSeason by mutableStateOf<MediaSeason?>(null)
+    var filterGenres by mutableStateOf(emptyList<String>())
+    var filterFormats by mutableStateOf(emptyList<String>())
+    var filterYear by mutableStateOf<Int?>(null)
 
     val entries: List<AnimeListEntry> get() = loader.entries
     val isLoading: Boolean get() = loader.isLoading

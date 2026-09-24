@@ -44,6 +44,7 @@ internal class State(
     var isCalendarOpen by mutableStateOf(false)
     var isNotificationsOpen by mutableStateOf(false)
     var isSectionFilterOpen by mutableStateOf(false)
+    var isListSortOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
     var isSettingsOpen by mutableStateOf(false)
@@ -89,7 +90,7 @@ internal class State(
 
     fun nextBackStep(): BackStep = when {
         isSearchActive -> BackStep.CloseSearch
-        isExploreFilterOpen || isSectionFilterOpen -> BackStep.CloseSheet
+        isExploreFilterOpen || isSectionFilterOpen || isListSortOpen -> BackStep.CloseSheet
         isExploreOpen || isCalendarOpen || isNotificationsOpen || isEditorOpen ||
             isShareProfileOpen || isSettingsOpen -> BackStep.CloseOverlay
         isDetailOpen -> BackStep.CloseDetail
@@ -108,6 +109,7 @@ internal class State(
         BackStep.CloseSheet -> {
             isExploreFilterOpen = false
             isSectionFilterOpen = false
+            isListSortOpen = false
             true
         }
         BackStep.CloseOverlay -> {
@@ -184,6 +186,14 @@ internal class State(
 
     fun closeSectionFilter() {
         isSectionFilterOpen = false
+    }
+
+    fun openListSort() {
+        isListSortOpen = true
+    }
+
+    fun closeListSort() {
+        isListSortOpen = false
     }
 
     fun openExploreFilter() {

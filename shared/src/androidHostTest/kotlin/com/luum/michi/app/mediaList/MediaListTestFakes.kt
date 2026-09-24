@@ -8,6 +8,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -49,6 +50,7 @@ internal fun animeMediaJson(
     episodes: Int? = 12,
     season: String? = "WINTER",
     seasonYear: Int? = 2024,
+    genres: List<String> = emptyList(),
 ): JsonObject = buildJsonObject {
     put("id", id)
     put("title", titleJson(romaji, english, native))
@@ -58,6 +60,7 @@ internal fun animeMediaJson(
     put("coverImage", buildJsonObject { put("thumbnailUrl", "https://img/$id.jpg") })
     if (season != null) put("season", season)
     if (seasonYear != null) put("seasonYear", seasonYear)
+    put("genres", JsonArray(genres.map { JsonPrimitive(it) }))
 }
 
 internal fun mangaMediaJson(

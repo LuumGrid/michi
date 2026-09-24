@@ -188,10 +188,10 @@ internal fun Root(
                     when (id) {
                         ACTION_SEARCH -> state.openSearch(tab)
                         ACTION_SETTINGS -> state.openSettings()
-                        // TODO: wire to the list filter/sort sheets when the
-                        // anime/manga list screens land. Visible but inert today.
-                        ACTION_FILTER,
-                        ACTION_SORT,
+                        // List tools only exist on ANIME/MANGA (see
+                        // toolbarActions), so these always target a list tab.
+                        ACTION_FILTER -> state.openSectionFilter()
+                        ACTION_SORT -> state.openListSort()
                         // TODO: wire to the schedule surface when it lands.
                         ACTION_CALENDAR,
                         -> Unit
@@ -276,6 +276,10 @@ internal fun Root(
                         isRefreshing = animeHolder.isRefreshing,
                         onRefresh = { animeHolder.load(viewerId, forceRefresh = true) },
                         query = tabQuery,
+                        isFilterOpen = state.isSectionFilterOpen,
+                        onDismissFilter = { state.closeSectionFilter() },
+                        isSortOpen = state.isListSortOpen,
+                        onDismissSort = { state.closeListSort() },
                     )
                 } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
                     MangaListScreen(
@@ -287,6 +291,10 @@ internal fun Root(
                         isRefreshing = mangaHolder.isRefreshing,
                         onRefresh = { mangaHolder.load(viewerId, forceRefresh = true) },
                         query = tabQuery,
+                        isFilterOpen = state.isSectionFilterOpen,
+                        onDismissFilter = { state.closeSectionFilter() },
+                        isSortOpen = state.isListSortOpen,
+                        onDismissSort = { state.closeListSort() },
                     )
                 } else if (search != null && activeQuery.isNotEmpty()) {
                     // DISCOVER (and guests): server search lands in a later step.

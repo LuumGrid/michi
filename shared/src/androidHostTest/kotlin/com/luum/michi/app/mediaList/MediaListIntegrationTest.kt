@@ -1,6 +1,8 @@
 package com.luum.michi.app.mediaList
 
 import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
@@ -192,5 +194,86 @@ class MediaListIntegrationTest {
 
         assertTrue(holder.entriesInSection(AnimeListSection.ALL).isEmpty())
         assertIs<NetworkError.Http>(holder.error)
+    }
+
+    @Test
+    fun filterByGenreAndFormatNarrowsSectionAndResets() {
+        val graphQL = FakeGraphQL(listOf(singleGroupCollection(
+            listEntryJson(
+                id = 1,
+                status = "CURRENT",
+                progress = 3,
+                media = animeMediaJson(
+                    id = 101,
+                    format = "TV",
+                    romaji = "Action Show",
+                    english = null,
+                    genres = listOf("Action", "Adventure"),
+                ),
+            ),
+            listEntryJson(
+                id = 2,
+                status = "CURRENT",
+                progress = 1,
+                media = animeMediaJson(
+                    id = 102,
+                    format = "MOVIE",
+                    romaji = "Romance Film",
+                    english = null,
+                    genres = listOf("Romance"),
+                ),
+            ),
+        )))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        holder.updateListFilters(season = null, genres = listOf("Action"), formats = emptyList(), year = null)
+        assertEquals(
+            listOf(101),
+            holder.entriesInSection(AnimeListSection.WATCHING).map { it.id },
+        )
+
+        holder.updateListFilters(season = null, genres = emptyList(), formats = listOf("MOVIE"), year = null)
+        assertEquals(
+            listOf(102),
+            holder.entriesInSection(AnimeListSection.WATCHING).map { it.id },
+        )
+
+        holder.updateListFilters(season = null, genres = emptyList(), formats = emptyList(), year = null)
+        assertEquals(2, holder.entriesInSection(AnimeListSection.WATCHING).size)
+    }
+
+    @Test
+    fun sortByTitleRespectsOrder() {
+        val graphQL = FakeGraphQL(listOf(singleGroupCollection(
+            listEntryJson(
+                id = 1,
+                status = "CURRENT",
+                progress = 3,
+                media = animeMediaJson(id = 101, romaji = "Zulu", english = null),
+            ),
+            listEntryJson(
+                id = 2,
+                status = "CURRENT",
+                progress = 1,
+                media = animeMediaJson(id = 102, romaji = "Alpha", english = null),
+            ),
+        )))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        holder.updateSort(UserListSort.TITLE, UserListOrder.ASCENDING, persist = false)
+        assertEquals(
+            listOf("Alpha", "Zulu"),
+            holder.entriesInSection(AnimeListSection.WATCHING).map { it.title },
+        )
+
+        holder.updateSort(UserListSort.TITLE, UserListOrder.DESCENDING, persist = false)
+        assertEquals(
+            listOf("Zulu", "Alpha"),
+            holder.entriesInSection(AnimeListSection.WATCHING).map { it.title },
+        )
     }
 }
