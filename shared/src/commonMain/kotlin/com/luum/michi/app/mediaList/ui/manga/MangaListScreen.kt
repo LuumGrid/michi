@@ -72,7 +72,9 @@ internal fun MangaListScreen(
         if (trimmedQuery.isEmpty()) {
             sectionEntries
         } else {
-            sectionEntries.filter { it.title.contains(trimmedQuery, ignoreCase = true) }
+            sectionEntries.filter { entry ->
+                entry.titles.any { it.contains(trimmedQuery, ignoreCase = true) }
+            }
         }
     }
     Column(modifier = modifier.fillMaxSize()) {

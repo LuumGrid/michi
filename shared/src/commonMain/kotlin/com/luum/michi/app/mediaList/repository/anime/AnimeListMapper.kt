@@ -17,6 +17,11 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
     return AnimeListEntry(
         id = media.id,
         title = media.title.bestTitle(),
+        titles = listOfNotNull(
+            media.title?.romaji?.takeIf { it.isNotBlank() },
+            media.title?.english?.takeIf { it.isNotBlank() },
+            media.title?.native?.takeIf { it.isNotBlank() },
+        ).distinct(),
         format = parseMediaFormat(media.format),
         mediaStatus = parseMediaWorkStatus(media.status),
         status = section,

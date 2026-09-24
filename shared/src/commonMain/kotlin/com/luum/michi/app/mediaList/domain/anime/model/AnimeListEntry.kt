@@ -10,6 +10,8 @@ import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 internal data class AnimeListEntry(
     override val id: Int,
     override val title: String,
+    /** Every non-blank title variant (romaji/english/native): search matches any of them. */
+    val titles: List<String> = listOf(title),
     override val format: MediaFormat,
     val mediaStatus: MediaWorkStatus? = null,
     val status: AnimeListSection,

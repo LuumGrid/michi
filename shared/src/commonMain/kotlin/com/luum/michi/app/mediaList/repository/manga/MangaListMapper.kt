@@ -15,6 +15,11 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
     return MangaListEntry(
         id = media.id,
         title = media.title.bestTitle(),
+        titles = listOfNotNull(
+            media.title?.romaji?.takeIf { it.isNotBlank() },
+            media.title?.english?.takeIf { it.isNotBlank() },
+            media.title?.native?.takeIf { it.isNotBlank() },
+        ).distinct(),
         format = format,
         mediaStatus = parseMediaWorkStatus(media.status),
         status = mapMangaStatus(status),
