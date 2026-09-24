@@ -56,6 +56,9 @@ internal fun AnimeListScreen(
     bottomPadding: Dp = 0.dp,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
+    // In-context search: filters the current section by title (bestTitle
+    // only — v1 limitation). Empty query shows the section untouched.
+    query: String = "",
 ) {
     val sections = listOf(AnimeListSection.ALL) + AnimeStatusSections
     val tabs = sections.map { section ->
@@ -65,7 +68,14 @@ internal fun AnimeListScreen(
             count = holder.countInSection(section),
         )
     }
-    val entries = holder.entriesInSection(selected)
+    val trimmedQuery = query.trim()
+    val entries = holder.entriesInSection(selected).let { sectionEntries ->
+        if (trimmedQuery.isEmpty()) {
+            sectionEntries
+        } else {
+            sectionEntries.filter { it.title.contains(trimmedQuery, ignoreCase = true) }
+        }
+    }
     Column(modifier = modifier.fillMaxSize()) {
         MediaListSectionRail(
             tabs = tabs,
@@ -99,10 +109,13 @@ internal fun AnimeListScreen(
                 )
             }
             entries.isEmpty() -> {
+                // No match under an active query reads as no-results, not as
+                // an empty section (different message, same panel).
+                val noMatch = trimmedQuery.isNotEmpty()
                 MessagePanel(
-                    title = strings.listsEmptyLabel,
+                    title = if (noMatch) strings.searchNoResultsLabel else strings.listsEmptyLabel,
                     message = null,
-                    icon = AppIcons.Anime,
+                    icon = if (noMatch) AppIcons.Search else AppIcons.Anime,
                     actionLabel = null,
                     onAction = {},
                 )

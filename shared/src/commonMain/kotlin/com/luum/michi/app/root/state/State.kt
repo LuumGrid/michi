@@ -79,10 +79,6 @@ internal class State(
         searchActiveTab = null
     }
 
-    fun clearSearch(tab: TabSection) {
-        searchQueries[tab] = ""
-    }
-
     fun selectTab(tab: TabSection) {
         selectedTab = tab
         // Queries are preserved per tab; the search surface only stays open

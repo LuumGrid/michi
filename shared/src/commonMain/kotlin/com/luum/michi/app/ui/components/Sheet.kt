@@ -63,7 +63,6 @@ internal fun ModalSheet(
                 onSearchChange = {},
                 onSearchSubmit = {},
                 onSearchClose = {},
-                onSearchClear = {},
                 applyWindowInsets = false,
             )
             Column(

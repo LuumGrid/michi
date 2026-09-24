@@ -101,7 +101,6 @@ internal fun AuthLandingScreen(
                 onSearchChange = {},
                 onSearchSubmit = {},
                 onSearchClose = {},
-                onSearchClear = {},
             )
         },
         modifier = modifier,

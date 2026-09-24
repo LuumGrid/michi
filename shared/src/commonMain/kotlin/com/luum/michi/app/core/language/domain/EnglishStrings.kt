@@ -23,7 +23,7 @@ object EnglishStrings : LanguageStrings {
     override val dismissAction = "Dismiss"
     override val clearSearchAction = "Clear search"
     override val searchTypeAll = "All"
-    override val searchEmptyQueryHint = "Type to search anime or manga"
+    override val searchEmptyQueryHint = "Type to search..."
     override val searchNoResultsLabel = "No results in your list"
     override val exploreThisSeasonTitle = "This season"
     override val exploreUpcomingNextSeasonTitle = "Upcoming next season"

@@ -102,7 +102,6 @@ internal fun Toolbar(
     onSearchChange: (String) -> Unit,
     onSearchSubmit: () -> Unit,
     onSearchClose: () -> Unit,
-    onSearchClear: () -> Unit,
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     applyWindowInsets: Boolean = true,
@@ -199,9 +198,8 @@ internal fun Toolbar(
                 }
             }
         } else {
-            // Three loose glass pieces (never merged): chevron circle mirroring
-            // the search action position, expanding text pill, X circle where
-            // the magnifier was. Borders may touch, surfaces stay separate.
+            // Chevron circle mirroring the search action position plus the
+            // expanding text pill. Borders may touch, surfaces stay separate.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -224,23 +222,19 @@ internal fun Toolbar(
                         .weight(1f)
                         .glass(),
                 ) {
-                    // Lambda param (not the closure): during the close fade the
-                    // outgoing side still sees the last query instead of null.
+                    // Chevron circle mirroring the search action position plus
+                    // the expanding text pill (the clear-X lives bare inside
+                    // the field, only with text). Borders may touch, surfaces
+                    // stay separate.
                     SearchField(
                         query = activeSearch.query,
                         hint = activeSearch.hint,
                         autoFocus = activeSearch.autoFocus,
                         onQueryChange = onSearchChange,
                         onSubmit = onSearchSubmit,
+                        clearDescription = clearContentDescription.orEmpty(),
                     )
                 }
-                Spacer(modifier = Modifier.size(8.dp))
-                // Always visible, even with an empty query (clear is a no-op then).
-                GlassCircleButton(
-                    icon = AppIcons.Clear,
-                    contentDescription = clearContentDescription.orEmpty(),
-                    onClick = { onSearchClear() },
-                )
             }
         }
     }

@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
@@ -102,12 +103,26 @@ internal fun Root(
     // Derived, no state of its own: scrim while expanded with an empty query,
     // replaced by the result list on the first letter.
     val activeQuery = searchTab?.let { state.searchQuery(it) }.orEmpty()
+    // The query belongs to the tab where search opened: switching tabs
+    // mid-search must not filter the new tab with a foreign query.
+    val tabQuery = if (searchTab == tab) activeQuery else ""
     val showScrim = search != null && activeQuery.isEmpty()
 
     // Synced settings load once per session, on first open — never on
     // composition, never for guests (canSync). The holder dedups repeats.
     LaunchedEffect(state.isSettingsOpen) {
         if (state.isSettingsOpen) settingsState.refresh()
+    }
+
+    // Keyboard follows search: every close path (chevron, scrim, system
+    // back, tab switch) funnels through searchActiveTab, so releasing focus
+    // here dismisses the keyboard in sync with the toolbar transition.
+    // No-op when nothing holds focus.
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(state.searchActiveTab) {
+        if (state.searchActiveTab == null) {
+            focusManager.clearFocus()
+        }
     }
 
     // Anime list holder, recreated per viewer. Loads are explicit and the
@@ -187,9 +202,6 @@ internal fun Root(
                 },
                 onSearchSubmit = {},
                 onSearchClose = { state.applyBackStep() },
-                onSearchClear = {
-                    searchTab?.let { state.clearSearch(it) }
-                },
                 scrollBehavior = toolbarScroll.takeIf { hideToolbarOnScroll },
             )
             }
@@ -252,15 +264,9 @@ internal fun Root(
                         onLogin = onLogin,
                         onLogout = onLogout,
                     )
-                } else if (search != null && activeQuery.isNotEmpty()) {
-                    MessagePanel(
-                        title = strings.searchNoResultsLabel,
-                        message = null,
-                        icon = AppIcons.Search,
-                        actionLabel = null,
-                        onAction = {},
-                    )
                 } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
+                    // Lists own their query: with or without text the screen
+                    // renders (full section under the scrim when empty).
                     AnimeListScreen(
                         holder = animeHolder,
                         selected = state.selectedAnimeSection,
@@ -269,6 +275,7 @@ internal fun Root(
                         bottomPadding = padding.calculateBottomPadding(),
                         isRefreshing = animeHolder.isRefreshing,
                         onRefresh = { animeHolder.load(viewerId, forceRefresh = true) },
+                        query = tabQuery,
                     )
                 } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
                     MangaListScreen(
@@ -279,6 +286,16 @@ internal fun Root(
                         bottomPadding = padding.calculateBottomPadding(),
                         isRefreshing = mangaHolder.isRefreshing,
                         onRefresh = { mangaHolder.load(viewerId, forceRefresh = true) },
+                        query = tabQuery,
+                    )
+                } else if (search != null && activeQuery.isNotEmpty()) {
+                    // DISCOVER (and guests): server search lands in a later step.
+                    MessagePanel(
+                        title = strings.searchNoResultsLabel,
+                        message = null,
+                        icon = AppIcons.Search,
+                        actionLabel = null,
+                        onAction = {},
                     )
                 } else {
                     val tabItem = tabs(strings).first { it.section == activeTab }
