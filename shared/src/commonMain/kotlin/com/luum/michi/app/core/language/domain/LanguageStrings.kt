@@ -203,6 +203,10 @@ interface LanguageStrings {
     val settingsTitleLanguageRomaji: String
     val settingsTitleLanguageEnglish: String
     val settingsTitleLanguageNative: String
+    val settingsStaffNameTitle: String
+    val settingsStaffNameWestern: String
+    val settingsStaffNameRomaji: String
+    val settingsStaffNameNative: String
     val settingsAdultContentTitle: String
     val settingsAdultContentSubtitle: String
     val settingsScoreFormatTitle: String

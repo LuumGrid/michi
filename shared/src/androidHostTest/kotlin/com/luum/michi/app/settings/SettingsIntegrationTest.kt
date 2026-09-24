@@ -4,6 +4,7 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.ui.state.SettingsState
@@ -33,6 +34,7 @@ private val viewerPage = buildJsonObject {
     put("Viewer", buildJsonObject {
         put("options", buildJsonObject {
             put("titleLanguage", "ENGLISH")
+            put("staffNameLanguage", "NATIVE")
             put("displayAdultContent", true)
             put("airingNotifications", true)
             putJsonArray("notificationOptions") {
@@ -94,6 +96,7 @@ class SettingsIntegrationTest {
             state.refresh()
 
             assertEquals(TitleLanguage.ENGLISH, state.titleLanguage)
+            assertEquals(StaffNameLanguage.NATIVE, state.staffNameLanguage)
             assertEquals(true, state.displayAdultContent)
             assertEquals(ScoreFormat.POINT_100, state.scoreFormat)
             assertEquals(ListSort.SCORE, state.listSort)
@@ -128,6 +131,7 @@ class SettingsIntegrationTest {
             state.refresh()
 
             state.scoreFormat = ScoreFormat.POINT_5_STARS
+            state.staffNameLanguage = StaffNameLanguage.ROMAJI
             state.listSort = ListSort.UPDATED
             state.splitCompletedAnime = false
             state.notifications = state.notifications.copy(airing = false)
@@ -140,6 +144,7 @@ class SettingsIntegrationTest {
             assertEquals("UpdateUser", mutation.operationName)
             val variables = mutation.variables
             assertEquals("POINT_5", variables?.get("scoreFormat")?.jsonPrimitive?.content)
+            assertEquals("ROMAJI", variables?.get("staffNameLanguage")?.jsonPrimitive?.content)
             assertEquals("updatedAt", variables?.get("rowOrder")?.jsonPrimitive?.content)
             assertEquals(false, variables?.get("splitCompletedAnime")?.jsonPrimitive?.content.toBoolean())
         } finally {

@@ -6,6 +6,7 @@ package com.luum.michi.app.settings.domain.model
  */
 internal data class SettingsData(
     val titleLanguage: TitleLanguage,
+    val staffNameLanguage: StaffNameLanguage,
     val scoreFormat: ScoreFormat,
     val displayAdultContent: Boolean,
     val listSort: ListSort,

@@ -10,6 +10,7 @@ import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.core.model.NotificationBucket
 import com.luum.michi.app.core.model.apiTypes
@@ -29,8 +30,8 @@ query UserSettings {
 """
 
 private const val UpdateUserMutation = """
-mutation UpdateUser(${'$'}titleLanguage: UserTitleLanguage, ${'$'}displayAdultContent: Boolean, ${'$'}airingNotifications: Boolean, ${'$'}scoreFormat: ScoreFormat, ${'$'}rowOrder: String, ${'$'}notificationOptions: [NotificationOptionInput], ${'$'}splitCompletedAnime: Boolean, ${'$'}splitCompletedManga: Boolean, ${'$'}advancedScoringEnabled: Boolean) {
-  UpdateUser(titleLanguage: ${'$'}titleLanguage, displayAdultContent: ${'$'}displayAdultContent, airingNotifications: ${'$'}airingNotifications, scoreFormat: ${'$'}scoreFormat, rowOrder: ${'$'}rowOrder, notificationOptions: ${'$'}notificationOptions, animeListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedAnime, advancedScoringEnabled: ${'$'}advancedScoringEnabled }, mangaListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedManga }) { id }
+mutation UpdateUser(${'$'}titleLanguage: UserTitleLanguage, ${'$'}staffNameLanguage: UserStaffNameLanguage, ${'$'}displayAdultContent: Boolean, ${'$'}airingNotifications: Boolean, ${'$'}scoreFormat: ScoreFormat, ${'$'}rowOrder: String, ${'$'}notificationOptions: [NotificationOptionInput], ${'$'}splitCompletedAnime: Boolean, ${'$'}splitCompletedManga: Boolean, ${'$'}advancedScoringEnabled: Boolean) {
+  UpdateUser(titleLanguage: ${'$'}titleLanguage, staffNameLanguage: ${'$'}staffNameLanguage, displayAdultContent: ${'$'}displayAdultContent, airingNotifications: ${'$'}airingNotifications, scoreFormat: ${'$'}scoreFormat, rowOrder: ${'$'}rowOrder, notificationOptions: ${'$'}notificationOptions, animeListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedAnime, advancedScoringEnabled: ${'$'}advancedScoringEnabled }, mangaListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedManga }) { id }
 }
 """
 
@@ -99,6 +100,18 @@ private fun String?.toTitleLanguage(): TitleLanguage = when (this) {
     "ENGLISH" -> TitleLanguage.ENGLISH
     "NATIVE" -> TitleLanguage.NATIVE
     else -> TitleLanguage.ROMAJI
+}
+
+private fun StaffNameLanguage.toApiValue(): String = when (this) {
+    StaffNameLanguage.ROMAJI_WESTERN -> "ROMAJI_WESTERN"
+    StaffNameLanguage.ROMAJI -> "ROMAJI"
+    StaffNameLanguage.NATIVE -> "NATIVE"
+}
+
+private fun String?.toStaffNameLanguage(): StaffNameLanguage = when (this) {
+    "ROMAJI" -> StaffNameLanguage.ROMAJI
+    "NATIVE" -> StaffNameLanguage.NATIVE
+    else -> StaffNameLanguage.ROMAJI_WESTERN
 }
 
 private fun ScoreFormat.toApiValue(): String = when (this) {
@@ -187,6 +200,7 @@ internal class SettingsRepositoryImpl(
             val listOptions = viewer?.mediaListOptions
             SettingsData(
                 titleLanguage = options?.titleLanguage.toTitleLanguage(),
+                staffNameLanguage = options?.staffNameLanguage.toStaffNameLanguage(),
                 scoreFormat = listOptions?.scoreFormat.toScoreFormat(),
                 displayAdultContent = options?.displayAdultContent ?: false,
                 listSort = listOptions?.rowOrder.toListSort(),
@@ -201,6 +215,7 @@ internal class SettingsRepositoryImpl(
     override suspend fun saveSettings(data: SettingsData): NetworkResult<Unit> {
         val variables = buildJsonObject {
             put("titleLanguage", data.titleLanguage.toApiValue())
+            put("staffNameLanguage", data.staffNameLanguage.toApiValue())
             put("displayAdultContent", data.displayAdultContent)
             put("airingNotifications", data.notifications.airing)
             put("scoreFormat", data.scoreFormat.toApiValue())

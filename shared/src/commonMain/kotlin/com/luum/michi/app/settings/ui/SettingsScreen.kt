@@ -44,6 +44,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.label
 import com.luum.michi.app.core.session.domain.Viewer
@@ -92,6 +93,7 @@ internal fun SettingsScreen(
     var themeSheet by remember { mutableStateOf(false) }
     var fontSheet by remember { mutableStateOf(false) }
     var titleLanguageSheet by remember { mutableStateOf(false) }
+    var staffNameLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
     var sortSheet by remember { mutableStateOf(false) }
     var aboutSheet by remember { mutableStateOf(false) }
@@ -149,6 +151,11 @@ internal fun SettingsScreen(
                         value = settingsState.titleLanguage.label(strings),
                         onClick = { titleLanguageSheet = true },
                         divider = false,
+                    )
+                    SettingsRow(
+                        label = strings.settingsStaffNameTitle,
+                        value = settingsState.staffNameLanguage.label(strings),
+                        onClick = { staffNameLanguageSheet = true },
                     )
                     SettingsToggleRow(
                         title = strings.settingsAdultContentTitle,
@@ -324,6 +331,27 @@ internal fun SettingsScreen(
                         selected = option == settingsState.titleLanguage,
                         onClick = {
                             settingsState.titleLanguage = option
+                        },
+                        divider = index > 0,
+                    )
+                }
+            }
+        }
+    }
+
+    if (staffNameLanguageSheet) {
+        ModalSheet(
+            title = strings.settingsStaffNameTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { staffNameLanguageSheet = false },
+        ) {
+            OptionGroup(title = null) {
+                StaffNameLanguage.entries.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = option.label(strings),
+                        selected = option == settingsState.staffNameLanguage,
+                        onClick = {
+                            settingsState.staffNameLanguage = option
                         },
                         divider = index > 0,
                     )

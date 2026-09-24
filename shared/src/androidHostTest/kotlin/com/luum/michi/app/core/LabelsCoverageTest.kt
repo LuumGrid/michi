@@ -22,6 +22,7 @@ import com.luum.michi.app.notifications.domain.model.label
 import com.luum.michi.app.settings.domain.model.DiscoverTabOption
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.ThemeMode
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.label
@@ -94,6 +95,9 @@ class LabelsCoverageTest {
         }
         assertAllLabeled("TitleLanguage") { strings ->
             TitleLanguage.entries.map { it.label(strings) }
+        }
+        assertAllLabeled("StaffNameLanguage") { strings ->
+            StaffNameLanguage.entries.map { it.label(strings) }
         }
         assertAllLabeled("ScoreFormat") { strings ->
             ScoreFormat.entries.map { it.label(strings) }

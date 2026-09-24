@@ -18,6 +18,14 @@ internal fun TitleLanguage.label(strings: LanguageStrings): String = when (this)
     TitleLanguage.NATIVE -> strings.settingsTitleLanguageNative
 }
 
+internal enum class StaffNameLanguage { ROMAJI_WESTERN, ROMAJI, NATIVE }
+
+internal fun StaffNameLanguage.label(strings: LanguageStrings): String = when (this) {
+    StaffNameLanguage.ROMAJI_WESTERN -> strings.settingsStaffNameWestern
+    StaffNameLanguage.ROMAJI -> strings.settingsStaffNameRomaji
+    StaffNameLanguage.NATIVE -> strings.settingsStaffNameNative
+}
+
 internal enum class ScoreFormat {
     POINT_100,
     POINT_10_DECIMAL,

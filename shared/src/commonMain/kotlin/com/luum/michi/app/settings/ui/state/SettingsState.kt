@@ -11,6 +11,7 @@ import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val KeyTitleLanguage = "title_language"
+private const val KeyStaffNameLanguage = "staff_name_language"
 private const val KeyDisplayAdultContent = "display_adult_content"
 private const val KeyScoreFormat = "score_format"
 private const val KeyListSort = "list_sort"
@@ -48,6 +50,15 @@ internal class SettingsState(
         set(value) {
             titleLanguageState.value = value
             persistTitleLanguage(value)
+            scheduleSave()
+        }
+
+    private val staffNameLanguageState = mutableStateOf(StaffNameLanguage.ROMAJI_WESTERN)
+    var staffNameLanguage: StaffNameLanguage
+        get() = staffNameLanguageState.value
+        set(value) {
+            staffNameLanguageState.value = value
+            persistStaffNameLanguage(value)
             scheduleSave()
         }
 
@@ -161,6 +172,11 @@ internal class SettingsState(
                 titleLanguageState.value = it
             }
         }
+        store.getString(KeyStaffNameLanguage)?.let { saved ->
+            StaffNameLanguage.entries.firstOrNull { it.name == saved }?.let {
+                staffNameLanguageState.value = it
+            }
+        }
         displayAdultContentState.value =
             store.getBoolean(KeyDisplayAdultContent, displayAdultContentState.value)
         store.getString(KeyScoreFormat)?.let { saved ->
@@ -195,6 +211,8 @@ internal class SettingsState(
     private fun applyLoaded(data: SettingsData) {
         titleLanguageState.value = data.titleLanguage
         persistTitleLanguage(data.titleLanguage)
+        staffNameLanguageState.value = data.staffNameLanguage
+        persistStaffNameLanguage(data.staffNameLanguage)
         displayAdultContentState.value = data.displayAdultContent
         store.putBoolean(KeyDisplayAdultContent, data.displayAdultContent)
         scoreFormatState.value = data.scoreFormat
@@ -216,6 +234,10 @@ internal class SettingsState(
         store.putString(KeyTitleLanguage, value.name)
     }
 
+    private fun persistStaffNameLanguage(value: StaffNameLanguage) {
+        store.putString(KeyStaffNameLanguage, value.name)
+    }
+
     private fun persistScoreFormat(value: ScoreFormat) {
         store.putString(KeyScoreFormat, value.name)
     }
@@ -235,6 +257,7 @@ internal class SettingsState(
 
     private fun currentData(): SettingsData = SettingsData(
         titleLanguage = titleLanguage,
+        staffNameLanguage = staffNameLanguage,
         scoreFormat = scoreFormat,
         displayAdultContent = displayAdultContent,
         listSort = listSort,
