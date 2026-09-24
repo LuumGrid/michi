@@ -38,23 +38,25 @@ internal fun MediaListSortSheet(
         onDismiss = onDismiss,
         modifier = modifier,
     ) {
-        OptionGroup(title = strings.filterSortCriterionTitle) {
-            options.forEachIndexed { index, option ->
-                OptionRow(
-                    label = option.label(strings),
-                    selected = option == selected,
-                    onClick = { onSelect(option) },
-                    divider = index != 0,
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+        // Direction first: it applies to whichever criterion is picked
+        // below, so it reads as the primary switch.
         OptionGroup(title = strings.filterOrderDirectionTitle) {
             UserListOrder.entries.forEachIndexed { index, entry ->
                 OptionRow(
                     label = entry.label(strings),
                     selected = entry == order,
                     onClick = { onSelectOrder(entry) },
+                    divider = index != 0,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        OptionGroup(title = strings.filterSortCriterionTitle) {
+            options.forEachIndexed { index, option ->
+                OptionRow(
+                    label = option.label(strings),
+                    selected = option == selected,
+                    onClick = { onSelect(option) },
                     divider = index != 0,
                 )
             }

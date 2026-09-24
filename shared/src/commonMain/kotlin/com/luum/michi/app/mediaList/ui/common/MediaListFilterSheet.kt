@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaList.ui.common
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
@@ -60,14 +61,31 @@ internal fun MediaListFilterSheet(
         }
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = strings.exploreFilterYearLabel) {
-            yearOptions.forEachIndexed { index, year ->
+            // "Any" stays a lone top row; the rest groups visually by
+            // decade (headers only — selection is still the exact year,
+            // so the filter predicate is untouched).
+            if (yearOptions.any { it == null }) {
                 OptionRow(
-                    label = year?.toString() ?: strings.exploreAnyYearLabel,
-                    selected = year == selectedYear,
-                    onClick = { onSelectYear(year) },
-                    divider = index != 0,
+                    label = strings.exploreAnyYearLabel,
+                    selected = selectedYear == null,
+                    onClick = { onSelectYear(null) },
+                    divider = false,
                 )
             }
+            yearOptions.filterNotNull()
+                .groupBy { it / 10 * 10 }
+                .toSortedMap(compareByDescending { it })
+                .forEach { (decade, years) ->
+                    DecadeHeader(label = "$decade–${decade + 9}")
+                    years.forEach { year ->
+                        OptionRow(
+                            label = year.toString(),
+                            selected = year == selectedYear,
+                            onClick = { onSelectYear(year) },
+                            divider = true,
+                        )
+                    }
+                }
         }
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = strings.exploreFilterGenreLabel) {
@@ -102,4 +120,22 @@ internal fun MediaListFilterSheet(
             )
         }
     }
+}
+
+/**
+ * Visual-only decade separator inside the year group (same label style as
+ * [com.luum.michi.app.ui.components.OptionGroup] titles, tighter spacing
+ * since it lives inside the frame).
+ */
+@Composable
+private fun DecadeHeader(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(top = 12.dp, bottom = 4.dp),
+    )
 }
