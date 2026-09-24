@@ -81,9 +81,10 @@ internal class State(
 
     fun selectTab(tab: TabSection) {
         selectedTab = tab
-        // Queries are preserved per tab; the search surface only stays open
-        // where it is supported.
-        if (!supportsSearch(tab)) searchActiveTab = null
+        // Queries are preserved per tab in the map, but the search surface
+        // always closes: it belongs to the tab where it opened and must
+        // never show another tab's query.
+        searchActiveTab = null
     }
 
     fun nextBackStep(): BackStep = when {
