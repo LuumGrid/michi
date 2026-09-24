@@ -1,0 +1,196 @@
+package com.luum.michi.app.mediaList
+
+import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
+import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.isComplete
+import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
+import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
+import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private fun animeCollection() = singleGroupCollection(
+    listEntryJson(
+        id = 1,
+        status = "CURRENT",
+        progress = 5,
+        score = 8.0,
+        media = animeMediaJson(
+            id = 101,
+            format = "TV",
+            mediaStatus = "RELEASING",
+            romaji = "Romaji Anime",
+            english = "English Anime",
+            native = "ネイティブ",
+            episodes = 12,
+            season = "WINTER",
+            seasonYear = 2024,
+        ),
+    ),
+    listEntryJson(
+        id = 2,
+        status = "COMPLETED",
+        progress = 1,
+        media = animeMediaJson(
+            id = 102,
+            format = "MOVIE",
+            mediaStatus = "FINISHED",
+            romaji = "Romaji Movie",
+            english = null,
+            episodes = 1,
+            season = null,
+            seasonYear = null,
+        ),
+    ),
+)
+
+private fun mangaCollection() = singleGroupCollection(
+    listEntryJson(
+        id = 10,
+        status = "CURRENT",
+        progress = 0,
+        progressVolumes = 3,
+        media = mangaMediaJson(
+            id = 201,
+            format = "NOVEL",
+            mediaStatus = "RELEASING",
+            romaji = "Romaji Novel",
+            chapters = 0,
+            volumes = 10,
+        ),
+    ),
+    listEntryJson(
+        id = 11,
+        status = "CURRENT",
+        progress = 42,
+        media = mangaMediaJson(
+            id = 202,
+            format = "MANGA",
+            mediaStatus = "FINISHED",
+            romaji = "Romaji Manga",
+            chapters = 100,
+            volumes = 10,
+        ),
+    ),
+)
+
+private fun animeWired(graphQL: FakeGraphQL): Pair<AnimeListStateHolder, MediaListEntryRepositoryImpl> {
+    val entryRepository = MediaListEntryRepositoryImpl(graphQL)
+    val holder = AnimeListStateHolder(
+        AnimeListRepositoryImpl(graphQL),
+        entryRepository,
+        CoroutineScope(Dispatchers.Unconfined),
+    )
+    return holder to entryRepository
+}
+
+private fun mangaWired(graphQL: FakeGraphQL): Pair<MangaListStateHolder, MediaListEntryRepositoryImpl> {
+    val entryRepository = MediaListEntryRepositoryImpl(graphQL)
+    val holder = MangaListStateHolder(
+        MangaListRepositoryImpl(graphQL),
+        entryRepository,
+        CoroutineScope(Dispatchers.Unconfined),
+    )
+    return holder to entryRepository
+}
+
+class MediaListIntegrationTest {
+
+    @Test
+    fun animeMapsStatusTitlesWorkStatusAndSections() {
+        val graphQL = FakeGraphQL(listOf(animeCollection()))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        assertEquals(null, holder.error, "loader error: ${holder.error}")
+        assertEquals(2, holder.entries.size, "raw entries")
+
+        val entries = holder.entriesInSection(AnimeListSection.ALL)
+        assertEquals(2, entries.size)
+        val watching = entries.single { it.id == 101 }
+        assertEquals(AnimeListSection.WATCHING, watching.status)
+        // bestTitle prefers English over Romaji when both exist.
+        assertEquals("English Anime", watching.title)
+        assertEquals(listOf("Romaji Anime", "English Anime", "ネイティブ"), watching.titles)
+        assertEquals(MediaWorkStatus.RELEASING, watching.mediaStatus)
+        assertEquals(2024, watching.seasonYear)
+        assertEquals(AnimeListSection.COMPLETED_MOVIE, entries.single { it.id == 102 }.status)
+        assertEquals(MediaWorkStatus.FINISHED, entries.single { it.id == 102 }.mediaStatus)
+        assertEquals(1, holder.countInSection(AnimeListSection.WATCHING))
+        assertNull(holder.error)
+    }
+
+    @Test
+    fun mangaNovelTracksVolumesWhileMangaTracksChapters() {
+        val graphQL = FakeGraphQL(listOf(mangaCollection()))
+        val (holder) = mangaWired(graphQL)
+
+        holder.load(7)
+
+        val entries = holder.entriesInSection(MangaListSection.ALL)
+        assertEquals(2, entries.size)
+        val novel = entries.single { it.id == 201 }
+        assertTrue(novel.tracksByVolume)
+        assertFalse(novel.isComplete())
+        val manga = entries.single { it.id == 202 }
+        assertFalse(manga.tracksByVolume)
+        assertEquals(2, holder.countInSection(MangaListSection.CURRENT))
+    }
+
+    @Test
+    fun incrementProgressAppliesOptimisticallyAndRollsBackOnFailure() {
+        // Success path.
+        val okGraphQL = FakeGraphQL(listOf(animeCollection(), emptyUpdateAck))
+        val (okHolder) = animeWired(okGraphQL)
+        okHolder.load(7)
+        okHolder.incrementProgress(okHolder.entriesInSection(AnimeListSection.WATCHING).single())
+        assertEquals(6, okHolder.entriesInSection(AnimeListSection.WATCHING).single().progress)
+        assertEquals(2, okGraphQL.calls)
+
+        // Failure path: the entry rolls back to the loaded value.
+        val failGraphQL = FakeGraphQL(listOf(animeCollection(), emptyUpdateAck), failureAt = 1)
+        val (failHolder) = animeWired(failGraphQL)
+        failHolder.load(7)
+        failHolder.incrementProgress(failHolder.entriesInSection(AnimeListSection.WATCHING).single())
+        assertEquals(5, failHolder.entriesInSection(AnimeListSection.WATCHING).single().progress)
+        assertEquals(2, failGraphQL.calls)
+    }
+
+    @Test
+    fun saveProgressOmitsChaptersForNovels() {
+        val graphQL = FakeGraphQL(listOf(mangaCollection(), emptyUpdateAck))
+        val (holder) = mangaWired(graphQL)
+
+        holder.load(7)
+        val novel = holder.entriesInSection(MangaListSection.CURRENT).single { it.id == 201 }
+        holder.incrementVolumes(novel)
+
+        assertEquals(4, holder.entriesInSection(MangaListSection.CURRENT).single { it.id == 201 }.volumesProgress)
+        val variables = graphQL.requests.last().variables
+        assertEquals(4, variables?.get("progressVolumes")?.jsonPrimitive?.content?.toInt())
+        assertNull(variables?.get("progress"))
+    }
+
+    @Test
+    fun loaderErrorSurfacesWithEmptyEntries() {
+        val graphQL = FakeGraphQL(listOf(animeCollection()), failureAt = 0)
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        assertTrue(holder.entriesInSection(AnimeListSection.ALL).isEmpty())
+        assertIs<NetworkError.Http>(holder.error)
+    }
+}
