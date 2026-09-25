@@ -119,6 +119,25 @@ class SettingsIntegrationTest {
     }
 
     @Test
+    fun persistListSortRoundTripsThroughStoreOnly() {
+        setUp()
+        try {
+            val store = FakeSettingsStore()
+            val state = stateWith(ScriptedSettingsGraphQL(listOf(viewerPage)), store)
+
+            // ON by default on fresh installs.
+            assertEquals(true, state.persistListSort)
+            state.persistListSort = false
+            assertEquals(false, store.getBoolean("persist_list_sort", true))
+
+            val revived = stateWith(ScriptedSettingsGraphQL(listOf(viewerPage)), store)
+            assertEquals(false, revived.persistListSort)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
     fun saveSendsMappedUpdateUserVariables(): Unit = runBlocking {
         val testScope = CoroutineScope(Dispatchers.Unconfined)
         try {

@@ -236,6 +236,8 @@ object SpanishStrings : LanguageStrings {
     override val settingsSplitCompletedMangaSubtitle = "Manga, novelas y one-shots por separado"
     override val settingsAdvancedScoringTitle = "Puntaje avanzado"
     override val settingsAdvancedScoringSubtitle = "Puntajes adicionales por categoria"
+    override val settingsPersistSortTitle = "Recordar orden de listas"
+    override val settingsPersistSortSubtitle = "Conserva el orden de cada lista entre reinicios"
     override val notificationsSection = "Notificaciones"
     override val notificationsAiringTitle = "Estrenos"
     override val activityLabel = "Actividad"

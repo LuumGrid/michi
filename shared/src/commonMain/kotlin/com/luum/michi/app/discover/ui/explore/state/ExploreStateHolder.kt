@@ -29,7 +29,7 @@ internal class ExploreStateHolder(
     var onList: Boolean? = null
     var currentSortOption = UserListSort.TRENDING
     var currentSortOrder = UserListOrder.DESCENDING
-    var isFilterPersisted = false
+    var isSortPersisted = false
     var focusSearchRequested = false
 
     private val resultsBacking = mutableListOf<ExploreResult>()
@@ -78,12 +78,13 @@ internal class ExploreStateHolder(
     }
 
     /** Espejo de las listas: guarda la selección y deriva el MediaSort del API.
-     *  La persistencia entre reinicios es solo de sesión en Discover (el slot
-     *  de FilterSettings es único y lo comparten anime/manga). */
+     *  La persistencia entre reinicios es solo de sesión en Discover (cada
+     *  superficie persiste su propio slot de SortPersistence: anime/manga
+     *  no comparten memoria de sort). */
     fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
         currentSortOrder = order
-        isFilterPersisted = persist
+        isSortPersisted = persist
         sort = option.toMediaSort(order, category)
         loadingState = true
         searchJob?.cancel()
@@ -116,7 +117,7 @@ internal class ExploreStateHolder(
         onList = null
         currentSortOption = sortOption
         currentSortOrder = sortOrder
-        isFilterPersisted = false
+        isSortPersisted = false
         sort = sortOption.toMediaSort(sortOrder, category)
         load()
     }

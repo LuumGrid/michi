@@ -28,9 +28,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
+import com.luum.michi.app.core.storage.domain.SortPersistence
+import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
@@ -90,6 +94,7 @@ internal fun Root(
     animeListRepository: AnimeListRepository,
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
+    sortPersistence: SortPersistence,
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -129,14 +134,14 @@ internal fun Root(
     // loader dedups repeats via TTL; guests never load (no user id).
     val listScope = rememberCoroutineScope()
     val viewerId = viewer?.id
-    val animeHolder = remember(viewerId, animeListRepository, mediaListEntryRepository) {
+    val animeHolder = remember(viewerId, animeListRepository, mediaListEntryRepository, sortPersistence) {
         viewerId?.let {
-            AnimeListStateHolder(animeListRepository, mediaListEntryRepository, listScope)
+            AnimeListStateHolder(animeListRepository, mediaListEntryRepository, listScope, sortPersistence)
         }
     }
-    val mangaHolder = remember(viewerId, mangaListRepository, mediaListEntryRepository) {
+    val mangaHolder = remember(viewerId, mangaListRepository, mediaListEntryRepository, sortPersistence) {
         viewerId?.let {
-            MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope)
+            MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope, sortPersistence)
         }
     }
     LaunchedEffect(tab, viewerId) {
@@ -145,6 +150,26 @@ internal fun Root(
         }
         if (tab == TabSection.MANGA && viewerId != null) {
             mangaHolder?.load(viewerId)
+        }
+    }
+
+    // Sort memory (Settings persist toggle, per tab): hydrate on session
+    // start when on (unknown/corrupt values fall back to FOLLOW_LIST),
+    // clear stored sorts when off so stale values never resurrect.
+    // Filters never persist — express search only.
+    val persistSort = settingsState.persistListSort
+    LaunchedEffect(viewerId, persistSort) {
+        if (viewerId == null) return@LaunchedEffect
+        if (persistSort) {
+            hydrateSort(sortPersistence, SortScope.ANIME)?.let { (option, order) ->
+                animeHolder?.updateSort(option, order, persist = true)
+            }
+            hydrateSort(sortPersistence, SortScope.MANGA)?.let { (option, order) ->
+                mangaHolder?.updateSort(option, order, persist = true)
+            }
+        } else {
+            sortPersistence.clearSort(SortScope.ANIME)
+            sortPersistence.clearSort(SortScope.MANGA)
         }
     }
 
@@ -280,6 +305,7 @@ internal fun Root(
                         onDismissFilter = { state.closeSectionFilter() },
                         isSortOpen = state.isListSortOpen,
                         onDismissSort = { state.closeListSort() },
+                        sortPersist = persistSort,
                     )
                 } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
                     MangaListScreen(
@@ -295,6 +321,7 @@ internal fun Root(
                         onDismissFilter = { state.closeSectionFilter() },
                         isSortOpen = state.isListSortOpen,
                         onDismissSort = { state.closeListSort() },
+                        sortPersist = persistSort,
                     )
                 } else if (search != null && activeQuery.isNotEmpty()) {
                     // DISCOVER (and guests): server search lands in a later step.
@@ -347,6 +374,18 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
         icon = AppIcons.Account,
     ),
 )
+
+/** Sort memory restore: unknown/corrupt names fall back to null (holder
+ * defaults), never crash. Pure for tests. */
+internal fun hydrateSort(
+    persistence: SortPersistence,
+    scope: SortScope,
+): Pair<UserListSort, UserListOrder>? {
+    val (sort, order) = persistence.loadSort(scope) ?: return null
+    val option = UserListSort.entries.firstOrNull { it.name == sort } ?: return null
+    val direction = UserListOrder.entries.firstOrNull { it.name == order } ?: return null
+    return option to direction
+}
 
 private const val ACTION_SEARCH = "search"
 private const val ACTION_SETTINGS = "settings"

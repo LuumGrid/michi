@@ -27,6 +27,7 @@ private const val KeyListSort = "list_sort"
 private const val KeySplitCompletedAnime = "split_completed_anime"
 private const val KeySplitCompletedManga = "split_completed_manga"
 private const val KeyAdvancedScoring = "advanced_scoring"
+private const val KeyPersistListSort = "persist_list_sort"
 private const val KeyNotificationAiring = "notification_airing"
 private const val KeyNotificationActivity = "notification_activity"
 private const val KeyNotificationFollowing = "notification_following"
@@ -85,7 +86,7 @@ internal class SettingsState(
         get() = listSortState.value
         set(value) {
             listSortState.value = value
-            persistListSort(value)
+            saveListSort(value)
             scheduleSave()
         }
 
@@ -114,6 +115,18 @@ internal class SettingsState(
             advancedScoringState.value = value
             store.putBoolean(KeyAdvancedScoring, value)
             scheduleSave()
+        }
+
+    // Local-only: AniList has no field for sort memory, so this never
+    // joins currentData()/scheduleSave — store only, like App theme/language.
+    // ON by default: sort is set-and-forget, and non-changers save nothing
+    // (fallback stays FOLLOW_LIST), so nobody is surprised either way.
+    private val persistListSortState = mutableStateOf(true)
+    var persistListSort: Boolean
+        get() = persistListSortState.value
+        set(value) {
+            persistListSortState.value = value
+            store.putBoolean(KeyPersistListSort, value)
         }
 
     private val notificationsState = mutableStateOf(NotificationPreferences())
@@ -193,6 +206,8 @@ internal class SettingsState(
             store.getBoolean(KeySplitCompletedManga, splitCompletedMangaState.value)
         advancedScoringState.value =
             store.getBoolean(KeyAdvancedScoring, advancedScoringState.value)
+        persistListSortState.value =
+            store.getBoolean(KeyPersistListSort, true)
         notificationsState.value = NotificationPreferences(
             airing = store.getBoolean(KeyNotificationAiring, notificationsState.value.airing),
             activity = store.getBoolean(KeyNotificationActivity, notificationsState.value.activity),
@@ -218,7 +233,7 @@ internal class SettingsState(
         scoreFormatState.value = data.scoreFormat
         persistScoreFormat(data.scoreFormat)
         listSortState.value = data.listSort
-        persistListSort(data.listSort)
+        saveListSort(data.listSort)
         splitCompletedAnimeState.value = data.splitCompletedAnime
         store.putBoolean(KeySplitCompletedAnime, data.splitCompletedAnime)
         splitCompletedMangaState.value = data.splitCompletedManga
@@ -242,7 +257,7 @@ internal class SettingsState(
         store.putString(KeyScoreFormat, value.name)
     }
 
-    private fun persistListSort(value: ListSort) {
+    private fun saveListSort(value: ListSort) {
         store.putString(KeyListSort, value.name)
     }
 

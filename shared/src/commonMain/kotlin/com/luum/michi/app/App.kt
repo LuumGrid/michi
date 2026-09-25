@@ -38,6 +38,7 @@ import com.luum.michi.app.core.language.domain.getLanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
+import com.luum.michi.app.core.storage.repository.StoreSortPersistence
 import com.luum.michi.app.root.AuthLandingScreen
 import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
@@ -102,6 +103,10 @@ fun App(
         scope = scope,
         canSync = session is SessionState.Authenticated,
     )
+    // Sort memory backing (Settings persist toggle, per tab): store-owned,
+    // session-independent — Root hydrates holders from it, holders save
+    // into it. Local-only, like theme/language.
+    val sortPersistence = remember { StoreSortPersistence(store) }
 
     CompositionLocalProvider(LocalStrings provides strings) {
         Theme(
@@ -205,6 +210,7 @@ fun App(
                             animeListRepository = dependencies.animeListRepository,
                             mangaListRepository = dependencies.mangaListRepository,
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
+                            sortPersistence = sortPersistence,
                         )
                     }
                     AppRoute.ERROR -> {

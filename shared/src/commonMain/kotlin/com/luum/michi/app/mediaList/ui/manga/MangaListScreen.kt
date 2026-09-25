@@ -79,6 +79,9 @@ internal fun MangaListScreen(
     onDismissFilter: () -> Unit = {},
     isSortOpen: Boolean = false,
     onDismissSort: () -> Unit = {},
+    // Mirrors the Settings persist toggle: when on, sort changes are
+    // remembered per tab across restarts (filters never persist).
+    sortPersist: Boolean = false,
 ) {
     val sections = listOf(MangaListSection.ALL) + MangaStatusSections
     val tabs = sections.map { section ->
@@ -259,11 +262,11 @@ internal fun MangaListScreen(
             options = UserListSort.entries,
             selected = holder.currentSortOption,
             onSelect = { option ->
-                holder.updateSort(option, holder.currentSortOrder, persist = false)
+                holder.updateSort(option, holder.currentSortOrder, persist = sortPersist)
             },
             order = holder.currentSortOrder,
             onSelectOrder = { order ->
-                holder.updateSort(holder.currentSortOption, order, persist = false)
+                holder.updateSort(holder.currentSortOption, order, persist = sortPersist)
             },
             onDismiss = onDismissSort,
         )

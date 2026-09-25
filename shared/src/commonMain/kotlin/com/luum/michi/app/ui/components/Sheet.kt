@@ -21,9 +21,11 @@ import com.luum.michi.app.ui.icons.AppIcons
 
 /**
  * Generic bottom sheet: [Toolbar] header (title + X, no status-bar insets)
- * over a scrollable caller-owned interior. Dismiss via the X, the native
+ * over a scrollable caller-owned interior, plus an optional fixed [footer]
+ * (e.g. [SheetActionBar]) pinned below the scroll — existing callers pass
+ * nothing and render exactly as before. Dismiss via the X, the native
  * handle, tap-outside or system back. Used by language/theme pickers today;
- * filters and editors tomorrow. Takes only primitives + a slot, so no
+ * filters and editors tomorrow. Takes only primitives + slots, so no
  * feature model leaks in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +35,7 @@ internal fun ModalSheet(
     dismissLabel: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
@@ -42,8 +45,10 @@ internal fun ModalSheet(
     ) {
         Column(
             modifier = Modifier
+                // 24dp matches the TabBar's bottom margin, so sheet
+                // buttons rest at the same air from the system handle.
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 24.dp),
         ) {
             Toolbar(
                 title = title,
@@ -68,9 +73,19 @@ internal fun ModalSheet(
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .weight(1f, fill = false),
             ) {
                 content()
+            }
+            if (footer != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, top = 12.dp),
+                ) {
+                    footer()
+                }
             }
         }
     }

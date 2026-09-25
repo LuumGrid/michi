@@ -4,6 +4,7 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
@@ -12,6 +13,7 @@ import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
+import com.luum.michi.app.root.hydrateSort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.jsonPrimitive
@@ -275,5 +277,41 @@ class MediaListIntegrationTest {
             listOf("Zulu", "Alpha"),
             holder.entriesInSection(AnimeListSection.WATCHING).map { it.title },
         )
+    }
+
+    @Test
+    fun updateSortPersistsPerScopeOnlyWhenAsked() {
+        val persistence = MemorySortPersistence()
+        val graphQL = FakeGraphQL(listOf(animeCollection()))
+        val holder = AnimeListStateHolder(
+            AnimeListRepositoryImpl(graphQL),
+            MediaListEntryRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+            persistence,
+        )
+
+        holder.load(7)
+
+        holder.updateSort(UserListSort.TITLE, UserListOrder.ASCENDING, persist = false)
+        assertNull(persistence.loadSort(SortScope.ANIME))
+
+        holder.updateSort(UserListSort.SCORE, UserListOrder.DESCENDING, persist = true)
+        assertEquals("SCORE" to "DESCENDING", persistence.loadSort(SortScope.ANIME))
+        assertNull(persistence.loadSort(SortScope.MANGA))
+    }
+
+    @Test
+    fun hydrateSortRestoresKnownNamesAndFallsBackOnUnknown() {
+        val persistence = MemorySortPersistence()
+        persistence.saveSort(SortScope.ANIME, "TITLE", "ASCENDING")
+
+        assertEquals(
+            UserListSort.TITLE to UserListOrder.ASCENDING,
+            hydrateSort(persistence, SortScope.ANIME),
+        )
+        assertNull(hydrateSort(persistence, SortScope.MANGA))
+
+        persistence.saveSort(SortScope.MANGA, "NOPE", "ASCENDING")
+        assertNull(hydrateSort(persistence, SortScope.MANGA))
     }
 }

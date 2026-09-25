@@ -3,14 +3,12 @@ package com.luum.michi.app.mediaList.ui.common
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,9 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.FilterOption
+import com.luum.michi.app.ui.components.GhostButton
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
+import com.luum.michi.app.ui.components.SheetActionBar
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -57,6 +57,14 @@ internal fun MediaListFilterSheet(
         dismissLabel = strings.dismissAction,
         onDismiss = onDismiss,
         modifier = modifier,
+        footer = {
+            SheetActionBar {
+                GhostButton(
+                    label = strings.filterResetAction,
+                    onClick = onReset,
+                )
+            }
+        },
     ) {
         OptionGroup(title = strings.seasonLabel) {
             seasonOptions.forEachIndexed { index, option ->
@@ -148,16 +156,6 @@ internal fun MediaListFilterSheet(
                     divider = index != 0,
                 )
             }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        TextButton(
-            onClick = onReset,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = strings.filterResetAction,
-                style = MaterialTheme.typography.labelLarge,
-            )
         }
     }
 }

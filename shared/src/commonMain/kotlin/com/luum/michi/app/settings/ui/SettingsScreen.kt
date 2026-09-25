@@ -54,6 +54,7 @@ import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionGroupShape
 import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.GlassButton
+import com.luum.michi.app.ui.components.SheetActionBar
 import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
@@ -195,6 +196,12 @@ internal fun SettingsScreen(
                         subtitle = strings.settingsAdvancedScoringSubtitle,
                         checked = settingsState.advancedScoring,
                         onCheckedChange = { settingsState.advancedScoring = it },
+                    )
+                    SettingsToggleRow(
+                        title = strings.settingsPersistSortTitle,
+                        subtitle = strings.settingsPersistSortSubtitle,
+                        checked = settingsState.persistListSort,
+                        onCheckedChange = { settingsState.persistListSort = it },
                     )
                 }
             }
@@ -482,22 +489,25 @@ internal fun SettingsScreen(
             title = strings.settingsSignOutTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { signOutConfirmSheet = false },
+            footer = {
+                SheetActionBar {
+                    GlassButton(
+                        label = strings.settingsSignOutConfirmAction,
+                        onClick = {
+                            signOutConfirmSheet = false
+                            accountSheet = false
+                            onLogout()
+                        },
+                        containerColor = null,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
         ) {
             Text(
                 text = strings.settingsSignOutConfirmMessage,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            GlassButton(
-                label = strings.settingsSignOutConfirmAction,
-                onClick = {
-                    signOutConfirmSheet = false
-                    accountSheet = false
-                    onLogout()
-                },
-                containerColor = null,
-                contentColor = MaterialTheme.colorScheme.error,
             )
         }
     }

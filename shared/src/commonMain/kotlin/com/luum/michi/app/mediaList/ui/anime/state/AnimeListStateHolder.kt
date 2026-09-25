@@ -20,11 +20,15 @@ import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.common.MediaListLoader
 import com.luum.michi.app.mediaList.domain.common.matchesMediaListFilters
 import com.luum.michi.app.mediaList.domain.common.sortMediaListEntries
+import com.luum.michi.app.core.storage.domain.SortPersistence
+import com.luum.michi.app.core.storage.domain.SortScope
 
 internal class AnimeListStateHolder(
     repository: AnimeListRepository,
     private val entryRepository: MediaListEntryRepository,
     private val scope: CoroutineScope,
+    private val sortPersistence: SortPersistence? = null,
+    private val sortScope: SortScope = SortScope.ANIME,
 ) {
     private val loader = MediaListLoader(scope) { userId -> repository.loadList(userId) }
 
@@ -32,7 +36,7 @@ internal class AnimeListStateHolder(
     // intent (plain vars would apply silently until the next load).
     var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
-    var isFilterPersisted by mutableStateOf(false)
+    var isSortPersisted by mutableStateOf(false)
 
     var filterSeason by mutableStateOf<MediaSeason?>(null)
     var filterGenres by mutableStateOf(emptyList<String>())
@@ -47,7 +51,10 @@ internal class AnimeListStateHolder(
     fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
         currentSortOrder = order
-        isFilterPersisted = persist
+        isSortPersisted = persist
+        if (persist) {
+            sortPersistence?.saveSort(sortScope, option.name, order.name)
+        }
     }
 
     /** Client-side filters (the whole list is already loaded): season/genre/format/year. */

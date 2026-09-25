@@ -4,6 +4,8 @@ import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.storage.domain.SortPersistence
+import com.luum.michi.app.core.storage.domain.SortScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -112,4 +114,21 @@ internal fun singleGroupCollection(vararg entries: JsonObject): JsonElement = bu
 
 internal val emptyUpdateAck: JsonElement = buildJsonObject {
     put("SaveMediaListEntry", buildJsonObject { put("id", 1) })
+}
+
+/** In-memory SortPersistence: per-scope slots, like the store impl. */
+internal class MemorySortPersistence : SortPersistence {
+    private val slots = mutableMapOf<SortScope, Pair<String, String>>()
+    val cleared = mutableListOf<SortScope>()
+
+    override fun saveSort(scope: SortScope, sort: String, order: String) {
+        slots[scope] = sort to order
+    }
+
+    override fun loadSort(scope: SortScope): Pair<String, String>? = slots[scope]
+
+    override fun clearSort(scope: SortScope) {
+        slots.remove(scope)
+        cleared += scope
+    }
 }

@@ -69,6 +69,26 @@ internal fun Modifier.glassPadding(top: Boolean): Modifier =
     }
 
 /**
+ * Floating glass capsule shared by the [TabBar] and sheet action bars:
+ * translucent container + border + shadow, no positioning of its own
+ * (callers own margins and interior padding).
+ */
+@Composable
+internal fun GlassCapsule(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        shape = GlassCircle,
+        color = glassContainerColor(),
+        border = glassBorder(),
+        modifier = modifier.glass(GlassCircle),
+    ) {
+        content()
+    }
+}
+
+/**
  * Fixed glass circle button (48dp touch target, no size overrides):
  * icon + action are injected, the recipe never changes. Use it for every
  * lone floating action so all circles measure identical.

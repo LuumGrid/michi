@@ -55,13 +55,8 @@ internal fun TabBar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
-            shape = GlassCircle,
-            color = glassContainerColor(),
-            border = glassBorder(),
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
-                .glass(GlassCircle),
+        GlassCapsule(
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
         ) {
             Row(
                 modifier = Modifier

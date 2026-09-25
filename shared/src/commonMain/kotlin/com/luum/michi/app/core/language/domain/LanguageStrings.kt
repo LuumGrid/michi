@@ -225,6 +225,8 @@ interface LanguageStrings {
     val settingsSplitCompletedMangaSubtitle: String
     val settingsAdvancedScoringTitle: String
     val settingsAdvancedScoringSubtitle: String
+    val settingsPersistSortTitle: String
+    val settingsPersistSortSubtitle: String
     val notificationsSection: String
     val notificationsAiringTitle: String
     val activityLabel: String
