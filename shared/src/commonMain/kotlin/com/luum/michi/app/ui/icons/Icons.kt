@@ -15,18 +15,15 @@ import com.luum.michi.app.ui.icons.generated.KeyboardArrowRight
 import com.luum.michi.app.ui.icons.generated.KeyboardArrowUp
 import com.luum.michi.app.ui.icons.generated.Language
 import com.luum.michi.app.ui.icons.generated.Books
-import com.luum.michi.app.ui.icons.generated.Manga
 import com.luum.michi.app.ui.icons.generated.IconPack
 import com.luum.michi.app.ui.icons.generated.MoreVert
 import com.luum.michi.app.ui.icons.generated.Notifications
 import com.luum.michi.app.ui.icons.generated.Palette
-import com.luum.michi.app.ui.icons.generated.Person
 import com.luum.michi.app.ui.icons.generated.Profile
 import com.luum.michi.app.ui.icons.generated.Search
 import com.luum.michi.app.ui.icons.generated.Settings
 import com.luum.michi.app.ui.icons.generated.SortList
 import com.luum.michi.app.ui.icons.generated.StarFilled
-import com.luum.michi.app.ui.icons.generated.Tv
 import com.luum.michi.app.ui.icons.generated.TvGen
 
 /**
