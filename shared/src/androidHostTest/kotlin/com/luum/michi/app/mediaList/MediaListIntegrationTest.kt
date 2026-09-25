@@ -16,6 +16,7 @@ import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.hydrateSort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -371,5 +372,94 @@ class MediaListIntegrationTest {
         holder.load(7, splitCompleted = false)
         assertEquals(2, holder.entriesInSection(MangaListSection.COMPLETED).size)
         assertEquals(0, holder.entriesInSection(MangaListSection.COMPLETED_NOVEL).size)
+    }
+
+    @Test
+    fun adultEntriesHideWhenSettingOff() {
+        fun mixedCollection() = singleGroupCollection(
+            listEntryJson(
+                id = 1,
+                status = "CURRENT",
+                progress = 3,
+                media = animeMediaJson(id = 101, romaji = "Clean Show", english = null),
+            ),
+            listEntryJson(
+                id = 2,
+                status = "CURRENT",
+                progress = 1,
+                media = animeMediaJson(id = 102, romaji = "Adult Show", english = null, isAdult = true),
+            ),
+        )
+        val graphQL = FakeGraphQL(listOf(mixedCollection()))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        assertEquals(2, holder.entriesInSection(AnimeListSection.WATCHING).size)
+        assertEquals(
+            listOf(101),
+            holder.entriesInSection(AnimeListSection.WATCHING, hideAdult = true).map { it.id },
+        )
+        // Rail counts stay raw by design (loaded list, never view state).
+        assertEquals(2, holder.countInSection(AnimeListSection.WATCHING))
+    }
+
+    @Test
+    fun decodeRealShapedCollectionMapsIsAdult() {
+        // Wire-shaped payload (keys as AniList delivers them, plus an
+        // unknown field): guards against doc drift on field naming, through
+        // the real DTO decode + mapper + holder.
+        val wireJson = """
+            {
+              "MediaListCollection": {
+                "lists": [
+                  {
+                    "name": "Watching",
+                    "status": "CURRENT",
+                    "isCustomList": false,
+                    "entries": [
+                      {
+                        "id": 1,
+                        "status": "CURRENT",
+                        "progress": 3,
+                        "score": 0,
+                        "media": {
+                          "id": 101,
+                          "title": { "romaji": "Clean Show" },
+                          "format": "TV",
+                          "isAdult": false,
+                          "__debug": 1
+                        }
+                      },
+                      {
+                        "id": 2,
+                        "status": "CURRENT",
+                        "progress": 1,
+                        "score": 0,
+                        "media": {
+                          "id": 102,
+                          "title": { "romaji": "Adult Show" },
+                          "format": "TV",
+                          "isAdult": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+        val graphQL = FakeGraphQL(listOf(Json.parseToJsonElement(wireJson)))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+
+        val entries = holder.entriesInSection(AnimeListSection.WATCHING)
+        assertEquals(false, entries.single { it.id == 101 }.isAdult)
+        assertEquals(true, entries.single { it.id == 102 }.isAdult)
+        assertEquals(
+            listOf(101),
+            holder.entriesInSection(AnimeListSection.WATCHING, hideAdult = true).map { it.id },
+        )
     }
 }

@@ -53,6 +53,7 @@ internal fun animeMediaJson(
     season: String? = "WINTER",
     seasonYear: Int? = 2024,
     genres: List<String> = emptyList(),
+    isAdult: Boolean = false,
 ): JsonObject = buildJsonObject {
     put("id", id)
     put("title", titleJson(romaji, english, native))
@@ -63,6 +64,7 @@ internal fun animeMediaJson(
     if (season != null) put("season", season)
     if (seasonYear != null) put("seasonYear", seasonYear)
     put("genres", JsonArray(genres.map { JsonPrimitive(it) }))
+    if (isAdult) put("isAdult", true)
 }
 
 internal fun mangaMediaJson(

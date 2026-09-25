@@ -22,6 +22,7 @@ internal data class MediaDto(
     val favourites: Int? = null,
     val popularity: Int? = null,
     val genres: List<String>? = null,
+    val isAdult: Boolean? = null,
     val season: String? = null,
     val seasonYear: Int? = null,
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,

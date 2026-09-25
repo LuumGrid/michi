@@ -34,6 +34,7 @@ internal data class AnimeListEntry(
     val nextAiringAt: Long = 0L,
     val nextEpisodeNumber: Int? = null,
     override val genres: List<String> = emptyList(),
+    val isAdult: Boolean = false,
     override val season: MediaSeason? = null,
     override val seasonYear: Int? = null,
 ) : SortableMediaListEntry

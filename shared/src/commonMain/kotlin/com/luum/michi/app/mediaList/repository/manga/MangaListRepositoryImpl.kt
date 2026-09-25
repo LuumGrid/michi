@@ -46,6 +46,7 @@ query MediaListCollection(${'$'}userId: Int!) {
           seasonYear
           startDate { year month day }
           title { romaji english native userPreferred }
+          isAdult
           coverImage { large medium color }
         }
       }

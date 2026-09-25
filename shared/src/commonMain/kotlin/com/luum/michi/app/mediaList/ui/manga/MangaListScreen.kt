@@ -85,6 +85,9 @@ internal fun MangaListScreen(
     // Mirrors the Settings split toggle: merged COMPLETED when off,
     // per-format sections when on.
     splitCompleted: Boolean = true,
+    // Global 18+ setting (inverted): hidden entries never reach the
+    // list, but rail counts stay raw (see holder.countInSection).
+    hideAdult: Boolean = false,
 ) {
     val sections = listOf(MangaListSection.ALL) + mangaStatusSections(splitCompleted)
     // Toggling split can strand the selection on a gone section (e.g.
@@ -98,7 +101,7 @@ internal fun MangaListScreen(
         )
     }
     val trimmedQuery = query.trim()
-    val entries = holder.entriesInSection(effectiveSelected).let { sectionEntries ->
+    val entries = holder.entriesInSection(effectiveSelected, hideAdult).let { sectionEntries ->
         if (trimmedQuery.isEmpty()) {
             sectionEntries
         } else {

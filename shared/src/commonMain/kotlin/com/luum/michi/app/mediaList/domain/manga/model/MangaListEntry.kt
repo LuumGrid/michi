@@ -34,6 +34,7 @@ internal data class MangaListEntry(
     override val trending: Int = 0,
     override val priority: Int = 0,
     override val genres: List<String> = emptyList(),
+    val isAdult: Boolean = false,
     override val season: MediaSeason? = null,
     override val seasonYear: Int? = null,
 ) : SortableMediaListEntry

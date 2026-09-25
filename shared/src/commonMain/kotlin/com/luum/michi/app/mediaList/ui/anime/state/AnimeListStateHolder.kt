@@ -103,12 +103,16 @@ internal class AnimeListStateHolder(
         }
     }
 
-    fun entriesInSection(section: AnimeListSection): List<AnimeListEntry> {
+    fun entriesInSection(section: AnimeListSection, hideAdult: Boolean = false): List<AnimeListEntry> {
         val filtered = loader.entries
             // ALL has no status of its own: no entry carries it, so filtering
             // by it would always come back empty (counts already treat ALL
             // as the whole list).
             .filter { section == AnimeListSection.ALL || it.status == section }
+            // Global 18+ setting (not a sheet filter): applied here so it
+            // stays fresh per composition with no holder state and no
+            // re-fetch — and testable at the seam like everything else.
+            .filter { !hideAdult || !it.isAdult }
             .filter {
                 matchesMediaListFilters(
                     season = it.season,
@@ -130,6 +134,10 @@ internal class AnimeListStateHolder(
         )
     }
 
+    // One rule: counts reflect the loaded list, never view state (sheet
+    // filters, search query, 18+ setting). A filtered-out-but-counted
+    // section tells the user something is hiding entries, not that the
+    // list emptied — same convention as AniList.
     fun countInSection(section: AnimeListSection): Int =
         if (section == AnimeListSection.ALL) loader.entries.size
         else loader.entries.count { it.status == section }

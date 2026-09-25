@@ -46,6 +46,7 @@ internal fun MediaListEntryDto.toMangaListEntry(
         trending = media.trending ?: 0,
         priority = priority ?: 0,
         genres = media.genres.orEmpty(),
+        isAdult = media.isAdult == true,
         season = parseMediaSeason(media.season),
         seasonYear = media.seasonYear ?: media.startDate?.year,
     )

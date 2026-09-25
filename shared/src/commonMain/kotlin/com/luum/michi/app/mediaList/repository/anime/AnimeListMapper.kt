@@ -47,6 +47,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(
         nextAiringAt = media.nextAiringEpisode?.airingAt ?: 0L,
         nextEpisodeNumber = media.nextAiringEpisode?.episode,
         genres = media.genres.orEmpty(),
+        isAdult = media.isAdult == true,
         season = parseMediaSeason(media.season),
         seasonYear = media.seasonYear ?: media.startDate?.year,
     )
