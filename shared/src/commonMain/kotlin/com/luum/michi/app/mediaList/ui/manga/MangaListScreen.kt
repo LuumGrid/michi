@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -88,6 +90,10 @@ internal fun MangaListScreen(
     // Global 18+ setting (inverted): hidden entries never reach the
     // list, but rail counts stay raw (see holder.countInSection).
     hideAdult: Boolean = false,
+    // Card tap opens media detail, pencil opens the entry editor (both
+    // dormant until their surfaces land; intents already exist in State).
+    onOpenDetail: (Int) -> Unit = {},
+    onEditEntry: (Int) -> Unit = {},
 ) {
     val sections = listOf(MangaListSection.ALL) + mangaStatusSections(splitCompleted)
     // Toggling split can strand the selection on a gone section (e.g.
@@ -179,17 +185,25 @@ internal fun MangaListScreen(
                             coverUrl = entry.coverUrl,
                             title = entry.title,
                             subtitle = meta,
-                                // TODO: open the quick-edit sheet (mini-step B);
-                                // cover/title taps will navigate to media detail.
-                                onClick = {},
-                            ) {
+                            onClick = { onOpenDetail(entry.id) },
+                            titleTrailing = {
+                                IconButton(onClick = { onEditEntry(entry.id) }) {
+                                    Icon(
+                                        imageVector = AppIcons.Edit,
+                                        contentDescription = strings.editEntryAction,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                            content = {
                                 MangaListEntryContent(
                                     entry = entry,
                                     onIncrementChapters = { holder.incrementChapters(entry) },
                                     onIncrementVolumes = { holder.incrementVolumes(entry) },
                                     strings = strings,
                                 )
-                            }
+                            },
+                        )
                         }
                     }
                 }

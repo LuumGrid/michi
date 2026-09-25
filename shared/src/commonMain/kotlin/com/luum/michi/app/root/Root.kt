@@ -342,6 +342,8 @@ internal fun Root(
                         sortPersist = persistSort,
                         splitCompleted = settingsState.splitCompletedAnime,
                         hideAdult = !settingsState.displayAdultContent,
+                        onOpenDetail = { state.openMedia(it) },
+                        onEditEntry = { state.openEditor(it) },
                     )
                 } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
                     MangaListScreen(
@@ -372,6 +374,8 @@ internal fun Root(
                         sortPersist = persistSort,
                         splitCompleted = settingsState.splitCompletedManga,
                         hideAdult = !settingsState.displayAdultContent,
+                        onOpenDetail = { state.openMedia(it) },
+                        onEditEntry = { state.openEditor(it) },
                     )
                 } else if (search != null && activeQuery.isNotEmpty()) {
                     // DISCOVER (and guests): server search lands in a later step.

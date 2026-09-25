@@ -32,7 +32,9 @@ import coil3.compose.SubcomposeAsyncImage
  * extras slot. Takes only primitives, so any feature showing media (lists,
  * discover, favorites, calendar, detail relations) reuses it. Feature-specific
  * content (progress counters, +1 buttons, ratings) goes in the [content] slot
- * and lives in the calling feature — never here.
+ * and lives in the calling feature — never here. Same for the optional
+ * [titleTrailing] action (e.g. the list edit pencil): caller-owned, hidden
+ * by default.
  *
  * Content surface, not glass: cards scroll with the list (see the glass
  * rule in CONTEXT).
@@ -49,6 +51,7 @@ internal fun MediaCoverCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    titleTrailing: (@Composable () -> Unit)? = null,
     content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     Surface(
@@ -87,21 +90,30 @@ internal fun MediaCoverCard(
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.Top,
             ) {
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (subtitle != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (subtitle != null) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                    if (titleTrailing != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        titleTrailing()
                     }
                 }
                 content?.invoke(this)
