@@ -58,7 +58,10 @@ internal class MangaListRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : MangaListRepository {
 
-    override suspend fun loadList(userId: Int): NetworkResult<List<MangaListEntry>> {
+    override suspend fun loadList(
+        userId: Int,
+        splitCompleted: Boolean,
+    ): NetworkResult<List<MangaListEntry>> {
         val request = AniListGraphQLRequest(
             query = MangaListQuery,
             variables = JsonObject(mapOf("userId" to JsonPrimitive(userId))),
@@ -71,7 +74,7 @@ internal class MangaListRepositoryImpl(
             response.collection.lists
                 .filter { !it.isCustomList }
                 .flatMap { it.entries }
-                .mapIndexed { index, entry -> entry.toMangaListEntry(index) }
+                .mapIndexed { index, entry -> entry.toMangaListEntry(index, splitCompleted) }
         }
     }
 }

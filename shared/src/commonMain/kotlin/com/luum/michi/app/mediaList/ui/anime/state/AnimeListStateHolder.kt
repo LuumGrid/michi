@@ -30,7 +30,9 @@ internal class AnimeListStateHolder(
     private val sortPersistence: SortPersistence? = null,
     private val sortScope: SortScope = SortScope.ANIME,
 ) {
-    private val loader = MediaListLoader(scope) { userId -> repository.loadList(userId) }
+    private val loader = MediaListLoader(scope) { userId ->
+        repository.loadList(userId, lastSplitCompleted)
+    }
 
     // Snapshot-backed so filter/sort sheets recompose the list on every
     // intent (plain vars would apply silently until the next load).
@@ -65,7 +67,18 @@ internal class AnimeListStateHolder(
         filterYear = year
     }
 
-    fun load(userId: Int, forceRefresh: Boolean = false) = loader.load(userId, forceRefresh)
+    fun load(userId: Int, forceRefresh: Boolean = false, splitCompleted: Boolean = true) {
+        // Split flips re-map every entry: bypass the TTL so the toggle
+        // applies immediately instead of on the next cold load. The fetch
+        // reads lastSplitCompleted at execution, so entries always match it.
+        val force = forceRefresh || splitCompleted != lastSplitCompleted
+        lastSplitCompleted = splitCompleted
+        loader.load(userId, force)
+    }
+
+    /** Split flag of the last mapping (entries always match it). Plain var:
+     * only load() writes it; the UI recomposes off entries + screen params. */
+    private var lastSplitCompleted = true
 
     fun incrementProgress(entry: AnimeListEntry) {
         val index = loader.indexOf { it.id == entry.id }
@@ -135,6 +148,7 @@ internal fun createAnimeListStateHolder(
 private fun AnimeListSection.toMediaListStatus(): MediaListStatus = when (this) {
     AnimeListSection.ALL -> MediaListStatus.CURRENT
     AnimeListSection.WATCHING -> MediaListStatus.CURRENT
+    AnimeListSection.COMPLETED,
     AnimeListSection.COMPLETED_TV,
     AnimeListSection.COMPLETED_MOVIE,
     AnimeListSection.COMPLETED_OVA,

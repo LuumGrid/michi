@@ -6,11 +6,15 @@ import com.luum.michi.app.core.network.repository.dto.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
+import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 
-internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry {
+internal fun MediaListEntryDto.toMangaListEntry(
+    index: Int = 0,
+    splitCompleted: Boolean = true,
+): MangaListEntry {
     val format = parseMediaFormat(media.format)
     return MangaListEntry(
         id = media.id,
@@ -22,7 +26,7 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
         ).distinct(),
         format = format,
         mediaStatus = parseMediaWorkStatus(media.status),
-        status = mapMangaStatus(status),
+        status = mapMangaStatus(status, format, splitCompleted),
         chaptersProgress = progress,
         totalChapters = media.chapters,
         volumesProgress = progressVolumes ?: 0,
@@ -47,9 +51,22 @@ internal fun MediaListEntryDto.toMangaListEntry(index: Int = 0): MangaListEntry 
     )
 }
 
-private fun mapMangaStatus(status: String?): MangaListSection = when (status?.uppercase()) {
+private fun mapMangaStatus(
+    status: String?,
+    format: MediaFormat,
+    splitCompleted: Boolean,
+): MangaListSection = when (status?.uppercase()) {
     "CURRENT" -> MangaListSection.CURRENT
-    "COMPLETED" -> MangaListSection.COMPLETED
+    "COMPLETED" -> if (splitCompleted) {
+        when (format) {
+            MediaFormat.MANGA -> MangaListSection.COMPLETED_MANGA
+            MediaFormat.NOVEL -> MangaListSection.COMPLETED_NOVEL
+            MediaFormat.ONE_SHOT -> MangaListSection.COMPLETED_ONE_SHOT
+            else -> MangaListSection.COMPLETED
+        }
+    } else {
+        MangaListSection.COMPLETED
+    }
     "PAUSED" -> MangaListSection.PAUSED
     "DROPPED" -> MangaListSection.DROPPED
     "PLANNING" -> MangaListSection.PLANNING

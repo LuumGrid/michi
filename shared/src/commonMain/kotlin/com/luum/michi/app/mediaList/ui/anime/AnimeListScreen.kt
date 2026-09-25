@@ -33,6 +33,7 @@ import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeStatusSections
+import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
@@ -84,8 +85,14 @@ internal fun AnimeListScreen(
     // Mirrors the Settings persist toggle: when on, sort changes are
     // remembered per tab across restarts (filters never persist).
     sortPersist: Boolean = false,
+    // Mirrors the Settings split toggle: merged COMPLETED when off,
+    // per-format sections when on.
+    splitCompleted: Boolean = true,
 ) {
-    val sections = listOf(AnimeListSection.ALL) + AnimeStatusSections
+    val sections = listOf(AnimeListSection.ALL) + animeStatusSections(splitCompleted)
+    // Toggling split can strand the selection on a gone section (e.g.
+    // COMPLETED_TV with split off): fall back to ALL without churning state.
+    val effectiveSelected = if (selected in sections) selected else AnimeListSection.ALL
     val tabs = sections.map { section ->
         MediaListSectionTab(
             value = section,
@@ -94,7 +101,7 @@ internal fun AnimeListScreen(
         )
     }
     val trimmedQuery = query.trim()
-    val entries = holder.entriesInSection(selected).let { sectionEntries ->
+    val entries = holder.entriesInSection(effectiveSelected).let { sectionEntries ->
         if (trimmedQuery.isEmpty()) {
             sectionEntries
         } else {
@@ -106,7 +113,7 @@ internal fun AnimeListScreen(
     Column(modifier = modifier.fillMaxSize()) {
         MediaListSectionRail(
             tabs = tabs,
-            selected = selected,
+            selected = effectiveSelected,
             onSelect = onSelectSection,
         )
         when {

@@ -35,8 +35,8 @@ import com.luum.michi.app.mediaList.domain.common.mediaListGenres
 import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
 import com.luum.michi.app.mediaList.domain.common.mediaListYears
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.mediaList.domain.manga.model.MangaStatusSections
 import com.luum.michi.app.mediaList.domain.manga.model.label
+import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
 import com.luum.michi.app.mediaList.ui.common.ANY_SEASON_ID
 import com.luum.michi.app.mediaList.ui.common.MediaListFilterSheet
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionRail
@@ -82,8 +82,14 @@ internal fun MangaListScreen(
     // Mirrors the Settings persist toggle: when on, sort changes are
     // remembered per tab across restarts (filters never persist).
     sortPersist: Boolean = false,
+    // Mirrors the Settings split toggle: merged COMPLETED when off,
+    // per-format sections when on.
+    splitCompleted: Boolean = true,
 ) {
-    val sections = listOf(MangaListSection.ALL) + MangaStatusSections
+    val sections = listOf(MangaListSection.ALL) + mangaStatusSections(splitCompleted)
+    // Toggling split can strand the selection on a gone section (e.g.
+    // COMPLETED_MANGA with split off): fall back to ALL without churning state.
+    val effectiveSelected = if (selected in sections) selected else MangaListSection.ALL
     val tabs = sections.map { section ->
         MediaListSectionTab(
             value = section,
@@ -92,7 +98,7 @@ internal fun MangaListScreen(
         )
     }
     val trimmedQuery = query.trim()
-    val entries = holder.entriesInSection(selected).let { sectionEntries ->
+    val entries = holder.entriesInSection(effectiveSelected).let { sectionEntries ->
         if (trimmedQuery.isEmpty()) {
             sectionEntries
         } else {
@@ -104,7 +110,7 @@ internal fun MangaListScreen(
     Column(modifier = modifier.fillMaxSize()) {
         MediaListSectionRail(
             tabs = tabs,
-            selected = selected,
+            selected = effectiveSelected,
             onSelect = onSelectSection,
         )
         when {

@@ -31,7 +31,9 @@ internal class MangaListStateHolder(
     private val sortPersistence: SortPersistence? = null,
     private val sortScope: SortScope = SortScope.MANGA,
 ) {
-    private val loader = MediaListLoader(scope) { userId -> repository.loadList(userId) }
+    private val loader = MediaListLoader(scope) { userId ->
+        repository.loadList(userId, lastSplitCompleted)
+    }
 
     // Snapshot-backed so filter/sort sheets recompose the list on every
     // intent (plain vars would apply silently until the next load).
@@ -66,7 +68,18 @@ internal class MangaListStateHolder(
         filterYear = year
     }
 
-    fun load(userId: Int, forceRefresh: Boolean = false) = loader.load(userId, forceRefresh)
+    fun load(userId: Int, forceRefresh: Boolean = false, splitCompleted: Boolean = true) {
+        // Split flips re-map every entry: bypass the TTL so the toggle
+        // applies immediately instead of on the next cold load. The fetch
+        // reads lastSplitCompleted at execution, so entries always match it.
+        val force = forceRefresh || splitCompleted != lastSplitCompleted
+        lastSplitCompleted = splitCompleted
+        loader.load(userId, force)
+    }
+
+    /** Split flag of the last mapping (entries always match it). Plain var:
+     * only load() writes it; the UI recomposes off entries + screen params. */
+    private var lastSplitCompleted = true
 
     fun incrementChapters(entry: MangaListEntry) {
         val index = loader.indexOf { it.id == entry.id }
@@ -163,7 +176,10 @@ internal fun createMangaListStateHolder(
 private fun MangaListSection.toMediaListStatus(): MediaListStatus = when (this) {
     MangaListSection.ALL -> MediaListStatus.CURRENT
     MangaListSection.CURRENT -> MediaListStatus.CURRENT
-    MangaListSection.COMPLETED -> MediaListStatus.COMPLETED
+    MangaListSection.COMPLETED,
+    MangaListSection.COMPLETED_MANGA,
+    MangaListSection.COMPLETED_NOVEL,
+    MangaListSection.COMPLETED_ONE_SHOT -> MediaListStatus.COMPLETED
     MangaListSection.PAUSED -> MediaListStatus.PAUSED
     MangaListSection.DROPPED -> MediaListStatus.DROPPED
     MangaListSection.PLANNING -> MediaListStatus.PLANNING

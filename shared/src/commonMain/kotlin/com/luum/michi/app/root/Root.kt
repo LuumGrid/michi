@@ -144,12 +144,12 @@ internal fun Root(
             MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope, sortPersistence)
         }
     }
-    LaunchedEffect(tab, viewerId) {
+    LaunchedEffect(tab, viewerId, settingsState.splitCompletedAnime, settingsState.splitCompletedManga) {
         if (tab == TabSection.ANIME && viewerId != null) {
-            animeHolder?.load(viewerId)
+            animeHolder?.load(viewerId, splitCompleted = settingsState.splitCompletedAnime)
         }
         if (tab == TabSection.MANGA && viewerId != null) {
-            mangaHolder?.load(viewerId)
+            mangaHolder?.load(viewerId, splitCompleted = settingsState.splitCompletedManga)
         }
     }
 
@@ -296,32 +296,58 @@ internal fun Root(
                         holder = animeHolder,
                         selected = state.selectedAnimeSection,
                         onSelectSection = { state.selectedAnimeSection = it },
-                        onRetry = { animeHolder.load(viewerId, forceRefresh = true) },
+                        onRetry = {
+                            animeHolder.load(
+                                viewerId,
+                                forceRefresh = true,
+                                splitCompleted = settingsState.splitCompletedAnime,
+                            )
+                        },
                         bottomPadding = padding.calculateBottomPadding(),
                         isRefreshing = animeHolder.isRefreshing,
-                        onRefresh = { animeHolder.load(viewerId, forceRefresh = true) },
+                        onRefresh = {
+                            animeHolder.load(
+                                viewerId,
+                                forceRefresh = true,
+                                splitCompleted = settingsState.splitCompletedAnime,
+                            )
+                        },
                         query = tabQuery,
                         isFilterOpen = state.isSectionFilterOpen,
                         onDismissFilter = { state.closeSectionFilter() },
                         isSortOpen = state.isListSortOpen,
                         onDismissSort = { state.closeListSort() },
                         sortPersist = persistSort,
+                        splitCompleted = settingsState.splitCompletedAnime,
                     )
                 } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
                     MangaListScreen(
                         holder = mangaHolder,
                         selected = state.selectedMangaSection,
                         onSelectSection = { state.selectedMangaSection = it },
-                        onRetry = { mangaHolder.load(viewerId, forceRefresh = true) },
+                        onRetry = {
+                            mangaHolder.load(
+                                viewerId,
+                                forceRefresh = true,
+                                splitCompleted = settingsState.splitCompletedManga,
+                            )
+                        },
                         bottomPadding = padding.calculateBottomPadding(),
                         isRefreshing = mangaHolder.isRefreshing,
-                        onRefresh = { mangaHolder.load(viewerId, forceRefresh = true) },
+                        onRefresh = {
+                            mangaHolder.load(
+                                viewerId,
+                                forceRefresh = true,
+                                splitCompleted = settingsState.splitCompletedManga,
+                            )
+                        },
                         query = tabQuery,
                         isFilterOpen = state.isSectionFilterOpen,
                         onDismissFilter = { state.closeSectionFilter() },
                         isSortOpen = state.isListSortOpen,
                         onDismissSort = { state.closeListSort() },
                         sortPersist = persistSort,
+                        splitCompleted = settingsState.splitCompletedManga,
                     )
                 } else if (search != null && activeQuery.isNotEmpty()) {
                     // DISCOVER (and guests): server search lands in a later step.

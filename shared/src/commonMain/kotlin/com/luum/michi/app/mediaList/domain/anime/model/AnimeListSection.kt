@@ -5,6 +5,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 internal enum class AnimeListSection {
     ALL,
     WATCHING,
+    COMPLETED,
     COMPLETED_TV,
     COMPLETED_MOVIE,
     COMPLETED_OVA,
@@ -31,8 +32,20 @@ internal val AnimeStatusSections: List<AnimeListSection> = listOf(
     AnimeListSection.REWATCHING,
 )
 
+/**
+ * Rail sections honoring the split toggle: merged COMPLETED when off,
+ * per-format sections when on (AniList "split completed by format").
+ */
+internal fun animeStatusSections(splitCompleted: Boolean): List<AnimeListSection> =
+    if (splitCompleted) {
+        AnimeStatusSections
+    } else {
+        AnimeStatusSections.map { if (it.isCompleted) AnimeListSection.COMPLETED else it }.distinct()
+    }
+
 internal val AnimeListSection.isCompleted: Boolean
     get() = when (this) {
+        AnimeListSection.COMPLETED,
         AnimeListSection.COMPLETED_TV,
         AnimeListSection.COMPLETED_MOVIE,
         AnimeListSection.COMPLETED_OVA,
@@ -50,6 +63,7 @@ internal val AnimeListSection.isCompleted: Boolean
 internal fun AnimeListSection.label(strings: LanguageStrings): String = when (this) {
     AnimeListSection.ALL -> strings.sectionAll
     AnimeListSection.WATCHING -> strings.sectionWatching
+    AnimeListSection.COMPLETED -> strings.completedLabel
     AnimeListSection.COMPLETED_TV -> strings.sectionCompletedTv
     AnimeListSection.COMPLETED_MOVIE -> strings.sectionCompletedMovie
     AnimeListSection.COMPLETED_OVA -> strings.sectionCompletedOva

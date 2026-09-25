@@ -12,8 +12,11 @@ import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.toComparableInt
 import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
 
-internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry {
-    val section = mapAnimeStatus(status, parseMediaFormat(media.format))
+internal fun MediaListEntryDto.toAnimeListEntry(
+    index: Int = 0,
+    splitCompleted: Boolean = true,
+): AnimeListEntry {
+    val section = mapAnimeStatus(status, parseMediaFormat(media.format), splitCompleted)
     return AnimeListEntry(
         id = media.id,
         title = media.title.bestTitle(),
@@ -49,10 +52,10 @@ internal fun MediaListEntryDto.toAnimeListEntry(index: Int = 0): AnimeListEntry 
     )
 }
 
-private fun mapAnimeStatus(status: String?, format: MediaFormat): AnimeListSection {
+private fun mapAnimeStatus(status: String?, format: MediaFormat, splitCompleted: Boolean): AnimeListSection {
     return when (status?.uppercase()) {
         "CURRENT" -> AnimeListSection.WATCHING
-        "COMPLETED" -> format.completedSection()
+        "COMPLETED" -> if (splitCompleted) format.completedSection() else AnimeListSection.COMPLETED
         "PAUSED" -> AnimeListSection.PAUSED
         "DROPPED" -> AnimeListSection.DROPPED
         "PLANNING" -> AnimeListSection.PLANNING

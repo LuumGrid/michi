@@ -314,4 +314,62 @@ class MediaListIntegrationTest {
         persistence.saveSort(SortScope.MANGA, "NOPE", "ASCENDING")
         assertNull(hydrateSort(persistence, SortScope.MANGA))
     }
+
+    @Test
+    fun splitCompletedMapsMergedOrPerFormat() {
+        val graphQL = FakeGraphQL(listOf(animeCollection(), animeCollection()))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+        assertEquals(1, holder.entriesInSection(AnimeListSection.COMPLETED_MOVIE).size)
+        assertEquals(0, holder.entriesInSection(AnimeListSection.COMPLETED).size)
+
+        // Flipping split bypasses the TTL: same server data, fresh mapping.
+        holder.load(7, splitCompleted = false)
+        assertEquals(1, holder.entriesInSection(AnimeListSection.COMPLETED).size)
+        assertEquals(0, holder.entriesInSection(AnimeListSection.COMPLETED_MOVIE).size)
+    }
+
+    @Test
+    fun mangaSplitCompletedMapsMergedOrPerFormat() {
+        fun completedCollection() = singleGroupCollection(
+            listEntryJson(
+                id = 10,
+                status = "COMPLETED",
+                progress = 10,
+                progressVolumes = 10,
+                media = mangaMediaJson(
+                    id = 201,
+                    format = "NOVEL",
+                    romaji = "Novel Done",
+                    chapters = 0,
+                    volumes = 10,
+                ),
+            ),
+            listEntryJson(
+                id = 11,
+                status = "COMPLETED",
+                progress = 100,
+                media = mangaMediaJson(
+                    id = 202,
+                    format = "MANGA",
+                    romaji = "Manga Done",
+                    chapters = 100,
+                    volumes = 10,
+                ),
+            ),
+        )
+        val graphQL = FakeGraphQL(listOf(completedCollection(), completedCollection()))
+        val (holder) = mangaWired(graphQL)
+
+        holder.load(7)
+        assertEquals(1, holder.entriesInSection(MangaListSection.COMPLETED_NOVEL).size)
+        assertEquals(1, holder.entriesInSection(MangaListSection.COMPLETED_MANGA).size)
+        assertEquals(0, holder.entriesInSection(MangaListSection.COMPLETED).size)
+
+        // Flipping split bypasses the TTL: same server data, fresh mapping.
+        holder.load(7, splitCompleted = false)
+        assertEquals(2, holder.entriesInSection(MangaListSection.COMPLETED).size)
+        assertEquals(0, holder.entriesInSection(MangaListSection.COMPLETED_NOVEL).size)
+    }
 }

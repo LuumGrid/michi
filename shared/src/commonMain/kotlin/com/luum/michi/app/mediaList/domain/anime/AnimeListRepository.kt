@@ -8,5 +8,5 @@ internal interface AnimeListRepository {
      * Fetches the authenticated user's full anime list, grouped by AniList
      * status and flattened into UI entries.
      */
-    suspend fun loadList(userId: Int): NetworkResult<List<AnimeListEntry>>
+    suspend fun loadList(userId: Int, splitCompleted: Boolean = true): NetworkResult<List<AnimeListEntry>>
 }

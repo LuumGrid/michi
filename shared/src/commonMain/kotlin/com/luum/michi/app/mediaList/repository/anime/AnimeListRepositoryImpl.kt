@@ -57,7 +57,10 @@ internal class AnimeListRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : AnimeListRepository {
 
-    override suspend fun loadList(userId: Int): NetworkResult<List<AnimeListEntry>> {
+    override suspend fun loadList(
+        userId: Int,
+        splitCompleted: Boolean,
+    ): NetworkResult<List<AnimeListEntry>> {
         val request = AniListGraphQLRequest(
             query = AnimeListQuery,
             variables = JsonObject(mapOf("userId" to JsonPrimitive(userId))),
@@ -70,7 +73,7 @@ internal class AnimeListRepositoryImpl(
             response.collection.lists
                 .filter { !it.isCustomList }
                 .flatMap { it.entries }
-                .mapIndexed { index, entry -> entry.toAnimeListEntry(index) }
+                .mapIndexed { index, entry -> entry.toAnimeListEntry(index, splitCompleted) }
         }
     }
 }
