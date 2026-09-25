@@ -48,6 +48,7 @@ internal class State(
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
     var isSettingsOpen by mutableStateOf(false)
+    var isSignInOpen by mutableStateOf(false)
 
     /** In-context search: one active tab at a time, query preserved per tab. */
     var searchActiveTab: TabSection? by mutableStateOf(null)
@@ -92,7 +93,7 @@ internal class State(
         isSearchActive -> BackStep.CloseSearch
         isExploreFilterOpen || isSectionFilterOpen || isListSortOpen -> BackStep.CloseSheet
         isExploreOpen || isCalendarOpen || isNotificationsOpen || isEditorOpen ||
-            isShareProfileOpen || isSettingsOpen -> BackStep.CloseOverlay
+            isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
         isDetailOpen -> BackStep.CloseDetail
         else -> BackStep.SystemDefault
     }
@@ -119,6 +120,7 @@ internal class State(
             closeEditor()
             closeShareProfile()
             closeSettings()
+            closeSignIn()
             true
         }
         BackStep.CloseDetail -> {
@@ -218,6 +220,14 @@ internal class State(
 
     fun closeSettings() {
         isSettingsOpen = false
+    }
+
+    fun openSignIn() {
+        isSignInOpen = true
+    }
+
+    fun closeSignIn() {
+        isSignInOpen = false
     }
 }
 

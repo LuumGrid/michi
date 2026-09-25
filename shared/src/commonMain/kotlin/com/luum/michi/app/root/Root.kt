@@ -91,12 +91,15 @@ internal fun Root(
     font: AppFont,
     onFontChange: (AppFont) -> Unit,
     viewer: Viewer? = null,
-    onLogin: () -> Unit = {},
     onLogout: () -> Unit = {},
     animeListRepository: AnimeListRepository,
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     sortPersistence: SortPersistence,
+    authServices: List<AuthService>,
+    isAuthConfigured: Boolean,
+    autoOpenSignIn: Boolean = false,
+    onAutoSignInShown: () -> Unit = {},
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -119,6 +122,18 @@ internal fun Root(
     // composition, never for guests (canSync). The holder dedups repeats.
     LaunchedEffect(state.isSettingsOpen) {
         if (state.isSettingsOpen) settingsState.refresh()
+    }
+
+    // Sign-in modal lifecycle: opens once on first anonymous launch,
+    // closes on login (viewer appears) wherever it was opened from.
+    LaunchedEffect(autoOpenSignIn) {
+        if (autoOpenSignIn) {
+            state.openSignIn()
+            onAutoSignInShown()
+        }
+    }
+    LaunchedEffect(viewer) {
+        if (viewer != null) state.closeSignIn()
     }
 
     // Keyboard follows search: every close path (chevron, scrim, system
@@ -211,7 +226,7 @@ internal fun Root(
                 } else {
                     ToolbarNavigation.None
                 },
-                actions = toolbarActions(tab, search != null, state.isSettingsOpen, strings),
+                actions = toolbarActions(tab, search != null, state.isSettingsOpen, viewerId == null, strings),
                 search = search,
                 backContentDescription = strings.backButton,
                 clearContentDescription = strings.clearSearchAction,
@@ -293,7 +308,7 @@ internal fun Root(
                         font = font,
                         onFontChange = onFontChange,
                         viewer = viewer,
-                        onLogin = onLogin,
+                        onLogin = { state.openSignIn() },
                         onLogout = onLogout,
                     )
                 } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
@@ -367,6 +382,20 @@ internal fun Root(
                         actionLabel = null,
                         onAction = {},
                     )
+                } else if (
+                    (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||
+                        activeTab == TabSection.ACCOUNT) && viewerId == null
+                ) {
+                    // Gated tabs without a session: sign-in prompt opening
+                    // the modal (the only login surface besides first launch).
+                    val tabItem = tabs(strings).first { it.section == activeTab }
+                    MessagePanel(
+                        title = activeTab.label(strings),
+                        message = strings.authGuestPrompt,
+                        icon = tabItem.icon,
+                        actionLabel = strings.settingsSignInTitle,
+                        onAction = { state.openSignIn() },
+                    )
                 } else {
                     val tabItem = tabs(strings).first { it.section == activeTab }
                     MessagePanel(
@@ -380,6 +409,17 @@ internal fun Root(
             }
             if (showScrim) {
                 SearchScrim(onDismiss = { state.applyBackStep() })
+            }
+            if (state.isSignInOpen) {
+                AuthModal(
+                    services = authServices,
+                    isConfigured = isAuthConfigured,
+                    configMissingLabel = strings.authConfigurationMissing,
+                    language = language,
+                    onLanguageChange = onLanguageChange,
+                    guestLabel = strings.authContinueAsGuestAction,
+                    onDismiss = { state.closeSignIn() },
+                )
             }
         }
     }
@@ -462,9 +502,15 @@ private fun toolbarActions(
     tab: TabSection,
     isSearching: Boolean,
     isSettingsOpen: Boolean,
+    isGuest: Boolean,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
     if (isSearching || isSettingsOpen) return emptyList()
+    // Gated tabs without a session keep the calendar only (public airing
+    // data, no login needed): filter/sort/search operate on lists that
+    // don't exist. Calendar stays visible-but-inert until its surface
+    // lands — same as for logged users today.
+    val isGatedGuest = isGuest && (tab == TabSection.ANIME || tab == TabSection.MANGA)
     return buildList {
         if (tab != TabSection.ACCOUNT) {
             // Ungrouped on purpose: lone circle left of the tools capsule.
@@ -476,7 +522,7 @@ private fun toolbarActions(
                 ),
             )
         }
-        if (tab == TabSection.ANIME || tab == TabSection.MANGA) {
+        if (!isGatedGuest && (tab == TabSection.ANIME || tab == TabSection.MANGA)) {
             add(
                 ToolbarAction(
                     id = ACTION_FILTER,
@@ -495,13 +541,15 @@ private fun toolbarActions(
             )
         }
         if (tab != TabSection.ACCOUNT) {
-            add(
-                ToolbarAction(
-                    id = ACTION_SEARCH,
-                    icon = AppIcons.Search,
-                    contentDescription = strings.searchTitle,
-                ),
-            )
+            if (!isGatedGuest) {
+                add(
+                    ToolbarAction(
+                        id = ACTION_SEARCH,
+                        icon = AppIcons.Search,
+                        contentDescription = strings.searchTitle,
+                    ),
+                )
+            }
         } else {
             add(
                 ToolbarAction(

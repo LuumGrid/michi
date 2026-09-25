@@ -39,7 +39,6 @@ import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.core.storage.repository.StoreSortPersistence
-import com.luum.michi.app.root.AuthLandingScreen
 import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
 import com.luum.michi.app.settings.ui.state.rememberSettingsState
@@ -70,7 +69,6 @@ fun App(
     var language by remember {
         mutableStateOf(AppLanguage.fromCode(store.getString(SettingsStoreKeys.Language)))
     }
-    var guestMode by remember { mutableStateOf(false) }
     var palette: ThemeColors by remember {
         mutableStateOf(paletteForId(store.getString(SettingsStoreKeys.ThemePalette)))
     }
@@ -95,6 +93,18 @@ fun App(
     val session by dependencies.sessionManager.state.collectAsState()
     val scope = rememberCoroutineScope()
 
+    // Login services (AniList today; MAL appends here tomorrow): shared by
+    // the sign-in modal everywhere it opens.
+    val authServices = listOf(
+        AuthService(
+            id = "anilist",
+            label = strings.authLoginAction,
+            onLogin = { dependencies.oAuthLauncher.open() },
+            icon = AppIcons.AniList,
+            brandHex = ANILIST_BRAND_HEX,
+        ),
+    )
+
     // Synced settings holder: one per session. Guests get canSync = false
     // (local-only, never touches the network); login/logout recreates it.
     val settingsState = rememberSettingsState(
@@ -108,6 +118,11 @@ fun App(
     // into it. Local-only, like theme/language.
     val sortPersistence = remember { StoreSortPersistence(store) }
 
+    // Sign-in modal auto-open: first anonymous launch only. Logout never
+    // reopens it (the flag persists); login closes it via the viewer effect.
+    val autoOpenSignIn =
+        session is SessionState.Anonymous && !store.getBoolean(SettingsStoreKeys.SeenSignIn, false)
+
     CompositionLocalProvider(LocalStrings provides strings) {
         Theme(
             palette = palette,
@@ -115,15 +130,16 @@ fun App(
             font = font,
         ) {
             val current = session
+            // No login wall: anonymous users enter the shell as guests
+            // (Discover works without a session); sign-in is on-demand
+            // via the modal wherever a gated surface needs it.
             val route = when (current) {
                 SessionState.Loading -> AppRoute.LOADING
-                SessionState.Anonymous -> if (guestMode) AppRoute.SHELL else AppRoute.LANDING
+                SessionState.Anonymous -> AppRoute.SHELL
                 is SessionState.Authenticated -> AppRoute.SHELL
                 is SessionState.Error -> AppRoute.ERROR
             }
-            // Same motion language as the tab switch: fade + quarter slide
-            // with tabFadeSpec. Entering the shell is forward, everything
-            // else is backward.
+            // Same motion language as the tab switch: fade + quarter slide.
             // Opaque theme backdrop: this AnimatedContent sits outside every
             // Scaffold, so the crossfade alpha overlap would otherwise bleed
             // the (light) window background through. (Tab switches don't need
@@ -134,12 +150,10 @@ fun App(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
                 transitionSpec = {
-                    val forward = initialState == AppRoute.LANDING && targetState == AppRoute.SHELL
-                    val enterFrom = if (forward) 1 else -1
                     (fadeIn(animationSpec = tabFadeSpec()) +
-                        slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 * enterFrom } togetherWith
+                        slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 } togetherWith
                         fadeOut(animationSpec = tabFadeSpec()) +
-                        slideOutHorizontally(animationSpec = tabFadeSpec()) { -it / 4 * enterFrom }) using
+                        slideOutHorizontally(animationSpec = tabFadeSpec()) { -it / 4 }) using
                         SizeTransform(clip = false)
                 },
                 label = "session-route",
@@ -160,26 +174,6 @@ fun App(
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
-                    }
-                    AppRoute.LANDING -> {
-                        AuthLandingScreen(
-                            strings = strings,
-                            services = listOf(
-                                AuthService(
-                                    id = "anilist",
-                                    label = strings.authLoginAction,
-                                    onLogin = { dependencies.oAuthLauncher.open() },
-                                    icon = AppIcons.AniList,
-                                    brandHex = ANILIST_BRAND_HEX,
-                                ),
-                            ),
-                            language = language,
-                            onLanguageChange = onLanguageChange,
-                            guestLabel = strings.authContinueAsGuestAction,
-                            isConfigured = AniListOAuthConfig.isConfigured,
-                            configMissingLabel = strings.authConfigurationMissing,
-                            onGuest = { guestMode = true },
-                        )
                     }
                     AppRoute.SHELL -> {
                         Root(
@@ -202,15 +196,19 @@ fun App(
                                 store.putString(SettingsStoreKeys.Font, it.name)
                             },
                             viewer = (current as? SessionState.Authenticated)?.viewer,
-                            onLogin = { dependencies.oAuthLauncher.open() },
                             onLogout = {
-                                guestMode = false
                                 dependencies.logout()
                             },
                             animeListRepository = dependencies.animeListRepository,
                             mangaListRepository = dependencies.mangaListRepository,
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
                             sortPersistence = sortPersistence,
+                            authServices = authServices,
+                            isAuthConfigured = AniListOAuthConfig.isConfigured,
+                            autoOpenSignIn = autoOpenSignIn,
+                            onAutoSignInShown = {
+                                store.putBoolean(SettingsStoreKeys.SeenSignIn, true)
+                            },
                         )
                     }
                     AppRoute.ERROR -> {
@@ -234,7 +232,6 @@ fun App(
                             )
                             TextButton(
                                 onClick = {
-                                    guestMode = false
                                     dependencies.logout()
                                 },
                             ) {
@@ -254,7 +251,6 @@ fun App(
 /** Session routing key: drives the landing/shell transition, never the session itself. */
 private enum class AppRoute {
     LOADING,
-    LANDING,
     SHELL,
     ERROR,
 }

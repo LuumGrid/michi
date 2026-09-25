@@ -248,7 +248,8 @@ interface LanguageStrings {
     val settingsSignOutConfirmMessage: String
     val backButton: String
     val authWelcomeTitle: String
-    val authWelcomeSubtitle: String
+    val authModalSubtitle: String
+    val authGuestPrompt: String
     val authLoginAction: String
     val authContinueAsGuestAction: String
     val authConfigurationMissing: String

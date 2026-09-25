@@ -36,6 +36,11 @@ internal fun ModalSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
+    // Extra header actions ahead of the fixed X (e.g. the language switch
+    // on the sign-in sheet). Empty everywhere else — existing callers
+    // render exactly as before.
+    headerActions: List<ToolbarAction> = emptyList(),
+    onHeaderAction: (String) -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
@@ -53,7 +58,7 @@ internal fun ModalSheet(
             Toolbar(
                 title = title,
                 navigation = ToolbarNavigation.None,
-                actions = listOf(
+                actions = headerActions + listOf(
                     ToolbarAction(
                         id = ACTION_DISMISS,
                         icon = AppIcons.Clear,
@@ -64,7 +69,9 @@ internal fun ModalSheet(
                 backContentDescription = null,
                 clearContentDescription = null,
                 onNavigation = {},
-                onAction = { onDismiss() },
+                onAction = { id ->
+                    if (id == ACTION_DISMISS) onDismiss() else onHeaderAction(id)
+                },
                 onSearchChange = {},
                 onSearchSubmit = {},
                 onSearchClose = {},

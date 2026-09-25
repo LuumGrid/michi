@@ -11,4 +11,6 @@ internal object SettingsStoreKeys {
     const val Font = "app_font"
     const val Language = "app_language"
     const val DefaultDiscoverTab = "default_home_tab"
+    /** Sign-in modal auto-opened once (first anonymous launch, never again). */
+    const val SeenSignIn = "seen_sign_in"
 }
