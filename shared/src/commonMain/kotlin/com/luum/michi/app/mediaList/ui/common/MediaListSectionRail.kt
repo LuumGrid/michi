@@ -33,10 +33,13 @@ internal fun <T> MediaListSectionRail(
     selected: T,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    // Baked 16dp matches the full-width list screens; sheets (already
+    // inset) pass zero to avoid double padding.
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
 ) {
     LazyRow(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(

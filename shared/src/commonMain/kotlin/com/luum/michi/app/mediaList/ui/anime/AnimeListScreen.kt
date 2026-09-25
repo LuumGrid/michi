@@ -15,6 +15,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -43,6 +47,7 @@ import com.luum.michi.app.mediaList.ui.common.MediaListSectionRail
 import com.luum.michi.app.mediaList.ui.common.MediaListSectionTab
 import com.luum.michi.app.mediaList.ui.common.MediaListSortSheet
 import com.luum.michi.app.mediaList.ui.common.toggled
+import com.luum.michi.app.mediaList.ui.common.yearFilterTabs
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
@@ -185,6 +190,17 @@ internal fun AnimeListScreen(
         }
     }
     if (isFilterOpen) {
+        // Accordion decade: screen-local, auto-expands the decade holding
+        // the current year filter. Root never sees it (single sheet, so
+        // back always closes the filter sheet — no ordering involved).
+        var expandedDecade by remember {
+            mutableStateOf(holder.filterYear?.let { it / 10 * 10 })
+        }
+        val yearTabs = yearFilterTabs(
+            entries = holder.entries,
+            years = mediaListYears(),
+            anyLabel = strings.exploreAnyYearLabel,
+        )
         MediaListFilterSheet(
             seasonOptions = mediaListSeasonOptions(strings),
             selectedSeasonId = holder.filterSeason?.name ?: ANY_SEASON_ID,
@@ -196,7 +212,7 @@ internal fun AnimeListScreen(
                     year = holder.filterYear,
                 )
             },
-            yearOptions = mediaListYears(),
+            yearTabs = yearTabs,
             selectedYear = holder.filterYear,
             onSelectYear = { year ->
                 holder.updateListFilters(
@@ -206,6 +222,8 @@ internal fun AnimeListScreen(
                     year = year,
                 )
             },
+            expandedDecade = expandedDecade,
+            onToggleDecade = { expandedDecade = if (it == expandedDecade) null else it },
             genres = mediaListGenres(),
             selectedGenres = holder.filterGenres,
             onToggleGenre = { genre ->
@@ -227,6 +245,7 @@ internal fun AnimeListScreen(
                 )
             },
             onReset = {
+                expandedDecade = null
                 holder.updateListFilters(
                     season = null,
                     genres = emptyList(),
@@ -234,7 +253,10 @@ internal fun AnimeListScreen(
                     year = null,
                 )
             },
-            onDismiss = onDismissFilter,
+            onDismiss = {
+                expandedDecade = null
+                onDismissFilter()
+            },
         )
     }
     if (isSortOpen) {

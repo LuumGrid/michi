@@ -16,11 +16,15 @@ internal fun mediaListGenres(): List<String> = listOf(
 
 /**
  * Selectable years: next year first (covers next season falling in January),
- * then backwards, with the classic curated tail. Mirrored from Explore.
+ * then every year down to [OLDEST_FILTER_YEAR] — no curated jumps, so no
+ * year is ever missing from the filter. Rendered as a horizontal rail, so
+ * the (gently growing) count never costs vertical space.
  */
+internal const val OLDEST_FILTER_YEAR = 1960
+
 internal fun mediaListYears(): List<Int?> {
     val currentYear = currentSeasonAndYear().year
-    return listOf(null) + ((currentYear + 1) downTo 2011) + listOf(2010, 2005, 2000)
+    return listOf(null) + ((currentYear + 1) downTo OLDEST_FILTER_YEAR)
 }
 
 internal fun mediaListSeasonOptions(strings: LanguageStrings): List<FilterOption> {

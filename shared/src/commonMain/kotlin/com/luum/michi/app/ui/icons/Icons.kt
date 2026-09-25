@@ -9,8 +9,10 @@ import com.luum.michi.app.ui.icons.generated.Explore
 import com.luum.michi.app.ui.icons.generated.Favorite
 import com.luum.michi.app.ui.icons.generated.FavoriteFilled
 import com.luum.michi.app.ui.icons.generated.FilterList
+import com.luum.michi.app.ui.icons.generated.KeyboardArrowDown
 import com.luum.michi.app.ui.icons.generated.KeyboardArrowLeft
 import com.luum.michi.app.ui.icons.generated.KeyboardArrowRight
+import com.luum.michi.app.ui.icons.generated.KeyboardArrowUp
 import com.luum.michi.app.ui.icons.generated.Language
 import com.luum.michi.app.ui.icons.generated.Manga
 import com.luum.michi.app.ui.icons.generated.IconPack
@@ -109,6 +111,14 @@ internal object AppIcons {
     /** Chevron-right: rows that open a picker sheet. */
     val ChevronRight: ImageVector
         get() = IconPack.KeyboardArrowRight
+
+    /** Chevron-down: expands an accordion row (year filter decades). */
+    val ExpandMore: ImageVector
+        get() = IconPack.KeyboardArrowDown
+
+    /** Chevron-up: collapses an accordion row. */
+    val ExpandLess: ImageVector
+        get() = IconPack.KeyboardArrowUp
 
     /** Filled star: the user's own rating (global averages use the outline twin). */
     val Star: ImageVector

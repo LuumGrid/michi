@@ -1,13 +1,19 @@
 package com.luum.michi.app.mediaList.ui.common
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -15,6 +21,7 @@ import com.luum.michi.app.core.model.FilterOption
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
+import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -29,9 +36,11 @@ internal fun MediaListFilterSheet(
     seasonOptions: List<FilterOption>,
     selectedSeasonId: String,
     onSelectSeason: (String) -> Unit,
-    yearOptions: List<Int?>,
+    yearTabs: List<MediaListSectionTab<Int?>>,
     selectedYear: Int?,
     onSelectYear: (Int?) -> Unit,
+    expandedDecade: Int?,
+    onToggleDecade: (Int) -> Unit,
     genres: List<String>,
     selectedGenres: List<String>,
     onToggleGenre: (String) -> Unit,
@@ -60,29 +69,60 @@ internal fun MediaListFilterSheet(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
+        // Accordion year group (variant C): decade rows expand inline to
+        // their year rail. Tabs arrive flat and group here, so screens and
+        // the filter predicate stay untouched; selection is the exact year.
         OptionGroup(title = strings.exploreFilterYearLabel) {
-            // "Any" stays a lone top row; the rest groups visually by
-            // decade (headers only — selection is still the exact year,
-            // so the filter predicate is untouched).
-            if (yearOptions.any { it == null }) {
+            var firstRow = true
+            if (yearTabs.any { it.value == null }) {
                 OptionRow(
                     label = strings.exploreAnyYearLabel,
                     selected = selectedYear == null,
                     onClick = { onSelectYear(null) },
                     divider = false,
                 )
+                firstRow = false
             }
-            yearOptions.filterNotNull()
-                .groupBy { it / 10 * 10 }
+            yearTabs.filter { it.value != null }
+                .groupBy { it.value!! / 10 * 10 }
                 .toSortedMap(compareByDescending { it })
-                .forEach { (decade, years) ->
-                    DecadeHeader(label = "$decade–${decade + 9}")
-                    years.forEach { year ->
-                        OptionRow(
-                            label = year.toString(),
-                            selected = year == selectedYear,
-                            onClick = { onSelectYear(year) },
-                            divider = true,
+                .forEach { (decade, tabs) ->
+                    val expanded = decade == expandedDecade
+                    val decadeSelected = tabs.any { it.value == selectedYear }
+                    OptionRow(
+                        label = "$decade–${decade + 9}",
+                        selected = decadeSelected,
+                        onClick = { onToggleDecade(decade) },
+                        divider = !firstRow,
+                        trailing = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = if (expanded) {
+                                        AppIcons.ExpandLess
+                                    } else {
+                                        AppIcons.ExpandMore
+                                    },
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Checkbox(
+                                    checked = decadeSelected,
+                                    onCheckedChange = null,
+                                )
+                            }
+                        },
+                    )
+                    firstRow = false
+                    if (expanded) {
+                        MediaListSectionRail(
+                            tabs = tabs,
+                            selected = selectedYear,
+                            onSelect = { onSelectYear(it) },
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
                 }
@@ -120,22 +160,4 @@ internal fun MediaListFilterSheet(
             )
         }
     }
-}
-
-/**
- * Visual-only decade separator inside the year group (same label style as
- * [com.luum.michi.app.ui.components.OptionGroup] titles, tighter spacing
- * since it lives inside the frame).
- */
-@Composable
-private fun DecadeHeader(
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(top = 12.dp, bottom = 4.dp),
-    )
 }

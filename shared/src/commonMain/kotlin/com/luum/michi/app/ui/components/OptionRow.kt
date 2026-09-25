@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Generic single-select row: optional leading slot (e.g. palette dot),
- * label, and a trailing checkbox (IG-style square). Whole row is selectable
- * so accessibility services announce the selected state; the checkbox is
- * display-only (null onCheckedChange). Set [divider]=false on the first row
- * of each [OptionGroup].
+ * label, and a trailing checkbox (IG-style square) by default. Pass
+ * [trailing] to replace the checkbox (e.g. checkbox + expand chevron on
+ * accordion rows). Whole row is selectable so accessibility services
+ * announce the selected state; the checkbox is display-only
+ * (null onCheckedChange). Set [divider]=false on the first row of each
+ * [OptionGroup].
  */
 @Composable
 internal fun OptionRow(
@@ -32,6 +34,7 @@ internal fun OptionRow(
     modifier: Modifier = Modifier,
     divider: Boolean = true,
     leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
@@ -53,10 +56,14 @@ internal fun OptionRow(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
-            Checkbox(
-                checked = selected,
-                onCheckedChange = null,
-            )
+            if (trailing != null) {
+                trailing()
+            } else {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = null,
+                )
+            }
         }
     }
 }
