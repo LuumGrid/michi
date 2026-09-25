@@ -1,6 +1,8 @@
 package com.luum.michi.app.settings.domain.model
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 
 internal enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
@@ -54,6 +56,18 @@ internal fun ListSort.label(strings: LanguageStrings): String = when (this) {
     ListSort.SCORE -> strings.settingsListSortByScore
     ListSort.UPDATED -> strings.settingsListSortByUpdated
     ListSort.ADDED -> strings.settingsListSortByAdded
+}
+
+/**
+ * Default sort as a list sort: TITLE orders A-Z like AniList web, the rest
+ * newest/highest first. Consumed by Root's hydration chain
+ * (saved persist-sort wins, then this, then FOLLOW_LIST).
+ */
+internal fun ListSort.toUserSort(): Pair<UserListSort, UserListOrder> = when (this) {
+    ListSort.TITLE -> UserListSort.TITLE to UserListOrder.ASCENDING
+    ListSort.SCORE -> UserListSort.SCORE to UserListOrder.DESCENDING
+    ListSort.UPDATED -> UserListSort.LAST_UPDATED to UserListOrder.DESCENDING
+    ListSort.ADDED -> UserListSort.LAST_ADDED to UserListOrder.DESCENDING
 }
 
 internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, ACCOUNT }

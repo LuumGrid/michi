@@ -14,6 +14,8 @@ import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.hydrateSort
+import com.luum.michi.app.root.resolveInitialSort
+import com.luum.michi.app.settings.domain.model.ListSort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
@@ -314,6 +316,29 @@ class MediaListIntegrationTest {
 
         persistence.saveSort(SortScope.MANGA, "NOPE", "ASCENDING")
         assertNull(hydrateSort(persistence, SortScope.MANGA))
+    }
+
+    @Test
+    fun resolveInitialSortPrefersSavedThenDefault() {
+        val saved = UserListSort.SCORE to UserListOrder.ASCENDING
+        val restored = resolveInitialSort(saved, ListSort.TITLE)
+        assertEquals(UserListSort.SCORE, restored.option)
+        assertEquals(UserListOrder.ASCENDING, restored.order)
+        assertTrue(restored.persist)
+
+        val defaulted = resolveInitialSort(null, ListSort.TITLE)
+        assertEquals(UserListSort.TITLE, defaulted.option)
+        assertEquals(UserListOrder.ASCENDING, defaulted.order)
+        assertFalse(defaulted.persist)
+    }
+
+    @Test
+    fun resolveInitialSortMapsEveryDefaultSort() {
+        fun mapped(sort: ListSort) = resolveInitialSort(null, sort).let { it.option to it.order }
+        assertEquals(UserListSort.TITLE to UserListOrder.ASCENDING, mapped(ListSort.TITLE))
+        assertEquals(UserListSort.SCORE to UserListOrder.DESCENDING, mapped(ListSort.SCORE))
+        assertEquals(UserListSort.LAST_UPDATED to UserListOrder.DESCENDING, mapped(ListSort.UPDATED))
+        assertEquals(UserListSort.LAST_ADDED to UserListOrder.DESCENDING, mapped(ListSort.ADDED))
     }
 
     @Test

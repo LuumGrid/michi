@@ -37,6 +37,8 @@ import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
+import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
@@ -153,24 +155,29 @@ internal fun Root(
         }
     }
 
-    // Sort memory (Settings persist toggle, per tab): hydrate on session
-    // start when on (unknown/corrupt values fall back to FOLLOW_LIST),
-    // clear stored sorts when off so stale values never resurrect.
-    // Filters never persist — express search only.
+    // Sort memory (Settings persist toggle, per tab) + Default sort:
+    // saved persist-sort wins, then the default, then holder defaults.
+    // Changing Default sort applies live (effect key); changing it while a
+    // saved sort exists leaves that tab on the saved sort. Clearing on
+    // toggle-off so stale values never resurrect. Filters never persist.
     val persistSort = settingsState.persistListSort
-    LaunchedEffect(viewerId, persistSort) {
+    val defaultSort = settingsState.listSort
+    LaunchedEffect(viewerId, persistSort, defaultSort) {
         if (viewerId == null) return@LaunchedEffect
-        if (persistSort) {
-            hydrateSort(sortPersistence, SortScope.ANIME)?.let { (option, order) ->
-                animeHolder?.updateSort(option, order, persist = true)
-            }
-            hydrateSort(sortPersistence, SortScope.MANGA)?.let { (option, order) ->
-                mangaHolder?.updateSort(option, order, persist = true)
-            }
-        } else {
+        if (!persistSort) {
             sortPersistence.clearSort(SortScope.ANIME)
             sortPersistence.clearSort(SortScope.MANGA)
         }
+        val animeInitial = resolveInitialSort(
+            saved = hydrateSort(sortPersistence, SortScope.ANIME).takeIf { persistSort },
+            defaultSort = defaultSort,
+        )
+        animeHolder?.updateSort(animeInitial.option, animeInitial.order, persist = animeInitial.persist)
+        val mangaInitial = resolveInitialSort(
+            saved = hydrateSort(sortPersistence, SortScope.MANGA).takeIf { persistSort },
+            defaultSort = defaultSort,
+        )
+        mangaHolder?.updateSort(mangaInitial.option, mangaInitial.order, persist = mangaInitial.persist)
     }
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
@@ -413,6 +420,32 @@ internal fun hydrateSort(
     val option = UserListSort.entries.firstOrNull { it.name == sort } ?: return null
     val direction = UserListOrder.entries.firstOrNull { it.name == order } ?: return null
     return option to direction
+}
+
+/** Session-start sort per tab. Pure for tests. */
+internal data class InitialSort(
+    val option: UserListSort,
+    val order: UserListOrder,
+    /** True only when restoring the user's own saved sort. */
+    val persist: Boolean,
+)
+
+/**
+ * Precedence: saved persist-sort wins, then the Settings default sort, then
+ * holder defaults (handled by the caller when this returns the default —
+ * persist is false so defaults are never written back as user choices).
+ * Explicit always beats default: changing Default sort while a saved sort
+ * exists leaves the lists on the saved sort.
+ */
+internal fun resolveInitialSort(
+    saved: Pair<UserListSort, UserListOrder>?,
+    defaultSort: ListSort,
+): InitialSort {
+    if (saved != null) {
+        return InitialSort(saved.first, saved.second, persist = true)
+    }
+    val (option, order) = defaultSort.toUserSort()
+    return InitialSort(option, order, persist = false)
 }
 
 private const val ACTION_SEARCH = "search"
