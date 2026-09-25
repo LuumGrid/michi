@@ -1,7 +1,7 @@
-package com.luum.michi.app.account
+package com.luum.michi.app.profile
 
-import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.account.repository.AccountRepositoryImpl
+import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
 import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
@@ -9,11 +9,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AccountRepositoryLoadTest {
+class ProfileRepositoryLoadTest {
 
     @Test
-    fun loadAccountMapsCountsFavoritesAndFollows() {
-        val result = runBlocking { AccountRepositoryImpl(FakeAccountGraphQL(listOf(accountData()))).loadAccount(1) }
+    fun loadProfileMapsCountsFavoritesAndFollows() {
+        val result = runBlocking { ProfileRepositoryImpl(FakeProfileGraphQL(listOf(profileData()))).loadProfile(1) }
         assertTrue(result is NetworkResult.Success)
         assertEquals(10, result.value.stats.animeCount)
         assertEquals(5, result.value.stats.mangaCount)
@@ -24,9 +24,9 @@ class AccountRepositoryLoadTest {
     }
 
     @Test
-    fun loadAccountWithNullUserFallsBackToEmpty() {
+    fun loadProfileWithNullUserFallsBackToEmpty() {
         val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(buildJsonObject {}))).loadAccount(1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(buildJsonObject {}))).loadProfile(1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals(0, result.value.stats.animeCount)
@@ -37,8 +37,8 @@ class AccountRepositoryLoadTest {
     @Test
     fun loadFavoritesPageMapsMediaBranch() {
         val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("anime", "A", true))))
-                .loadFavoritesPage(1, AccountFavoritesCategory.ANIME, 1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("anime", "A", true))))
+                .loadFavoritesPage(1, ProfileFavoritesCategory.ANIME, 1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals("A", result.value.mediaItems.single().title)
@@ -48,8 +48,8 @@ class AccountRepositoryLoadTest {
     @Test
     fun loadFavoritesPageMapsPersonBranch() {
         val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("characters", "C", false))))
-                .loadFavoritesPage(1, AccountFavoritesCategory.CHARACTERS, 1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("characters", "C", false))))
+                .loadFavoritesPage(1, ProfileFavoritesCategory.CHARACTERS, 1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals("C", result.value.personItems.single().name)
@@ -58,8 +58,8 @@ class AccountRepositoryLoadTest {
     @Test
     fun loadFavoritesPageMapsMangaBranch() {
         val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("manga", "M", false))))
-                .loadFavoritesPage(1, AccountFavoritesCategory.MANGA, 1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("manga", "M", false))))
+                .loadFavoritesPage(1, ProfileFavoritesCategory.MANGA, 1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals("M", result.value.mediaItems.single().title)
@@ -68,8 +68,8 @@ class AccountRepositoryLoadTest {
     @Test
     fun loadFavoritesPageMapsStaffBranch() {
         val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("staff", "S", false))))
-                .loadFavoritesPage(1, AccountFavoritesCategory.STAFF, 1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("staff", "S", false))))
+                .loadFavoritesPage(1, ProfileFavoritesCategory.STAFF, 1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals("S", result.value.personItems.single().name)
@@ -77,8 +77,8 @@ class AccountRepositoryLoadTest {
 
     @Test
     fun loadFavoritesPageMapsStudioBranch() {        val result = runBlocking {
-            AccountRepositoryImpl(FakeAccountGraphQL(listOf(favouritesPage("studios", "S", false))))
-                .loadFavoritesPage(1, AccountFavoritesCategory.STUDIOS, 1)
+            ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("studios", "S", false))))
+                .loadFavoritesPage(1, ProfileFavoritesCategory.STUDIOS, 1)
         }
         assertTrue(result is NetworkResult.Success)
         assertEquals("S", result.value.studioItems.single().name)

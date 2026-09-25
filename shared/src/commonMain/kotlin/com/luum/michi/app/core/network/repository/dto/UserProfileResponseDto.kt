@@ -4,12 +4,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Combined response DTO for the merged account query that fetches user stats
+ * Combined response DTO for the merged profile query that fetches user stats
  * (statistics + followers/following counts) AND favourites in a single request.
  *
  * GraphQL:
  * ```
- * query UserAccount($userId: Int!) {
+ * query UserProfile($userId: Int!) {
  *   User(id: $userId) {
  *     statistics { anime { count meanScore minutesWatched } manga { count meanScore chaptersRead volumesRead } }
  *     favourites {
@@ -26,15 +26,15 @@ import kotlinx.serialization.Serializable
  * ```
  */
 @Serializable
-internal data class UserAccountResponseDto(
+internal data class UserProfileResponseDto(
     @SerialName("User")
-    val user: UserAccountContainerDto? = null,
+    val user: UserProfileContainerDto? = null,
     val followers: FollowsPageDto? = null,
     val following: FollowsPageDto? = null,
 )
 
 @Serializable
-internal data class UserAccountContainerDto(
+internal data class UserProfileContainerDto(
     val statistics: UserStatisticTypesDto? = null,
     val favourites: FavouritesDto? = null,
 )

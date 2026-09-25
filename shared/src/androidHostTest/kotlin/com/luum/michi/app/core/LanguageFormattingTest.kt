@@ -30,8 +30,8 @@ class LanguageFormattingTest {
 
     @Test
     fun joinedLabelLocalizesMonth() {
-        assertEquals("Joined Mar 2024", EnglishStrings.accountJoinedLabel(3, 2024))
-        assertEquals("Se unió en mar 2024", SpanishStrings.accountJoinedLabel(3, 2024))
+        assertEquals("Joined Mar 2024", EnglishStrings.profileJoinedLabel(3, 2024))
+        assertEquals("Se unió en mar 2024", SpanishStrings.profileJoinedLabel(3, 2024))
     }
 
     @Test

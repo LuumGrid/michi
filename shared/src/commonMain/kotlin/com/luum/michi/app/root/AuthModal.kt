@@ -24,7 +24,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * The single sign-in surface (list/Account placeholders, Settings
+ * The single sign-in surface (list/Profile placeholders, Settings
  * sign-in, first launch): landing toolbar (Michi + language) plus X,
  * welcome copy without a service name (multi-service future), the shared
  * service buttons, and the guest button (X alone is missed by users).

@@ -48,7 +48,7 @@ internal object AppIcons {
     val Clear: ImageVector
         get() = IconPack.Close
 
-    /** Gear: trailing action of the Account tab. */
+    /** Gear: trailing action of the Profile tab. */
     val Settings: ImageVector
         get() = IconPack.Settings
 
@@ -73,7 +73,7 @@ internal object AppIcons {
     val Manga: ImageVector
         get() = IconPack.Books
 
-    val Account: ImageVector
+    val Profile: ImageVector
         get() = IconPack.Profile
 
     // ---- Brand ----
@@ -128,7 +128,7 @@ internal object AppIcons {
     val Calendar: ImageVector
         get() = IconPack.CalendarMonth
 
-    /** Bell: opens the notifications overlay (trigger lives in account). */
+    /** Bell: opens the notifications overlay (trigger lives in profile). */
     val Notifications: ImageVector
         get() = IconPack.Notifications
 }

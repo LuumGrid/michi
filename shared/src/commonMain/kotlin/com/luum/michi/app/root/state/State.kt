@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.account.domain.model.AccountProfileDraft
+import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
@@ -29,13 +29,13 @@ internal sealed interface BackStep {
 }
 
 internal class State(
-    initialProfile: AccountProfileDraft,
+    initialProfile: ProfileDraft,
     initialTab: TabSection = TabSection.DISCOVER,
 ) {
     var selectedTab: TabSection by mutableStateOf(initialTab)
     var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
     var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
-    var currentProfile: AccountProfileDraft by mutableStateOf(initialProfile)
+    var currentProfile: ProfileDraft by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
     var editorMediaId: Int? by mutableStateOf(null)
     var editorInitialStatus: MediaListStatus? by mutableStateOf(null)
@@ -64,8 +64,8 @@ internal class State(
     val isEditorOpen: Boolean
         get() = editorMediaId != null
 
-    /** Only ACCOUNT has no search surface; every other tab searches its own scope. */
-    fun supportsSearch(tab: TabSection): Boolean = tab != TabSection.ACCOUNT
+    /** Only PROFILE has no search surface; every other tab searches its own scope. */
+    fun supportsSearch(tab: TabSection): Boolean = tab != TabSection.PROFILE
 
     fun searchQuery(tab: TabSection): String = searchQueries[tab].orEmpty()
 
@@ -237,7 +237,7 @@ internal fun createState(
     initialTab: TabSection = TabSection.DISCOVER,
 ): State {
     return State(
-        initialProfile = viewer.toAccountProfileDraft(),
+        initialProfile = viewer.toProfileDraft(),
         initialTab = initialTab,
     )
 }
@@ -248,7 +248,7 @@ internal fun rememberState(
     initialTab: TabSection = TabSection.DISCOVER,
 ): State = remember {
     State(
-        initialProfile = AccountProfileDraft(
+        initialProfile = ProfileDraft(
             username = "",
             displayName = "",
             avatarUrl = null,
@@ -259,7 +259,7 @@ internal fun rememberState(
     )
 }
 
-private fun Viewer.toAccountProfileDraft(): AccountProfileDraft = AccountProfileDraft(
+private fun Viewer.toProfileDraft(): ProfileDraft = ProfileDraft(
     username = name,
     displayName = name,
     avatarUrl = avatarUrl,

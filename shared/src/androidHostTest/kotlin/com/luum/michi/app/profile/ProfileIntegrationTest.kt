@@ -1,9 +1,9 @@
-package com.luum.michi.app.account
+package com.luum.michi.app.profile
 
-import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.account.repository.AccountRepositoryImpl
-import com.luum.michi.app.account.ui.state.AccountFavoritesGridStateHolder
-import com.luum.michi.app.account.ui.state.AccountStateHolder
+import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
+import com.luum.michi.app.profile.ui.state.ProfileFavoritesGridStateHolder
+import com.luum.michi.app.profile.ui.state.ProfileStateHolder
 import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,13 +14,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class AccountIntegrationTest {
+class ProfileIntegrationTest {
 
     @Test
     fun happySlicePopulatesHolder() {
-        val graphQL = FakeAccountGraphQL(listOf(accountData()))
-        val holder = AccountStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(profileData()))
+        val holder = ProfileStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -32,9 +32,9 @@ class AccountIntegrationTest {
 
     @Test
     fun nullUserEndToEndStaysUsable() {
-        val graphQL = FakeAccountGraphQL(listOf(buildJsonObject {}))
-        val holder = AccountStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(buildJsonObject {}))
+        val holder = ProfileStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -45,12 +45,12 @@ class AccountIntegrationTest {
 
     @Test
     fun gridSliceLoadsThroughRealRepo() {
-        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("anime", "A", true)))
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(favouritesPage("anime", "A", true)))
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.ANIME)
+        holder.load(1, ProfileFavoritesCategory.ANIME)
         assertEquals("A", holder.mediaItems.single().title)
         assertTrue(holder.hasNextPage)
         assertNull(holder.error)
@@ -58,9 +58,9 @@ class AccountIntegrationTest {
 
     @Test
     fun serverFailureSurfacesOnHolder() {
-        val graphQL = FakeAccountGraphQL(listOf(accountData()), failureAt = 0)
-        val holder = AccountStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(profileData()), failureAt = 0)
+        val holder = ProfileStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -70,11 +70,11 @@ class AccountIntegrationTest {
 
     @Test
     fun refreshRefetchesThroughRealRepo() {
-        val graphQL = FakeAccountGraphQL(
-            listOf(accountData(), accountData()),
+        val graphQL = FakeProfileGraphQL(
+            listOf(profileData(), profileData()),
         )
-        val holder = AccountStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val holder = ProfileStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -84,61 +84,61 @@ class AccountIntegrationTest {
     }
     @Test
     fun gridSliceLoadsMangaBranch() {
-        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("manga", "M", false)))
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(favouritesPage("manga", "M", false)))
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.MANGA)
+        holder.load(1, ProfileFavoritesCategory.MANGA)
         assertEquals("M", holder.mediaItems.single().title)
     }
 
     @Test
     fun gridSliceLoadsCharactersBranch() {
-        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("characters", "C", false)))
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(favouritesPage("characters", "C", false)))
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.CHARACTERS)
+        holder.load(1, ProfileFavoritesCategory.CHARACTERS)
         assertEquals("C", holder.personItems.single().name)
     }
 
     @Test
     fun gridSliceLoadsStaffBranch() {
-        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("staff", "S", false)))
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(favouritesPage("staff", "S", false)))
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.STAFF)
+        holder.load(1, ProfileFavoritesCategory.STAFF)
         assertEquals("S", holder.personItems.single().name)
     }
 
     @Test
     fun gridSliceLoadsStudiosBranch() {
-        val graphQL = FakeAccountGraphQL(listOf(favouritesPage("studios", "T", false)))
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val graphQL = FakeProfileGraphQL(listOf(favouritesPage("studios", "T", false)))
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.STUDIOS)
+        holder.load(1, ProfileFavoritesCategory.STUDIOS)
         assertEquals("T", holder.studioItems.single().name)
     }
 
     @Test
     fun gridPaginationAppendsSecondPage() {
-        val graphQL = FakeAccountGraphQL(
+        val graphQL = FakeProfileGraphQL(
             listOf(
                 favouritesPage("anime", "A", hasNextPage = true, id = 2),
                 favouritesPage("anime", "B", hasNextPage = false, id = 3),
             ),
         )
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.ANIME)
+        holder.load(1, ProfileFavoritesCategory.ANIME)
         holder.loadMore()
         assertEquals(listOf("A", "B"), holder.mediaItems.map { it.title })
         assertEquals(false, holder.hasNextPage)
@@ -146,18 +146,18 @@ class AccountIntegrationTest {
 
     @Test
     fun emptyGridStaysEmptyWithoutError() {
-        val graphQL = FakeAccountGraphQL(
+        val graphQL = FakeProfileGraphQL(
             listOf(
                 buildJsonObject {
                     put("User", buildJsonObject { put("favourites", buildJsonObject {}) })
                 },
             ),
         )
-        val holder = AccountFavoritesGridStateHolder(
-            AccountRepositoryImpl(graphQL),
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
             CoroutineScope(Dispatchers.Unconfined),
         )
-        holder.load(1, AccountFavoritesCategory.MANGA)
+        holder.load(1, ProfileFavoritesCategory.MANGA)
         assertTrue(holder.mediaItems.isEmpty())
         assertNull(holder.error)
     }

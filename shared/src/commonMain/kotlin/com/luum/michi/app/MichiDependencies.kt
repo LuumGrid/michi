@@ -1,7 +1,7 @@
 package com.luum.michi.app
 
-import com.luum.michi.app.account.repository.AccountRepositoryImpl
-import com.luum.michi.app.account.domain.AccountRepository
+import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
+import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
@@ -73,8 +73,8 @@ class MichiDependencies internal constructor(
     internal val mangaListRepository: MangaListRepository =
         MangaListRepositoryImpl(graphQLClient)
 
-    internal val accountRepository: AccountRepository =
-        AccountRepositoryImpl(graphQLClient)
+    internal val profileRepository: ProfileRepository =
+        ProfileRepositoryImpl(graphQLClient)
 
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)

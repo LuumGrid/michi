@@ -1,19 +1,19 @@
-package com.luum.michi.app.account.repository
+package com.luum.michi.app.profile.repository
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-import com.luum.michi.app.account.domain.AccountData
-import com.luum.michi.app.account.domain.AccountFavoritesPage
-import com.luum.michi.app.account.domain.AccountRepository
-import com.luum.michi.app.account.domain.model.AccountFavorites
-import com.luum.michi.app.account.domain.model.AccountFavoritesCategory
-import com.luum.michi.app.account.domain.model.AccountStats
+import com.luum.michi.app.profile.domain.ProfileData
+import com.luum.michi.app.profile.domain.ProfileFavoritesPage
+import com.luum.michi.app.profile.domain.ProfileRepository
+import com.luum.michi.app.profile.domain.model.ProfileFavorites
+import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.network.repository.dto.CharacterDto
 import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.StaffDto
 import com.luum.michi.app.core.network.repository.dto.StudioDto
-import com.luum.michi.app.core.network.repository.dto.UserAccountResponseDto
+import com.luum.michi.app.core.network.repository.dto.UserProfileResponseDto
 import com.luum.michi.app.core.network.repository.dto.UserFavouritesResponseDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -21,21 +21,21 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 
-/** Shared node fields for anime/manga favourites. Single source of truth for both account queries. */
+/** Shared node fields for anime/manga favourites. Single source of truth for both profile queries. */
 private const val MediaFavoriteNodeFields = """
   id
   title { romaji english native userPreferred }
   coverImage { extraLarge large medium color }
 """
 
-/** Shared node fields for character/staff favourites. Single source of truth for both account queries. */
+/** Shared node fields for character/staff favourites. Single source of truth for both profile queries. */
 private const val PersonFavoriteNodeFields = """
   id
   name { full userPreferred }
   image { large medium }
 """
 
-/** Shared node fields for studio favourites. Single source of truth for both account queries. */
+/** Shared node fields for studio favourites. Single source of truth for both profile queries. */
 private const val StudioFavoriteNodeFields = """
   id
   name
@@ -44,8 +44,8 @@ private const val StudioFavoriteNodeFields = """
   }
 """
 
-private const val UserAccountQuery = """
-query UserAccount(${'$'}userId: Int!) {
+private const val UserProfileQuery = """
+query UserProfile(${'$'}userId: Int!) {
   User(id: ${'$'}userId) {
     statistics {
       anime {
@@ -110,9 +110,9 @@ query UserAccount(${'$'}userId: Int!) {
 }
 """
 
-private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
+private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
     val field = when (category) {
-        AccountFavoritesCategory.ANIME -> """
+        ProfileFavoritesCategory.ANIME -> """
             anime(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
@@ -120,7 +120,7 @@ private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
               }
             }
         """.trimIndent()
-        AccountFavoritesCategory.MANGA -> """
+        ProfileFavoritesCategory.MANGA -> """
             manga(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
@@ -128,19 +128,19 @@ private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
               }
             }
         """.trimIndent()
-        AccountFavoritesCategory.CHARACTERS -> """
+        ProfileFavoritesCategory.CHARACTERS -> """
             characters(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
-        AccountFavoritesCategory.STAFF -> """
+        ProfileFavoritesCategory.STAFF -> """
             staff(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
-        AccountFavoritesCategory.STUDIOS -> """
+        ProfileFavoritesCategory.STUDIOS -> """
             studios(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage }
               nodes {
@@ -163,38 +163,38 @@ private fun favoritesPageQuery(category: AccountFavoritesCategory): String {
 /** Items fetched per page in the "see more" favourites grid. */
 private const val FavoritesPageSize = 25
 
-internal class AccountRepositoryImpl(
+internal class ProfileRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
-) : AccountRepository {
+) : ProfileRepository {
 
-    override suspend fun loadAccount(userId: Int): NetworkResult<AccountData> {
+    override suspend fun loadProfile(userId: Int): NetworkResult<ProfileData> {
         val request = AniListGraphQLRequest(
-            query = UserAccountQuery,
+            query = UserProfileQuery,
             variables = JsonObject(mapOf("userId" to JsonPrimitive(userId))),
-            operationName = "UserAccount",
+            operationName = "UserProfile",
         )
 
         return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(UserAccountResponseDto.serializer(), dataJson)
+            AniListJson.decodeFromJsonElement(UserProfileResponseDto.serializer(), dataJson)
         }.map { response ->
-            val stats = AccountStats(
+            val stats = ProfileStats(
                 animeCount = response.user?.statistics?.anime?.count ?: 0,
                 mangaCount = response.user?.statistics?.manga?.count ?: 0,
                 followingCount = response.following?.pageInfo?.total ?: 0,
                 followersCount = response.followers?.pageInfo?.total ?: 0,
-                anime = response.user?.statistics?.anime.toAccountMediaTypeStats(isManga = false),
-                manga = response.user?.statistics?.manga.toAccountMediaTypeStats(isManga = true),
+                anime = response.user?.statistics?.anime.toProfileMediaTypeStats(isManga = false),
+                manga = response.user?.statistics?.manga.toProfileMediaTypeStats(isManga = true),
             )
-            val favorites = response.user?.favourites?.toDomain() ?: AccountFavorites.EMPTY
-            AccountData(stats = stats, favorites = favorites)
+            val favorites = response.user?.favourites?.toDomain() ?: ProfileFavorites.EMPTY
+            ProfileData(stats = stats, favorites = favorites)
         }
     }
 
     override suspend fun loadFavoritesPage(
         userId: Int,
-        category: AccountFavoritesCategory,
+        category: ProfileFavoritesCategory,
         page: Int,
-    ): NetworkResult<AccountFavoritesPage> {
+    ): NetworkResult<ProfileFavoritesPage> {
         val request = AniListGraphQLRequest(
             query = favoritesPageQuery(category),
             variables = JsonObject(
@@ -212,24 +212,24 @@ internal class AccountRepositoryImpl(
         }.map { response ->
             val favourites = response.user?.favourites
             when (category) {
-                AccountFavoritesCategory.ANIME -> AccountFavoritesPage(
-                    mediaItems = favourites?.anime?.nodes?.map(MediaDto::toAccountFavoriteMedia).orEmpty(),
+                ProfileFavoritesCategory.ANIME -> ProfileFavoritesPage(
+                    mediaItems = favourites?.anime?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
                     hasNextPage = favourites?.anime?.pageInfo?.hasNextPage ?: false,
                 )
-                AccountFavoritesCategory.MANGA -> AccountFavoritesPage(
-                    mediaItems = favourites?.manga?.nodes?.map(MediaDto::toAccountFavoriteMedia).orEmpty(),
+                ProfileFavoritesCategory.MANGA -> ProfileFavoritesPage(
+                    mediaItems = favourites?.manga?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
                     hasNextPage = favourites?.manga?.pageInfo?.hasNextPage ?: false,
                 )
-                AccountFavoritesCategory.CHARACTERS -> AccountFavoritesPage(
-                    personItems = favourites?.characters?.nodes?.map(CharacterDto::toAccountFavoritePerson).orEmpty(),
+                ProfileFavoritesCategory.CHARACTERS -> ProfileFavoritesPage(
+                    personItems = favourites?.characters?.nodes?.map(CharacterDto::toProfileFavoritePerson).orEmpty(),
                     hasNextPage = favourites?.characters?.pageInfo?.hasNextPage ?: false,
                 )
-                AccountFavoritesCategory.STAFF -> AccountFavoritesPage(
-                    personItems = favourites?.staff?.nodes?.map(StaffDto::toAccountFavoritePerson).orEmpty(),
+                ProfileFavoritesCategory.STAFF -> ProfileFavoritesPage(
+                    personItems = favourites?.staff?.nodes?.map(StaffDto::toProfileFavoritePerson).orEmpty(),
                     hasNextPage = favourites?.staff?.pageInfo?.hasNextPage ?: false,
                 )
-                AccountFavoritesCategory.STUDIOS -> AccountFavoritesPage(
-                    studioItems = favourites?.studios?.nodes?.map(StudioDto::toAccountFavoriteStudio).orEmpty(),
+                ProfileFavoritesCategory.STUDIOS -> ProfileFavoritesPage(
+                    studioItems = favourites?.studios?.nodes?.map(StudioDto::toProfileFavoriteStudio).orEmpty(),
                     hasNextPage = favourites?.studios?.pageInfo?.hasNextPage ?: false,
                 )
             }

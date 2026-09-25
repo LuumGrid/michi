@@ -1,7 +1,7 @@
 package com.luum.michi.app.core.session.domain
 
 /**
- * Session gate for token-mandatory loads (user lists, account, notifications,
+ * Session gate for token-mandatory loads (user lists, profile, notifications,
  * settings sync, entry mutations). The future UI calls this instead of raw
  * `load()`s; discover, calendar and media-detail reads load directly without
  * authentication (try-before-login).

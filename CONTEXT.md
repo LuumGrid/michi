@@ -16,7 +16,7 @@ Before designing any AniList feature surface, consult the reference clients:
 - Shared Android library namespace: `com.luum.michi.app.shared`.
 - Compose resources package: `com.luum.michi.app.resources`.
 - iOS framework name: `Shared`.
-- Product: AniList client for anime/manga discovery, lists, account, feed, search, details, and settings.
+- Product: AniList client for anime/manga discovery, lists, profile, feed, search, details, and settings.
 
 ## Current Stack
 
@@ -105,8 +105,8 @@ mediaDetail/
 
 ## State Pattern
 
-- A stateful feature owns a `*StateHolder` (plain Kotlin class) holding query state in plain vars, exposing derived read-only views and intent-style mutations (`load`, `refresh`, filters, edits). Real examples: `ExploreStateHolder`, `AnimeListStateHolder`, `AccountStateHolder`, `CalendarStateHolder`.
-- The holder is constructed with its repository (plus scope/store where needed); several have a pure `create*` factory for tests (`createAccountStateHolder`, `createCalendarStateHolder`, `createNotificationsStateHolder`, `createSettingsState`). Only `SettingsState` is Compose-backed today (its async load/save/error drives UI recomposition) with a `rememberSettingsState()` Composable factory.
+- A stateful feature owns a `*StateHolder` (plain Kotlin class) holding query state in plain vars, exposing derived read-only views and intent-style mutations (`load`, `refresh`, filters, edits). Real examples: `ExploreStateHolder`, `AnimeListStateHolder`, `ProfileStateHolder`, `CalendarStateHolder`.
+- The holder is constructed with its repository (plus scope/store where needed); several have a pure `create*` factory for tests (`createProfileStateHolder`, `createCalendarStateHolder`, `createNotificationsStateHolder`, `createSettingsState`). Only `SettingsState` is Compose-backed today (its async load/save/error drives UI recomposition) with a `rememberSettingsState()` Composable factory.
 - `SettingsState` is a Compose-backed holder (`settings/ui/state/`) over `SettingsRepository` + `SettingsStore` (hydrate + debounced save, `canSync` gate, `refresh()` deduped per session with `force` retry). `App` creates one per session via `rememberSettingsState()` (keyed by auth flip) and passes it to `Root`, which calls `refresh()` on first open (`LaunchedEffect(isSettingsOpen)`) and forwards it to `SettingsScreen`; guests get `canSync = false` (local-only, never touches the network).
 - **Direction (parked): overlay stack.** `State` currently grows one `isXxxOpen` boolean per overlay (plus editor fields and `detailStack`). When the first overlay-over-overlay case appears (e.g. editor over detail) or flags reach ~12, migrate to `overlayStack: SnapshotStateList<Overlay>` (sealed: Explore, Calendar, Notifications, Editor(...), ShareProfile) so back pops one at a time (true progressive back — today `CloseOverlay` closes everything at once) and `nextBackStep`/`applyBackStep` become exhaustive `when`s (compiler catches new overlays). Keep `openX()`/`closeX()` as thin wrappers so callers do not churn.
 
@@ -174,7 +174,7 @@ com.luum.michi.app
   root/
     Root.kt                 slim orchestrator (toolbar + tabs + content router)
     AuthLandingScreen.kt    login landing + language picker (title only; theme lives in Settings)
-    state/State.kt          BackStep, State, rememberState (+ isSettingsOpen flag, no account routes)
+    state/State.kt          BackStep, State, rememberState (+ isSettingsOpen flag, no profile routes)
   core/
     auth/domain|repository/   AniList OAuth flow + token storage
     session/domain|repository/ viewer identity + SessionManager
@@ -191,7 +191,7 @@ com.luum.michi.app
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
     theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura), ThemeProvider
-  account/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
+  profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder (no screens yet)
   discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet)
   mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (anime screen live, manga holder-only)
@@ -215,7 +215,7 @@ appear only when real behavior justifies them.
 - `animation` / `Animation` for anime.
 - `reading` / `Reading` for manga/reading.
 - `feed` / `Feed` for AniList activity feed.
-- `account` / `Account` for user profile surfaces.
+- `profile` / `Profile` for user profile surfaces.
 - `brandColor()` for app-wide brand primitives (raw hex in, `Color` out, converted at the UI boundary).
 - No layer prefixes on class names: shared UI lives in `ui/` (`Toolbar`, `Icons`, `TabBar`), root scope in `root/` (`Root`, `State`). The package is the disambiguator — `ui.Icons` vs feature icons, `root.State` vs any other state.
 - `AniList*` for API/client/DTO-specific classes.
@@ -224,12 +224,12 @@ appear only when real behavior justifies them.
 
 - `App.kt` owns theme mode/palette/font + language via `remember`, hydrated from `SettingsStore` at startup and persisted on every change (unknown values fall back to defaults). It routes landing vs shell on `SessionState` with an `AnimatedContent` crossfade (same `tabFadeSpec` motion as tabs) over an opaque theme backdrop. The authenticated `Viewer` enters `Root` so the shell profile draft is real.
 - `root` is a slim orchestrator. It wires the session `SettingsState` and composes `Toolbar` + `TabBar`. Root-scoped state lives in `root/state/State.kt`.
-- Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `ACCOUNT`.
-- Settings is independent of account (the old account-route concept is gone). The gear in the ACCOUNT toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `account/`.
+- Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `PROFILE`.
+- Settings is independent of profile (the old profile-route concept is gone). The gear in the PROFILE toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `profile/`.
 - `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` (media/character/studio/staff holders). `mediaList/` has the first real list UI: `AnimeListScreen` (section rail + `MediaCoverCard` rows over `AnimeListStateHolder`, wired in `Root`'s ANIME tab) while manga stays holder-only. Screens land later without restructuring (see feature-group exceptions).
-- `account/` has domain + repository (+mappers) + state holders (`AccountStateHolder`, `AccountFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/media surfaces exist yet.
+- `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/media surfaces exist yet.
 - `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`) and font rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the landing edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
-- Notifications feed is parked as a future `account` subfeature (sheet from the Account toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `account/` when its UI lands.
+- Notifications feed is parked as a future `profile` subfeature (sheet from the Profile toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `profile/` when its UI lands.
 - Every tab except Settings renders a `MessagePanel` placeholder (title + icon, no actions).
 - App language support: Spanish (`es`) and English (`en`).
 - App name `Michi` is a brand name; do not move it to translatable XML unless the user changes direction.
@@ -243,16 +243,16 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 ## Root Responsibilities
 
 - `Root` is the app-level orchestrator. It wires the session `SettingsState`, derives the topbar title, and routes the content area.
-- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, search active/query, and current account profile draft.
-- `root` owns topbar search state for DISCOVER, ANIME and MANGA via `Toolbar` (ACCOUNT has no search):
+- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, search active/query, and current profile draft.
+- `root` owns topbar search state for DISCOVER, ANIME and MANGA via `Toolbar` (PROFILE has no search):
   - Normal state: topbar actions.
   - Active search: replaces title with `SearchField`; left icon becomes ChevronLeft; system back closes search.
 - `root` owns the settings overlay via `State.isSettingsOpen` (single source for title, content and back; closes with `CloseOverlay`). Open means `Toolbar` with back + `settingsTitle` and zero actions; the content area renders `SettingsScreen`.
 - `Toolbar` takes primitives + callbacks (`onNavigation`, `onAction(id)`, search callbacks); `Root` maps action ids (`ACTION_SEARCH`, `ACTION_SETTINGS`, …). Filter/sort/calendar actions are currently no-op until their screens land.
 
-## Account Profile Layout (parked — no profile UI exists yet)
+## Profile Layout (parked — no profile UI exists yet)
 
-- `account/` holds domain + repository (+mappers) + state holders only.
+- `profile/` holds domain + repository (+mappers) + state holders only.
 - When the profile lands, cross-feature navigation (e.g. a "See more" rail jumping to a list tab) goes through `Root` callbacks — never feature→feature imports.
 
 ## Settings Layout
@@ -268,19 +268,19 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - **Inline toggles** (private `SettingsToggleRow`: title + optional subtitle + display-only `Switch`): 18+ content, split completed anime/manga, advanced scoring, plus the 3 notification prefs (airing, messages, media).
 - **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list).
 - **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font as its own row — same pickers the auth landing's theme sheet had. Writes persist to the store; the auth landing keeps only its language picker.
-- Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside account routes). `settings` never imports `root`.
+- Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
 
 ## UI Decisions
 
 - Bottom tab labels (4):
-  - Spanish: `Descubrir`, `Anime`, `Manga`, `Cuenta`.
-  - English: `Discover`, `Anime`, `Manga`, `Account`.
+  - Spanish: `Descubrir`, `Anime`, `Manga`, `Perfil`.
+  - English: `Discover`, `Anime`, `Manga`, `Profile`.
 - Home has no banner/avatar and no embedded search row. Search belongs in the topbar.
 - **Glass rule (validated sep-2026):** glass (`glassContainerColor`, `glassBorder`, shadow) is reserved for floating surfaces and actions (Toolbar, TabBar, buttons). Content cards stay opaque `surface` — a glass pilot on the session card washed out in light mode (translucency flattened, shadow + 40% border rendered a ghost edge).
 - **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.Star`) and popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). `Icons.Like` (heart) is reserved for user favorites only.
 - Reading: separate `+1 CH` and `+1 VO` buttons (manga has chapters and volumes). Animation: `+1 EP`.
 - Counters are numeric-only next to their buttons, styled with stronger weight.
-- Account stats: compact count label (e.g. `1.8K`) via `AccountStats.toCompactCountLabel`.
+- Account stats: compact count label (e.g. `1.8K`) via `ProfileStats.toCompactCountLabel`.
 - `MediaReleaseDateTime` prepares next-release and behind-label support.
 - **Direction (parked): list bottom padding.** `Root` intentionally lets content scroll behind the floating TabBar (veil effect) and only pads top. When the first real list lands, its `LazyColumn` takes `contentPadding(bottom = scaffoldBottom)` threaded from `Root` (`padding.calculateBottomPadding()`), so the last item clears the capsule (~72dp + 24dp margin) while mid-scroll still passes behind it. Never hardcode per-feature bottom values. (`SettingsScreen` still carries no list today; when its rows land, it follows this rule like every other list.)
 
@@ -298,7 +298,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 ## Naming
 
 - Include feature/scope in every file and class name.
-- Good examples: `SettingsScreen`, `AnimeListStateHolder`, `MediaDetailStateHolder`, `ExploreStateHolder`, `AccountRepositoryImpl`, `NotificationPreferences`.
+- Good examples: `SettingsScreen`, `AnimeListStateHolder`, `MediaDetailStateHolder`, `ExploreStateHolder`, `ProfileRepositoryImpl`, `NotificationPreferences`.
 - Avoid generic names: `ViewModel.kt`, `Repository.kt`, `Screen.kt`, `TopBar.kt`, `UserForm`, `LanguageSelector`.
 
 ## Workflow & Validation

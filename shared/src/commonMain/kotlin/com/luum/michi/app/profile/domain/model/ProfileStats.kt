@@ -1,24 +1,24 @@
-package com.luum.michi.app.account.domain.model
+package com.luum.michi.app.profile.domain.model
 
-internal data class AccountStats(
+internal data class ProfileStats(
     val animeCount: Int,
     val mangaCount: Int,
     val followingCount: Int,
     val followersCount: Int,
-    val anime: AccountMediaTypeStats = AccountMediaTypeStats(),
-    val manga: AccountMediaTypeStats = AccountMediaTypeStats(),
+    val anime: ProfileMediaTypeStats = ProfileMediaTypeStats(),
+    val manga: ProfileMediaTypeStats = ProfileMediaTypeStats(),
 )
 
 /** A single labeled bucket in a distribution (score / format / status / genre).
  *  Labels are raw API values ("TV", "CURRENT"); the stats UI formats them at
  *  display time. */
-internal data class AccountStatDistributionEntry(
+internal data class ProfileStatDistributionEntry(
     val label: String,
     val count: Int,
 )
 
 /** Detailed statistics for either the anime or the manga side of a profile. */
-internal data class AccountMediaTypeStats(
+internal data class ProfileMediaTypeStats(
     val count: Int = 0,
     /** Episodes watched (anime) or chapters read (manga). */
     val episodesOrChapters: Int = 0,
@@ -26,10 +26,10 @@ internal data class AccountMediaTypeStats(
     val daysOrVolumes: Double = 0.0,
     val meanScore: Double = 0.0,
     val standardDeviation: Double = 0.0,
-    val scoreDistribution: List<AccountStatDistributionEntry> = emptyList(),
-    val formatDistribution: List<AccountStatDistributionEntry> = emptyList(),
-    val statusDistribution: List<AccountStatDistributionEntry> = emptyList(),
-    val topGenres: List<AccountStatDistributionEntry> = emptyList(),
+    val scoreDistribution: List<ProfileStatDistributionEntry> = emptyList(),
+    val formatDistribution: List<ProfileStatDistributionEntry> = emptyList(),
+    val statusDistribution: List<ProfileStatDistributionEntry> = emptyList(),
+    val topGenres: List<ProfileStatDistributionEntry> = emptyList(),
 )
 
 internal fun Int.toCompactCountLabel(): String = when {

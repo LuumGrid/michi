@@ -6,12 +6,12 @@ internal enum class TabSection {
     DISCOVER,
     ANIME,
     MANGA,
-    ACCOUNT,
+    PROFILE,
 }
 
 internal fun TabSection.label(strings: LanguageStrings): String = when (this) {
     TabSection.DISCOVER -> strings.discoverLabel
     TabSection.ANIME -> strings.animeLabel
     TabSection.MANGA -> strings.mangaLabel
-    TabSection.ACCOUNT -> strings.accountLabel
+    TabSection.PROFILE -> strings.profileLabel
 }

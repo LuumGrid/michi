@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Response shape for a combined "account stats" query that pulls:
+ * Response shape for a combined "profile stats" query that pulls:
  *   - User.statistics.anime.count
  *   - User.statistics.manga.count
  *   - followers Page total

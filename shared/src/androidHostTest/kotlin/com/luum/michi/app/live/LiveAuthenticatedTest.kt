@@ -1,6 +1,6 @@
 package com.luum.michi.app.live
 
-import com.luum.michi.app.account.repository.AccountRepositoryImpl
+import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
 import com.luum.michi.app.core.auth.domain.AniListToken
 import com.luum.michi.app.core.auth.domain.InMemoryAniListTokenStorage
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
@@ -44,7 +44,7 @@ private class LiveStack(private val token: String) {
     val sessionManager = SessionManager(storage, viewerRepository)
     val animeListRepository: AnimeListRepository = AnimeListRepositoryImpl(graphQLClient)
     val mangaListRepository: MangaListRepository = MangaListRepositoryImpl(graphQLClient)
-    val accountRepository = AccountRepositoryImpl(graphQLClient)
+    val profileRepository = ProfileRepositoryImpl(graphQLClient)
 
     val rawToken: String = token
 
@@ -93,12 +93,12 @@ class LiveAuthenticatedTest {
     }
 
     @Test
-    fun gatedAccountLoads() {
+    fun gatedProfileLoads() {
         val stack = LiveStack(requireToken())
         runBlocking {
             val viewerId = stack.bootstrapAuthenticated()
             val loaded = loadIfAuthenticated(stack.sessionManager.state.value) { id ->
-                assertTrue(stack.accountRepository.loadAccount(id) is NetworkResult.Success)
+                assertTrue(stack.profileRepository.loadProfile(id) is NetworkResult.Success)
             }
             assertTrue(loaded)
         }

@@ -1,6 +1,6 @@
-package com.luum.michi.app.account.domain.model
+package com.luum.michi.app.profile.domain.model
 
-internal data class AccountProfileDraft(
+internal data class ProfileDraft(
     val username: String,
     val displayName: String,
     val avatarUrl: String?,

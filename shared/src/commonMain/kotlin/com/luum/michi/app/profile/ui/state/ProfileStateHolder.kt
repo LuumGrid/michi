@@ -1,8 +1,8 @@
-package com.luum.michi.app.account.ui.state
+package com.luum.michi.app.profile.ui.state
 
-import com.luum.michi.app.account.domain.AccountRepository
-import com.luum.michi.app.account.domain.model.AccountFavorites
-import com.luum.michi.app.account.domain.model.AccountStats
+import com.luum.michi.app.profile.domain.ProfileRepository
+import com.luum.michi.app.profile.domain.model.ProfileFavorites
+import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -10,19 +10,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
-internal val EmptyStats = AccountStats(
+internal val EmptyStats = ProfileStats(
     animeCount = 0,
     mangaCount = 0,
     followingCount = 0,
     followersCount = 0,
 )
 
-internal class AccountStateHolder(
-    private val repository: AccountRepository,
+internal class ProfileStateHolder(
+    private val repository: ProfileRepository,
     private val scope: CoroutineScope,
 ) {
     private var statsState = EmptyStats
-    private var favoritesState = AccountFavorites.EMPTY
+    private var favoritesState = ProfileFavorites.EMPTY
     private var loadingState = false
     private var refreshingState = false
     private var errorState: NetworkError? = null
@@ -30,8 +30,8 @@ internal class AccountStateHolder(
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
 
-    val stats: AccountStats get() = statsState
-    val favorites: AccountFavorites get() = favoritesState
+    val stats: ProfileStats get() = statsState
+    val favorites: ProfileFavorites get() = favoritesState
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
     val error: NetworkError? get() = errorState
@@ -48,7 +48,7 @@ internal class AccountStateHolder(
         errorState = null
         scope.launch {
             try {
-                when (val result = repository.loadAccount(userId)) {
+                when (val result = repository.loadProfile(userId)) {
                     is NetworkResult.Success -> {
                         statsState = result.value.stats
                         favoritesState = result.value.favorites
@@ -70,10 +70,10 @@ internal class AccountStateHolder(
 }
 
 /** Pure-logic factory (placeholder for UI wiring). */
-internal fun createAccountStateHolder(
-    repository: AccountRepository,
+internal fun createProfileStateHolder(
+    repository: ProfileRepository,
     scope: CoroutineScope,
     viewerId: Int,
-): AccountStateHolder {
-    return AccountStateHolder(repository, scope)
+): ProfileStateHolder {
+    return ProfileStateHolder(repository, scope)
 }

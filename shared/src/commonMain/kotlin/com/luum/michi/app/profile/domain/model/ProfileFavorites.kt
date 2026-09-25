@@ -1,36 +1,36 @@
-package com.luum.michi.app.account.domain.model
+package com.luum.michi.app.profile.domain.model
 
 
-internal data class AccountFavoriteMedia(
+internal data class ProfileFavoriteMedia(
     val id: Int,
     val title: String,
     val coverUrl: String?,
     val paletteHex: String?,
 )
 
-internal data class AccountFavoritePerson(
+internal data class ProfileFavoritePerson(
     val id: Int,
     val name: String,
     val imageUrl: String?,
     val paletteHex: String?,
 )
 
-internal data class AccountFavoriteStudio(
+internal data class ProfileFavoriteStudio(
     val id: Int,
     val name: String,
     val coverUrl: String?,
     val paletteHex: String?,
 )
 
-internal data class AccountFavorites(
-    val anime: List<AccountFavoriteMedia>,
-    val manga: List<AccountFavoriteMedia>,
-    val characters: List<AccountFavoritePerson>,
-    val staff: List<AccountFavoritePerson>,
-    val studios: List<AccountFavoriteStudio>,
+internal data class ProfileFavorites(
+    val anime: List<ProfileFavoriteMedia>,
+    val manga: List<ProfileFavoriteMedia>,
+    val characters: List<ProfileFavoritePerson>,
+    val staff: List<ProfileFavoritePerson>,
+    val studios: List<ProfileFavoriteStudio>,
 ) {
     companion object {
-        val EMPTY = AccountFavorites(
+        val EMPTY = ProfileFavorites(
             anime = emptyList(),
             manga = emptyList(),
             characters = emptyList(),
@@ -41,7 +41,7 @@ internal data class AccountFavorites(
 }
 
 /** Which favourites bucket a "see more" grid should page through. */
-internal enum class AccountFavoritesCategory {
+internal enum class ProfileFavoritesCategory {
     ANIME,
     MANGA,
     CHARACTERS,

@@ -19,10 +19,10 @@ internal object Strings {
 
 /**
  * In-context search hint per tab: DISCOVER searches the global catalog,
- * ANIME/MANGA search the user's own list. ACCOUNT has no search.
+ * ANIME/MANGA search the user's own list. PROFILE has no search.
  */
 internal fun searchHintFor(tab: TabSection, strings: LanguageStrings): String? = when (tab) {
     TabSection.DISCOVER -> strings.discoverSearchPlaceholder
     TabSection.ANIME, TabSection.MANGA -> strings.searchEmptyQueryHint
-    TabSection.ACCOUNT -> null
+    TabSection.PROFILE -> null
 }

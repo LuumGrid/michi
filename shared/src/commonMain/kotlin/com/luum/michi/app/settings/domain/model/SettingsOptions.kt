@@ -70,13 +70,13 @@ internal fun ListSort.toUserSort(): Pair<UserListSort, UserListOrder> = when (th
     ListSort.ADDED -> UserListSort.LAST_ADDED to UserListOrder.DESCENDING
 }
 
-internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, ACCOUNT }
+internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, PROFILE }
 
 internal fun DiscoverTabOption.label(strings: LanguageStrings): String = when (this) {
     DiscoverTabOption.DISCOVER -> strings.discoverLabel
     DiscoverTabOption.ANIME -> strings.animeLabel
     DiscoverTabOption.MANGA -> strings.mangaLabel
-    DiscoverTabOption.ACCOUNT -> strings.accountLabel
+    DiscoverTabOption.PROFILE -> strings.profileLabel
 }
 
 internal data class NotificationPreferences(

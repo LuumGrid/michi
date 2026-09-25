@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 /**
  * Shared pull-to-refresh: M3's floating indicator over the caller's
  * scrollable. Takes only refresh state + callback, so any feature screen
- * (lists today, dashboard/account tomorrow) reuses it without the holder
+ * (lists today, dashboard/profile tomorrow) reuses it without the holder
  * leaking in. If the inline Instagram-style indicator ever wins, it lands
  * here once — not in N screens.
  */

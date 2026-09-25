@@ -9,7 +9,7 @@ interface LanguageStrings {
     val discoverLabel: String
     val animeLabel: String
     val mangaLabel: String
-    val accountLabel: String
+    val profileLabel: String
     val filterByLabel: String
     val orderByLabel: String
     val settingsAction: String
@@ -160,34 +160,34 @@ interface LanguageStrings {
     fun notificationDateLabel(dateTime: MediaReleaseDateTime): String
     /** Short month name used by preformatted date labels (media airing dates, birthdays). */
     fun monthShortName(month: Int): String
-    val accountFollowersLabel: String
-    val accountFollowingLabel: String
-    val accountFavoriteAnimeTitle: String
-    val accountFavoriteMangaTitle: String
-    val accountFavoriteCharactersTitle: String
-    val accountFavoriteStaffTitle: String
-    val accountFavoriteStudiosTitle: String
-    fun accountJoinedLabel(month: Int, year: Int): String
-    val accountEditProfileAction: String
-    val accountShareProfileAction: String
-    val accountDownloadProfileQrAction: String
-    val accountWebOnlyFieldsNote: String
-    val accountUpdateProfileOnWebAction: String
-    val accountManageAccountOnWebAction: String
-    val accountListSettingsOnWebAction: String
-    val accountImportListOnWebAction: String
+    val profileFollowersLabel: String
+    val profileFollowingLabel: String
+    val profileFavoriteAnimeTitle: String
+    val profileFavoriteMangaTitle: String
+    val profileFavoriteCharactersTitle: String
+    val profileFavoriteStaffTitle: String
+    val profileFavoriteStudiosTitle: String
+    fun profileJoinedLabel(month: Int, year: Int): String
+    val profileEditProfileAction: String
+    val profileShareProfileAction: String
+    val profileDownloadProfileQrAction: String
+    val profileWebOnlyFieldsNote: String
+    val profileUpdateProfileOnWebAction: String
+    val profileManageProfileOnWebAction: String
+    val profileListSettingsOnWebAction: String
+    val profileImportListOnWebAction: String
     val settingsTitle: String
-    val accountStatsEpisodesWatchedLabel: String
-    val accountStatsChaptersReadLabel: String
-    val accountStatsDaysWatchedLabel: String
-    val accountStatsVolumesReadLabel: String
-    val accountStatsMeanScoreLabel: String
-    val accountStatsStandardDeviationLabel: String
-    val accountStatsScoreDistributionTitle: String
-    val accountStatsFormatDistributionTitle: String
-    val accountStatsTopGenresTitle: String
-    val accountStatsEmptyLabel: String
-    val accountFavoritesGridEmptyLabel: String
+    val profileStatsEpisodesWatchedLabel: String
+    val profileStatsChaptersReadLabel: String
+    val profileStatsDaysWatchedLabel: String
+    val profileStatsVolumesReadLabel: String
+    val profileStatsMeanScoreLabel: String
+    val profileStatsStandardDeviationLabel: String
+    val profileStatsScoreDistributionTitle: String
+    val profileStatsFormatDistributionTitle: String
+    val profileStatsTopGenresTitle: String
+    val profileStatsEmptyLabel: String
+    val profileFavoritesGridEmptyLabel: String
     val settingsGeneralSection: String
     val settingsAniListSection: String
     val settingsListsSection: String

@@ -388,7 +388,7 @@ internal fun Root(
                     )
                 } else if (
                     (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||
-                        activeTab == TabSection.ACCOUNT) && viewerId == null
+                        activeTab == TabSection.PROFILE) && viewerId == null
                 ) {
                     // Gated tabs without a session: sign-in prompt opening
                     // the modal (the only login surface besides first launch).
@@ -448,9 +448,9 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
         icon = AppIcons.Manga,
     ),
     TabItem(
-        section = TabSection.ACCOUNT,
-        label = TabSection.ACCOUNT.label(strings),
-        icon = AppIcons.Account,
+        section = TabSection.PROFILE,
+        label = TabSection.PROFILE.label(strings),
+        icon = AppIcons.Profile,
     ),
 )
 
@@ -516,7 +516,7 @@ private fun toolbarActions(
     // lands — same as for logged users today.
     val isGatedGuest = isGuest && (tab == TabSection.ANIME || tab == TabSection.MANGA)
     return buildList {
-        if (tab != TabSection.ACCOUNT) {
+        if (tab != TabSection.PROFILE) {
             // Ungrouped on purpose: lone circle left of the tools capsule.
             add(
                 ToolbarAction(
@@ -544,7 +544,7 @@ private fun toolbarActions(
                 ),
             )
         }
-        if (tab != TabSection.ACCOUNT) {
+        if (tab != TabSection.PROFILE) {
             if (!isGatedGuest) {
                 add(
                     ToolbarAction(

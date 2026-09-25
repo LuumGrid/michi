@@ -1,4 +1,4 @@
-package com.luum.michi.app.account
+package com.luum.michi.app.profile
 
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -9,8 +9,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/** Shared scripted GraphQL fake for account tests (single definition on purpose). */
-internal class FakeAccountGraphQL(
+/** Shared scripted GraphQL fake for profile tests (single definition on purpose). */
+internal class FakeProfileGraphQL(
     private val pages: List<JsonElement>,
     private val failureAt: Int = -1,
 ) : AniListGraphQLClient {
@@ -26,7 +26,7 @@ internal class FakeAccountGraphQL(
     }
 }
 
-internal fun accountData() = buildJsonObject {
+internal fun profileData() = buildJsonObject {
     put("User", buildJsonObject {
         put("statistics", buildJsonObject {
             put("anime", buildJsonObject { put("count", 10) })
