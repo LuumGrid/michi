@@ -436,21 +436,25 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
         section = TabSection.DISCOVER,
         label = TabSection.DISCOVER.label(strings),
         icon = AppIcons.Discover,
+        selectedIcon = AppIcons.DiscoverSelected,
     ),
     TabItem(
         section = TabSection.ANIME,
         label = TabSection.ANIME.label(strings),
         icon = AppIcons.Anime,
+        selectedIcon = AppIcons.AnimeSelected,
     ),
     TabItem(
         section = TabSection.MANGA,
         label = TabSection.MANGA.label(strings),
         icon = AppIcons.Manga,
+        selectedIcon = AppIcons.MangaSelected,
     ),
     TabItem(
         section = TabSection.PROFILE,
         label = TabSection.PROFILE.label(strings),
         icon = AppIcons.Profile,
+        selectedIcon = AppIcons.ProfileSelected,
     ),
 )
 

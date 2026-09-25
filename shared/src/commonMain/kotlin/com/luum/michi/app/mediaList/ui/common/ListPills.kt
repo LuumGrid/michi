@@ -47,7 +47,7 @@ internal fun ScorePill(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = AppIcons.Star,
+                imageVector = AppIcons.StarFilled,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp),
