@@ -67,6 +67,7 @@ internal fun MediaEntryEditorSheet(
     formatScore: (Float) -> String,
     parseScore: (String) -> Float?,
     scoreSuffix: String?,
+    scoreStep: Float,
     onSaved: () -> Unit,
     onDeleted: () -> Unit,
     onDismiss: () -> Unit,
@@ -146,6 +147,7 @@ internal fun MediaEntryEditorSheet(
                     formatScore = formatScore,
                     parseScore = parseScore,
                     scoreSuffix = scoreSuffix,
+                    scoreStep = scoreStep,
                     strings = strings,
                 )
                 if (editor.error != null) {
@@ -198,6 +200,7 @@ private fun EditorBody(
     formatScore: (Float) -> String,
     parseScore: (String) -> Float?,
     scoreSuffix: String?,
+    scoreStep: Float,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
 ) {
@@ -266,9 +269,9 @@ private fun EditorBody(
                 parseScore(raw)?.let { editor.updateScore(it) }
             },
             onDecrement = {
-                editor.updateScore((editor.score - SCORE_STEP).coerceAtLeast(0f))
+                editor.updateScore((editor.score - scoreStep).coerceAtLeast(0f))
             },
-            onIncrement = { editor.updateScore(editor.score + SCORE_STEP) },
+            onIncrement = { editor.updateScore(editor.score + scoreStep) },
             decrementEnabled = editor.score > 0f,
         )
         if (editor.showAdvancedScoring) {
@@ -283,15 +286,14 @@ private fun EditorBody(
                 val value = editor.advancedScoreValues.getOrNull(index) ?: 0f
                 EditorCounterField(
                     label = name,
-                    displayValue = formatAdvancedScore(value),
-                    suffix = ADVANCED_SCORE_SUFFIX,
+                    displayValue = formatScore(value),
+                    suffix = scoreSuffix,
                     onCommit = { raw ->
-                        raw.toFloatOrNull()?.let { editor.updateAdvancedScore(index, it) }
+                        parseScore(raw)?.let { editor.updateAdvancedScore(index, it) }
                     },
-                    onDecrement = { editor.updateAdvancedScore(index, value - ADVANCED_SCORE_STEP) },
-                    onIncrement = { editor.updateAdvancedScore(index, value + ADVANCED_SCORE_STEP) },
+                    onDecrement = { editor.updateAdvancedScore(index, value - scoreStep) },
+                    onIncrement = { editor.updateAdvancedScore(index, value + scoreStep) },
                     decrementEnabled = value > 0f,
-                    incrementEnabled = value < ADVANCED_SCORE_MAX,
                 )
             }
         }
@@ -366,18 +368,6 @@ private fun EditorBody(
             modifier = Modifier.fillMaxWidth(),
         )
     }
-}
-
-private const val SCORE_STEP = 0.5f
-
-private const val ADVANCED_SCORE_STEP = 1f
-private const val ADVANCED_SCORE_MAX = 100f
-private const val ADVANCED_SCORE_SUFFIX = "/100"
-
-/** Trims float noise: 80 (not 80.0), keeps real decimals (87.5). */
-private fun formatAdvancedScore(value: Float): String {
-    val rounded = value.toLong()
-    return if (value == rounded.toFloat()) rounded.toString() else value.toString()
 }
 
 private const val ACTION_FAVOURITE = "favourite"

@@ -251,7 +251,6 @@ class SettingsIntegrationTest {
             tearDown()
         }
     }
-
     @Test
     fun refreshClearsRefreshingOnFailure() {
         setUp()
@@ -263,6 +262,46 @@ class SettingsIntegrationTest {
 
             assertIs<NetworkError.Http>(state.error)
             assertEquals(false, state.isRefreshing)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun advancedNamesHydrateFromStoreWithoutNetwork() {
+        setUp()
+        try {
+            val store = FakeSettingsStore()
+            store.preload("advanced_scoring", true)
+            store.preload("advanced_scoring_anime_names", "Story\u001FAnimation")
+            val state = stateWith(ScriptedSettingsGraphQL(emptyList()), store)
+
+            assertEquals(true, state.advancedScoring)
+            assertEquals(listOf("Story", "Animation"), state.advancedScoringAnime)
+            assertEquals(emptyList(), state.advancedScoringManga)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun refreshOverwritesPersistedNamesFromServer() {
+        setUp()
+        try {
+            val store = FakeSettingsStore()
+            store.preload("advanced_scoring_anime_names", "Stale\u001FNames")
+            val client = ScriptedSettingsGraphQL(listOf(viewerPage))
+            val state = stateWith(client, store)
+            assertEquals(listOf("Stale", "Names"), state.advancedScoringAnime)
+
+            state.refresh()
+
+            assertEquals(listOf("Story", "Animation"), state.advancedScoringAnime)
+            assertEquals(listOf("Art"), state.advancedScoringManga)
+            assertEquals(
+                "Story\u001FAnimation",
+                store.getString("advanced_scoring_anime_names"),
+            )
         } finally {
             tearDown()
         }

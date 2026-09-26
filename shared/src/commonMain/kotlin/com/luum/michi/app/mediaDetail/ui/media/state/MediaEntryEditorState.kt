@@ -25,6 +25,7 @@ internal class MediaEntryEditorState(
     private val advancedScoringEnabled: Boolean = false,
     private val advancedScoringAnimeNames: List<String> = emptyList(),
     private val advancedScoringMangaNames: List<String> = emptyList(),
+    private val scoreMax: Float = 10f,
 ) {
     var detail: MediaDetail? by mutableStateOf(null)
         private set
@@ -103,8 +104,11 @@ internal class MediaEntryEditorState(
                         hiddenFromStatusLists = existing.hiddenFromStatusLists
                         startedAtMillis = existing.startedAtMillis
                         completedAtMillis = existing.completedAtMillis
+                        // Server scores (main and advanced) arrive in the user's
+                        // format; internal draft holds them verbatim, display
+                        // and parsing go through the score-format lambdas.
                         advancedScoreValues = advancedScoringNames.map { name ->
-                            existing.advancedScores[name] ?: 0f
+                            (existing.advancedScores[name] ?: 0f).coerceIn(0f, scoreMax)
                         }
                     } else {
                         status = initialStatusOverride ?: MediaListStatus.PLANNING
@@ -134,14 +138,14 @@ internal class MediaEntryEditorState(
     fun incrementProgressVolumes() = updateProgressVolumes(progressVolumes + 1)
     fun decrementProgressVolumes() = updateProgressVolumes(progressVolumes - 1)
 
-    fun updateScore(value: Float) { score = value.coerceIn(0f, 10f) }
+    fun updateScore(value: Float) { score = value.coerceIn(0f, scoreMax) }
     fun updateNotes(value: String) { notes = value }
 
     fun updateAdvancedScore(index: Int, value: Float) {
         val names = advancedScoringNames
         if (index !in names.indices) return
         advancedScoreValues = advancedScoreValues.alignTo(names.size).toMutableList().also {
-            it[index] = value.coerceIn(0f, 100f)
+            it[index] = value.coerceIn(0f, scoreMax)
         }
     }
 
@@ -235,6 +239,7 @@ internal fun createMediaEntryEditorState(
     advancedScoringEnabled: Boolean = false,
     advancedScoringAnimeNames: List<String> = emptyList(),
     advancedScoringMangaNames: List<String> = emptyList(),
+    scoreMax: Float = 10f,
 ): MediaEntryEditorState {
     return MediaEntryEditorState(
         entryRepository = entryRepository,
@@ -247,6 +252,7 @@ internal fun createMediaEntryEditorState(
         advancedScoringEnabled = advancedScoringEnabled,
         advancedScoringAnimeNames = advancedScoringAnimeNames,
         advancedScoringMangaNames = advancedScoringMangaNames,
+        scoreMax = scoreMax,
     )
 }
 

@@ -41,7 +41,11 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
-import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.formatScoreValue
+import com.luum.michi.app.settings.domain.model.parseScoreValue
+import com.luum.michi.app.settings.domain.model.scoreMaxFor
+import com.luum.michi.app.settings.domain.model.scoreStepFor
+import com.luum.michi.app.settings.domain.model.scoreSuffixFor
 import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
@@ -212,17 +216,14 @@ internal fun Root(
         mangaHolder?.load(id, forceRefresh = true, splitCompleted = settingsState.splitCompletedManga)
     }
 
-    // Editor score display in the user's format (translation lives here
-    // so settings types never cross into mediaDetail).
+    // Editor score display in the user's format (translation lives in
+    // settings pure functions so mediaDetail stays primitive-only).
     val editorScoreFormat = settingsState.scoreFormat
-    val formatScore: (Float) -> String = { formatEditorScore(editorScoreFormat, it) }
-    val parseScore: (String) -> Float? = { parseEditorScore(editorScoreFormat, it) }
-    val scoreSuffix: String? = when (editorScoreFormat) {
-        ScoreFormat.POINT_100 -> "/100"
-        ScoreFormat.POINT_10_DECIMAL, ScoreFormat.POINT_10 -> "/10"
-        ScoreFormat.POINT_5_STARS -> "/5"
-        ScoreFormat.POINT_3_SMILEYS -> null
-    }
+    val formatScore: (Float) -> String = { formatScoreValue(editorScoreFormat, it) }
+    val parseScore: (String) -> Float? = { parseScoreValue(editorScoreFormat, it) }
+    val scoreSuffix: String? = scoreSuffixFor(editorScoreFormat)
+    val scoreMax: Float = scoreMaxFor(editorScoreFormat)
+    val scoreStep: Float = scoreStepFor(editorScoreFormat)
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
     // explicitly opt in via [hidesToolbarOnScroll]. The veil rides the same
@@ -470,6 +471,7 @@ internal fun Root(
                         advancedScoringEnabled = settingsState.advancedScoring,
                         advancedScoringAnimeNames = settingsState.advancedScoringAnime,
                         advancedScoringMangaNames = settingsState.advancedScoringManga,
+                        scoreMax = scoreMax,
                     )
                 }
                 LaunchedEffect(editorId) { editor.load() }
@@ -478,6 +480,7 @@ internal fun Root(
                     formatScore = formatScore,
                     parseScore = parseScore,
                     scoreSuffix = scoreSuffix,
+                    scoreStep = scoreStep,
                     onSaved = {
                         state.closeEditor()
                         refreshLists()
@@ -491,37 +494,6 @@ internal fun Root(
             }
         }
     }
-}
-
-/** Score display/parsing in the user's format (settings never crosses
- * into mediaDetail: Root translates to lambdas over primitives). */
-private fun formatEditorScore(scoreFormat: ScoreFormat, value: Float): String = when (scoreFormat) {
-    ScoreFormat.POINT_100 -> (value * 10).roundToInt().toString()
-    ScoreFormat.POINT_10_DECIMAL -> trimScoreNumber(value)
-    ScoreFormat.POINT_10 -> value.roundToInt().toString()
-    ScoreFormat.POINT_5_STARS -> trimScoreNumber(value / 2)
-    ScoreFormat.POINT_3_SMILEYS -> smileyFor(value)
-}
-
-private fun parseEditorScore(scoreFormat: ScoreFormat, raw: String): Float? {
-    val parsed = when (scoreFormat) {
-        ScoreFormat.POINT_100 -> raw.toFloatOrNull()?.div(10)
-        ScoreFormat.POINT_10_DECIMAL, ScoreFormat.POINT_10 -> raw.toFloatOrNull()
-        // Stars type in stars; smileys have no typed form (steppers only).
-        ScoreFormat.POINT_5_STARS -> raw.toFloatOrNull()?.times(2)
-        ScoreFormat.POINT_3_SMILEYS -> null
-    } ?: return null
-    return parsed.takeIf { it in 0f..10f }
-}
-
-private fun trimScoreNumber(value: Float): String =
-    if (value == value.toInt().toFloat()) value.toInt().toString() else value.toString()
-
-private fun smileyFor(value: Float): String = when {
-    value <= 0f -> "—"
-    value < 3.34f -> "🙁"
-    value < 6.67f -> "😐"
-    else -> "🙂"
 }
 
 /** The 4 top-level destinations. Root chooses the icons; ui stays dumb. */

@@ -112,6 +112,7 @@ private fun editorWired(
     mediaId: Int = 101,
     advancedScoringEnabled: Boolean = false,
     advancedScoringAnimeNames: List<String> = emptyList(),
+    scoreMax: Float = 10f,
 ): MediaEntryEditorState = MediaEntryEditorState(
     entryRepository = MediaListEntryRepositoryImpl(graphQL),
     detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
@@ -120,6 +121,7 @@ private fun editorWired(
     mediaId = mediaId,
     advancedScoringEnabled = advancedScoringEnabled,
     advancedScoringAnimeNames = advancedScoringAnimeNames,
+    scoreMax = scoreMax,
 )
 
 class MediaEntryEditorIntegrationTest {
@@ -209,6 +211,7 @@ class MediaEntryEditorIntegrationTest {
             entry,
             advancedScoringEnabled = true,
             advancedScoringAnimeNames = listOf("Story", "Animation"),
+            scoreMax = 100f,
         )
 
         editor.load()
@@ -225,6 +228,7 @@ class MediaEntryEditorIntegrationTest {
             entry,
             advancedScoringEnabled = true,
             advancedScoringAnimeNames = listOf("Story", "Animation"),
+            scoreMax = 100f,
         )
 
         editor.load()
@@ -267,15 +271,15 @@ class MediaEntryEditorIntegrationTest {
         )
 
         editor.load()
-        editor.updateAdvancedScore(0, 85f)
-        editor.updateAdvancedScore(1, 150f)
-        editor.updateAdvancedScore(9, 50f)
+        editor.updateAdvancedScore(0, 8.5f)
+        editor.updateAdvancedScore(1, 15f)
+        editor.updateAdvancedScore(9, 5f)
         var saved = false
         editor.save { saved = true }
 
         assertTrue(saved)
         val sent = graphQL.requests.single().variables?.get("advancedScores")
-        assertEquals("[85.0,100.0]", sent.toString())
+        assertEquals("[8.5,10.0]", sent.toString())
     }
 
     @Test

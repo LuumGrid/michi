@@ -27,6 +27,8 @@ private const val KeyListSort = "list_sort"
 private const val KeySplitCompletedAnime = "split_completed_anime"
 private const val KeySplitCompletedManga = "split_completed_manga"
 private const val KeyAdvancedScoring = "advanced_scoring"
+private const val KeyAdvancedScoringAnimeNames = "advanced_scoring_anime_names"
+private const val KeyAdvancedScoringMangaNames = "advanced_scoring_manga_names"
 private const val KeyPersistListSort = "persist_list_sort"
 private const val KeyNotificationAiring = "notification_airing"
 private const val KeyNotificationActivity = "notification_activity"
@@ -36,6 +38,8 @@ private const val KeyNotificationMessages = "notification_messages"
 private const val KeyNotificationMedia = "notification_media"
 
 private val SaveDebounce = 600.milliseconds
+
+private const val NAME_SEPARATOR = "\u001F"
 
 internal class SettingsState(
     private val repository: SettingsRepository,
@@ -117,9 +121,10 @@ internal class SettingsState(
             scheduleSave()
         }
 
-    // Advanced-scoring category names per list type (server-owned, memory
-    // only: no store keys, never saved — guests stay empty so the editor
-    // section hides, and a fresh session rehydrates on refresh).
+    // Advanced-scoring category names per list type: server-owned but
+    // store-persisted (like the toggle) so the editor section survives
+    // restarts without opening Settings; refresh overwrites from server.
+    // Encoded with the unit separator (never appears in category names).
     private val advancedScoringAnimeState = mutableStateOf(emptyList<String>())
     var advancedScoringAnime: List<String>
         get() = advancedScoringAnimeState.value
@@ -235,6 +240,8 @@ internal class SettingsState(
             store.getBoolean(KeySplitCompletedManga, splitCompletedMangaState.value)
         advancedScoringState.value =
             store.getBoolean(KeyAdvancedScoring, advancedScoringState.value)
+        advancedScoringAnime = decodeNames(store.getString(KeyAdvancedScoringAnimeNames))
+        advancedScoringManga = decodeNames(store.getString(KeyAdvancedScoringMangaNames))
         persistListSortState.value =
             store.getBoolean(KeyPersistListSort, true)
         notificationsState.value = NotificationPreferences(
@@ -270,7 +277,9 @@ internal class SettingsState(
         advancedScoringState.value = data.advancedScoring
         store.putBoolean(KeyAdvancedScoring, data.advancedScoring)
         advancedScoringAnime = data.advancedScoringAnime
+        store.putString(KeyAdvancedScoringAnimeNames, encodeNames(data.advancedScoringAnime))
         advancedScoringManga = data.advancedScoringManga
+        store.putString(KeyAdvancedScoringMangaNames, encodeNames(data.advancedScoringManga))
         notificationsState.value = data.notifications
         persistNotifications(data.notifications)
         error = null
@@ -292,8 +301,13 @@ internal class SettingsState(
         store.putString(KeyListSort, value.name)
     }
 
-    private fun persistNotifications(value: NotificationPreferences) {
-        store.putBoolean(KeyNotificationAiring, value.airing)
+    private fun encodeNames(names: List<String>): String =
+        names.filter { it.isNotBlank() }.joinToString(NAME_SEPARATOR)
+
+    private fun decodeNames(raw: String?): List<String> =
+        raw?.split(NAME_SEPARATOR).orEmpty().filter { it.isNotBlank() }
+
+    private fun persistNotifications(value: NotificationPreferences) {        store.putBoolean(KeyNotificationAiring, value.airing)
         store.putBoolean(KeyNotificationActivity, value.activity)
         store.putBoolean(KeyNotificationFollowing, value.following)
         store.putBoolean(KeyNotificationForum, value.forum)
