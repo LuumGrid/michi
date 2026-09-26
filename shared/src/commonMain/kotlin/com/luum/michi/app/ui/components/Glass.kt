@@ -100,6 +100,7 @@ internal fun GlassCircleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     badgeCount: Int? = null,
+    enabled: Boolean = true,
 ) {
     Surface(
         shape = GlassCircle,
@@ -107,7 +108,7 @@ internal fun GlassCircleButton(
         border = glassBorder(),
         modifier = modifier.glass(GlassCircle),
     ) {
-        IconButton(onClick = onClick) {
+        IconButton(onClick = onClick, enabled = enabled) {
             if (badgeCount != null && badgeCount > 0) {
                 BadgedBox(badge = { Text(text = badgeCount.toString()) }) {
                     Icon(imageVector = icon, contentDescription = contentDescription)

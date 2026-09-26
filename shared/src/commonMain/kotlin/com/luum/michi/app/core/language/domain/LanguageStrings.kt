@@ -144,12 +144,14 @@ interface LanguageStrings {
     val completedLabel: String
     val dateNotSetLabel: String
     val datePickerOkAction: String
+    val selectDateAction: String
     val datePickerClearAction: String
     val todayLabel: String
     val totalRewatchesLabel: String
     val totalRereadsLabel: String
     val favouriteLabel: String
     val priorityLabel: String
+    val repeatLabel: String
     val privateLabel: String
     val hiddenFromStatusListsLabel: String
     val saveAction: String

@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,12 +42,17 @@ internal fun ModalSheet(
     // render exactly as before.
     headerActions: List<ToolbarAction> = emptyList(),
     onHeaderAction: (String) -> Unit = {},
+    // Full-height sheet with no half detent (long forms like the entry
+    // editor): opens full and stays full instead of landing mid-travel.
+    // Default keeps every other sheet wrapping its content.
+    fullscreen: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         dragHandle = { SheetDragHandle() },
         modifier = modifier,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullscreen),
     ) {
         Column(
             modifier = Modifier

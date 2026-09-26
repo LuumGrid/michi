@@ -35,9 +35,13 @@ import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
+import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
+import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
@@ -95,6 +99,7 @@ internal fun Root(
     animeListRepository: AnimeListRepository,
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
+    mediaDetailRepository: MediaDetailRepository,
     sortPersistence: SortPersistence,
     authServices: List<AuthService>,
     isAuthConfigured: Boolean,
@@ -193,6 +198,27 @@ internal fun Root(
             defaultSort = defaultSort,
         )
         mangaHolder?.updateSort(mangaInitial.option, mangaInitial.order, persist = mangaInitial.persist)
+    }
+
+    // Editor save/delete land here: both lists re-fetch so the edited
+    // entry (possibly moved sections) shows the truth. Rare action,
+    // two queries, zero staleness.
+    fun refreshLists() {
+        val id = viewerId ?: return
+        animeHolder?.load(id, forceRefresh = true, splitCompleted = settingsState.splitCompletedAnime)
+        mangaHolder?.load(id, forceRefresh = true, splitCompleted = settingsState.splitCompletedManga)
+    }
+
+    // Editor score display in the user's format (translation lives here
+    // so settings types never cross into mediaDetail).
+    val editorScoreFormat = settingsState.scoreFormat
+    val formatScore: (Float) -> String = { formatEditorScore(editorScoreFormat, it) }
+    val parseScore: (String) -> Float? = { parseEditorScore(editorScoreFormat, it) }
+    val scoreSuffix: String? = when (editorScoreFormat) {
+        ScoreFormat.POINT_100 -> "/100"
+        ScoreFormat.POINT_10_DECIMAL, ScoreFormat.POINT_10 -> "/10"
+        ScoreFormat.POINT_5_STARS -> "/5"
+        ScoreFormat.POINT_3_SMILEYS -> null
     }
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
@@ -425,8 +451,69 @@ internal fun Root(
                     onDismiss = { state.closeSignIn() },
                 )
             }
+            val editorId = state.editorMediaId
+            if (state.isEditorOpen && editorId != null && viewerId != null) {
+                val editor = remember(editorId) {
+                    createMediaEntryEditorState(
+                        mediaId = editorId,
+                        entryRepository = mediaListEntryRepository,
+                        detailRepository = mediaDetailRepository,
+                        scope = listScope,
+                        strings = strings,
+                        initialStatusOverride = state.editorInitialStatus,
+                        initialProgressOverride = state.editorInitialProgress,
+                    )
+                }
+                LaunchedEffect(editorId) { editor.load() }
+                MediaEntryEditorSheet(
+                    editor = editor,
+                    formatScore = formatScore,
+                    parseScore = parseScore,
+                    scoreSuffix = scoreSuffix,
+                    onSaved = {
+                        state.closeEditor()
+                        refreshLists()
+                    },
+                    onDeleted = {
+                        state.closeEditor()
+                        refreshLists()
+                    },
+                    onDismiss = { state.closeEditor() },
+                )
+            }
         }
     }
+}
+
+/** Score display/parsing in the user's format (settings never crosses
+ * into mediaDetail: Root translates to lambdas over primitives). */
+private fun formatEditorScore(scoreFormat: ScoreFormat, value: Float): String = when (scoreFormat) {
+    ScoreFormat.POINT_100 -> (value * 10).roundToInt().toString()
+    ScoreFormat.POINT_10_DECIMAL -> trimScoreNumber(value)
+    ScoreFormat.POINT_10 -> value.roundToInt().toString()
+    ScoreFormat.POINT_5_STARS -> trimScoreNumber(value / 2)
+    ScoreFormat.POINT_3_SMILEYS -> smileyFor(value)
+}
+
+private fun parseEditorScore(scoreFormat: ScoreFormat, raw: String): Float? {
+    val parsed = when (scoreFormat) {
+        ScoreFormat.POINT_100 -> raw.toFloatOrNull()?.div(10)
+        ScoreFormat.POINT_10_DECIMAL, ScoreFormat.POINT_10 -> raw.toFloatOrNull()
+        // Stars type in stars; smileys have no typed form (steppers only).
+        ScoreFormat.POINT_5_STARS -> raw.toFloatOrNull()?.times(2)
+        ScoreFormat.POINT_3_SMILEYS -> null
+    } ?: return null
+    return parsed.takeIf { it in 0f..10f }
+}
+
+private fun trimScoreNumber(value: Float): String =
+    if (value == value.toInt().toFloat()) value.toInt().toString() else value.toString()
+
+private fun smileyFor(value: Float): String = when {
+    value <= 0f -> "—"
+    value < 3.34f -> "🙁"
+    value < 6.67f -> "😐"
+    else -> "🙂"
 }
 
 /** The 4 top-level destinations. Root chooses the icons; ui stays dumb. */

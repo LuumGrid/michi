@@ -8,6 +8,9 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -20,45 +23,45 @@ internal class MediaEntryEditorState(
     private val initialStatusOverride: MediaListStatus? = null,
     private val initialProgressOverride: Int? = null,
 ) {
-    var detail: MediaDetail? = null
+    var detail: MediaDetail? by mutableStateOf(null)
         private set
-    var isLoadingDetail = true
+    var isLoadingDetail by mutableStateOf(true)
         private set
-    var loadError: NetworkError? = null
-        private set
-
-    var status = MediaListStatus.PLANNING
-        private set
-    var progress = 0
-        private set
-    var progressVolumes = 0
-        private set
-    var score = 0f
-        private set
-    var notes = ""
-        private set
-    var repeat = 0
-        private set
-    var priority = 0
-        private set
-    var isPrivate = false
-        private set
-    var hiddenFromStatusLists = false
-        private set
-    var startedAtMillis: Long? = null
-        private set
-    var completedAtMillis: Long? = null
-        private set
-    var isFavourite = false
-        private set
-    var isTogglingFavourite = false
+    var loadError: NetworkError? by mutableStateOf(null)
         private set
 
-    var isSaving = false
+    var status by mutableStateOf(MediaListStatus.PLANNING)
         private set
-    var isDeleting = false
+    var progress by mutableStateOf(0)
         private set
-    var error: NetworkError? = null
+    var progressVolumes by mutableStateOf(0)
+        private set
+    var score by mutableStateOf(0f)
+        private set
+    var notes by mutableStateOf("")
+        private set
+    var repeat by mutableStateOf(0)
+        private set
+    var priority by mutableStateOf(0)
+        private set
+    var isPrivate by mutableStateOf(false)
+        private set
+    var hiddenFromStatusLists by mutableStateOf(false)
+        private set
+    var startedAtMillis: Long? by mutableStateOf(null)
+        private set
+    var completedAtMillis: Long? by mutableStateOf(null)
+        private set
+    var isFavourite by mutableStateOf(false)
+        private set
+    var isTogglingFavourite by mutableStateOf(false)
+        private set
+
+    var isSaving by mutableStateOf(false)
+        private set
+    var isDeleting by mutableStateOf(false)
+        private set
+    var error: NetworkError? by mutableStateOf(null)
         private set
 
     val isManga: Boolean get() = detail?.type == MediaDetailType.MANGA
@@ -66,11 +69,11 @@ internal class MediaEntryEditorState(
     val maxProgressVolumes: Int? get() = detail?.volumes
     val isExisting: Boolean get() = detail?.viewerEntry != null
 
-    init {
-        loadDetail()
-    }
-
-    private fun loadDetail() {
+    /**
+     * Explicit load (no auto-load in init): Root calls this from a
+     * LaunchedEffect when the editor opens; retries call it again.
+     */
+    fun load() {
         isLoadingDetail = true
         loadError = null
         scope.launch {
@@ -123,9 +126,11 @@ internal class MediaEntryEditorState(
 
     fun incrementRepeat() { repeat++ }
     fun decrementRepeat() { if (repeat > 0) repeat-- }
+    fun updateRepeat(value: Int) { repeat = value.coerceAtLeast(0) }
 
     fun incrementPriority() { if (priority < 5) priority++ }
     fun decrementPriority() { if (priority > 0) priority-- }
+    fun updatePriority(value: Int) { priority = value.coerceIn(0, 5) }
 
     fun updatePrivate(value: Boolean) { isPrivate = value }
     fun updateHiddenFromStatusLists(value: Boolean) { hiddenFromStatusLists = value }
