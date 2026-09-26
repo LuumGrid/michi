@@ -271,6 +271,30 @@ private fun EditorBody(
             onIncrement = { editor.updateScore(editor.score + SCORE_STEP) },
             decrementEnabled = editor.score > 0f,
         )
+        if (editor.showAdvancedScoring) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = strings.settingsAdvancedScoringTitle,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            editor.advancedScoringNames.forEachIndexed { index, name ->
+                Spacer(modifier = Modifier.height(8.dp))
+                val value = editor.advancedScoreValues.getOrNull(index) ?: 0f
+                EditorCounterField(
+                    label = name,
+                    displayValue = formatAdvancedScore(value),
+                    suffix = ADVANCED_SCORE_SUFFIX,
+                    onCommit = { raw ->
+                        raw.toFloatOrNull()?.let { editor.updateAdvancedScore(index, it) }
+                    },
+                    onDecrement = { editor.updateAdvancedScore(index, value - ADVANCED_SCORE_STEP) },
+                    onIncrement = { editor.updateAdvancedScore(index, value + ADVANCED_SCORE_STEP) },
+                    decrementEnabled = value > 0f,
+                    incrementEnabled = value < ADVANCED_SCORE_MAX,
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         DatePickerField(
             label = strings.startedLabel,
@@ -345,6 +369,16 @@ private fun EditorBody(
 }
 
 private const val SCORE_STEP = 0.5f
+
+private const val ADVANCED_SCORE_STEP = 1f
+private const val ADVANCED_SCORE_MAX = 100f
+private const val ADVANCED_SCORE_SUFFIX = "/100"
+
+/** Trims float noise: 80 (not 80.0), keeps real decimals (87.5). */
+private fun formatAdvancedScore(value: Float): String {
+    val rounded = value.toLong()
+    return if (value == rounded.toFloat()) rounded.toString() else value.toString()
+}
 
 private const val ACTION_FAVOURITE = "favourite"
 

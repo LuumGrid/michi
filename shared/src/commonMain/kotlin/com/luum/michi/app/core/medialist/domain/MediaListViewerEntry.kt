@@ -7,6 +7,7 @@ internal data class MediaListViewerEntry(
     val progress: Int,
     val progressVolumes: Int?,
     val score: Float,
+    val advancedScores: Map<String, Float> = emptyMap(),
     val notes: String,
     val repeat: Int,
     val priority: Int,

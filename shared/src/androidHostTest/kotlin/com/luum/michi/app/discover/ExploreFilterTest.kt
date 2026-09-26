@@ -57,6 +57,7 @@ private class FakeExploreRepository : ExploreRepository {
         perPage: Int,
         season: String?,
         onList: Boolean?,
+        hideAdult: Boolean,
         strings: com.luum.michi.app.core.language.domain.LanguageStrings,
     ): NetworkResult<ExplorePage> {
         catalogCalls += CatalogCall(query, genres, formats, year, sort, season)
@@ -72,6 +73,7 @@ private class FakeExploreRepository : ExploreRepository {
         page: Int,
         perPage: Int,
         onList: Boolean?,
+        hideAdult: Boolean,
         strings: com.luum.michi.app.core.language.domain.LanguageStrings,
     ): NetworkResult<ExplorePage> {
         mangaCalls += CatalogCall(query, genres, formats, year, sort, season = null)

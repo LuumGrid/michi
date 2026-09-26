@@ -14,6 +14,7 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -27,6 +28,7 @@ mutation SaveMediaListEntry(
   ${'$'}progress: Int,
   ${'$'}progressVolumes: Int,
   ${'$'}score: Float,
+  ${'$'}advancedScores: [Float],
   ${'$'}notes: String,
   ${'$'}repeat: Int,
   ${'$'}priority: Int,
@@ -41,6 +43,7 @@ mutation SaveMediaListEntry(
     progress: ${'$'}progress,
     progressVolumes: ${'$'}progressVolumes,
     score: ${'$'}score,
+    advancedScores: ${'$'}advancedScores,
     notes: ${'$'}notes,
     repeat: ${'$'}repeat,
     priority: ${'$'}priority,
@@ -49,7 +52,7 @@ mutation SaveMediaListEntry(
     startedAt: ${'$'}startedAt,
     completedAt: ${'$'}completedAt
   ) {
-    id status progress progressVolumes score notes repeat priority private hiddenFromStatusLists
+    id status progress progressVolumes score advancedScores notes repeat priority private hiddenFromStatusLists
     startedAt { year month day }
     completedAt { year month day }
   }
@@ -135,6 +138,7 @@ internal class MediaListEntryRepositoryImpl(
         progress: Int,
         progressVolumes: Int?,
         score: Float,
+        advancedScores: List<Float>?,
         notes: String,
         repeat: Int,
         priority: Int,
@@ -149,6 +153,9 @@ internal class MediaListEntryRepositoryImpl(
             put("progress", JsonPrimitive(progress))
             if (progressVolumes != null) put("progressVolumes", JsonPrimitive(progressVolumes))
             put("score", JsonPrimitive(score))
+            if (advancedScores != null) {
+                put("advancedScores", JsonArray(advancedScores.map { JsonPrimitive(it) }))
+            }
             put("notes", JsonPrimitive(notes))
             put("repeat", JsonPrimitive(repeat))
             put("priority", JsonPrimitive(priority))
@@ -173,6 +180,7 @@ internal class MediaListEntryRepositoryImpl(
                 progress = entry?.progress ?: progress,
                 progressVolumes = entry?.progressVolumes ?: progressVolumes,
                 score = entry?.score?.toFloat() ?: score,
+                advancedScores = entry?.advancedScores ?: emptyMap(),
                 notes = entry?.notes.orEmpty(),
                 repeat = entry?.repeat ?: repeat,
                 priority = entry?.priority ?: priority,

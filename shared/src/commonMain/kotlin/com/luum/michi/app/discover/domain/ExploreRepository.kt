@@ -15,6 +15,7 @@ internal interface ExploreRepository {
         perPage: Int = 30,
         season: String? = null,
         onList: Boolean? = null,
+        hideAdult: Boolean = true,
         strings: LanguageStrings,
     ): NetworkResult<ExplorePage>
 
@@ -27,6 +28,7 @@ internal interface ExploreRepository {
         page: Int = 1,
         perPage: Int = 30,
         onList: Boolean? = null,
+        hideAdult: Boolean = true,
         strings: LanguageStrings,
     ): NetworkResult<ExplorePage>
 

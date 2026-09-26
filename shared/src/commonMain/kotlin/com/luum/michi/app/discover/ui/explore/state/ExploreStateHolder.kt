@@ -27,6 +27,7 @@ internal class ExploreStateHolder(
     var year: Int? = null
     var sort = "TRENDING_DESC"
     var onList: Boolean? = null
+    var hideAdult = true
     var currentSortOption = UserListSort.TRENDING
     var currentSortOrder = UserListOrder.DESCENDING
     var isSortPersisted = false
@@ -207,6 +208,7 @@ internal class ExploreStateHolder(
             page = page,
             season = season,
             onList = onList,
+            hideAdult = hideAdult,
             strings = strings,
         )
         ExploreCategory.MANGA -> repository.searchManga(
@@ -217,6 +219,7 @@ internal class ExploreStateHolder(
             sort = sort,
             page = page,
             onList = onList,
+            hideAdult = hideAdult,
             strings = strings,
         )
         ExploreCategory.CHARACTERS -> repository.searchCharacters(

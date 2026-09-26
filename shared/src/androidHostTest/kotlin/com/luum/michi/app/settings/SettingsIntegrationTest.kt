@@ -14,6 +14,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -52,9 +54,16 @@ private val viewerPage = buildJsonObject {
             put("animeList", buildJsonObject {
                 put("splitCompletedSectionByFormat", false)
                 put("advancedScoringEnabled", true)
+                putJsonArray("advancedScoring") {
+                    add(JsonPrimitive("Story"))
+                    add(JsonPrimitive("Animation"))
+                }
             })
             put("mangaList", buildJsonObject {
                 put("splitCompletedSectionByFormat", true)
+                putJsonArray("advancedScoring") {
+                    add(JsonPrimitive("Art"))
+                }
             })
         })
     })
@@ -103,6 +112,8 @@ class SettingsIntegrationTest {
             assertEquals(false, state.splitCompletedAnime)
             assertEquals(true, state.splitCompletedManga)
             assertEquals(true, state.advancedScoring)
+            assertEquals(listOf("Story", "Animation"), state.advancedScoringAnime)
+            assertEquals(listOf("Art"), state.advancedScoringManga)
             // airingNotifications flag wins over the disabled AIRING bucket entry.
             assertEquals(true, state.notifications.airing)
             // Any-logic: mixed activity types resolve to true.
@@ -113,6 +124,34 @@ class SettingsIntegrationTest {
             assertEquals("ENGLISH", store.getString("title_language"))
             assertEquals("POINT_100", store.getString("score_format"))
             assertEquals(true, store.getBoolean("display_adult_content", false))
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun explicitNullAdvancedScoringNamesDecodeToEmpty() {        setUp()
+        try {
+            val page = buildJsonObject {
+                put("Viewer", buildJsonObject {
+                    put("mediaListOptions", buildJsonObject {
+                        put("animeList", buildJsonObject {
+                            put("advancedScoringEnabled", false)
+                            put("advancedScoring", JsonNull)
+                        })
+                        put("mangaList", buildJsonObject {
+                            put("advancedScoring", JsonNull)
+                        })
+                    })
+                })
+            }
+            val state = stateWith(ScriptedSettingsGraphQL(listOf(page)))
+
+            state.refresh()
+
+            assertEquals(false, state.advancedScoring)
+            assertEquals(emptyList(), state.advancedScoringAnime)
+            assertEquals(emptyList(), state.advancedScoringManga)
         } finally {
             tearDown()
         }
@@ -186,6 +225,44 @@ class SettingsIntegrationTest {
             assertEquals(ScoreFormat.POINT_10_DECIMAL, state.scoreFormat)
             assertEquals(null, store.getString("title_language"))
             assertTrue(client.calls == 1)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun refreshClearsRefreshingOnSuccessAndRefiresOnForce() {
+        setUp()
+        try {
+            val client = ScriptedSettingsGraphQL(listOf(viewerPage, viewerPage))
+            val state = stateWith(client)
+
+            state.refresh()
+            assertEquals(false, state.isRefreshing)
+            assertEquals(1, client.calls)
+
+            // Second plain refresh is deduped; force re-fires.
+            state.refresh()
+            assertEquals(1, client.calls)
+            state.refresh(force = true)
+            assertEquals(false, state.isRefreshing)
+            assertEquals(2, client.calls)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun refreshClearsRefreshingOnFailure() {
+        setUp()
+        try {
+            val client = ScriptedSettingsGraphQL(listOf(viewerPage), failureAt = 0)
+            val state = stateWith(client)
+
+            state.refresh()
+
+            assertIs<NetworkError.Http>(state.error)
+            assertEquals(false, state.isRefreshing)
         } finally {
             tearDown()
         }

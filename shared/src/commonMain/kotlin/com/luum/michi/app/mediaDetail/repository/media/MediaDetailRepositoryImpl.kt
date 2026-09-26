@@ -53,7 +53,7 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
     countryOfOrigin
     isAdult
     isFavourite
-    mediaListEntry { id status progress progressVolumes score notes repeat priority private hiddenFromStatusLists startedAt { year month day } completedAt { year month day } }
+    mediaListEntry { id status progress progressVolumes score advancedScores notes repeat priority private hiddenFromStatusLists startedAt { year month day } completedAt { year month day } }
     relations {
       edges {
         relationType(version: 2)

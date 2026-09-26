@@ -9,6 +9,7 @@ internal interface MediaListEntryRepository {
         progress: Int,
         progressVolumes: Int?,
         score: Float,
+        advancedScores: List<Float>? = null,
         notes: String,
         repeat: Int,
         priority: Int,

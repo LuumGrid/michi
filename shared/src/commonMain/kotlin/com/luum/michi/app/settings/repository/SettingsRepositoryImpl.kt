@@ -24,7 +24,7 @@ private const val UserSettingsQuery = """
 query UserSettings {
   Viewer {
     options { titleLanguage staffNameLanguage displayAdultContent airingNotifications notificationOptions { type enabled } }
-    mediaListOptions { scoreFormat rowOrder animeList { splitCompletedSectionByFormat advancedScoringEnabled } mangaList { splitCompletedSectionByFormat } }
+    mediaListOptions { scoreFormat rowOrder animeList { splitCompletedSectionByFormat advancedScoringEnabled advancedScoring } mangaList { splitCompletedSectionByFormat advancedScoring } }
   }
 }
 """
@@ -73,11 +73,13 @@ private data class ViewerMediaListOptionsDto(
 private data class ViewerAnimeListOptionsDto(
     val splitCompletedSectionByFormat: Boolean? = null,
     val advancedScoringEnabled: Boolean? = null,
+    val advancedScoring: List<String>? = null,
 )
 
 @Serializable
 private data class ViewerMangaListOptionsDto(
     val splitCompletedSectionByFormat: Boolean? = null,
+    val advancedScoring: List<String>? = null,
 )
 
 @Serializable
@@ -207,6 +209,8 @@ internal class SettingsRepositoryImpl(
                 splitCompletedAnime = listOptions?.animeList?.splitCompletedSectionByFormat ?: true,
                 splitCompletedManga = listOptions?.mangaList?.splitCompletedSectionByFormat ?: false,
                 advancedScoring = listOptions?.animeList?.advancedScoringEnabled ?: false,
+                advancedScoringAnime = listOptions?.animeList?.advancedScoring.orEmpty().filter { it.isNotBlank() },
+                advancedScoringManga = listOptions?.mangaList?.advancedScoring.orEmpty().filter { it.isNotBlank() },
                 notifications = options.toNotificationPreferences(),
             )
         }

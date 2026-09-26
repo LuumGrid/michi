@@ -12,11 +12,14 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
+import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
 import com.luum.michi.app.mediaList.FakeGraphQL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
@@ -107,12 +110,16 @@ private fun editorWired(
     graphQL: FakeGraphQL,
     viewerEntry: MediaListViewerEntry?,
     mediaId: Int = 101,
+    advancedScoringEnabled: Boolean = false,
+    advancedScoringAnimeNames: List<String> = emptyList(),
 ): MediaEntryEditorState = MediaEntryEditorState(
     entryRepository = MediaListEntryRepositoryImpl(graphQL),
     detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
     scope = CoroutineScope(Dispatchers.Unconfined),
     strings = EnglishStrings,
     mediaId = mediaId,
+    advancedScoringEnabled = advancedScoringEnabled,
+    advancedScoringAnimeNames = advancedScoringAnimeNames,
 )
 
 class MediaEntryEditorIntegrationTest {
@@ -192,5 +199,146 @@ class MediaEntryEditorIntegrationTest {
 
         assertFalse(editor.isFavourite)
         assertIs<NetworkError.Http>(editor.error)
+    }
+
+    @Test
+    fun advancedScoresHydrateAlignedToCategoryNames() {
+        val entry = existingEntry().copy(advancedScores = mapOf("Story" to 80f, "Animation" to 70f, "Extra" to 60f))
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            entry,
+            advancedScoringEnabled = true,
+            advancedScoringAnimeNames = listOf("Story", "Animation"),
+        )
+
+        editor.load()
+
+        assertTrue(editor.showAdvancedScoring)
+        assertEquals(listOf(80f, 70f), editor.advancedScoreValues)
+    }
+
+    @Test
+    fun advancedScoresPadShortServerArrays() {
+        val entry = existingEntry().copy(advancedScores = mapOf("Story" to 80f))
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            entry,
+            advancedScoringEnabled = true,
+            advancedScoringAnimeNames = listOf("Story", "Animation"),
+        )
+
+        editor.load()
+
+        assertEquals(listOf(80f, 0f), editor.advancedScoreValues)
+    }
+
+    @Test
+    fun advancedScoresHiddenWithoutFlagOrNames() {
+        val enabledNoNames = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            existingEntry().copy(advancedScores = mapOf("Story" to 80f)),
+            advancedScoringEnabled = true,
+        )
+        val disabledWithNames = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            existingEntry().copy(advancedScores = mapOf("Story" to 80f)),
+            advancedScoringEnabled = false,
+            advancedScoringAnimeNames = listOf("Story"),
+        )
+
+        enabledNoNames.load()
+        disabledWithNames.load()
+
+        assertFalse(enabledNoNames.showAdvancedScoring)
+        assertFalse(disabledWithNames.showAdvancedScoring)
+    }
+
+    @Test
+    fun saveSendsAdvancedScoresOnlyWhenShown() {
+        val saveAck = buildJsonObject {
+            put("SaveMediaListEntry", buildJsonObject { put("id", 7) })
+        }
+        val graphQL = FakeGraphQL(listOf(saveAck))
+        val editor = editorWired(
+            graphQL,
+            existingEntry().copy(advancedScores = mapOf("Story" to 80f, "Animation" to 70f)),
+            advancedScoringEnabled = true,
+            advancedScoringAnimeNames = listOf("Story", "Animation"),
+        )
+
+        editor.load()
+        editor.updateAdvancedScore(0, 85f)
+        editor.updateAdvancedScore(1, 150f)
+        editor.updateAdvancedScore(9, 50f)
+        var saved = false
+        editor.save { saved = true }
+
+        assertTrue(saved)
+        val sent = graphQL.requests.single().variables?.get("advancedScores")
+        assertEquals("[85.0,100.0]", sent.toString())
+    }
+
+    @Test
+    fun saveOmitsAdvancedScoresWhenHidden() {        val saveAck = buildJsonObject {
+            put("SaveMediaListEntry", buildJsonObject { put("id", 7) })
+        }
+        val graphQL = FakeGraphQL(listOf(saveAck))
+        val editor = editorWired(graphQL, existingEntry())
+
+        editor.load()
+        var saved = false
+        editor.save { saved = true }
+
+        assertTrue(saved)
+        assertNull(graphQL.requests.single().variables?.get("advancedScores"))
+    }
+
+    @Test
+    fun explicitNullAdvancedScoresDecodeToEmpty() {
+        // Live shape: the server sends explicit nulls for unset fields.
+        // A non-null List default only covers missing keys — explicit null
+        // used to throw and break the whole detail load.
+        val page = buildJsonObject {
+            put("Media", buildJsonObject {
+                put("id", 1)
+                put("mediaListEntry", buildJsonObject {
+                    put("id", 7)
+                    put("advancedScores", JsonNull)
+                })
+            })
+        }
+        val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
+
+        val result = runBlocking { repository.loadDetail(1, "JAPANESE", EnglishStrings) }
+
+        assertIs<NetworkResult.Success<MediaDetail>>(result)
+        assertEquals(emptyMap(), result.value.viewerEntry?.advancedScores)
+    }
+
+    @Test
+    fun populatedObjectAdvancedScoresDecodeToMap() {
+        // Live shape: Json object keyed by category name, NOT an array.
+        // Decoding it as List used to throw and break the whole detail load.
+        val page = buildJsonObject {
+            put("Media", buildJsonObject {
+                put("id", 1)
+                put("mediaListEntry", buildJsonObject {
+                    put("id", 7)
+                    put("advancedScores", buildJsonObject {
+                        put("Story", 80)
+                        put("Animation", 70)
+                    })
+                })
+            })
+        }
+        val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
+
+        val result = runBlocking { repository.loadDetail(1, "JAPANESE", EnglishStrings) }
+
+        assertIs<NetworkResult.Success<MediaDetail>>(result)
+        assertEquals(
+            mapOf("Story" to 80f, "Animation" to 70f),
+            result.value.viewerEntry?.advancedScores,
+        )
     }
 }

@@ -22,6 +22,9 @@ internal class MediaEntryEditorState(
     val mediaId: Int,
     private val initialStatusOverride: MediaListStatus? = null,
     private val initialProgressOverride: Int? = null,
+    private val advancedScoringEnabled: Boolean = false,
+    private val advancedScoringAnimeNames: List<String> = emptyList(),
+    private val advancedScoringMangaNames: List<String> = emptyList(),
 ) {
     var detail: MediaDetail? by mutableStateOf(null)
         private set
@@ -37,6 +40,8 @@ internal class MediaEntryEditorState(
     var progressVolumes by mutableStateOf(0)
         private set
     var score by mutableStateOf(0f)
+        private set
+    var advancedScoreValues by mutableStateOf(emptyList<Float>())
         private set
     var notes by mutableStateOf("")
         private set
@@ -65,6 +70,10 @@ internal class MediaEntryEditorState(
         private set
 
     val isManga: Boolean get() = detail?.type == MediaDetailType.MANGA
+    val advancedScoringNames: List<String>
+        get() = if (isManga) advancedScoringMangaNames else advancedScoringAnimeNames
+    val showAdvancedScoring: Boolean
+        get() = advancedScoringEnabled && advancedScoringNames.isNotEmpty()
     val maxProgress: Int? get() = detail?.let { if (it.type == MediaDetailType.MANGA) it.chapters else it.episodes }
     val maxProgressVolumes: Int? get() = detail?.volumes
     val isExisting: Boolean get() = detail?.viewerEntry != null
@@ -94,9 +103,13 @@ internal class MediaEntryEditorState(
                         hiddenFromStatusLists = existing.hiddenFromStatusLists
                         startedAtMillis = existing.startedAtMillis
                         completedAtMillis = existing.completedAtMillis
+                        advancedScoreValues = advancedScoringNames.map { name ->
+                            existing.advancedScores[name] ?: 0f
+                        }
                     } else {
                         status = initialStatusOverride ?: MediaListStatus.PLANNING
                         progress = initialProgressOverride ?: 0
+                        advancedScoreValues = List(advancedScoringNames.size) { 0f }
                     }
                 }
                 is NetworkResult.Failure -> loadError = result.error
@@ -123,6 +136,14 @@ internal class MediaEntryEditorState(
 
     fun updateScore(value: Float) { score = value.coerceIn(0f, 10f) }
     fun updateNotes(value: String) { notes = value }
+
+    fun updateAdvancedScore(index: Int, value: Float) {
+        val names = advancedScoringNames
+        if (index !in names.indices) return
+        advancedScoreValues = advancedScoreValues.alignTo(names.size).toMutableList().also {
+            it[index] = value.coerceIn(0f, 100f)
+        }
+    }
 
     fun incrementRepeat() { repeat++ }
     fun decrementRepeat() { if (repeat > 0) repeat-- }
@@ -165,6 +186,11 @@ internal class MediaEntryEditorState(
                 progress = progress,
                 progressVolumes = if (isManga) progressVolumes else null,
                 score = score,
+                advancedScores = if (showAdvancedScoring) {
+                    advancedScoreValues.alignTo(advancedScoringNames.size)
+                } else {
+                    null
+                },
                 notes = notes,
                 repeat = repeat,
                 priority = priority,
@@ -206,6 +232,9 @@ internal fun createMediaEntryEditorState(
     strings: LanguageStrings,
     initialStatusOverride: MediaListStatus? = null,
     initialProgressOverride: Int? = null,
+    advancedScoringEnabled: Boolean = false,
+    advancedScoringAnimeNames: List<String> = emptyList(),
+    advancedScoringMangaNames: List<String> = emptyList(),
 ): MediaEntryEditorState {
     return MediaEntryEditorState(
         entryRepository = entryRepository,
@@ -215,5 +244,14 @@ internal fun createMediaEntryEditorState(
         mediaId = mediaId,
         initialStatusOverride = initialStatusOverride,
         initialProgressOverride = initialProgressOverride,
+        advancedScoringEnabled = advancedScoringEnabled,
+        advancedScoringAnimeNames = advancedScoringAnimeNames,
+        advancedScoringMangaNames = advancedScoringMangaNames,
     )
+}
+
+/** Pads with 0 and truncates to the category count: server arrays may be shorter or stale-long. */
+private fun List<Float>.alignTo(size: Int): List<Float> {
+    if (size <= 0) return emptyList()
+    return List(size) { index -> getOrNull(index) ?: 0f }
 }

@@ -13,5 +13,7 @@ internal data class SettingsData(
     val splitCompletedAnime: Boolean,
     val splitCompletedManga: Boolean,
     val advancedScoring: Boolean,
+    val advancedScoringAnime: List<String> = emptyList(),
+    val advancedScoringManga: List<String> = emptyList(),
     val notifications: NotificationPreferences,
 )

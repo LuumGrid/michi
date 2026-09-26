@@ -52,6 +52,7 @@ import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionGroupShape
+import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.GlassButton
 import com.luum.michi.app.ui.components.SheetActionBar
@@ -105,163 +106,179 @@ internal fun SettingsScreen(
     var accountSheet by remember { mutableStateOf(false) }
     var signOutConfirmSheet by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            SettingsAccountCard(
-                viewer = viewer,
-                strings = strings,
-                onSignIn = onLogin,
-                onAccountSettings = { accountSheet = true },
-            )
-        }
-        item {
-            OptionGroup(title = strings.settingsGeneralSection) {
-                SettingsRow(
-                    label = strings.languageLabel,
-                    value = language.displayName,
-                    onClick = { languageSheet = true },
-                    divider = false,
-                )
-                SettingsRow(
-                    label = strings.settingsThemeTitle,
-                    value = "${themeType.label(strings)} · ${paletteDisplayName(palette)}",
-                    onClick = { themeSheet = true },
-                )
-                SettingsRow(
-                    label = strings.themeFontSection,
-                    value = font.displayName,
-                    onClick = { fontSheet = true },
-                )
-                SettingsRow(
-                    label = strings.settingsSurfaceTitle,
-                    value = surfaces.label(strings),
-                    onClick = { surfaceSheet = true },
+    val listContent: @Composable () -> Unit = {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            item {
+                SettingsAccountCard(
+                    viewer = viewer,
+                    strings = strings,
+                    onSignIn = onLogin,
+                    onAccountSettings = { accountSheet = true },
                 )
             }
-        }
-        if (settingsState.canSync) {
-            val error = settingsState.error
-            if (error != null) {
+            item {
+                OptionGroup(title = strings.settingsGeneralSection) {
+                    SettingsRow(
+                        label = strings.languageLabel,
+                        value = language.displayName,
+                        onClick = { languageSheet = true },
+                        divider = false,
+                    )
+                    SettingsRow(
+                        label = strings.settingsThemeTitle,
+                        value = "${themeType.label(strings)} · ${paletteDisplayName(palette)}",
+                        onClick = { themeSheet = true },
+                    )
+                    SettingsRow(
+                        label = strings.themeFontSection,
+                        value = font.displayName,
+                        onClick = { fontSheet = true },
+                    )
+                    SettingsRow(
+                        label = strings.settingsSurfaceTitle,
+                        value = surfaces.label(strings),
+                        onClick = { surfaceSheet = true },
+                    )
+                }
+            }
+            if (settingsState.canSync) {
+                val error = settingsState.error
+                if (error != null) {
+                    item {
+                        SettingsErrorRow(
+                            message = strings.networkErrorMessage(error),
+                            retryLabel = strings.retryAction,
+                            onRetry = { settingsState.refresh(force = true) },
+                        )
+                    }
+                }
                 item {
-                    SettingsErrorRow(
-                        message = strings.networkErrorMessage(error),
-                        retryLabel = strings.retryAction,
-                        onRetry = { settingsState.refresh(force = true) },
-                    )
+                    OptionGroup(title = strings.settingsAniListSection) {
+                        SettingsRow(
+                            label = strings.settingsTitleLanguageTitle,
+                            value = settingsState.titleLanguage.label(strings),
+                            onClick = { titleLanguageSheet = true },
+                            divider = false,
+                        )
+                        SettingsRow(
+                            label = strings.settingsStaffNameTitle,
+                            value = settingsState.staffNameLanguage.label(strings),
+                            onClick = { staffNameLanguageSheet = true },
+                        )
+                        SettingsToggleRow(
+                            title = strings.settingsAdultContentTitle,
+                            subtitle = strings.settingsAdultContentSubtitle,
+                            checked = settingsState.displayAdultContent,
+                            onCheckedChange = { settingsState.displayAdultContent = it },
+                        )
+                        SettingsRow(
+                            label = strings.settingsScoreFormatTitle,
+                            value = settingsState.scoreFormat.label(strings),
+                            onClick = { scoreFormatSheet = true },
+                        )
+                    }
+                }
+                item {
+                    OptionGroup(title = strings.settingsListsSection) {
+                        SettingsRow(
+                            label = strings.settingsListSortTitle,
+                            value = settingsState.listSort.label(strings),
+                            onClick = { sortSheet = true },
+                            divider = false,
+                        )
+                        SettingsToggleRow(
+                            title = strings.settingsSplitCompletedAnimeTitle,
+                            subtitle = strings.settingsSplitCompletedAnimeSubtitle,
+                            checked = settingsState.splitCompletedAnime,
+                            onCheckedChange = { settingsState.splitCompletedAnime = it },
+                        )
+                        SettingsToggleRow(
+                            title = strings.settingsSplitCompletedMangaTitle,
+                            subtitle = strings.settingsSplitCompletedMangaSubtitle,
+                            checked = settingsState.splitCompletedManga,
+                            onCheckedChange = { settingsState.splitCompletedManga = it },
+                        )
+                        SettingsToggleRow(
+                            title = strings.settingsAdvancedScoringTitle,
+                            subtitle = strings.settingsAdvancedScoringSubtitle,
+                            checked = settingsState.advancedScoring,
+                            onCheckedChange = { settingsState.advancedScoring = it },
+                        )
+                        SettingsToggleRow(
+                            title = strings.settingsPersistSortTitle,
+                            subtitle = strings.settingsPersistSortSubtitle,
+                            checked = settingsState.persistListSort,
+                            onCheckedChange = { settingsState.persistListSort = it },
+                        )
+                    }
+                }
+                item {
+                    OptionGroup(title = strings.notificationsSection) {
+                        SettingsToggleRow(
+                            title = strings.notificationsAiringTitle,
+                            subtitle = null,
+                            checked = settingsState.notifications.airing,
+                            onCheckedChange = {
+                                settingsState.notifications =
+                                    settingsState.notifications.copy(airing = it)
+                            },
+                            divider = false,
+                        )
+                        SettingsToggleRow(
+                            title = strings.notificationsMessagesTitle,
+                            subtitle = null,
+                            checked = settingsState.notifications.messages,
+                            onCheckedChange = {
+                                settingsState.notifications =
+                                    settingsState.notifications.copy(messages = it)
+                            },
+                        )
+                        SettingsToggleRow(
+                            title = strings.notificationsMediaTitle,
+                            subtitle = null,
+                            checked = settingsState.notifications.media,
+                            onCheckedChange = {
+                                settingsState.notifications =
+                                    settingsState.notifications.copy(media = it)
+                            },
+                        )
+                    }
                 }
             }
             item {
-                OptionGroup(title = strings.settingsAniListSection) {
+                OptionGroup(title = strings.settingsInformationSection) {
                     SettingsRow(
-                        label = strings.settingsTitleLanguageTitle,
-                        value = settingsState.titleLanguage.label(strings),
-                        onClick = { titleLanguageSheet = true },
+                        label = strings.settingsAboutVersionLabel,
+                        value = MichiBuildConfig.Version,
+                        onClick = null,
                         divider = false,
                     )
                     SettingsRow(
-                        label = strings.settingsStaffNameTitle,
-                        value = settingsState.staffNameLanguage.label(strings),
-                        onClick = { staffNameLanguageSheet = true },
-                    )
-                    SettingsToggleRow(
-                        title = strings.settingsAdultContentTitle,
-                        subtitle = strings.settingsAdultContentSubtitle,
-                        checked = settingsState.displayAdultContent,
-                        onCheckedChange = { settingsState.displayAdultContent = it },
-                    )
-                    SettingsRow(
-                        label = strings.settingsScoreFormatTitle,
-                        value = settingsState.scoreFormat.label(strings),
-                        onClick = { scoreFormatSheet = true },
-                    )
-                }
-            }
-            item {
-                OptionGroup(title = strings.settingsListsSection) {
-                    SettingsRow(
-                        label = strings.settingsListSortTitle,
-                        value = settingsState.listSort.label(strings),
-                        onClick = { sortSheet = true },
-                        divider = false,
-                    )
-                    SettingsToggleRow(
-                        title = strings.settingsSplitCompletedAnimeTitle,
-                        subtitle = strings.settingsSplitCompletedAnimeSubtitle,
-                        checked = settingsState.splitCompletedAnime,
-                        onCheckedChange = { settingsState.splitCompletedAnime = it },
-                    )
-                    SettingsToggleRow(
-                        title = strings.settingsSplitCompletedMangaTitle,
-                        subtitle = strings.settingsSplitCompletedMangaSubtitle,
-                        checked = settingsState.splitCompletedManga,
-                        onCheckedChange = { settingsState.splitCompletedManga = it },
-                    )
-                    SettingsToggleRow(
-                        title = strings.settingsAdvancedScoringTitle,
-                        subtitle = strings.settingsAdvancedScoringSubtitle,
-                        checked = settingsState.advancedScoring,
-                        onCheckedChange = { settingsState.advancedScoring = it },
-                    )
-                    SettingsToggleRow(
-                        title = strings.settingsPersistSortTitle,
-                        subtitle = strings.settingsPersistSortSubtitle,
-                        checked = settingsState.persistListSort,
-                        onCheckedChange = { settingsState.persistListSort = it },
-                    )
-                }
-            }
-            item {
-                OptionGroup(title = strings.notificationsSection) {
-                    SettingsToggleRow(
-                        title = strings.notificationsAiringTitle,
-                        subtitle = null,
-                        checked = settingsState.notifications.airing,
-                        onCheckedChange = {
-                            settingsState.notifications =
-                                settingsState.notifications.copy(airing = it)
-                        },
-                        divider = false,
-                    )
-                    SettingsToggleRow(
-                        title = strings.notificationsMessagesTitle,
-                        subtitle = null,
-                        checked = settingsState.notifications.messages,
-                        onCheckedChange = {
-                            settingsState.notifications =
-                                settingsState.notifications.copy(messages = it)
-                        },
-                    )
-                    SettingsToggleRow(
-                        title = strings.notificationsMediaTitle,
-                        subtitle = null,
-                        checked = settingsState.notifications.media,
-                        onCheckedChange = {
-                            settingsState.notifications =
-                                settingsState.notifications.copy(media = it)
-                        },
+                        label = strings.settingsAboutTitle,
+                        value = strings.settingsAboutSubtitle,
+                        onClick = { aboutSheet = true },
                     )
                 }
             }
         }
-        item {
-            OptionGroup(title = strings.settingsInformationSection) {
-                SettingsRow(
-                    label = strings.settingsAboutVersionLabel,
-                    value = MichiBuildConfig.Version,
-                    onClick = null,
-                    divider = false,
-                )
-                SettingsRow(
-                    label = strings.settingsAboutTitle,
-                    value = strings.settingsAboutSubtitle,
-                    onClick = { aboutSheet = true },
-                )
-            }
+    }
+
+    // Pull-to-refresh only when sync means something: guests are
+    // local-only, and a dead pull with no feedback is worse than none.
+    // Sheets stay outside the refresh box (modal overlays, no gesture share).
+    if (settingsState.canSync) {
+        PullRefresh(
+            isRefreshing = settingsState.isRefreshing,
+            onRefresh = { settingsState.refresh(force = true) },
+        ) {
+            listContent()
         }
+    } else {
+        listContent()
     }
 
     if (languageSheet) {

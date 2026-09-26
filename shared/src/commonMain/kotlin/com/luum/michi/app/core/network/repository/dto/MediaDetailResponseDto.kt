@@ -172,6 +172,7 @@ internal data class MediaViewerListEntryDto(
     val progress: Int? = null,
     val progressVolumes: Int? = null,
     val score: Double? = null,
+    val advancedScores: Map<String, Float>? = null,
     val notes: String? = null,
     val repeat: Int? = null,
     val priority: Int? = null,

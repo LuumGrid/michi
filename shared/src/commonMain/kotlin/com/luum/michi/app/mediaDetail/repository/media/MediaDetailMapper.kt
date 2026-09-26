@@ -180,6 +180,7 @@ private fun MediaViewerListEntryDto.toViewerEntry(): MediaListViewerEntry = Medi
     progress = progress ?: 0,
     progressVolumes = progressVolumes,
     score = (score ?: 0.0).toFloat(),
+    advancedScores = advancedScores.orEmpty(),
     notes = notes.orEmpty(),
     repeat = repeat ?: 0,
     priority = priority ?: 0,

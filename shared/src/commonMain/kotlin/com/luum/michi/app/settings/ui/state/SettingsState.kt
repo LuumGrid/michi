@@ -117,6 +117,23 @@ internal class SettingsState(
             scheduleSave()
         }
 
+    // Advanced-scoring category names per list type (server-owned, memory
+    // only: no store keys, never saved — guests stay empty so the editor
+    // section hides, and a fresh session rehydrates on refresh).
+    private val advancedScoringAnimeState = mutableStateOf(emptyList<String>())
+    var advancedScoringAnime: List<String>
+        get() = advancedScoringAnimeState.value
+        private set(value) {
+            advancedScoringAnimeState.value = value
+        }
+
+    private val advancedScoringMangaState = mutableStateOf(emptyList<String>())
+    var advancedScoringManga: List<String>
+        get() = advancedScoringMangaState.value
+        private set(value) {
+            advancedScoringMangaState.value = value
+        }
+
     // Local-only: AniList has no field for sort memory, so this never
     // joins currentData()/scheduleSave — store only, like App theme/language.
     // ON by default: sort is set-and-forget, and non-changers save nothing
@@ -145,6 +162,13 @@ internal class SettingsState(
             errorState.value = value
         }
 
+    private val refreshingState = mutableStateOf(false)
+    var isRefreshing: Boolean
+        get() = refreshingState.value
+        private set(value) {
+            refreshingState.value = value
+        }
+
     private var saveJob: Job? = null
 
     /** True after the first successful load. Plain var: no UI reads it, only gating. */
@@ -168,13 +192,18 @@ internal class SettingsState(
         if (!canSync || (!force && hasLoaded)) return
         if (!force && loadJob?.isActive == true) return
         loadJob?.cancel()
+        isRefreshing = true
         loadJob = scope.launch {
-            when (val result = repository.loadSettings()) {
-                is NetworkResult.Success -> {
-                    applyLoaded(result.value)
-                    hasLoaded = true
+            try {
+                when (val result = repository.loadSettings()) {
+                    is NetworkResult.Success -> {
+                        applyLoaded(result.value)
+                        hasLoaded = true
+                    }
+                    is NetworkResult.Failure -> error = result.error
                 }
-                is NetworkResult.Failure -> error = result.error
+            } finally {
+                isRefreshing = false
             }
         }
     }
@@ -240,6 +269,8 @@ internal class SettingsState(
         store.putBoolean(KeySplitCompletedManga, data.splitCompletedManga)
         advancedScoringState.value = data.advancedScoring
         store.putBoolean(KeyAdvancedScoring, data.advancedScoring)
+        advancedScoringAnime = data.advancedScoringAnime
+        advancedScoringManga = data.advancedScoringManga
         notificationsState.value = data.notifications
         persistNotifications(data.notifications)
         error = null
@@ -279,6 +310,8 @@ internal class SettingsState(
         splitCompletedAnime = splitCompletedAnime,
         splitCompletedManga = splitCompletedManga,
         advancedScoring = advancedScoring,
+        advancedScoringAnime = advancedScoringAnime,
+        advancedScoringManga = advancedScoringManga,
         notifications = notifications,
     )
 

@@ -31,7 +31,8 @@ query AnimeCatalog(
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
   ${'$'}perPage: Int!,
-  ${'$'}onList: Boolean
+  ${'$'}onList: Boolean,
+  ${'$'}isAdult: Boolean
 ) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
     pageInfo { hasNextPage }
@@ -44,7 +45,7 @@ query AnimeCatalog(
       season: ${'$'}season,
       sort: ${'$'}sort,
       onList: ${'$'}onList,
-      isAdult: false
+      isAdult: ${'$'}isAdult
     ) {
       id
       type
@@ -79,7 +80,8 @@ query MangaCatalog(
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
   ${'$'}perPage: Int!,
-  ${'$'}onList: Boolean
+  ${'$'}onList: Boolean,
+  ${'$'}isAdult: Boolean
 ) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
     pageInfo { hasNextPage }
@@ -92,7 +94,7 @@ query MangaCatalog(
       startDate_lesser: ${'$'}startDate_lesser,
       sort: ${'$'}sort,
       onList: ${'$'}onList,
-      isAdult: false
+      isAdult: ${'$'}isAdult
     ) {
       id
       type
@@ -172,6 +174,7 @@ internal class ExploreRepositoryImpl(
         perPage: Int,
         season: String?,
         onList: Boolean?,
+        hideAdult: Boolean,
         strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
@@ -192,6 +195,11 @@ internal class ExploreRepositoryImpl(
             }
             if (onList != null) {
                 put("onList", JsonPrimitive(onList))
+            }
+            // Omit (null) when adult is allowed: the server then returns
+            // both. Never send true — that would filter to adult ONLY.
+            if (hideAdult) {
+                put("isAdult", JsonPrimitive(false))
             }
             put("sort", JsonArray(listOf(JsonPrimitive(sort))))
             put("page", JsonPrimitive(page))
@@ -223,6 +231,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         onList: Boolean?,
+        hideAdult: Boolean,
         strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
@@ -243,6 +252,11 @@ internal class ExploreRepositoryImpl(
             }
             if (onList != null) {
                 put("onList", JsonPrimitive(onList))
+            }
+            // Omit (null) when adult is allowed: the server then returns
+            // both. Never send true — that would filter to adult ONLY.
+            if (hideAdult) {
+                put("isAdult", JsonPrimitive(false))
             }
             put("sort", JsonArray(listOf(JsonPrimitive(sort))))
             put("page", JsonPrimitive(page))

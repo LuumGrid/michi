@@ -467,6 +467,9 @@ internal fun Root(
                         strings = strings,
                         initialStatusOverride = state.editorInitialStatus,
                         initialProgressOverride = state.editorInitialProgress,
+                        advancedScoringEnabled = settingsState.advancedScoring,
+                        advancedScoringAnimeNames = settingsState.advancedScoringAnime,
+                        advancedScoringMangaNames = settingsState.advancedScoringManga,
                     )
                 }
                 LaunchedEffect(editorId) { editor.load() }

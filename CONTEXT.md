@@ -233,7 +233,7 @@ appear only when real behavior justifies them.
 - Every tab except Settings and the two lists renders a `MessagePanel` placeholder (title + icon, no actions) — DISCOVER and PROFILE today.
 - App language support: Spanish (`es`) and English (`en`).
 - App name `Michi` is a brand name; do not move it to translatable XML unless the user changes direction.
-- Dropped directions (do not re-propose): multi-account (multi-service auth via `AuthServices` is the path instead); Niro-style adult-cover censoring (hide-behind-18+ stays); a dedicated guest profile surface (guest profile = sign-in prompt via `AuthModal`).
+- Dropped directions (do not re-propose): multi-account (multi-service auth via `AuthServices` is the path instead); Niro-style adult-cover censoring (hide-behind-18+ stays); a dedicated guest profile surface (guest profile = sign-in prompt via `AuthModal`); favourite hearts on list cards (saturates the lists).
 
 ## Lazy Loading Network Strategy (HTTP 429 Prevention)
 
@@ -290,6 +290,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 - AniList uses GraphQL. Prefer typed/structured handling over ad hoc string concatenation.
 - AniList api is limited to 30 request per minute
+- The API serves adult entries to clients; filtering via `isAdult` is the client's job (`docs.anilist.co/guide/considerations`). Omit the var when 18+ is allowed (null = both) — never send `isAdult: true` (that filters to adult ONLY).
 - Keep query/mutation definitions close to the repository/API surface that owns them.
 - Keep AniList API concerns out of UI state and screens.
 - Auth/session belongs behind `core.auth` or `core.session` abstractions (to be added).
