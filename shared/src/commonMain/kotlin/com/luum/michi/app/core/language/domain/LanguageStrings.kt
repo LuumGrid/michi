@@ -195,6 +195,9 @@ interface LanguageStrings {
     val settingsListsSection: String
     val settingsInformationSection: String
     val settingsThemeTitle: String
+    val settingsSurfaceTitle: String
+    val surfaceGlassLabel: String
+    val surfaceSolidLabel: String
     val settingsThemeSystem: String
     val settingsThemeLight: String
     val settingsThemeDark: String

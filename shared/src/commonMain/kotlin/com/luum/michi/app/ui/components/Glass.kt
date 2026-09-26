@@ -25,6 +25,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,16 @@ internal val GlassCircle: Shape = CircleShape
 
 /** Shared translucency for every glass surface (bars and buttons alike). */
 private const val GLASS_ALPHA = 0.88f
+
+/** Floating elevation for large surfaces (bars, pills): full shadow. */
+internal val GlassElevation = 32.dp
+
+/**
+ * Compact elevation for small surfaces (48dp circles): still reads as
+ * floating, but the smaller shadow fraction bleeds less through the
+ * 0.88 fill instead of flooding the whole shape.
+ */
+internal val GlassElevationCompact = 16.dp
 
 @Composable
 internal fun glassContainerColor(): Color =
@@ -78,11 +90,19 @@ internal fun GlassCapsule(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         shape = GlassCircle,
-        color = glassContainerColor(),
-        border = glassBorder(),
-        modifier = modifier.glass(GlassCircle),
+        color = if (glass) {
+            glassContainerColor()
+        } else {
+            solidContainerColor()
+        },
+        border = if (glass) glassBorder() else solidBorder(),
+        // Elevation straight on the Surface (never a chained .shadow()):
+        // the offscreen layer of Modifier.shadow seals translucent fills.
+        shadowElevation = GlassElevationCompact,
+        modifier = modifier.clip(GlassCircle),
     ) {
         content()
     }
@@ -102,11 +122,19 @@ internal fun GlassCircleButton(
     badgeCount: Int? = null,
     enabled: Boolean = true,
 ) {
+    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         shape = GlassCircle,
-        color = glassContainerColor(),
-        border = glassBorder(),
-        modifier = modifier.glass(GlassCircle),
+        color = if (glass) {
+            glassContainerColor()
+        } else {
+            solidContainerColor()
+        },
+        border = if (glass) glassBorder() else solidBorder(),
+        // Elevation straight on the Surface (never a chained .shadow()):
+        // the offscreen layer of Modifier.shadow seals translucent fills.
+        shadowElevation = GlassElevationCompact,
+        modifier = modifier.clip(GlassCircle),
     ) {
         IconButton(onClick = onClick, enabled = enabled) {
             if (badgeCount != null && badgeCount > 0) {
@@ -140,19 +168,26 @@ internal fun GlassButton(
     contentColor: Color? = null,
     shape: Shape = GlassShape,
 ) {
-    val container = containerColor?.copy(alpha = GLASS_ALPHA) ?: glassContainerColor()
+    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
+    val container = if (glass) {
+        containerColor?.copy(alpha = GLASS_ALPHA) ?: glassContainerColor()
+    } else {
+        containerColor ?: solidContainerColor()
+    }
     val content = contentColor ?: MaterialTheme.colorScheme.onSurface
     Button(
         onClick = onClick,
         enabled = enabled,
         shape = shape,
-        border = glassBorder(),
+        border = if (glass) glassBorder() else solidBorder(),
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = content,
         ),
         elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
+            // Elevation on the Button itself (never a chained .shadow()):
+            // the offscreen layer of Modifier.shadow seals translucent fills.
+            defaultElevation = 8.dp,
             pressedElevation = 0.dp,
             disabledElevation = 0.dp,
         ),
@@ -160,7 +195,7 @@ internal fun GlassButton(
         modifier = modifier
             .fillMaxWidth()
             .height(GLASS_BUTTON_HEIGHT)
-            .glass(shape),
+            .clip(shape),
     ) {
         if (leadingIcon != null) {
             Icon(

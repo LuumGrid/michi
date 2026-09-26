@@ -60,6 +60,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.theme.AppFont
 import com.luum.michi.app.ui.theme.LocalWarning
+import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemePalettes
 import com.luum.michi.app.ui.theme.ThemeType
@@ -84,6 +85,8 @@ internal fun SettingsScreen(
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
     onFontChange: (AppFont) -> Unit,
+    surfaces: SurfaceStyle,
+    onSurfacesChange: (SurfaceStyle) -> Unit,
     viewer: Viewer?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
@@ -93,6 +96,7 @@ internal fun SettingsScreen(
     var languageSheet by remember { mutableStateOf(false) }
     var themeSheet by remember { mutableStateOf(false) }
     var fontSheet by remember { mutableStateOf(false) }
+    var surfaceSheet by remember { mutableStateOf(false) }
     var titleLanguageSheet by remember { mutableStateOf(false) }
     var staffNameLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
@@ -131,6 +135,11 @@ internal fun SettingsScreen(
                     label = strings.themeFontSection,
                     value = font.displayName,
                     onClick = { fontSheet = true },
+                )
+                SettingsRow(
+                    label = strings.settingsSurfaceTitle,
+                    value = surfaces.label(strings),
+                    onClick = { surfaceSheet = true },
                 )
             }
         }
@@ -319,6 +328,27 @@ internal fun SettingsScreen(
                                 ),
                             )
                         },
+                    )
+                }
+            }
+        }
+    }
+
+    if (surfaceSheet) {
+        ModalSheet(
+            title = strings.settingsSurfaceTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { surfaceSheet = false },
+        ) {
+            OptionGroup(title = null) {
+                SurfaceStyle.entries.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = option.label(strings),
+                        selected = option == surfaces,
+                        onClick = {
+                            onSurfacesChange(option)
+                        },
+                        divider = index > 0,
                     )
                 }
             }
@@ -790,4 +820,9 @@ private fun ThemeType.label(strings: LanguageStrings): String = when (this) {
     ThemeType.SYSTEM -> strings.settingsThemeSystem
     ThemeType.LIGHT -> strings.settingsThemeLight
     ThemeType.DARK -> strings.settingsThemeDark
+}
+
+private fun SurfaceStyle.label(strings: LanguageStrings): String = when (this) {
+    SurfaceStyle.GLASS -> strings.surfaceGlassLabel
+    SurfaceStyle.SOLID -> strings.surfaceSolidLabel
 }

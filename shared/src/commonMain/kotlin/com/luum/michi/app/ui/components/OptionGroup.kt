@@ -14,10 +14,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
- * IG-style framed group: optional subtitle + outlined rounded frame
- * enclosing option rows. Rows draw their own dividers ([OptionRow.divider]).
+ * IG-style framed group: optional subtitle + rounded frame enclosing
+ * option rows. Rows draw their own dividers ([OptionRow.divider]).
+ *
+ * Both surface styles keep the same frame structure, padding and sizes —
+ * only the recipe changes (translucent + glass border + shadow vs opaque
+ * + outline border). The experiment isolates surface, never layout.
  */
 internal val OptionGroupShape = RoundedCornerShape(20.dp)
 
@@ -27,6 +33,7 @@ internal fun OptionGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Column(modifier = modifier.fillMaxWidth()) {
         if (title != null) {
             Text(
@@ -38,11 +45,23 @@ internal fun OptionGroup(
         }
         Surface(
             shape = OptionGroupShape,
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            ),
-            color = MaterialTheme.colorScheme.surface,
+            border = if (glass) {
+                glassBorder()
+            } else {
+                BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+            },
+            // Translucent fill in glass mode; opaque surface in solid.
+            // Same frame, padding and sizes in both — only the recipe
+            // changes, so the experiment isolates surface, never layout.
+            color = if (glass) {
+                glassContainerColor()
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+            modifier = modifier,
         ) {
             Column(
                 modifier = Modifier

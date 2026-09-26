@@ -13,4 +13,6 @@ internal object SettingsStoreKeys {
     const val DefaultDiscoverTab = "default_home_tab"
     /** Sign-in modal auto-opened once (first anonymous launch, never again). */
     const val SeenSignIn = "seen_sign_in"
+    /** Sheet/chrome surface style (Settings toggle). */
+    const val SurfaceStyle = "surface_style"
 }

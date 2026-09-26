@@ -29,12 +29,14 @@ internal fun Theme(
     palette: ThemeColors = DefaultTheme(),
     type: ThemeType = ThemeType.SYSTEM,
     font: AppFont = AppFont.JAKARTA,
+    surfaces: SurfaceStyle = SurfaceStyle.GLASS,
     content: @Composable () -> Unit,
 ) {
     val dark = type.resolveDarkTheme(isSystemInDarkTheme())
     CompositionLocalProvider(
         LocalThemeColors provides palette,
         LocalWarning provides warningScheme(dark).primary,
+        LocalSurfaceStyle provides surfaces,
     ) {
         MaterialTheme(
             colorScheme = palette.scheme(dark),

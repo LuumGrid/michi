@@ -16,19 +16,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
- * Glass text input: [BasicTextField] inside the toolbar capsule recipe
- * (translucent container + border + shadow), copied from the search
- * surface. Takes only primitives so no feature model leaks in.
- *
- * Glass-rule tension, stated: this sits on scrolling sheet content, where
- * translucency can wash out (the session-card pilot proved it for cards).
- * Kept because the editor spec asks for it — revert to outlined on
- * physical evidence, one line per call site.
+ * Sheet text input with both surface recipes inline: same metrics,
+ * decoration and behavior in both branches — only the container recipe
+ * varies (translucent + glass border + shadow vs opaque + outline).
+ * Callers (editor counters, notes) never branch themselves.
  */
 @Composable
-internal fun GlassTextField(
+internal fun SheetTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -40,11 +38,12 @@ internal fun GlassTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
+    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         shape = GlassShape,
-        color = glassContainerColor(),
-        border = glassBorder(),
-        modifier = modifier.glass(GlassShape),
+        color = if (glass) glassContainerColor() else solidContainerColor(),
+        border = if (glass) glassBorder() else solidBorder(),
+        modifier = if (glass) modifier.glass(GlassShape) else modifier,
     ) {
         BasicTextField(
             value = value,

@@ -228,7 +228,7 @@ appear only when real behavior justifies them.
 - Settings is independent of profile (the old profile-route concept is gone). The gear in the PROFILE toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `profile/`.
 - `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` (media/character/studio/staff holders). `mediaList/` has the first real list UI: `AnimeListScreen` (section rail + `MediaCoverCard` rows over `AnimeListStateHolder`, wired in `Root`'s ANIME tab) while manga stays holder-only. Screens land later without restructuring (see feature-group exceptions).
 - `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/media surfaces exist yet.
-- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`) and font rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the landing edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
+- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the landing edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
 - Notifications feed is parked as a future `profile` subfeature (sheet from the Profile toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `profile/` when its UI lands.
 - Every tab except Settings renders a `MessagePanel` placeholder (title + icon, no actions).
 - App language support: Spanish (`es`) and English (`en`).
@@ -259,14 +259,14 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 | Group | Items | Rendering |
 |---|---|---|
-| **General** | Language · Theme (mode · palette) · Font | picker sheets (`ModalSheet` + `OptionGroup`) |
+| **General** | Language · Theme (mode · palette) · Font · Surfaces | picker sheets (`ModalSheet` + `OptionGroup`) |
 | **AniList** | Title language · 18+ content · Score format | picker / inline toggle |
 | **Lists** | Default sort · Split completed anime · Split completed manga · Advanced scoring | picker / inline toggle |
 | **Notifications** | Airing · Messages · Media | 3 inline toggles (activity/following/forum have no living feature behind them) |
 | **Information** | Version · About (modal) | static row + `ModalSheet` (brand mark + description + attribution, version from `MichiBuildConfig`) |
 
 - **Inline toggles** (private `SettingsToggleRow`: title + optional subtitle + display-only `Switch`): 18+ content, split completed anime/manga, advanced scoring, plus the 3 notification prefs (airing, messages, media).
-- **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list).
+- **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list).
 - **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font as its own row — same pickers the auth landing's theme sheet had. Writes persist to the store; the auth landing keeps only its language picker.
 - Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
 
@@ -277,7 +277,8 @@ State holders do NOT load automatically inside constructor `remember` blocks:
   - English: `Discover`, `Anime`, `Manga`, `Profile`.
 - Home has no banner/avatar and no embedded search row. Search belongs in the topbar.
 - **Glass rule (validated sep-2026):** glass (`glassContainerColor`, `glassBorder`, shadow) is reserved for floating surfaces and actions (Toolbar, TabBar, buttons). Content cards stay opaque `surface` — a glass pilot on the session card washed out in light mode (translucency flattened, shadow + 40% border rendered a ghost edge).
-- **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.Star`) and popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). `Icons.Like` (heart) is reserved for user favorites only.
+- **Glass corruption rule (validated sep-2026):** never chain `Modifier.glass()` (`.shadow().clip()`, forces an offscreen compositing layer) on inline content — the container alpha seals inside the layer and composites as an opaque inner square. Inline surfaces take the glass *recipe* (translucent color + border, no shadow); `.glass()` lives only on floating elements.
+- **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.StarOutline`) and user score (filled `Icons.StarFilled`) plus popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). Global favs use outline `Icons.Favorite`, user favourited state the filled twin.
 - Reading: separate `+1 CH` and `+1 VO` buttons (manga has chapters and volumes). Animation: `+1 EP`.
 - Counters are numeric-only next to their buttons, styled with stronger weight.
 - Account stats: compact count label (e.g. `1.8K`) via `ProfileStats.toCompactCountLabel`.

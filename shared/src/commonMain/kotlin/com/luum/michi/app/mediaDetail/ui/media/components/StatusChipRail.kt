@@ -14,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.ui.components.GlassShape
+import com.luum.michi.app.ui.components.glassBorder
+import com.luum.michi.app.ui.components.glassContainerColor
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Single-select status chips in a horizontal rail (the editor goes rail,
@@ -45,23 +49,27 @@ internal fun StatusChipRail(
     ) {
         options.forEachIndexed { index, option ->
             val isSelected = option == selected
+            val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
             Surface(
                 onClick = { onSelect(option) },
                 shape = GlassShape,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primaryContainer
+                } else if (glass) {
+                    glassContainerColor()
                 } else {
                     MaterialTheme.colorScheme.surface
                 },
                 border = if (isSelected) {
                     null
+                } else if (glass) {
+                    glassBorder()
                 } else {
                     BorderStroke(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )
                 },
-                modifier = Modifier,
             ) {
                 Text(
                     text = labels[index],

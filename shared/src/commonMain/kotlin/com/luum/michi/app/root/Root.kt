@@ -67,6 +67,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.language.searchHintFor
 import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
 import kotlin.math.roundToInt
@@ -94,6 +95,8 @@ internal fun Root(
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
     onFontChange: (AppFont) -> Unit,
+    surfaces: SurfaceStyle,
+    onSurfacesChange: (SurfaceStyle) -> Unit,
     viewer: Viewer? = null,
     onLogout: () -> Unit = {},
     animeListRepository: AnimeListRepository,
@@ -333,6 +336,8 @@ internal fun Root(
                         onThemeTypeChange = onThemeTypeChange,
                         font = font,
                         onFontChange = onFontChange,
+                        surfaces = surfaces,
+                        onSurfacesChange = onSurfacesChange,
                         viewer = viewer,
                         onLogin = { state.openSignIn() },
                         onLogout = onLogout,

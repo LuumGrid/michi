@@ -49,6 +49,7 @@ import com.luum.michi.app.ui.theme.paletteForId
 import com.luum.michi.app.ui.theme.paletteIdOf
 import com.luum.michi.app.ui.language.LocalStrings
 import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.Theme
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
@@ -82,6 +83,12 @@ fun App(
         mutableStateOf(
             AppFont.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.Font) }
                 ?: AppFont.JAKARTA,
+        )
+    }
+    var surfaces by remember {
+        mutableStateOf(
+            SurfaceStyle.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.SurfaceStyle) }
+                ?: SurfaceStyle.GLASS,
         )
     }
     val onLanguageChange: (AppLanguage) -> Unit = {
@@ -128,6 +135,7 @@ fun App(
             palette = palette,
             type = themeType,
             font = font,
+            surfaces = surfaces,
         ) {
             val current = session
             // No login wall: anonymous users enter the shell as guests
@@ -194,6 +202,11 @@ fun App(
                             onFontChange = {
                                 font = it
                                 store.putString(SettingsStoreKeys.Font, it.name)
+                            },
+                            surfaces = surfaces,
+                            onSurfacesChange = {
+                                surfaces = it
+                                store.putString(SettingsStoreKeys.SurfaceStyle, it.name)
                             },
                             viewer = (current as? SessionState.Authenticated)?.viewer,
                             onLogout = {

@@ -22,7 +22,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.components.GlassCircleButton
-import com.luum.michi.app.ui.components.GlassTextField
+import com.luum.michi.app.ui.components.SheetTextField
 import com.luum.michi.app.ui.icons.AppIcons
 
 /**
@@ -61,7 +61,7 @@ internal fun EditorCounterField(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            GlassTextField(
+            SheetTextField(
                 value = draft ?: displayValue,
                 onValueChange = { draft = it },
                 suffix = suffix,

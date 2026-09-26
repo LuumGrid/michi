@@ -41,7 +41,7 @@ import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
 import com.luum.michi.app.ui.components.GhostButton
 import com.luum.michi.app.ui.components.GhostButton
 import com.luum.michi.app.ui.components.GlassButton
-import com.luum.michi.app.ui.components.GlassTextField
+import com.luum.michi.app.ui.components.SheetTextField
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
@@ -334,7 +334,7 @@ private fun EditorBody(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        GlassTextField(
+        SheetTextField(
             value = editor.notes,
             onValueChange = { editor.updateNotes(it) },
             minLines = 3,

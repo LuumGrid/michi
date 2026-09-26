@@ -9,7 +9,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -22,18 +21,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Toolbar navigation slot. Leading edge only: standard back affordance
@@ -181,11 +182,18 @@ internal fun Toolbar(
                                 badgeCount = action.badgeCount,
                             )
                         } else {
+                            val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
                             Surface(
                                 shape = GlassShape,
-                                color = glassContainerColor(),
-                                border = glassBorder(),
-                                modifier = Modifier.glass(),
+                                color = if (glass) {
+                                    glassContainerColor()
+                                } else {
+                                    solidContainerColor()
+                                },
+                                border = if (glass) glassBorder() else solidBorder(),
+                                // Elevation straight on the Surface (never a chained .shadow()).
+                                shadowElevation = 8.dp,
+                                modifier = Modifier.clip(GlassShape),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     run.forEach { action ->
@@ -216,11 +224,21 @@ internal fun Toolbar(
                 Spacer(modifier = Modifier.size(8.dp))
                 Surface(
                     shape = GlassShape,
-                    color = glassContainerColor(),
-                    border = glassBorder(),
+                    color = if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
+                        glassContainerColor()
+                    } else {
+                        solidContainerColor()
+                    },
+                    border = if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
+                        glassBorder()
+                    } else {
+                        solidBorder()
+                    },
+                    // Elevation straight on the Surface (never a chained .shadow()).
+                    shadowElevation = 8.dp,
                     modifier = Modifier
                         .weight(1f)
-                        .glass(),
+                        .clip(GlassShape),
                 ) {
                     // Chevron circle mirroring the search action position plus
                     // the expanding text pill (the clear-X lives bare inside

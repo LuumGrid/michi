@@ -13,6 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.components.GlassShape
+import com.luum.michi.app.ui.components.glassBorder
+import com.luum.michi.app.ui.components.glassContainerColor
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Section rail shared by the anime/manga lists. Generic over the scope's
@@ -47,16 +51,21 @@ internal fun <T> MediaListSectionRail(
             key = { it.label },
         ) { tab ->
             val isSelected = tab.value == selected
+            val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
             Surface(
                 onClick = { onSelect(tab.value) },
                 shape = GlassShape,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primaryContainer
+                } else if (glass) {
+                    glassContainerColor()
                 } else {
                     MaterialTheme.colorScheme.surface
                 },
                 border = if (isSelected) {
                     null
+                } else if (glass) {
+                    glassBorder()
                 } else {
                     BorderStroke(
                         width = 1.dp,
