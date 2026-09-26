@@ -48,7 +48,7 @@ Add `domain/` and `data/` only when real AniList/session/storage behavior appear
 
 ### Feature-group exceptions: `discover/`, `mediaList/` and `mediaDetail/`
 
-No feature has screens or components yet (only `settings/` renders UI). The groups below are domain + repository + state holders; screens land later without restructuring.
+`mediaList/` and `mediaDetail/` already render UI (`AnimeListScreen`, `MangaListScreen`, `MediaEntryEditorSheet`); `settings/` renders its full screen. The groups below are domain + repository + state holders; remaining screens land later without restructuring.
 
 `discover/` is a feature-group with two sub-scopes (`dashboard/` and `explore/`) sharing one `domain/` and one `repository/`:
 ```text
@@ -173,7 +173,7 @@ com.luum.michi.app
   App.kt
   root/
     Root.kt                 slim orchestrator (toolbar + tabs + content router)
-    AuthLandingScreen.kt    login landing + language picker (title only; theme lives in Settings)
+    AuthModal.kt            on-demand sign-in modal + language picker (MAL appends to AuthServices)
     state/State.kt          BackStep, State, rememberState (+ isSettingsOpen flag, no profile routes)
   core/
     auth/domain|repository/   AniList OAuth flow + token storage
@@ -194,8 +194,8 @@ com.luum.michi.app
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder (no screens yet)
   discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet)
-  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (anime screen live, manga holder-only)
-  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (no screens yet)
+  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (both screens live)
+  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (editor sheet live, detail screens pending)
   notifications/          domain(+model)/repository/ui/state holder (no screens yet)
   settings/
     domain/               SettingsRepository + model/ (SettingsData, ThemeMode, TitleLanguage,
@@ -222,17 +222,18 @@ appear only when real behavior justifies them.
 
 ## Current State
 
-- `App.kt` owns theme mode/palette/font + language via `remember`, hydrated from `SettingsStore` at startup and persisted on every change (unknown values fall back to defaults). It routes landing vs shell on `SessionState` with an `AnimatedContent` crossfade (same `tabFadeSpec` motion as tabs) over an opaque theme backdrop. The authenticated `Viewer` enters `Root` so the shell profile draft is real.
+- `App.kt` owns theme mode/palette/font + language via `remember`, hydrated from `SettingsStore` at startup and persisted on every change (unknown values fall back to defaults). It routes loading/shell/error on `SessionState` with an `AnimatedContent` crossfade (same `tabFadeSpec` motion as tabs) over an opaque theme backdrop — no login wall: anonymous users enter `Root` as guests and sign in on demand via `AuthModal` (auto-opens once on first anonymous launch, never after logout). The authenticated `Viewer` enters `Root` so the shell profile draft is real.
 - `root` is a slim orchestrator. It wires the session `SettingsState` and composes `Toolbar` + `TabBar`. Root-scoped state lives in `root/state/State.kt`.
 - Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `PROFILE`.
 - Settings is independent of profile (the old profile-route concept is gone). The gear in the PROFILE toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `profile/`.
-- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` (media/character/studio/staff holders). `mediaList/` has the first real list UI: `AnimeListScreen` (section rail + `MediaCoverCard` rows over `AnimeListStateHolder`, wired in `Root`'s ANIME tab) while manga stays holder-only. Screens land later without restructuring (see feature-group exceptions).
-- `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/media surfaces exist yet.
-- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the landing edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
+- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` detail scopes (media/character/studio/staff holders, only the editor sheet renders). `mediaList/` has the first real list UI: `AnimeListScreen` and `MangaListScreen` (section rail + `MediaCoverCard` rows over their holders, wired in `Root`'s ANIME/MANGA tabs, guest sees calendar action only). Screens land later without restructuring (see feature-group exceptions).
+- `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `calendar/` and `notifications/` likewise (holder, no screens). No feed/search/library/detail surfaces exist yet.
+- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the auth modal edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
 - Notifications feed is parked as a future `profile` subfeature (sheet from the Profile toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `profile/` when its UI lands.
-- Every tab except Settings renders a `MessagePanel` placeholder (title + icon, no actions).
+- Every tab except Settings and the two lists renders a `MessagePanel` placeholder (title + icon, no actions) — DISCOVER and PROFILE today.
 - App language support: Spanish (`es`) and English (`en`).
 - App name `Michi` is a brand name; do not move it to translatable XML unless the user changes direction.
+- Dropped directions (do not re-propose): multi-account (multi-service auth via `AuthServices` is the path instead); Niro-style adult-cover censoring (hide-behind-18+ stays); a dedicated guest profile surface (guest profile = sign-in prompt via `AuthModal`).
 
 ## Lazy Loading Network Strategy (HTTP 429 Prevention)
 
@@ -267,7 +268,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 - **Inline toggles** (private `SettingsToggleRow`: title + optional subtitle + display-only `Switch`): 18+ content, split completed anime/manga, advanced scoring, plus the 3 notification prefs (airing, messages, media).
 - **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list).
-- **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font as its own row — same pickers the auth landing's theme sheet had. Writes persist to the store; the auth landing keeps only its language picker.
+- **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font as its own row — same pickers the auth modal's theme sheet had. Writes persist to the store; the auth modal keeps only its language picker.
 - Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
 
 ## UI Decisions
@@ -283,7 +284,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - Counters are numeric-only next to their buttons, styled with stronger weight.
 - Account stats: compact count label (e.g. `1.8K`) via `ProfileStats.toCompactCountLabel`.
 - `MediaReleaseDateTime` prepares next-release and behind-label support.
-- **Direction (parked): list bottom padding.** `Root` intentionally lets content scroll behind the floating TabBar (veil effect) and only pads top. When the first real list lands, its `LazyColumn` takes `contentPadding(bottom = scaffoldBottom)` threaded from `Root` (`padding.calculateBottomPadding()`), so the last item clears the capsule (~72dp + 24dp margin) while mid-scroll still passes behind it. Never hardcode per-feature bottom values. (`SettingsScreen` still carries no list today; when its rows land, it follows this rule like every other list.)
+- **Direction (parked): list bottom padding.** `Root` intentionally lets content scroll behind the floating TabBar (veil effect) and only pads top. When the first real list lands, its `LazyColumn` takes `contentPadding(bottom = scaffoldBottom)` threaded from `Root` (`padding.calculateBottomPadding()`), so the last item clears the capsule (~72dp + 24dp margin) while mid-scroll still passes behind it. Never hardcode per-feature bottom values. (Every list follows this rule, including `SettingsScreen`.)
 
 ## AniList / API Direction
 
