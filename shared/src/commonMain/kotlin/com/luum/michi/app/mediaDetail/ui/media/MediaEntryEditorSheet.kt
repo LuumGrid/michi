@@ -291,8 +291,8 @@ private fun EditorBody(
                     onCommit = { raw ->
                         parseScore(raw)?.let { editor.updateAdvancedScore(index, it) }
                     },
-                    onDecrement = { editor.updateAdvancedScore(index, value - scoreStep) },
-                    onIncrement = { editor.updateAdvancedScore(index, value + scoreStep) },
+                    onDecrement = { editor.updateAdvancedScore(index, value - ADVANCED_SCORE_STEP) },
+                    onIncrement = { editor.updateAdvancedScore(index, value + ADVANCED_SCORE_STEP) },
                     decrementEnabled = value > 0f,
                 )
             }
@@ -371,6 +371,11 @@ private fun EditorBody(
 }
 
 private const val ACTION_FAVOURITE = "favourite"
+
+// Advanced rows always draft in 0–10 (server scale is fixed 0–100),
+// so their step is fixed too — unlike the main row, which steps in
+// the user's score format via [scoreStep].
+private const val ADVANCED_SCORE_STEP = 0.5f
 
 /**
  * Date button opening the system-style M3 calendar dialog (CLEAR /

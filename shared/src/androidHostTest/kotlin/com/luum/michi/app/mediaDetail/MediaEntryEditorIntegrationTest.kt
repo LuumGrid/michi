@@ -217,7 +217,7 @@ class MediaEntryEditorIntegrationTest {
         editor.load()
 
         assertTrue(editor.showAdvancedScoring)
-        assertEquals(listOf(80f, 70f), editor.advancedScoreValues)
+        assertEquals(listOf(8f, 7f), editor.advancedScoreValues)
     }
 
     @Test
@@ -233,7 +233,7 @@ class MediaEntryEditorIntegrationTest {
 
         editor.load()
 
-        assertEquals(listOf(80f, 0f), editor.advancedScoreValues)
+        assertEquals(listOf(8f, 0f), editor.advancedScoreValues)
     }
 
     @Test
@@ -279,7 +279,7 @@ class MediaEntryEditorIntegrationTest {
 
         assertTrue(saved)
         val sent = graphQL.requests.single().variables?.get("advancedScores")
-        assertEquals("[8.5,10.0]", sent.toString())
+        assertEquals("[85.0,100.0]", sent.toString())
     }
 
     @Test

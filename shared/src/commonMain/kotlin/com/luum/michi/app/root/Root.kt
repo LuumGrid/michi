@@ -41,6 +41,7 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.formatScoreValue
 import com.luum.michi.app.settings.domain.model.parseScoreValue
 import com.luum.michi.app.settings.domain.model.scoreMaxFor
@@ -224,6 +225,10 @@ internal fun Root(
     val scoreSuffix: String? = scoreSuffixFor(editorScoreFormat)
     val scoreMax: Float = scoreMaxFor(editorScoreFormat)
     val scoreStep: Float = scoreStepFor(editorScoreFormat)
+    // Card smiley pill: translated here so settings types never cross
+    // into mediaList (same rule as the editor score lambdas).
+    val isSmileyFormat: Boolean = editorScoreFormat == ScoreFormat.POINT_3_SMILEYS
+    val formatSmiley: (Float) -> String = { formatScoreValue(ScoreFormat.POINT_3_SMILEYS, it) }
 
     // Pinned by default: the toolbar only hides on scroll for surfaces that
     // explicitly opt in via [hidesToolbarOnScroll]. The veil rides the same
@@ -374,6 +379,8 @@ internal fun Root(
                         sortPersist = persistSort,
                         splitCompleted = settingsState.splitCompletedAnime,
                         hideAdult = !settingsState.displayAdultContent,
+                        isSmileyFormat = isSmileyFormat,
+                        formatSmiley = formatSmiley,
                         onOpenDetail = { state.openMedia(it) },
                         onEditEntry = { state.openEditor(it) },
                     )
@@ -406,6 +413,8 @@ internal fun Root(
                         sortPersist = persistSort,
                         splitCompleted = settingsState.splitCompletedManga,
                         hideAdult = !settingsState.displayAdultContent,
+                        isSmileyFormat = isSmileyFormat,
+                        formatSmiley = formatSmiley,
                         onOpenDetail = { state.openMedia(it) },
                         onEditEntry = { state.openEditor(it) },
                     )

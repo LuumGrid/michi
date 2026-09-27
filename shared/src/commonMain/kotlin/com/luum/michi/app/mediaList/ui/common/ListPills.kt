@@ -21,17 +21,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.luum.michi.app.ui.icons.AppIcons
 
 /**
  * The user's own rating: filled star + number in a static ghost pill. Only
  * rendered with a real score — "-" adds nothing. Global averages (other
- * surfaces, later) use the outline twin.
+ * surfaces, later) use the outline twin. With [icon] null the pill shows
+ * text only (smiley score format: the glyph is the rating).
  */
 @Composable
 internal fun ScorePill(
     score: String,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = AppIcons.StarFilled,
 ) {
     Surface(
         modifier = modifier,
@@ -46,13 +49,15 @@ internal fun ScorePill(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = AppIcons.StarFilled,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.width(4.dp))
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
             Text(
                 text = score,
                 style = MaterialTheme.typography.bodyMedium.copy(

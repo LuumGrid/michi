@@ -90,6 +90,10 @@ internal fun MangaListScreen(
     // Global 18+ setting (inverted): hidden entries never reach the
     // list, but rail counts stay raw (see holder.countInSection).
     hideAdult: Boolean = false,
+    // Smiley score format: the card pill shows the glyph instead of
+    // star + number (translated in Root; settings never crosses here).
+    isSmileyFormat: Boolean = false,
+    formatSmiley: (Float) -> String = { "" },
     // Card tap opens media detail, pencil opens the entry editor (both
     // dormant until their surfaces land; intents already exist in State).
     onOpenDetail: (Int) -> Unit = {},
@@ -201,6 +205,8 @@ internal fun MangaListScreen(
                                     onIncrementChapters = { holder.incrementChapters(entry) },
                                     onIncrementVolumes = { holder.incrementVolumes(entry) },
                                     strings = strings,
+                                    isSmileyFormat = isSmileyFormat,
+                                    formatSmiley = formatSmiley,
                                 )
                             },
                         )

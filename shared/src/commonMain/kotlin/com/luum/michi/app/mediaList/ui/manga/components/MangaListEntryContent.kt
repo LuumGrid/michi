@@ -37,6 +37,8 @@ internal fun ColumnScope.MangaListEntryContent(
     onIncrementVolumes: () -> Unit,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
+    isSmileyFormat: Boolean = false,
+    formatSmiley: (Float) -> String = { "" },
 ) {
     Column(
         modifier = modifier.weight(1f),
@@ -62,7 +64,11 @@ internal fun ColumnScope.MangaListEntryContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (entry.score > 0.0) {
-                ScorePill(score = entry.formattedScore())
+                if (isSmileyFormat) {
+                    ScorePill(score = formatSmiley(entry.score.toFloat()), icon = null)
+                } else {
+                    ScorePill(score = entry.formattedScore())
+                }
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }

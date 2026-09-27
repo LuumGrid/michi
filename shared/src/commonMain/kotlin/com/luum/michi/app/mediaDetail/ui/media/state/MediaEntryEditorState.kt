@@ -104,11 +104,13 @@ internal class MediaEntryEditorState(
                         hiddenFromStatusLists = existing.hiddenFromStatusLists
                         startedAtMillis = existing.startedAtMillis
                         completedAtMillis = existing.completedAtMillis
-                        // Server scores (main and advanced) arrive in the user's
-                        // format; internal draft holds them verbatim, display
-                        // and parsing go through the score-format lambdas.
+                        // Server advanced scores are raw 0–100, independent of
+                        // the user's score format (proven: format changes move
+                        // the main score but never the advanced map). Internal
+                        // draft stays 0–10; display/parsing go through the
+                        // score-format lambdas, save scales back up.
                         advancedScoreValues = advancedScoringNames.map { name ->
-                            (existing.advancedScores[name] ?: 0f).coerceIn(0f, scoreMax)
+                            ((existing.advancedScores[name] ?: 0f) / 10f).coerceIn(0f, 10f)
                         }
                     } else {
                         status = initialStatusOverride ?: MediaListStatus.PLANNING
@@ -145,7 +147,7 @@ internal class MediaEntryEditorState(
         val names = advancedScoringNames
         if (index !in names.indices) return
         advancedScoreValues = advancedScoreValues.alignTo(names.size).toMutableList().also {
-            it[index] = value.coerceIn(0f, scoreMax)
+            it[index] = value.coerceIn(0f, 10f)
         }
     }
 
@@ -191,7 +193,7 @@ internal class MediaEntryEditorState(
                 progressVolumes = if (isManga) progressVolumes else null,
                 score = score,
                 advancedScores = if (showAdvancedScoring) {
-                    advancedScoreValues.alignTo(advancedScoringNames.size)
+                    advancedScoreValues.alignTo(advancedScoringNames.size).map { it * 10f }
                 } else {
                     null
                 },

@@ -36,6 +36,8 @@ internal fun ColumnScope.AnimeListEntryContent(
     onIncrement: () -> Unit,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
+    isSmileyFormat: Boolean = false,
+    formatSmiley: (Float) -> String = { "" },
 ) {
     // weight(1f), not fillMaxHeight: inside the card's bounded column it
     // takes the remainder, so SpaceBetween pins the bottom row flush with
@@ -75,7 +77,11 @@ internal fun ColumnScope.AnimeListEntryContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (entry.score > 0.0) {
-                ScorePill(score = entry.formattedScore())
+                if (isSmileyFormat) {
+                    ScorePill(score = formatSmiley(entry.score.toFloat()), icon = null)
+                } else {
+                    ScorePill(score = entry.formattedScore())
+                }
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
