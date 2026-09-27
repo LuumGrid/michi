@@ -20,8 +20,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -174,13 +177,28 @@ internal fun Root(
             MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope, sortPersistence)
         }
     }
-    LaunchedEffect(tab, viewerId, settingsState.splitCompletedAnime, settingsState.splitCompletedManga) {
+    // Server-mapped titles (userPreferred) only re-map on load: changing
+    // the title language forces one reload so cards stop showing stale
+    // titles. The write below recomposes once but never relaunches the
+    // effect (keys unchanged), so there is no loop.
+    var lastTitleLanguage by remember { mutableStateOf(settingsState.titleLanguage) }
+    val titleLanguageChanged = settingsState.titleLanguage != lastTitleLanguage
+    LaunchedEffect(tab, viewerId, settingsState.splitCompletedAnime, settingsState.splitCompletedManga, settingsState.titleLanguage) {
         if (tab == TabSection.ANIME && viewerId != null) {
-            animeHolder?.load(viewerId, splitCompleted = settingsState.splitCompletedAnime)
+            animeHolder?.load(
+                viewerId,
+                forceRefresh = titleLanguageChanged,
+                splitCompleted = settingsState.splitCompletedAnime,
+            )
         }
         if (tab == TabSection.MANGA && viewerId != null) {
-            mangaHolder?.load(viewerId, splitCompleted = settingsState.splitCompletedManga)
+            mangaHolder?.load(
+                viewerId,
+                forceRefresh = titleLanguageChanged,
+                splitCompleted = settingsState.splitCompletedManga,
+            )
         }
+        lastTitleLanguage = settingsState.titleLanguage
     }
 
     // Sort memory (Settings persist toggle, per tab) + Default sort:
