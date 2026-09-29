@@ -41,8 +41,8 @@ import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
 import com.luum.michi.app.mediaList.ui.common.ANY_SEASON_ID
 import com.luum.michi.app.mediaList.ui.common.MediaListFilterSheet
-import com.luum.michi.app.mediaList.ui.common.MediaListSectionRail
-import com.luum.michi.app.mediaList.ui.common.MediaListSectionTab
+import com.luum.michi.app.ui.components.ChipRail
+import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.mediaList.ui.common.MediaListSortSheet
 import com.luum.michi.app.mediaList.ui.common.toggled
 import com.luum.michi.app.mediaList.ui.common.yearFilterTabs
@@ -104,7 +104,7 @@ internal fun MangaListScreen(
     // COMPLETED_MANGA with split off): fall back to ALL without churning state.
     val effectiveSelected = if (selected in sections) selected else MangaListSection.ALL
     val tabs = sections.map { section ->
-        MediaListSectionTab(
+        ChipTab(
             value = section,
             label = section.label(strings),
             count = holder.countInSection(section),
@@ -121,7 +121,7 @@ internal fun MangaListScreen(
         }
     }
     Column(modifier = modifier.fillMaxSize()) {
-        MediaListSectionRail(
+        ChipRail(
             tabs = tabs,
             selected = effectiveSelected,
             onSelect = onSelectSection,

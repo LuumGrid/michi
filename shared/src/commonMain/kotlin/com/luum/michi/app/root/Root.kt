@@ -55,6 +55,7 @@ import com.luum.michi.app.settings.domain.model.scoreStepFor
 import com.luum.michi.app.settings.domain.model.scoreSuffixFor
 import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.core.navigation.domain.UrlOpener
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
@@ -115,6 +116,7 @@ internal fun Root(
     mediaListEntryRepository: MediaListEntryRepository,
     mediaDetailRepository: MediaDetailRepository,
     calendarRepository: CalendarRepository,
+    urlOpener: UrlOpener,
     sortPersistence: SortPersistence,
     authServices: List<AuthService>,
     isAuthConfigured: Boolean,
@@ -392,6 +394,7 @@ internal fun Root(
                         isFilterOpen = state.isCalendarFilterOpen,
                         onDismissFilter = { state.closeCalendarFilter() },
                         onOpenDetail = { state.openMedia(it) },
+                        onOpenUrl = { urlOpener.open(it) },
                     )
                 } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
                     // Lists own their query: with or without text the screen

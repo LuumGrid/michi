@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList.ui.common
 
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
+import com.luum.michi.app.ui.components.ChipTab
 
 /** Option id for the "any" season row (matches mediaListSeasonOptions). */
 internal const val ANY_SEASON_ID = "any"
@@ -18,10 +19,10 @@ internal fun yearFilterTabs(
     entries: List<SortableMediaListEntry>,
     years: List<Int?>,
     anyLabel: String,
-): List<MediaListSectionTab<Int?>> {
+): List<ChipTab<Int?>> {
     val counts = entries.groupingBy { it.seasonYear }.eachCount()
     return years.map { year ->
-        MediaListSectionTab(
+        ChipTab(
             value = year,
             label = year?.toString() ?: anyLabel,
             count = if (year == null) entries.size else counts[year] ?: 0,

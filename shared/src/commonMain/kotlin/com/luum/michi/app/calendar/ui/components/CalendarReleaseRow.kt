@@ -1,24 +1,23 @@
 package com.luum.michi.app.calendar.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.calendar.domain.CalendarEntry
+import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.label
+import com.luum.michi.app.ui.components.ChipRail
+import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.language.Strings
 
@@ -34,6 +33,7 @@ import com.luum.michi.app.ui.language.Strings
 internal fun CalendarReleaseRow(
     entry: CalendarEntry,
     onOpenDetail: (Int) -> Unit,
+    onOpenUrl: (String) -> Unit,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
@@ -56,46 +56,18 @@ internal fun CalendarReleaseRow(
         content = {
             ReleaseMetaRow(
                 meta = meta,
-                platforms = item.streamingPlatforms.map { it.site },
+                platforms = item.streamingPlatforms,
+                onOpenUrl = onOpenUrl,
             )
         },
     )
 }
 
-/** Display-only platform rail (opening a browser needs a platform launcher). */
-@Composable
-private fun StreamingRail(
-    platforms: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        items(
-            items = platforms,
-            key = { it },
-        ) { site ->
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                Text(
-                    text = site,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun ColumnScope.ReleaseMetaRow(
     meta: String,
-    platforms: List<String>,
+    platforms: List<StreamingPlatform>,
+    onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.weight(1f)) {
@@ -108,7 +80,15 @@ private fun ColumnScope.ReleaseMetaRow(
         )
         Spacer(modifier = Modifier.weight(1f))
         if (platforms.isNotEmpty()) {
-            StreamingRail(platforms = platforms)
+            // URLs already travel in StreamingPlatform.url; opening a
+            // browser needs a platform launcher (deferred), so taps no-op.
+            ChipRail(
+                tabs = platforms.map { ChipTab(it.url, it.site, iconUrl = it.iconUrl) },
+                selected = null,
+                onSelect = onOpenUrl,
+                contentPadding = PaddingValues(0.dp),
+                compact = true,
+            )
         }
     }
 }

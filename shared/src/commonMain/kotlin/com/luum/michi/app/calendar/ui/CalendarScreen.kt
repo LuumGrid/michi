@@ -41,6 +41,7 @@ import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.model.utcMillisToLocalMidnightBucket
 import com.luum.michi.app.calendar.ui.components.CalendarDateBar
 import com.luum.michi.app.ui.components.DatePickerField
 import com.luum.michi.app.ui.components.MessagePanel
@@ -85,6 +86,7 @@ internal fun CalendarScreen(
     isFilterOpen: Boolean = false,
     onDismissFilter: () -> Unit = {},
     onOpenDetail: (Int) -> Unit = {},
+    onOpenUrl: (String) -> Unit = {},
 ) {
     val items = holder.selectedItems
     val selected = holder.selectedDayBucket
@@ -154,6 +156,7 @@ internal fun CalendarScreen(
                                 CalendarReleaseRow(
                                     entry = entry,
                                     onOpenDetail = onOpenDetail,
+                                    onOpenUrl = onOpenUrl,
                                 )
                             }
                         }
@@ -178,9 +181,7 @@ internal fun CalendarScreen(
             exit = slideOutVertically(animationSpec = tabFadeSpec()) { it } +
                 fadeOut(animationSpec = tabFadeSpec()),
             label = "date-bar-visibility",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = bottomPadding),
+            modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             val current = selected
             if (current != null) {
@@ -227,11 +228,8 @@ private val BottomBarClearance = 96.dp
 
 private fun Long.bucketToMillis(): Long = this * 1000
 
-private fun Long.millisToBucket(): Long {
-    val zone = TimeZone.currentSystemDefault()
-    return Instant.fromEpochMilliseconds(this).toLocalDateTime(zone).date
-        .atStartOfDayIn(zone).epochSeconds
-}
+private fun Long.millisToBucket(): Long =
+    utcMillisToLocalMidnightBucket(this, TimeZone.currentSystemDefault())
 
 private fun dateButtonLabel(bucket: Long, todayBucket: Long, strings: LanguageStrings): String {
     val zone = TimeZone.currentSystemDefault()

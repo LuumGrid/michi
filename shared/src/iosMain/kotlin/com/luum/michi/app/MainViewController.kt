@@ -3,6 +3,7 @@ package com.luum.michi.app
 import androidx.compose.ui.window.ComposeUIViewController
 import com.luum.michi.app.core.auth.repository.NSUserDefaultsAniListTokenStorage
 import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
+import com.luum.michi.app.core.navigation.repository.IosUrlOpener
 import com.luum.michi.app.core.storage.repository.NSUserDefaultsSettingsStore
 import platform.UIKit.UIViewController
 
@@ -35,6 +36,7 @@ private object IosMichiDependencies {
         current ?: MichiDependencies(
             tokenStorage = NSUserDefaultsAniListTokenStorage(),
             oAuthLauncher = SafariOAuthLauncher(),
+            urlOpener = IosUrlOpener(),
             settingsStore = NSUserDefaultsSettingsStore(),
         ).also {
             current = it

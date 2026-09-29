@@ -410,6 +410,7 @@ class CalendarIntegrationTest {
                             put("site", "Crunchyroll")
                             put("url", "https://example.com/cr")
                             put("type", "STREAMING")
+                            put("color", "#F47521")
                         },
                         buildJsonObject {
                             put("site", "Dead")
@@ -438,5 +439,7 @@ class CalendarIntegrationTest {
         assertEquals(MediaWorkStatus.RELEASING, item.mediaStatus)
         assertEquals(8.5f, item.userScore)
         assertEquals(listOf("Crunchyroll"), item.streamingPlatforms.map { it.site })
+        assertEquals("https://example.com/cr", item.streamingPlatforms.single().url)
+        assertEquals("#F47521", item.streamingPlatforms.single().color)
     }
 }

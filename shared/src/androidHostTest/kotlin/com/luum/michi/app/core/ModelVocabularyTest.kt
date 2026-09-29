@@ -16,6 +16,9 @@ import com.luum.michi.app.core.model.previous
 import com.luum.michi.app.core.model.seasonForMonth
 import com.luum.michi.app.core.model.startEpochSeconds
 import com.luum.michi.app.core.model.toTitleCase
+import com.luum.michi.app.core.model.utcMillisToLocalMidnightBucket
+import com.luum.michi.app.core.navigation.domain.isWebUrl
+import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -108,5 +111,24 @@ class ModelVocabularyTest {
     fun seasonLabelsTranslate() {
         assertEquals("Winter", MediaSeason.WINTER.label(EnglishStrings))
         assertEquals("Fall", MediaSeason.FALL.label(EnglishStrings))
+    }
+
+    @Test
+    fun utcPickerMillisMapToLocalMidnightBucket() {
+        // Oct 30 2026 00:00 UTC picked in Mexico City (UTC-6, no DST) is
+        // still Oct 29 locally — reading in the local zone shifts a day
+        // behind, so the helper reads the calendar date in UTC.
+        val zone = TimeZone.of("America/Mexico_City")
+        assertEquals(1793340000L, utcMillisToLocalMidnightBucket(1793318400000L, zone))
+    }
+
+    @Test
+    fun webUrlGuardAcceptsHttpOnly() {
+        assertEquals(true, isWebUrl("https://example.com/x"))
+        assertEquals(true, isWebUrl("HTTP://example.com"))
+        assertEquals(false, isWebUrl("javascript:alert(1)"))
+        assertEquals(false, isWebUrl("michi://oauth/callback"))
+        assertEquals(false, isWebUrl(null))
+        assertEquals(false, isWebUrl(""))
     }
 }

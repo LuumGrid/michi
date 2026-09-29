@@ -44,3 +44,15 @@ internal fun localMidnightEpoch(
     val date = Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(timeZone).date
     return date.atStartOfDayIn(timeZone).epochSeconds
 }
+
+/**
+ * Maps M3 date-picker millis (a UTC calendar date) to the local-midnight
+ * bucket. The picker speaks UTC: Oct 30 00:00 UTC picked in a UTC-6 zone is
+ * still Oct 29 locally, so interpreting the millis in the local zone shifts
+ * the selection a day behind. Read the calendar date in UTC, then midnight
+ * it in the local zone.
+ */
+internal fun utcMillisToLocalMidnightBucket(millis: Long, timeZone: TimeZone): Long {
+    val date = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date
+    return date.atStartOfDayIn(timeZone).epochSeconds
+}

@@ -217,6 +217,7 @@ fun App(
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
                             mediaDetailRepository = dependencies.mediaDetailRepository,
                             calendarRepository = dependencies.calendarRepository,
+                            urlOpener = dependencies.urlOpener,
                             sortPersistence = sortPersistence,
                             authServices = authServices,
                             isAuthConfigured = AniListOAuthConfig.isConfigured,

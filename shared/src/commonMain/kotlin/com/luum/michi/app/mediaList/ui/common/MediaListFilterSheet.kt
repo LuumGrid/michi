@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.FilterOption
 import com.luum.michi.app.ui.components.GhostButton
+import com.luum.michi.app.ui.components.ChipRail
+import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
@@ -36,7 +38,7 @@ internal fun MediaListFilterSheet(
     seasonOptions: List<FilterOption>,
     selectedSeasonId: String,
     onSelectSeason: (String) -> Unit,
-    yearTabs: List<MediaListSectionTab<Int?>>,
+    yearTabs: List<ChipTab<Int?>>,
     selectedYear: Int?,
     onSelectYear: (Int?) -> Unit,
     expandedDecade: Int?,
@@ -125,7 +127,7 @@ internal fun MediaListFilterSheet(
                     )
                     firstRow = false
                     if (expanded) {
-                        MediaListSectionRail(
+                        ChipRail(
                             tabs = tabs,
                             selected = selectedYear,
                             onSelect = { onSelectYear(it) },

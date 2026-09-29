@@ -9,6 +9,7 @@ import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.mediaDetail.repository.character.CharacterDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.core.auth.domain.AniListOAuthLauncher
+import com.luum.michi.app.core.navigation.domain.UrlOpener
 import com.luum.michi.app.core.auth.domain.AniListTokenStorage
 import com.luum.michi.app.core.auth.domain.parseAniListOAuthCallback
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
@@ -55,6 +56,7 @@ import kotlinx.coroutines.launch
 class MichiDependencies internal constructor(
     internal val tokenStorage: AniListTokenStorage,
     internal val oAuthLauncher: AniListOAuthLauncher,
+    internal val urlOpener: UrlOpener,
     internal val settingsStore: SettingsStore,
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
