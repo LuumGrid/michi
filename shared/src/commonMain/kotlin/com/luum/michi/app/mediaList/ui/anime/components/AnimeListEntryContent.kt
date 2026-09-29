@@ -47,15 +47,17 @@ internal fun ColumnScope.AnimeListEntryContent(
         modifier = modifier.weight(1f),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
+        // Weighted text slot: it can shrink to ellipsis but never pushes the
+        // bottom pills, which are measured first (intrinsic) and stay pinned.
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             // Airing date on its own line (was the subtitle before the work
             // status arrived); behind below it, never duplicated.
             val date = entry.releaseLabel(strings)
             if (date != null) {
                 Text(
                     text = date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -64,9 +66,9 @@ internal fun ColumnScope.AnimeListEntryContent(
             if (note != null) {
                 Text(
                     text = note,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }

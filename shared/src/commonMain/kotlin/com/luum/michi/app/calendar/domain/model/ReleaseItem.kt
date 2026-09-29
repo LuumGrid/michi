@@ -9,6 +9,7 @@ internal data class ReleaseItem(
     val title: String,
     val release: String,
     val time: String,
+    val airingAtEpoch: Long,
     val paletteHex: String?,
     val id: Int? = null,
     val coverUrl: String? = null,

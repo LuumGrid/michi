@@ -168,6 +168,11 @@ object SpanishStrings : LanguageStrings {
     override fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
         return "Ep. $episodeNumber - ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
+    override fun airingCountdownLabel(hours: Int, minutes: Int): String {
+        val hourUnit = if (hours == 1) "hora" else "horas"
+        val minuteUnit = if (minutes == 1) "minuto" else "minutos"
+        return if (hours > 0) "en $hours $hourUnit $minutes $minuteUnit" else "en $minutes $minuteUnit"
+    }
     override fun notificationDateLabel(dateTime: MediaReleaseDateTime): String {
         return dateTime.formatReadableDateTime(::monthName)
     }

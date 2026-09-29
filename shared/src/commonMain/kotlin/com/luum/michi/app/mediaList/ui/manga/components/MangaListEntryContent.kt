@@ -50,9 +50,10 @@ internal fun ColumnScope.MangaListEntryContent(
         if (note != null) {
             Text(
                 text = note,
-                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         } else {

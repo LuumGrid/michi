@@ -159,6 +159,7 @@ interface LanguageStrings {
     fun episodesBehind(count: Int): String
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
+    fun airingCountdownLabel(hours: Int, minutes: Int): String
     fun notificationDateLabel(dateTime: MediaReleaseDateTime): String
     /** Short month name used by preformatted date labels (media airing dates, birthdays). */
     fun monthShortName(month: Int): String

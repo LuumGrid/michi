@@ -14,12 +14,12 @@ import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
     val media = media ?: return null
     val hasUserScore = (media.mediaListEntry?.score ?: 0.0) > 0.0
-    val totalEpisodes = media.episodes?.takeIf { it > 0 }
-    val releaseLabel = totalEpisodes?.let { "Ep $episode / $it" } ?: "Ep $episode"
+    val releaseLabel = "Ep. $episode"
     return ReleaseItem(
         title = media.title.bestTitle(),
         release = releaseLabel,
         time = formatAiringTime(airingAt),
+        airingAtEpoch = airingAt,
         paletteHex = media.coverImage?.color,
         id = media.id,
         coverUrl = media.coverImage?.thumbnailUrl,

@@ -1,9 +1,9 @@
 package com.luum.michi.app.calendar.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -14,20 +14,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.calendar.domain.CalendarEntry
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
+import com.luum.michi.app.calendar.domain.model.airingCountdownLabel
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.language.Strings
+import kotlin.time.Clock
 
 /**
- * One airing release as a cover card: title + episode/time subtitle, meta
- * line mirroring the list cards (minus the behind/release notes, which
- * belong to lists), plus a streaming platform rail. Card tap navigates
- * to detail (dormant until detail nav lands, same as the list cards);
- * the id is null only for malformed feed items, which no-op instead of
- * navigating nowhere.
+ * One airing release as a cover card: title + format/season meta subtitle,
+ * episode/time/countdown line in list-card type, plus a streaming platform
+ * rail. Card tap navigates to detail (dormant until detail nav lands, same
+ * as the list cards); the id is null only for malformed feed items, which
+ * no-op instead of navigating nowhere.
  */
 @Composable
 internal fun CalendarReleaseRow(
@@ -47,15 +48,22 @@ internal fun CalendarReleaseRow(
         seasonYear,
         item.mediaStatus?.label(strings, isManga = false),
     ).joinToString(" · ")
+    val countdown = airingCountdownLabel(
+        strings = strings,
+        airingAtEpochSeconds = item.airingAtEpoch,
+        nowEpochSeconds = Clock.System.now().epochSeconds,
+    )
+    val episodeLine = if (countdown != null) "${item.release} - ${item.time}, $countdown"
+    else "${item.release} - ${item.time}"
     MediaCoverCard(
         coverUrl = item.coverUrl,
         title = item.title,
-        subtitle = "${item.release} · ${item.time}",
+        subtitle = meta,
         onClick = { item.id?.let(onOpenDetail) },
         modifier = modifier,
         content = {
             ReleaseMetaRow(
-                meta = meta,
+                episodeLine = episodeLine,
                 platforms = item.streamingPlatforms,
                 onOpenUrl = onOpenUrl,
             )
@@ -65,20 +73,25 @@ internal fun CalendarReleaseRow(
 
 @Composable
 private fun ColumnScope.ReleaseMetaRow(
-    meta: String,
+    episodeLine: String,
     platforms: List<StreamingPlatform>,
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.weight(1f)) {
+    Column(
+        modifier = modifier.weight(1f),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        // Episode line is bounded; the platform rail is measured first and
+        // stays pinned at the cover bottom instead of being pushed out.
         Text(
-            text = meta,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = episodeLine,
+            modifier = Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Spacer(modifier = Modifier.weight(1f))
         if (platforms.isNotEmpty()) {
             // URLs already travel in StreamingPlatform.url; opening a
             // browser needs a platform launcher (deferred), so taps no-op.

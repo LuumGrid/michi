@@ -438,6 +438,7 @@ class CalendarIntegrationTest {
         assertEquals(MediaFormat.TV, item.format)
         assertEquals(MediaWorkStatus.RELEASING, item.mediaStatus)
         assertEquals(8.5f, item.userScore)
+        assertEquals(Now, item.airingAtEpoch)
         assertEquals(listOf("Crunchyroll"), item.streamingPlatforms.map { it.site })
         assertEquals("https://example.com/cr", item.streamingPlatforms.single().url)
         assertEquals("#F47521", item.streamingPlatforms.single().color)
