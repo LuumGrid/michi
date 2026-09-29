@@ -47,11 +47,16 @@ private fun mediaJson(
     }
 }
 
-private fun schedJson(id: Int, airingAt: Long, media: JsonObject? = null): JsonObject =
+private fun schedJson(
+    id: Int,
+    airingAt: Long,
+    media: JsonObject? = null,
+    episode: Int = 1,
+): JsonObject =
     buildJsonObject {
         put("id", id)
         put("airingAt", airingAt)
-        put("episode", 1)
+        put("episode", episode)
         if (media != null) put("media", media)
     }
 
@@ -439,8 +444,26 @@ class CalendarIntegrationTest {
         assertEquals(MediaWorkStatus.RELEASING, item.mediaStatus)
         assertEquals(8.5f, item.userScore)
         assertEquals(Now, item.airingAtEpoch)
+        assertEquals("Ep. 1", item.release)
         assertEquals(listOf("Crunchyroll"), item.streamingPlatforms.map { it.site })
         assertEquals("https://example.com/cr", item.streamingPlatforms.single().url)
         assertEquals("#F47521", item.streamingPlatforms.single().color)
+    }
+
+    @Test
+    fun releaseLabelDropsTotalEpisodes() {
+        // "Ep. N" only: the "/ total" suffix was removed from the card line.
+        val media = buildJsonObject {
+            put("id", 10)
+            put("episodes", 13)
+        }
+        val graphQL = FakeGraphQL(
+            listOf(pageJson(false, schedJson(1, Now, media, episode = 13))),
+        )
+        val (holder) = wiredHolder(graphQL)
+
+        holder.load()
+
+        assertEquals("Ep. 13", holder.selectedItems.single().item.release)
     }
 }
