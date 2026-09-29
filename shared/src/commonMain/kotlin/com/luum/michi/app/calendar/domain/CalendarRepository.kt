@@ -1,6 +1,5 @@
 package com.luum.michi.app.calendar.domain
 
-import kotlinx.coroutines.flow.Flow
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 
@@ -9,18 +8,12 @@ internal data class CalendarEntry(
     val item: ReleaseItem,
 )
 
-internal data class CalendarDay(
-    val dayBucket: Long,
-    val isoDayOfWeek: Int,
-    val offsetFromToday: Int,
-    val day: Int,
-    val month: Int,
-    val year: Int,
-    val items: List<CalendarEntry>,
-)
-
-internal data class CalendarFeed(val days: List<CalendarDay>)
-
 internal interface CalendarRepository {
-    fun loadFeed(): Flow<NetworkResult<CalendarFeed>>
+    /**
+     * Single-day slice of the airing schedule: one query per chosen day
+     * (typically a single page), so day navigation never fans out into
+     * the multi-page loop a wide window needs. Window is [from, to] in
+     * epoch seconds; callers pass a local-midnight day slice.
+     */
+    suspend fun loadDay(from: Long, to: Long): NetworkResult<List<CalendarEntry>>
 }

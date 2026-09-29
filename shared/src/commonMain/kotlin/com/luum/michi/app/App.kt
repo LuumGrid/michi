@@ -216,6 +216,7 @@ fun App(
                             mangaListRepository = dependencies.mangaListRepository,
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
                             mediaDetailRepository = dependencies.mediaDetailRepository,
+                            calendarRepository = dependencies.calendarRepository,
                             sortPersistence = sortPersistence,
                             authServices = authServices,
                             isAuthConfigured = AniListOAuthConfig.isConfigured,

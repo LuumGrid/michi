@@ -29,6 +29,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
+import com.luum.michi.app.calendar.domain.CalendarRepository
+import com.luum.michi.app.calendar.ui.CalendarScreen
+import com.luum.michi.app.calendar.ui.state.createCalendarStateHolder
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.UserListOrder
@@ -111,6 +114,7 @@ internal fun Root(
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     mediaDetailRepository: MediaDetailRepository,
+    calendarRepository: CalendarRepository,
     sortPersistence: SortPersistence,
     authServices: List<AuthService>,
     isAuthConfigured: Boolean,
@@ -201,6 +205,16 @@ internal fun Root(
         lastTitleLanguage = settingsState.titleLanguage
     }
 
+    // Airing calendar holder: session-independent (public feed, no viewer
+    // id) and shared by guests. Loads are explicit on open; the loader
+    // dedups repeats.
+    val calendarHolder = remember(calendarRepository) {
+        createCalendarStateHolder(calendarRepository, listScope)
+    }
+    LaunchedEffect(state.isCalendarOpen) {
+        if (state.isCalendarOpen) calendarHolder.load()
+    }
+
     // Sort memory (Settings persist toggle, per tab) + Default sort:
     // saved persist-sort wins, then the default, then holder defaults.
     // Changing Default sort applies live (effect key); changing it while a
@@ -274,12 +288,12 @@ internal fun Root(
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
                 title = toolbarTitle(state, tab, strings),
-                navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen) {
+                navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
                     ToolbarNavigation.Back(strings.backButton)
                 } else {
                     ToolbarNavigation.None
                 },
-                actions = toolbarActions(tab, search != null, state.isSettingsOpen, viewerId == null, strings),
+                actions = toolbarActions(tab, search != null, state.isSettingsOpen, state.isCalendarOpen, viewerId == null, strings),
                 search = search,
                 backContentDescription = strings.backButton,
                 clearContentDescription = strings.clearSearchAction,
@@ -293,8 +307,8 @@ internal fun Root(
                         ACTION_FILTER -> state.openSectionFilter()
                         ACTION_SORT -> state.openListSort()
                         // TODO: wire to the schedule surface when it lands.
-                        ACTION_CALENDAR,
-                        -> Unit
+                        ACTION_CALENDAR -> state.openCalendar()
+                        ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                     }
                 },
                 onSearchChange = { query ->
@@ -365,6 +379,19 @@ internal fun Root(
                         viewer = viewer,
                         onLogin = { state.openSignIn() },
                         onLogout = onLogout,
+                    )
+                } else if (state.isCalendarOpen) {
+                    // Airing schedule overlay (fullscreen, tab bar hidden):
+                    // public feed, so guests render the same surface.
+                    CalendarScreen(
+                        holder = calendarHolder,
+                        onRetry = { calendarHolder.reloadSelected() },
+                        bottomPadding = padding.calculateBottomPadding(),
+                        isRefreshing = calendarHolder.isLoading,
+                        onRefresh = { calendarHolder.reloadSelected() },
+                        isFilterOpen = state.isCalendarFilterOpen,
+                        onDismissFilter = { state.closeCalendarFilter() },
+                        onOpenDetail = { state.openMedia(it) },
                     )
                 } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
                     // Lists own their query: with or without text the screen
@@ -595,6 +622,7 @@ private const val ACTION_SETTINGS = "settings"
 private const val ACTION_FILTER = "filter"
 private const val ACTION_SORT = "sort"
 private const val ACTION_CALENDAR = "calendar"
+private const val ACTION_CALENDAR_FILTER = "calendar-filter"
 
 /** Shared capsule group for the list tools (reference: one capsule, lone search). */
 private const val GROUP_LIST_TOOLS = "list-tools"
@@ -604,14 +632,26 @@ private fun toolbarActions(
     tab: TabSection,
     isSearching: Boolean,
     isSettingsOpen: Boolean,
+    isCalendarOpen: Boolean,
     isGuest: Boolean,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
     if (isSearching || isSettingsOpen) return emptyList()
+    // Calendar overlay: lone filter next to the back chevron. Settings
+    // hides everything, but the day list needs its filters in reach.
+    if (isCalendarOpen) {
+        return listOf(
+            ToolbarAction(
+                id = ACTION_CALENDAR_FILTER,
+                icon = AppIcons.Filter,
+                contentDescription = strings.filterAction,
+            ),
+        )
+    }
     // Gated tabs without a session keep the calendar only (public airing
     // data, no login needed): filter/sort/search operate on lists that
-    // don't exist. Calendar stays visible-but-inert until its surface
-    // lands — same as for logged users today.
+    // don't exist. The calendar button opens the schedule overlay, which
+    // guests render with null user fields.
     val isGatedGuest = isGuest && (tab == TabSection.ANIME || tab == TabSection.MANGA)
     return buildList {
         if (tab != TabSection.PROFILE) {
@@ -675,7 +715,8 @@ private fun hidesToolbarOnScroll(tab: TabSection, state: State): Boolean = false
  * Explicit opt-in per surface: the tab bar shows unless a surface asks to
  * hide it (full-screen surfaces like Settings). Default is visible.
  */
-private fun showsTabBar(tab: TabSection, state: State): Boolean = !state.isSettingsOpen
+private fun showsTabBar(tab: TabSection, state: State): Boolean =
+    !state.isSettingsOpen && !state.isCalendarOpen
 
 private fun toolbarTitle(
     state: State,
@@ -683,6 +724,8 @@ private fun toolbarTitle(
     strings: LanguageStrings,
 ): String = if (state.isSettingsOpen) {
     strings.settingsTitle
+} else if (state.isCalendarOpen) {
+    strings.calendarTitle
 } else {
     tab.label(strings)
 }

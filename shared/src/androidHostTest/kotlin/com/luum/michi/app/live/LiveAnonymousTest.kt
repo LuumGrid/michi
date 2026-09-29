@@ -1,7 +1,9 @@
 package com.luum.michi.app.live
 
 import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
+import com.luum.michi.app.core.auth.domain.currentEpochSeconds
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.model.localMidnightEpoch
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.repository.AniListRateLimiter
@@ -11,7 +13,6 @@ import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import io.ktor.client.engine.okhttp.OkHttp
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -85,7 +86,10 @@ class LiveAnonymousTest {
     @Test
     fun calendarLoads() {
         assumeLive()
-        val result = runBlocking { CalendarRepositoryImpl(liveClient()).loadFeed().first() }
+        val from = localMidnightEpoch(currentEpochSeconds())
+        val result = runBlocking {
+            CalendarRepositoryImpl(liveClient()).loadDay(from, from + 86399)
+        }
         assumeNotForbidden("calendarLoads", result)
         assertTrue(result is NetworkResult.Success)
     }
