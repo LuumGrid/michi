@@ -143,7 +143,7 @@ core/
                                 map at feature boundaries)
   storage/domain/               settings/filter keys and stores
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
-  navigation/domain/            routes, back-handler contracts
+  navigation/domain/            routes, back-handler contracts, url-opening (`UrlOpener` + `isWebUrl`; platform `AndroidUrlOpener`/`IosUrlOpener` in `repository/`)
   medialist/domain/             list-status contracts shared by list features
   model/                        neutral domain vocabulary (MediaFormat, MediaSeason, dates,
                                 sort, FilterOption) — cross-concept, belongs to no feature
@@ -154,7 +154,7 @@ core/
 
 ```text
 ui/
-  components/   shared composables (Toolbar, TabBar, SearchField, MessagePanel, …) — no layer prefix, package disambiguates
+  components/   shared composables (Toolbar, TabBar, SearchField, MessagePanel, ChipRail, DatePickerField, …) — no layer prefix, package disambiguates
   icons/        shared toolbar primitives (AppIcons: Search, Back, Clear)
   language/     LanguageProvider (CompositionLocal) + searchHintFor()
   theme/        Theme, ThemeColors seeds (Default/Ocean/Sakura), ThemeProvider
@@ -183,7 +183,7 @@ com.luum.michi.app
                                 `SharedPreferencesSettingsStore` on Android,
                                 `NSUserDefaultsSettingsStore` on iOS, wired via `MichiDependencies`)
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
-    navigation/domain/        routes, back-handler contracts
+    navigation/domain/        routes, back-handler contracts, url-opening (`UrlOpener` + `isWebUrl`)
     medialist/domain/         list-status contracts
     model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort)
     util/                     pure helpers
@@ -192,14 +192,14 @@ com.luum.michi.app
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
     theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura), ThemeProvider
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
-  calendar/               domain(+model)/repository/ui/state holder + CalendarScreen overlay (release cards + bottom date bar + filter sheet, per-day queries with session cache)
-  discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet)
+  calendar/               domain(+model)/repository/ui/state holder + CalendarScreen overlay (`CalendarDateBar` at TabBar-identical 24dp with deferred entrance + `CalendarReleaseRow` with shared `ChipRail` platform chips that open urls via `UrlOpener`, + filter sheet, per-day queries with session cache, UTC-safe picker)
+  discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet; Explore honors `hideAdult`)
   mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (both screens live)
-  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (editor sheet live, detail screens pending)
+  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (editor sheet live with score-format-driven scores incl. advanced 0-100 scaling, detail screens pending)
   notifications/          domain(+model)/repository/ui/state holder (no screens yet)
   settings/
     domain/               SettingsRepository + model/ (SettingsData, ThemeMode, TitleLanguage,
-                          ScoreFormat, ListSort, DiscoverTabOption, NotificationPreferences)
+                          ScoreFormat, ScoreFormatDisplay, ListSort, DiscoverTabOption, NotificationPreferences)
     repository/           SettingsRepositoryImpl (`UserSettings` query + `UpdateUser` mutation)
     ui/SettingsScreen.kt  shell (rows land step by step; no own header)
     ui/state/             SettingsState (Compose-backed) + rememberSettingsState (App-owned instance; rows land step by step)
@@ -226,9 +226,9 @@ appear only when real behavior justifies them.
 - `root` is a slim orchestrator. It wires the session `SettingsState` and composes `Toolbar` + `TabBar`. Root-scoped state lives in `root/state/State.kt`.
 - Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `PROFILE`.
 - Settings is independent of profile (the old profile-route concept is gone). The gear in the PROFILE toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `profile/`.
-- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` detail scopes (media/character/studio/staff holders, only the editor sheet renders). `mediaList/` has the first real list UI: `AnimeListScreen` and `MangaListScreen` (section rail + `MediaCoverCard` rows over their holders, wired in `Root`'s ANIME/MANGA tabs, guest sees calendar action only). Screens land later without restructuring (see feature-group exceptions).
+- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` detail scopes (media/character/studio/staff holders, only the editor sheet renders). `mediaList/` has the first real list UI: `AnimeListScreen` and `MangaListScreen` (shared `ChipRail` section rail + `MediaCoverCard` rows over their holders, wired in `Root`'s ANIME/MANGA tabs, guest sees calendar action only; lists force-reload on title-language change so server-mapped titles never go stale). Screens land later without restructuring (see feature-group exceptions).
 - `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `notifications/` likewise (holder, no screens). `calendar/` renders the schedule overlay (`CalendarScreen` over `CalendarStateHolder`, wired to the toolbar calendar action, guests included). No feed/search/library/detail surfaces exist yet.
-- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the auth modal edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal).
+- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the auth modal edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal). Pull-to-refresh forces `refresh()` with indicator; advanced category names persist locally via the store.
 - Notifications feed is parked as a future `profile` subfeature (sheet from the Profile toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `profile/` when its UI lands.
 - Every tab except Settings and the two lists renders a `MessagePanel` placeholder (title + icon, no actions) — DISCOVER and PROFILE today.
 - App language support: Spanish (`es`) and English (`en`).
@@ -244,12 +244,12 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 ## Root Responsibilities
 
 - `Root` is the app-level orchestrator. It wires the session `SettingsState`, derives the topbar title, and routes the content area.
-- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, search active/query, and current profile draft.
+- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, `isCalendarOpen` (+ `isCalendarFilterOpen`), search active/query, and current profile draft.
 - `root` owns topbar search state for DISCOVER, ANIME and MANGA via `Toolbar` (PROFILE has no search):
   - Normal state: topbar actions.
   - Active search: replaces title with `SearchField`; left icon becomes ChevronLeft; system back closes search.
 - `root` owns the settings overlay via `State.isSettingsOpen` (single source for title, content and back; closes with `CloseOverlay`). Open means `Toolbar` with back + `settingsTitle` and zero actions; the content area renders `SettingsScreen`.
-- `Toolbar` takes primitives + callbacks (`onNavigation`, `onAction(id)`, search callbacks); `Root` maps action ids (`ACTION_SEARCH`, `ACTION_SETTINGS`, …). Filter/sort/calendar actions are currently no-op until their screens land.
+- `Toolbar` takes primitives + callbacks (`onNavigation`, `onAction(id)`, search callbacks); `Root` maps action ids (`ACTION_SEARCH`, `ACTION_SETTINGS`, …). Filter/sort actions are currently no-op until their screens land; the calendar action opens the schedule overlay (`State.isCalendarOpen`).
 
 ## Profile Layout (parked — no profile UI exists yet)
 
@@ -279,7 +279,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - Home has no banner/avatar and no embedded search row. Search belongs in the topbar.
 - **Glass rule (validated sep-2026):** glass (`glassContainerColor`, `glassBorder`, shadow) is reserved for floating surfaces and actions (Toolbar, TabBar, buttons). Content cards stay opaque `surface` — a glass pilot on the session card washed out in light mode (translucency flattened, shadow + 40% border rendered a ghost edge).
 - **Glass corruption rule (validated sep-2026):** never chain `Modifier.glass()` (`.shadow().clip()`, forces an offscreen compositing layer) on inline content — the container alpha seals inside the layer and composites as an opaque inner square. Inline surfaces take the glass *recipe* (translucent color + border, no shadow); `.glass()` lives only on floating elements.
-- **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.StarOutline`) and user score (filled `Icons.StarFilled`) plus popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). Global favs use outline `Icons.Favorite`, user favourited state the filled twin.
+- **Card insignias**: `SearchResultCard.kt` shows average rating (top-right, `Icons.StarOutline`) and user score (filled `Icons.StarFilled`) plus popularity / members count (bottom-left, `Icons.Groups`, k/M formatter). Global favs use outline `Icons.Favorite`, user favourited state the filled twin. List cards render a glyph-only pill (no star/number) when the score format is smiley.
 - Reading: separate `+1 CH` and `+1 VO` buttons (manga has chapters and volumes). Animation: `+1 EP`.
 - Counters are numeric-only next to their buttons, styled with stronger weight.
 - Account stats: compact count label (e.g. `1.8K`) via `ProfileStats.toCompactCountLabel`.
@@ -311,7 +311,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - Preserve user changes in the working tree. Do not revert unrelated edits.
 - Prefer existing project patterns over introducing new frameworks.
 - Test policy: unit tests live in `core/` (stable, pure logic — mappers, parsers, keys, labels). Features are covered by integration tests at the repository seam (canned JSON → fake `AniListGraphQLClient` → real repository + holder), following `CalendarIntegrationTest`; no fine-grained holder unit tests (they rot on every rewrite).
-- Build from `/home/psyxho_skull/AndroidStudioProjects/luum/Michi`:
+- Build from `/home/psyxho_skull/StudioProjects/luum/michi`:
   - `./gradlew :shared:compileAndroidMain --offline` — shared code changes.
   - `./gradlew :androidApp:compileDebugKotlin --offline` — when root/feature signatures change.
   - Enforce the `core/` boundary with grep after structural moves: no `androidx.compose` imports under `core/`, and no `core.*` imports of `ui.*`.
