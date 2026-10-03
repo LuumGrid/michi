@@ -10,6 +10,8 @@ import com.luum.michi.app.mediaDetail.repository.character.CharacterDetailReposi
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.core.auth.domain.AniListOAuthLauncher
 import com.luum.michi.app.core.navigation.domain.UrlOpener
+import com.luum.michi.app.core.navigation.domain.ShareLauncher
+import com.luum.michi.app.core.navigation.domain.parseAniListMediaId
 import com.luum.michi.app.core.auth.domain.AniListTokenStorage
 import com.luum.michi.app.core.auth.domain.parseAniListOAuthCallback
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
@@ -41,6 +43,9 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -57,6 +62,7 @@ class MichiDependencies internal constructor(
     internal val tokenStorage: AniListTokenStorage,
     internal val oAuthLauncher: AniListOAuthLauncher,
     internal val urlOpener: UrlOpener,
+    internal val shareLauncher: ShareLauncher,
     internal val settingsStore: SettingsStore,
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -127,6 +133,22 @@ class MichiDependencies internal constructor(
     fun onOAuthCallback(uri: String) {
         val token = parseAniListOAuthCallback(uri) ?: return
         scope.launch { sessionManager.onOAuthCallback(token) }
+    }
+
+    /**
+     * Deep-linked media id from an AniList web link, or null. The UI collects
+     * this and opens the detail page, then calls [consumeDeepLink].
+     */
+    private val _pendingMediaId = MutableStateFlow<Int?>(null)
+    internal val pendingMediaId: StateFlow<Int?> = _pendingMediaId.asStateFlow()
+
+    /** Called by the platform when an AniList media link is opened. No-op otherwise. */
+    fun onDeepLink(url: String) {
+        parseAniListMediaId(url)?.let { _pendingMediaId.value = it }
+    }
+
+    fun consumeDeepLink() {
+        _pendingMediaId.value = null
     }
 
     fun logout() {

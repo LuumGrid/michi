@@ -32,6 +32,33 @@
                     android:host="oauth"
                     android:path="/callback" />
             </intent-filter>
+            <!-- AniList media links open the app's detail page. Not verifiable
+                 (we don't own anilist.co), so Android offers the app in the
+                 "open with" chooser next to the browser. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/anime/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/manga/" />
+            </intent-filter>
+            <!-- Share target: sharing an AniList link (Share → Michi) captures
+                 it reliably, unlike unverifiable web links. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
     </application>
 

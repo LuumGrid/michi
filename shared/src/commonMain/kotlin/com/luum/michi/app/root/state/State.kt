@@ -18,7 +18,9 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 /**
  * Progressive back order shared by the toolbar back affordance, the search
  * scrim and (once entries are wired) the system back handler:
- * search -> sheet -> overlay -> detail -> system.
+ * search -> sheet -> modal/settings -> detail -> overlay -> system.
+ * The detail page renders over calendar/explore/notifications, so it closes
+ * before them (one back per visible layer).
  */
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
@@ -45,6 +47,7 @@ internal class State(
     var isNotificationsOpen by mutableStateOf(false)
     var isSectionFilterOpen by mutableStateOf(false)
     var isCalendarFilterOpen by mutableStateOf(false)
+    var isDetailMenuOpen by mutableStateOf(false)
     var isListSortOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
@@ -92,10 +95,14 @@ internal class State(
 
     fun nextBackStep(): BackStep = when {
         isSearchActive -> BackStep.CloseSearch
-        isExploreFilterOpen || isSectionFilterOpen || isListSortOpen || isCalendarFilterOpen -> BackStep.CloseSheet
-        isExploreOpen || isCalendarOpen || isNotificationsOpen || isEditorOpen ||
-            isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
+        isExploreFilterOpen || isSectionFilterOpen || isListSortOpen || isCalendarFilterOpen ||
+            isDetailMenuOpen -> BackStep.CloseSheet
+        // Surfaces drawn ABOVE the detail page (modal sheets + settings).
+        isEditorOpen || isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
+        // The detail page sits over the tab content and over the overlays
+        // below, so it closes before them (one back per visible layer).
         isDetailOpen -> BackStep.CloseDetail
+        isExploreOpen || isCalendarOpen || isNotificationsOpen -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }
 
@@ -113,6 +120,7 @@ internal class State(
             isSectionFilterOpen = false
             isListSortOpen = false
             isCalendarFilterOpen = false
+            isDetailMenuOpen = false
             true
         }
         BackStep.CloseOverlay -> {
@@ -133,6 +141,7 @@ internal class State(
     }
 
     private fun push(dest: DetailDestination) {
+        isDetailMenuOpen = false
         if (detailStack.lastOrNull() != dest) detailStack.add(dest)
     }
 
@@ -140,7 +149,18 @@ internal class State(
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
-    fun closeDetail() { if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex) }
+    fun closeDetail() {
+        isDetailMenuOpen = false
+        if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex)
+    }
+
+    fun openDetailMenu() {
+        isDetailMenuOpen = true
+    }
+
+    fun closeDetailMenu() {
+        isDetailMenuOpen = false
+    }
 
     fun openEditor(id: Int) {
         editorMediaId = id

@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        handleOAuthCallback(intent)
+        handleDeepLink(intent)
         enableEdgeToEdge()
         setContent {
             App(dependencies = dependencies)
@@ -29,11 +29,26 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleOAuthCallback(intent)
+        handleDeepLink(intent)
     }
 
-    private fun handleOAuthCallback(intent: Intent?) {
-        val uri = intent?.dataString ?: return
-        dependencies.onOAuthCallback(uri)
+    /**
+     * Routes an incoming intent: the OAuth callback (`michi://…`) goes to the
+     * auth flow; a shared text (`ACTION_SEND`) or a web link (`ACTION_VIEW`) is
+     * offered to the media deep-link parser, which ignores non-media content.
+     */
+    private fun handleDeepLink(intent: Intent?) {
+        if (intent == null) return
+        if (intent.action == Intent.ACTION_SEND) {
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+            dependencies.onDeepLink(text)
+            return
+        }
+        val uri = intent.dataString ?: return
+        if (uri.startsWith("michi://", ignoreCase = true)) {
+            dependencies.onOAuthCallback(uri)
+        } else {
+            dependencies.onDeepLink(uri)
+        }
     }
 }

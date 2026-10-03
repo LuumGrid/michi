@@ -104,6 +104,7 @@ fun App(
 
     val strings = getLanguageStrings(language)
     val session by dependencies.sessionManager.state.collectAsState()
+    val deepLinkMediaId by dependencies.pendingMediaId.collectAsState()
     val scope = rememberCoroutineScope()
 
     // Login services (AniList today; MAL appends here tomorrow): shared by
@@ -230,6 +231,7 @@ fun App(
                             mediaDetailRepository = dependencies.mediaDetailRepository,
                             calendarRepository = dependencies.calendarRepository,
                             urlOpener = dependencies.urlOpener,
+                            shareLauncher = dependencies.shareLauncher,
                             sortPersistence = sortPersistence,
                             authServices = authServices,
                             isAuthConfigured = AniListOAuthConfig.isConfigured,
@@ -237,6 +239,8 @@ fun App(
                             onAutoSignInShown = {
                                 store.putBoolean(SettingsStoreKeys.SeenSignIn, true)
                             },
+                            deepLinkMediaId = deepLinkMediaId,
+                            onDeepLinkHandled = { dependencies.consumeDeepLink() },
                         )
                     }
                     AppRoute.ERROR -> {

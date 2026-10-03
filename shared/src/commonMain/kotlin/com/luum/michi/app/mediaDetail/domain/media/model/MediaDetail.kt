@@ -79,9 +79,13 @@ internal data class MediaExternalLink(
     val language: String? = null,
 )
 
+/** The API marks the official site by name (its `type` is a generic INFO). */
+internal fun MediaExternalLink.isOfficialSite(): Boolean =
+    site.equals("Official Site", ignoreCase = true)
+
 /** Localized label for a known external-link site name (API sends English). */
 internal fun MediaExternalLink.siteLabel(strings: LanguageStrings): String =
-    if (site.equals("Official Site", ignoreCase = true)) strings.mediaDetailOfficialSiteLabel else site
+    if (isOfficialSite()) strings.mediaDetailOfficialSiteLabel else site
 
 internal data class MediaTrailer(
     val videoId: String,
@@ -113,6 +117,15 @@ internal fun MediaDetail.workStatusLabel(strings: LanguageStrings): String? {
     val parsed = parseMediaWorkStatus(status)
     return parsed?.label(strings, type == MediaDetailType.MANGA) ?: status
 }
+
+/** Canonical AniList page for this entry. */
+internal fun MediaDetail.aniListUrl(): String {
+    val segment = if (type == MediaDetailType.MANGA) "manga" else "anime"
+    return "https://anilist.co/$segment/$id"
+}
+
+/** Body used by the share sheet: title + canonical URL. */
+internal fun MediaDetail.shareText(): String = "$title\n${aniListUrl()}"
 
 internal enum class MediaCharacterRole { MAIN, SUPPORTING, BACKGROUND, OTHER }
 

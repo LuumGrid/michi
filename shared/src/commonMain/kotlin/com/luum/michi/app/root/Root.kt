@@ -42,11 +42,14 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
+import com.luum.michi.app.mediaDetail.domain.media.model.shareText
 import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.ShareLauncher
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
@@ -69,6 +72,9 @@ import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.components.OptionGroup
+import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.components.SearchScrim
 import com.luum.michi.app.ui.components.TabBar
 import com.luum.michi.app.ui.components.TabItem
@@ -123,11 +129,14 @@ internal fun Root(
     mediaDetailRepository: MediaDetailRepository,
     calendarRepository: CalendarRepository,
     urlOpener: UrlOpener,
+    shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
     authServices: List<AuthService>,
     isAuthConfigured: Boolean,
     autoOpenSignIn: Boolean = false,
     onAutoSignInShown: () -> Unit = {},
+    deepLinkMediaId: Int? = null,
+    onDeepLinkHandled: () -> Unit = {},
 ) {
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
@@ -235,6 +244,15 @@ internal fun Root(
         if (destination is DetailDestination.Media) mediaDetailHolder.load(destination.id)
     }
 
+    // Deep link (anilist.co/anime|manga/{id}): open the media detail once the
+    // shell composes, then clear the pending id so it never reopens.
+    LaunchedEffect(deepLinkMediaId) {
+        deepLinkMediaId?.let {
+            state.openMedia(it)
+            onDeepLinkHandled()
+        }
+    }
+
     // Sort memory (Settings persist toggle, per tab) + Default sort:
     // saved persist-sort wins, then the default, then holder defaults.
     // Changing Default sort applies live (effect key); changing it while a
@@ -340,7 +358,7 @@ internal fun Root(
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
                         ACTION_FAVOURITE -> mediaDetailHolder.toggleFavourite()
-                        ACTION_MORE -> {}
+                        ACTION_MORE -> state.openDetailMenu()
                     }
                 },
                 onSearchChange = { query ->
@@ -601,6 +619,36 @@ internal fun Root(
                     },
                     onDismiss = { state.closeEditor() },
                 )
+            }
+            val detailMenu = mediaDetailHolder.detail
+            if (state.isDetailOpen && state.isDetailMenuOpen && detailMenu != null) {
+                ModalSheet(
+                    title = detailMenu.title,
+                    dismissLabel = strings.dismissAction,
+                    onDismiss = { state.closeDetailMenu() },
+                ) {
+                    OptionGroup(title = null) {
+                        OptionRow(
+                            label = strings.mediaDetailOpenInAniListAction,
+                            selected = false,
+                            onClick = {
+                                state.closeDetailMenu()
+                                urlOpener.open(detailMenu.aniListUrl())
+                            },
+                            divider = false,
+                            trailing = {},
+                        )
+                        OptionRow(
+                            label = strings.mediaDetailShareAction,
+                            selected = false,
+                            onClick = {
+                                state.closeDetailMenu()
+                                shareLauncher.share(text = detailMenu.shareText(), subject = detailMenu.title)
+                            },
+                            trailing = {},
+                        )
+                    }
+                }
             }
         }
     }

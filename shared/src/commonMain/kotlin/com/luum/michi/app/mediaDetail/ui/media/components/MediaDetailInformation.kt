@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
@@ -166,7 +167,7 @@ internal fun MediaDetailExternalLinks(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (link.type.equals("OFFICIAL", ignoreCase = true)) {
+                if (link.isOfficialSite()) {
                     Icon(
                         imageVector = AppIcons.Web,
                         contentDescription = null,

@@ -143,7 +143,7 @@ core/
                                 map at feature boundaries)
   storage/domain/               settings/filter keys and stores
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
-  navigation/domain/            routes, back-handler contracts, url-opening (`UrlOpener` + `isWebUrl`; platform `AndroidUrlOpener`/`IosUrlOpener` in `repository/`)
+  navigation/domain/            routes, back-handler contracts, url-opening + sharing (`UrlOpener`/`isWebUrl`, `ShareLauncher`), AniList deep-link parsing (`parseAniListMediaId`); platform openers/launchers in `repository/`
   medialist/domain/             list-status contracts shared by list features
   model/                        neutral domain vocabulary (MediaFormat, MediaSeason, dates,
                                 sort, FilterOption) — cross-concept, belongs to no feature
@@ -183,7 +183,7 @@ com.luum.michi.app
                                 `SharedPreferencesSettingsStore` on Android,
                                 `NSUserDefaultsSettingsStore` on iOS, wired via `MichiDependencies`)
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
-    navigation/domain/        routes, back-handler contracts, url-opening (`UrlOpener` + `isWebUrl`)
+    navigation/domain/        routes, back-handler contracts, url-opening + sharing (`UrlOpener`/`isWebUrl`, `ShareLauncher`), deep-link parsing (`parseAniListMediaId`)
     medialist/domain/         list-status contracts
     model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort)
     util/                     pure helpers
@@ -244,12 +244,12 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 ## Root Responsibilities
 
 - `Root` is the app-level orchestrator. It wires the session `SettingsState`, derives the topbar title, and routes the content area.
-- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, `isCalendarOpen` (+ `isCalendarFilterOpen`), `detailStack` (media/character/staff/studio push + `isDetailOpen`), search active/query, and current profile draft.
+- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, `isCalendarOpen` (+ `isCalendarFilterOpen`), `detailStack` (media/character/staff/studio push + `isDetailOpen` + `isDetailMenuOpen`), search active/query, and current profile draft.
 - `root` owns topbar search state for DISCOVER, ANIME and MANGA via `Toolbar` (PROFILE has no search):
   - Normal state: topbar actions.
   - Active search: replaces title with `SearchField`; left icon becomes ChevronLeft; system back closes search.
 - `root` owns the settings overlay via `State.isSettingsOpen` (single source for title, content and back; closes with `CloseOverlay`). Open means `Toolbar` with back + `settingsTitle` and zero actions; the content area renders `SettingsScreen`.
-- `root` owns media detail via `State.detailStack` (single source for title, content and back). Open means a full-screen `MediaDetailScreen` over the current tab with the tab bar hidden, back + the media title (falls back to `mediaDetailTitle` while loading) and zero actions; back pops one destination at a time (`BackStep.CloseDetail`).
+- `root` owns media detail via `State.detailStack` (single source for title, content and back). Open means a full-screen `MediaDetailScreen` over the current tab with the tab bar hidden, back chevron with no title (the title lives in the hero) and trailing edit / favourite / overflow actions (overflow: open in AniList, share); back pops one destination at a time (`BackStep.CloseDetail`) and, since the detail renders over calendar/explore/notifications, it closes before them (one back per visible layer).
 - `Toolbar` takes primitives + callbacks (`onNavigation`, `onAction(id)`, search callbacks); `Root` maps action ids (`ACTION_SEARCH`, `ACTION_SETTINGS`, …). Filter/sort actions are currently no-op until their screens land; the calendar action opens the schedule overlay (`State.isCalendarOpen`).
 
 ## Profile Layout (parked — no profile UI exists yet)
@@ -301,6 +301,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - API DTOs must not leak into presentation state — map at feature/core boundaries.
 - Model network errors, GraphQL errors, rate limits, and empty states explicitly for consistent UI rendering.
 - Android system back uses `androidx.activity.compose.BackHandler`. iOS system back is no-op until native behavior is needed.
+- Android deep links: the manifest registers `https://anilist.co/anime|manga/*` plus a `text/plain` `ACTION_SEND` share target (and the `michi://oauth/callback` filter). `MainActivity` routes OAuth vs media; the media id flows through `MichiDependencies.pendingMediaId` and `Root` opens the detail. The web link is not verifiable (we don't own anilist.co), so Android sends it to the browser; **sharing** the link (Share → Michi) is the reliable path. `parseAniListMediaId` extracts the id from free text. iOS universal links are parked for the same reason.
 
 ## Naming
 

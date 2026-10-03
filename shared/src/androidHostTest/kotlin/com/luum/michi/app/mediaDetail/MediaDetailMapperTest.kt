@@ -7,6 +7,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
 import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
+import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
@@ -18,6 +19,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -214,13 +216,16 @@ class MediaDetailMapperTest {
         val official = MediaExternalLink(
             site = "Official Site",
             url = "https://example.com",
-            type = "OFFICIAL",
+            type = "INFO",
             iconUrl = null,
             color = null,
         )
+        assertTrue(official.isOfficialSite())
         assertEquals("Official site", official.siteLabel(EnglishStrings))
         assertEquals("Sitio oficial", official.siteLabel(SpanishStrings))
-        assertEquals("Twitter", official.copy(site = "Twitter").siteLabel(EnglishStrings))
+        val twitter = official.copy(site = "Twitter")
+        assertFalse(twitter.isOfficialSite())
+        assertEquals("Twitter", twitter.siteLabel(EnglishStrings))
     }
 
     @Test

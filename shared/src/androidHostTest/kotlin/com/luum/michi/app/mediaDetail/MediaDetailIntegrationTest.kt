@@ -16,6 +16,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
+import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
+import com.luum.michi.app.mediaDetail.domain.media.model.shareText
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -252,6 +254,20 @@ class MediaDetailIntegrationTest {
         assertEquals("ENGLISH", holder.voiceLanguage)
         assertEquals("ENGLISH", repository.lastVoiceLanguage)
         assertEquals(1, repository.characterCalls)
+    }
+
+    @Test
+    fun aniListUrlUsesTypeSegment() {
+        assertEquals("https://anilist.co/anime/5", sampleDetail(5).aniListUrl())
+        assertEquals(
+            "https://anilist.co/manga/9",
+            sampleDetail(9).copy(type = MediaDetailType.MANGA).aniListUrl(),
+        )
+    }
+
+    @Test
+    fun shareTextCombinesTitleAndUrl() {
+        assertEquals("Media 5\nhttps://anilist.co/anime/5", sampleDetail(5).shareText())
     }
 
     @Test
