@@ -395,6 +395,7 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailInformationTitle = "Información"
     override val mediaDetailTagsTitle = "Etiquetas"
     override val mediaDetailExternalLinksTitle = "Enlaces externos"
+    override val mediaDetailOfficialSiteLabel = "Sitio oficial"
     override val mediaDetailSummaryStatsTitle = "Estadísticas"
     override val mediaDetailTotalLabel = "Total"
     override val mediaDetailHighestRatedLabel = "Mejor calificado"

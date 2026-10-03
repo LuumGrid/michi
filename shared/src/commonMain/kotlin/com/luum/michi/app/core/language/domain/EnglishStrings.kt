@@ -393,6 +393,7 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailInformationTitle = "Information"
     override val mediaDetailTagsTitle = "Tags"
     override val mediaDetailExternalLinksTitle = "External links"
+    override val mediaDetailOfficialSiteLabel = "Official site"
     override val mediaDetailSummaryStatsTitle = "Summary stats"
     override val mediaDetailTotalLabel = "Total"
     override val mediaDetailHighestRatedLabel = "Highest rated"

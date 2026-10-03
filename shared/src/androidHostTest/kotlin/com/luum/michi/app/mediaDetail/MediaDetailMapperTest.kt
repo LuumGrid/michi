@@ -1,10 +1,13 @@
 package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
 import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
+import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaList.FakeGraphQL
@@ -204,6 +207,20 @@ class MediaDetailMapperTest {
 
         val query = graphQL.requests.single().query
         assertTrue(query.contains("externalLinks { id site url type icon color language }"), query)
+    }
+
+    @Test
+    fun officialSiteLabelLocalizes() {
+        val official = MediaExternalLink(
+            site = "Official Site",
+            url = "https://example.com",
+            type = "OFFICIAL",
+            iconUrl = null,
+            color = null,
+        )
+        assertEquals("Official site", official.siteLabel(EnglishStrings))
+        assertEquals("Sitio oficial", official.siteLabel(SpanishStrings))
+        assertEquals("Twitter", official.copy(site = "Twitter").siteLabel(EnglishStrings))
     }
 
     @Test

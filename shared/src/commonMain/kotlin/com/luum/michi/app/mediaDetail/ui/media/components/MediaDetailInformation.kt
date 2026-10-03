@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
 import com.luum.michi.app.ui.components.ChipRail
@@ -191,7 +192,7 @@ internal fun MediaDetailExternalLinks(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = link.site,
+                    text = link.siteLabel(strings),
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

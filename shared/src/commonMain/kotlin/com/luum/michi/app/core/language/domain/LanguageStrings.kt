@@ -378,6 +378,7 @@ interface LanguageStrings {
     val mediaDetailInformationTitle: String
     val mediaDetailTagsTitle: String
     val mediaDetailExternalLinksTitle: String
+    val mediaDetailOfficialSiteLabel: String
     val mediaDetailSummaryStatsTitle: String
     val mediaDetailTotalLabel: String
     val mediaDetailHighestRatedLabel: String

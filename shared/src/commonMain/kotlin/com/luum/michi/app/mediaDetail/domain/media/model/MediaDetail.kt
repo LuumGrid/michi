@@ -79,6 +79,10 @@ internal data class MediaExternalLink(
     val language: String? = null,
 )
 
+/** Localized label for a known external-link site name (API sends English). */
+internal fun MediaExternalLink.siteLabel(strings: LanguageStrings): String =
+    if (site.equals("Official Site", ignoreCase = true)) strings.mediaDetailOfficialSiteLabel else site
+
 internal data class MediaTrailer(
     val videoId: String,
     val site: String?,
