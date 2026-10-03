@@ -40,6 +40,7 @@ import com.luum.michi.app.ui.components.glassBorder
 import com.luum.michi.app.ui.components.glassContainerColor
 import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.components.solidContainerColor
+import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
@@ -164,7 +165,14 @@ internal fun MediaDetailExternalLinks(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (!link.iconUrl.isNullOrBlank()) {
+                if (link.type.equals("OFFICIAL", ignoreCase = true)) {
+                    Icon(
+                        imageVector = AppIcons.Web,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
+                    )
+                } else if (!link.iconUrl.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = link.iconUrl,
                         contentDescription = null,

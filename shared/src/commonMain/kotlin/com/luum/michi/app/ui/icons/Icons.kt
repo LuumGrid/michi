@@ -31,6 +31,7 @@ import com.luum.michi.app.ui.icons.generated.SortRounded
 import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
 import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
 import com.luum.michi.app.ui.icons.generated.ThemeRounded
+import com.luum.michi.app.ui.icons.generated.WebRounded
 
 /**
  * Central icon catalog: Valkyrie-generated [IconPack] ([ImageVector] code,
@@ -128,6 +129,10 @@ internal object AppIcons {
     /** Vertical ellipsis: detail overflow menu. */
     val More: ImageVector
         get() = IconPack.MoreRounded
+
+    /** Globe/web: official-site external links. */
+    val Web: ImageVector
+        get() = IconPack.WebRounded
 
     // ---- Misc: catalogued, wired when their surface lands ----
     /** Chevron-right: rows that open a picker sheet. */
