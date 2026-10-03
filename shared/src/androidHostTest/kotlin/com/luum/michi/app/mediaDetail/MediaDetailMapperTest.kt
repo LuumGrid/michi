@@ -198,6 +198,15 @@ class MediaDetailMapperTest {
     }
 
     @Test
+    fun detailQueryRequestsExternalLinkLanguage() = runBlocking {
+        val graphQL = FakeGraphQL(listOf(mediaDetailPageJson()))
+        MediaDetailRepositoryImpl(graphQL).loadDetail(42, voiceLanguage = "JAPANESE", strings = EnglishStrings)
+
+        val query = graphQL.requests.single().query
+        assertTrue(query.contains("externalLinks { id site url type icon color language }"), query)
+    }
+
+    @Test
     fun mapsTrailerAndBuildsYoutubeUrl() = runBlocking {
         val detail = loadDetail()
 
