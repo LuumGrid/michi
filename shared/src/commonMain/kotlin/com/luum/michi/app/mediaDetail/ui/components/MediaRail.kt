@@ -32,6 +32,9 @@ internal data class MediaRailItem(
     val title: String,
     val imageUrl: String?,
     val subtitle: String? = null,
+    // Stable identity for LazyRow. Defaults to the id, but callers whose id
+    // can repeat (staff with multiple roles) pass a unique edge key.
+    val key: String = "",
 )
 
 /**
@@ -60,7 +63,7 @@ internal fun MediaRail(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(items = items, key = { it.id }) { item ->
+            items(items = items, key = { it.key.ifBlank { it.id.toString() } }) { item ->
                 RailCard(item = item, onSelect = onSelect)
             }
         }

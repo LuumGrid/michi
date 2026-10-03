@@ -194,6 +194,7 @@ private fun MediaDetailContent(
                             title = character.name,
                             imageUrl = character.imageUrl,
                             subtitle = character.voiceActor?.name,
+                            key = character.edgeKey,
                         )
                     },
                     onLoadMore = if (holder.charactersHasNextPage && !holder.isLoadingCharacters) {
@@ -215,6 +216,7 @@ private fun MediaDetailContent(
                             title = entry.name,
                             imageUrl = entry.imageUrl,
                             subtitle = entry.role,
+                            key = entry.edgeKey,
                         )
                     },
                     onLoadMore = if (holder.staffHasNextPage && !holder.isLoadingStaff) {
