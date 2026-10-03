@@ -68,6 +68,9 @@ import com.luum.michi.app.ui.theme.ThemeType
 import com.luum.michi.app.ui.theme.displayName
 import com.luum.michi.app.ui.theme.fontFamilyFor
 import com.luum.michi.app.ui.theme.paletteDisplayName
+import com.luum.michi.app.ui.theme.PaletteStyles
+import com.luum.michi.app.ui.theme.paletteStyleDisplayName
+import com.materialkolor.PaletteStyle
 
 /**
  * App settings. Root owns the toolbar (back + title, no actions);
@@ -82,6 +85,8 @@ internal fun SettingsScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     palette: ThemeColors,
     onPaletteChange: (ThemeColors) -> Unit,
+    themeStyle: PaletteStyle,
+    onThemeStyleChange: (PaletteStyle) -> Unit,
     themeType: ThemeType,
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
@@ -98,6 +103,7 @@ internal fun SettingsScreen(
     var themeSheet by remember { mutableStateOf(false) }
     var fontSheet by remember { mutableStateOf(false) }
     var surfaceSheet by remember { mutableStateOf(false) }
+    var styleSheet by remember { mutableStateOf(false) }
     var titleLanguageSheet by remember { mutableStateOf(false) }
     var staffNameLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
@@ -142,6 +148,11 @@ internal fun SettingsScreen(
                         label = strings.settingsSurfaceTitle,
                         value = surfaces.label(strings),
                         onClick = { surfaceSheet = true },
+                    )
+                    SettingsRow(
+                        label = strings.settingsStyleTitle,
+                        value = paletteStyleDisplayName(themeStyle),
+                        onClick = { styleSheet = true },
                     )
                 }
             }
@@ -364,6 +375,27 @@ internal fun SettingsScreen(
                         selected = option == surfaces,
                         onClick = {
                             onSurfacesChange(option)
+                        },
+                        divider = index > 0,
+                    )
+                }
+            }
+        }
+    }
+
+    if (styleSheet) {
+        ModalSheet(
+            title = strings.settingsStyleTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { styleSheet = false },
+        ) {
+            OptionGroup(title = null) {
+                PaletteStyles.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = paletteStyleDisplayName(option),
+                        selected = option == themeStyle,
+                        onClick = {
+                            onThemeStyleChange(option)
                         },
                         divider = index > 0,
                     )

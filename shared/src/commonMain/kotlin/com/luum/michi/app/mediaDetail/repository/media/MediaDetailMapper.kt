@@ -21,6 +21,10 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaTag
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
@@ -75,6 +79,43 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
         .orEmpty(),
     characters = characters.toCharactersPage(currentPage = 1),
     staff = staff.toStaffPage(currentPage = 1),
+    titleRomaji = title?.romaji,
+    titleNative = title?.native,
+    synonyms = synonyms,
+    rankings = rankings.map {
+        MediaRank(
+            rank = it.rank,
+            type = it.type,
+            context = it.context,
+            format = it.format,
+            season = it.season,
+            year = it.year,
+            allTime = it.allTime,
+        )
+    },
+    tags = tags.mapNotNull { dto ->
+        dto.name?.takeIf { it.isNotBlank() }?.let { name ->
+            MediaTag(name = name, rank = dto.rank, isMediaSpoiler = dto.isMediaSpoiler)
+        }
+    },
+    externalLinks = externalLinks.mapNotNull { dto ->
+        if (dto.isDisabled == true) return@mapNotNull null
+        dto.url?.takeIf { it.isNotBlank() }?.let { url ->
+            dto.site?.takeIf { it.isNotBlank() }?.let { site ->
+                MediaExternalLink(
+                    site = site,
+                    url = url,
+                    type = dto.type,
+                    iconUrl = dto.icon,
+                    color = dto.color,
+                    language = dto.language,
+                )
+            }
+        }
+    },
+    trailer = trailer?.let {
+        MediaTrailer(videoId = it.id.orEmpty(), site = it.site, thumbnailUrl = it.thumbnail)
+    }?.takeIf { it.videoId.isNotBlank() },
 )
 
 internal fun MediaCharacterConnectionDto?.toCharactersPage(currentPage: Int): MediaCharactersPage {

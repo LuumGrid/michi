@@ -42,8 +42,11 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
+import com.luum.michi.app.mediaDetail.ui.media.state.createMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
+import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
@@ -82,6 +85,7 @@ import com.luum.michi.app.ui.theme.AppFont
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
+import com.materialkolor.PaletteStyle
 import kotlin.math.roundToInt
 
 /**
@@ -103,6 +107,8 @@ internal fun Root(
     onLanguageChange: (AppLanguage) -> Unit,
     palette: ThemeColors,
     onPaletteChange: (ThemeColors) -> Unit,
+    themeStyle: PaletteStyle,
+    onThemeStyleChange: (PaletteStyle) -> Unit,
     themeType: ThemeType,
     onThemeTypeChange: (ThemeType) -> Unit,
     font: AppFont,
@@ -217,6 +223,18 @@ internal fun Root(
         if (state.isCalendarOpen) calendarHolder.load()
     }
 
+    // Media detail holder: session-independent (public data) and shared by
+    // guests. Loads on intent when a media destination opens; the holder's
+    // own LRU makes revisits instant. Character/staff/studio destinations
+    // render nothing yet (their screens are Phase 2).
+    val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, listScope, strings) {
+        createMediaDetailStateHolder(mediaDetailRepository, mediaListEntryRepository, listScope, strings)
+    }
+    LaunchedEffect(state.currentDetail) {
+        val destination = state.currentDetail
+        if (destination is DetailDestination.Media) mediaDetailHolder.load(destination.id)
+    }
+
     // Sort memory (Settings persist toggle, per tab) + Default sort:
     // saved persist-sort wins, then the default, then holder defaults.
     // Changing Default sort applies live (effect key); changing it while a
@@ -289,13 +307,22 @@ internal fun Root(
             ) {
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
-                title = toolbarTitle(state, tab, strings),
+                title = if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
                 navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
                     ToolbarNavigation.Back(strings.backButton)
                 } else {
                     ToolbarNavigation.None
                 },
-                actions = toolbarActions(tab, search != null, state.isSettingsOpen, state.isCalendarOpen, viewerId == null, strings),
+                actions = toolbarActions(
+                    tab = tab,
+                    isSearching = search != null,
+                    isSettingsOpen = state.isSettingsOpen,
+                    isCalendarOpen = state.isCalendarOpen,
+                    isDetailOpen = state.isDetailOpen,
+                    isDetailFavourite = mediaDetailHolder.detail?.isFavourite == true,
+                    isGuest = viewerId == null,
+                    strings = strings,
+                ),
                 search = search,
                 backContentDescription = strings.backButton,
                 clearContentDescription = strings.clearSearchAction,
@@ -311,6 +338,9 @@ internal fun Root(
                         // TODO: wire to the schedule surface when it lands.
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
+                        ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
+                        ACTION_FAVOURITE -> mediaDetailHolder.toggleFavourite()
+                        ACTION_MORE -> {}
                     }
                 },
                 onSearchChange = { query ->
@@ -372,6 +402,8 @@ internal fun Root(
                         onLanguageChange = onLanguageChange,
                         palette = palette,
                         onPaletteChange = onPaletteChange,
+                        themeStyle = themeStyle,
+                        onThemeStyleChange = onThemeStyleChange,
                         themeType = themeType,
                         onThemeTypeChange = onThemeTypeChange,
                         font = font,
@@ -382,6 +414,27 @@ internal fun Root(
                         onLogin = { state.openSignIn() },
                         onLogout = onLogout,
                     )
+                } else if (state.isDetailOpen) {
+                    // Detail page over the current tab (tab bar hidden):
+                    // pushes onto detailStack, back pops one at a time.
+                    val destination = state.currentDetail
+                    if (destination is DetailDestination.Media) {
+                        MediaDetailScreen(
+                            holder = mediaDetailHolder,
+                            strings = strings,
+                            bottomPadding = padding.calculateBottomPadding(),
+                            onRetry = {
+                                if (mediaDetailHolder.detail == null) {
+                                    mediaDetailHolder.load(destination.id)
+                                } else {
+                                    mediaDetailHolder.refresh()
+                                }
+                            },
+                            onOpenMedia = { state.openMedia(it) },
+                            onEditEntry = { state.openEditor(it) },
+                            onOpenUrl = { urlOpener.open(it) },
+                        )
+                    }
                 } else if (state.isCalendarOpen) {
                     // Airing schedule overlay (fullscreen, tab bar hidden):
                     // public feed, so guests render the same surface.
@@ -626,6 +679,9 @@ private const val ACTION_FILTER = "filter"
 private const val ACTION_SORT = "sort"
 private const val ACTION_CALENDAR = "calendar"
 private const val ACTION_CALENDAR_FILTER = "calendar-filter"
+private const val ACTION_EDIT = "edit"
+private const val ACTION_FAVOURITE = "favourite"
+private const val ACTION_MORE = "more"
 
 /** Shared capsule group for the list tools (reference: one capsule, lone search). */
 private const val GROUP_LIST_TOOLS = "list-tools"
@@ -636,10 +692,33 @@ private fun toolbarActions(
     isSearching: Boolean,
     isSettingsOpen: Boolean,
     isCalendarOpen: Boolean,
+    isDetailOpen: Boolean,
+    isDetailFavourite: Boolean,
     isGuest: Boolean,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
     if (isSearching || isSettingsOpen) return emptyList()
+    // Detail overlay: edit / favourite / overflow trailing the back chevron.
+    // The heart swaps to its filled twin when the entry is favourited.
+    if (isDetailOpen) {
+        return listOf(
+            ToolbarAction(
+                id = ACTION_EDIT,
+                icon = AppIcons.Edit,
+                contentDescription = strings.editEntryAction,
+            ),
+            ToolbarAction(
+                id = ACTION_FAVOURITE,
+                icon = if (isDetailFavourite) AppIcons.FavoriteFilled else AppIcons.Favorite,
+                contentDescription = strings.favouriteLabel,
+            ),
+            ToolbarAction(
+                id = ACTION_MORE,
+                icon = AppIcons.More,
+                contentDescription = strings.moreAction,
+            ),
+        )
+    }
     // Calendar overlay: lone filter next to the back chevron. Settings
     // hides everything, but the day list needs its filters in reach.
     if (isCalendarOpen) {
@@ -719,7 +798,7 @@ private fun hidesToolbarOnScroll(tab: TabSection, state: State): Boolean = false
  * hide it (full-screen surfaces like Settings). Default is visible.
  */
 private fun showsTabBar(tab: TabSection, state: State): Boolean =
-    !state.isSettingsOpen && !state.isCalendarOpen
+    !state.isSettingsOpen && !state.isCalendarOpen && !state.isDetailOpen
 
 private fun toolbarTitle(
     state: State,

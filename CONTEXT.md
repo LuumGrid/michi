@@ -48,7 +48,7 @@ Add `domain/` and `data/` only when real AniList/session/storage behavior appear
 
 ### Feature-group exceptions: `discover/`, `mediaList/` and `mediaDetail/`
 
-`mediaList/` and `mediaDetail/` already render UI (`AnimeListScreen`, `MangaListScreen`, `MediaEntryEditorSheet`); `settings/` renders its full screen. The groups below are domain + repository + state holders; remaining screens land later without restructuring.
+`mediaList/` and `mediaDetail/` already render UI (`AnimeListScreen`, `MangaListScreen`, `MediaEntryEditorSheet`, `MediaDetailScreen`); `settings/` renders its full screen. The groups below are domain + repository + state holders; remaining screens land later without restructuring.
 
 `discover/` is a feature-group with two sub-scopes (`dashboard/` and `explore/`) sharing one `domain/` and one `repository/`:
 ```text
@@ -157,7 +157,7 @@ ui/
   components/   shared composables (Toolbar, TabBar, SearchField, MessagePanel, ChipRail, DatePickerField, …) — no layer prefix, package disambiguates
   icons/        shared toolbar primitives (AppIcons: Search, Back, Clear)
   language/     LanguageProvider (CompositionLocal) + searchHintFor()
-  theme/        Theme, ThemeColors seeds (Default/Ocean/Sakura), ThemeProvider
+  theme/        Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle, ThemeProvider
 ```
 
 UI is 100% shared Compose Multiplatform in the `shared` module — no native
@@ -190,12 +190,12 @@ com.luum.michi.app
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
-    theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura), ThemeProvider
+    theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle, ThemeProvider
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder + CalendarScreen overlay (`CalendarDateBar` at TabBar-identical 24dp with deferred entrance + `CalendarReleaseRow` with shared `ChipRail` platform chips that open urls via `UrlOpener`, + filter sheet, per-day queries with session cache, UTC-safe picker)
   discover/               domain(+model)/repository/ui per dashboard+explore state holders (no screens yet; Explore honors `hideAdult`)
   mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (both screens live)
-  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (editor sheet live with score-format-driven scores incl. advanced 0-100 scaling, detail screens pending)
+  mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (media detail page with banner hero + score stats/rankings + videos + information + tags + external links + distributions, editor sheet live, favourite toggle; character/staff/studio screens pending)
   notifications/          domain(+model)/repository/ui/state holder (no screens yet)
   settings/
     domain/               SettingsRepository + model/ (SettingsData, ThemeMode, TitleLanguage,
@@ -222,13 +222,13 @@ appear only when real behavior justifies them.
 
 ## Current State
 
-- `App.kt` owns theme mode/palette/font + language via `remember`, hydrated from `SettingsStore` at startup and persisted on every change (unknown values fall back to defaults). It routes loading/shell/error on `SessionState` with an `AnimatedContent` crossfade (same `tabFadeSpec` motion as tabs) over an opaque theme backdrop — no login wall: anonymous users enter `Root` as guests and sign in on demand via `AuthModal` (auto-opens once on first anonymous launch, never after logout). The authenticated `Viewer` enters `Root` so the shell profile draft is real.
+- `App.kt` owns theme mode/palette/style/font + language via `remember`, hydrated from `SettingsStore` at startup and persisted on every change (unknown values fall back to defaults). It routes loading/shell/error on `SessionState` with an `AnimatedContent` crossfade (same `tabFadeSpec` motion as tabs) over an opaque theme backdrop — no login wall: anonymous users enter `Root` as guests and sign in on demand via `AuthModal` (auto-opens once on first anonymous launch, never after logout). The authenticated `Viewer` enters `Root` so the shell profile draft is real.
 - `root` is a slim orchestrator. It wires the session `SettingsState` and composes `Toolbar` + `TabBar`. Root-scoped state lives in `root/state/State.kt`.
 - Bottom tabs (4): `DISCOVER`, `ANIME`, `MANGA`, `PROFILE`.
 - Settings is independent of profile (the old profile-route concept is gone). The gear in the PROFILE toolbar sets `State.isSettingsOpen`; open means Root's `Toolbar` with back + `settingsTitle` ("App settings" / "Configuración de la app") and zero actions, and the content area renders `SettingsScreen`. Back closes the flag. Settings never imports `profile/`.
-- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; same for `mediaDetail/` detail scopes (media/character/studio/staff holders, only the editor sheet renders). `mediaList/` has the first real list UI: `AnimeListScreen` and `MangaListScreen` (shared `ChipRail` section rail + `MediaCoverCard` rows over their holders, wired in `Root`'s ANIME/MANGA tabs, guest sees calendar action only; lists force-reload on title-language change so server-mapped titles never go stale). Screens land later without restructuring (see feature-group exceptions).
-- `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `notifications/` likewise (holder, no screens). `calendar/` renders the schedule overlay (`CalendarScreen` over `CalendarStateHolder`, wired to the toolbar calendar action, guests included). No feed/search/library/detail surfaces exist yet.
-- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font and surfaces rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the auth modal edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal). Pull-to-refresh forces `refresh()` with indicator; advanced category names persist locally via the store.
+- `discover/` has repositories + state holders (`DashboardStateHolder`, `ExploreStateHolder`) and no screens yet; `mediaDetail/` renders the media detail page (`MediaDetailScreen` single scroll: full-bleed banner hero + centered cover + ranked stats trio (Average score · Highest rated · Most popular) + trailer + synopsis + framed information table + tags + external links + related/recommendations/characters/staff rails + summary stats and score distribution) and the entry editor sheet; the detail query also maps rankings/tags/externalLinks/trailer/synonyms + title variants, and the toolbar heart toggles the favourite via `MediaListEntryRepository`. Character/staff/studio screens are still pending. `mediaList/` has the first real list UI: `AnimeListScreen` and `MangaListScreen` (shared `ChipRail` section rail + `MediaCoverCard` rows over their holders, wired in `Root`'s ANIME/MANGA tabs, guest sees calendar action only; lists force-reload on title-language change so server-mapped titles never go stale). Screens land later without restructuring (see feature-group exceptions).
+- `profile/` has domain + repository (+mappers) + state holders (`ProfileStateHolder`, `ProfileFavoritesGridStateHolder`) and no profile UI yet; `notifications/` likewise (holder, no screens). `calendar/` renders the schedule overlay (`CalendarScreen` over `CalendarStateHolder`, wired to the toolbar calendar action, guests included). Media detail is live (taps on list/calendar cards push `State.detailStack`); no feed/search/library surfaces exist yet.
+- `settings` renders the General group today (`settings/ui/SettingsScreen.kt`, no own header): language, theme (mode-first groups: mode then palette, value reads `"$mode · $palette"`), font, surfaces and color style rows inside a shared `OptionGroup` frame, each opening its own `ModalSheet` picker, over the App-owned holder (same state the auth modal edits, already persisted). `SettingsState` (`UserSettings` query + `UpdateUser` mutation with 600ms save debounce) already flows `App → Root` with `refresh()` on first open; all five groups live (General local-only; AniList/Lists/Notifications synced and hidden for guests; Information static with Version row + About modal). Pull-to-refresh forces `refresh()` with indicator; advanced category names persist locally via the store.
 - Notifications feed is parked as a future `profile` subfeature (sheet from the Profile toolbar). A top-level `notifications/` package with repository + holder already exists and moves under `profile/` when its UI lands.
 - Every tab except Settings and the two lists renders a `MessagePanel` placeholder (title + icon, no actions) — DISCOVER and PROFILE today.
 - App language support: Spanish (`es`) and English (`en`).
@@ -244,11 +244,12 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 ## Root Responsibilities
 
 - `Root` is the app-level orchestrator. It wires the session `SettingsState`, derives the topbar title, and routes the content area.
-- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, `isCalendarOpen` (+ `isCalendarFilterOpen`), search active/query, and current profile draft.
+- `root/state/State.kt` holds: selected tab, selected animation/reading sections, `isSettingsOpen`, `isCalendarOpen` (+ `isCalendarFilterOpen`), `detailStack` (media/character/staff/studio push + `isDetailOpen`), search active/query, and current profile draft.
 - `root` owns topbar search state for DISCOVER, ANIME and MANGA via `Toolbar` (PROFILE has no search):
   - Normal state: topbar actions.
   - Active search: replaces title with `SearchField`; left icon becomes ChevronLeft; system back closes search.
 - `root` owns the settings overlay via `State.isSettingsOpen` (single source for title, content and back; closes with `CloseOverlay`). Open means `Toolbar` with back + `settingsTitle` and zero actions; the content area renders `SettingsScreen`.
+- `root` owns media detail via `State.detailStack` (single source for title, content and back). Open means a full-screen `MediaDetailScreen` over the current tab with the tab bar hidden, back + the media title (falls back to `mediaDetailTitle` while loading) and zero actions; back pops one destination at a time (`BackStep.CloseDetail`).
 - `Toolbar` takes primitives + callbacks (`onNavigation`, `onAction(id)`, search callbacks); `Root` maps action ids (`ACTION_SEARCH`, `ACTION_SETTINGS`, …). Filter/sort actions are currently no-op until their screens land; the calendar action opens the schedule overlay (`State.isCalendarOpen`).
 
 ## Profile Layout (parked — no profile UI exists yet)
@@ -260,15 +261,15 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 | Group | Items | Rendering |
 |---|---|---|
-| **General** | Language · Theme (mode · palette) · Font · Surfaces | picker sheets (`ModalSheet` + `OptionGroup`) |
+| **General** | Language · Theme (mode · palette) · Font · Surfaces · Color style | picker sheets (`ModalSheet` + `OptionGroup`) |
 | **AniList** | Title language · 18+ content · Score format | picker / inline toggle |
 | **Lists** | Default sort · Split completed anime · Split completed manga · Advanced scoring | picker / inline toggle |
 | **Notifications** | Airing · Messages · Media | 3 inline toggles (activity/following/forum have no living feature behind them) |
 | **Information** | Version · About (modal) | static row + `ModalSheet` (brand mark + description + attribution, version from `MichiBuildConfig`) |
 
 - **Inline toggles** (private `SettingsToggleRow`: title + optional subtitle + display-only `Switch`): 18+ content, split completed anime/manga, advanced scoring, plus the 3 notification prefs (airing, messages, media).
-- **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list).
-- **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font as its own row — same pickers the auth modal's theme sheet had. Writes persist to the store; the auth modal keeps only its language picker.
+- **Pickers** open `ModalSheet` with `OptionGroup` + `OptionRow`. Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list and `PaletteStyle` via the style list).
+- **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font, surfaces and the global MaterialKolor `PaletteStyle` as their own rows — same pickers the auth modal's theme sheet had. Style names travel raw ("Tonal spot", "Monochrome", …) like palette names. Writes persist to the store; the auth modal keeps only its language picker.
 - Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
 
 ## UI Decisions

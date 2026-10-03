@@ -53,6 +53,11 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
     countryOfOrigin
     isAdult
     isFavourite
+    rankings { rank type context format season year allTime }
+    tags { name rank isMediaSpoiler }
+    externalLinks { id site url type icon color }
+    trailer { id site thumbnail }
+    synonyms
     mediaListEntry { id status progress progressVolumes score advancedScores notes repeat priority private hiddenFromStatusLists startedAt { year month day } completedAt { year month day } }
     relations {
       edges {

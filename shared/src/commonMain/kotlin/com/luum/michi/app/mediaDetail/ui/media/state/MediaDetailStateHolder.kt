@@ -3,11 +3,16 @@ package com.luum.michi.app.mediaDetail.ui.media.state
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -50,64 +55,71 @@ private data class MediaDetailSnapshot(
 
 internal class MediaDetailStateHolder(
     private val repository: MediaDetailRepository,
+    private val entryRepository: MediaListEntryRepository,
     private val scope: CoroutineScope,
     private val strings: LanguageStrings,
 ) {
-    private var detailState: MediaDetail? = null
-    private var loadingState = false
-    private var errorState: NetworkError? = null
+    // Snapshot-backed: the detail screen reads these directly and must
+    // recompose on every load/pagination (plain vars would apply silently).
+    var detail: MediaDetail? by mutableStateOf(null)
+        private set
+    var isLoading: Boolean by mutableStateOf(false)
+        private set
+    var error: NetworkError? by mutableStateOf(null)
+        private set
+    var isTogglingFavourite: Boolean by mutableStateOf(false)
+        private set
+
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
 
     /** LRU cache of up to 5 recently-visited detail pages. */
     private val detailCache = LruCache<Int, MediaDetailSnapshot>(maxSize = 5)
 
-    var voiceLanguage = "JAPANESE"
+    var voiceLanguage: String by mutableStateOf("JAPANESE")
         private set
-    var characters: List<MediaCharacterEntry> = emptyList()
+    var characters: List<MediaCharacterEntry> by mutableStateOf(emptyList())
         private set
-    var charactersHasNextPage = false
+    var charactersHasNextPage: Boolean by mutableStateOf(false)
         private set
-    var charactersCurrentPage = 1
+    var charactersCurrentPage: Int by mutableStateOf(1)
         private set
-    var isLoadingCharacters = false
-        private set
-
-    var staff: List<MediaStaffEntry> = emptyList()
-        private set
-    var staffHasNextPage = false
-        private set
-    var staffCurrentPage = 1
-        private set
-    var isLoadingStaff = false
+    var isLoadingCharacters: Boolean by mutableStateOf(false)
         private set
 
-    var recommendations: List<MediaRecommendationEntry> = emptyList()
+    var staff: List<MediaStaffEntry> by mutableStateOf(emptyList())
         private set
-    var isLoadingRecommendations = false
+    var staffHasNextPage: Boolean by mutableStateOf(false)
+        private set
+    var staffCurrentPage: Int by mutableStateOf(1)
+        private set
+    var isLoadingStaff: Boolean by mutableStateOf(false)
         private set
 
-    val detail: MediaDetail? get() = detailState
-    val isLoading: Boolean get() = loadingState
-    val error: NetworkError? get() = errorState
+    var recommendations: List<MediaRecommendationEntry> by mutableStateOf(emptyList())
+        private set
+    var isLoadingRecommendations: Boolean by mutableStateOf(false)
+        private set
 
     fun load(mediaId: Int) {
-        if (currentMediaId == mediaId && (detailState != null || loadingState)) return
+        if (currentMediaId == mediaId && (detail != null || isLoading)) return
 
         // Restore from LRU cache if available (avoids a full network round-trip).
         val cached = detailCache.get(mediaId)
         if (cached != null) {
             currentMediaId = mediaId
             currentJob?.cancel()
-            detailState = cached.detail
+            detail = cached.detail
             characters = cached.characters
             charactersHasNextPage = cached.charactersHasNextPage
             charactersCurrentPage = cached.charactersCurrentPage
             staff = cached.staff
             staffHasNextPage = cached.staffHasNextPage
             staffCurrentPage = cached.staffCurrentPage
-            errorState = null
-            loadingState = false
+            error = null
+            isLoading = false
+            isLoadingCharacters = false
+            isLoadingStaff = false
             // Reset per-visit transient state
             recommendations = emptyList()
             return
@@ -115,9 +127,9 @@ internal class MediaDetailStateHolder(
 
         currentMediaId = mediaId
         currentJob?.cancel()
-        detailState = null
-        errorState = null
-        loadingState = true
+        detail = null
+        error = null
+        isLoading = true
         characters = emptyList()
         staff = emptyList()
         charactersHasNextPage = false
@@ -130,7 +142,7 @@ internal class MediaDetailStateHolder(
         currentJob = scope.launch {
             when (val result = repository.loadDetail(mediaId, voiceLanguage, strings)) {
                 is NetworkResult.Success -> {
-                    detailState = result.value
+                    detail = result.value
                     characters = result.value.characters.items
                     charactersHasNextPage = result.value.characters.hasNextPage
                     charactersCurrentPage = result.value.characters.currentPage
@@ -151,9 +163,9 @@ internal class MediaDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
-            loadingState = false
+            isLoading = false
         }
     }
 
@@ -162,10 +174,11 @@ internal class MediaDetailStateHolder(
         // Invalidate cached entry so next load() re-fetches from network.
         detailCache.remove(id)
         currentJob?.cancel()
+        isLoading = true
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
                 is NetworkResult.Success -> {
-                    detailState = result.value
+                    detail = result.value
                     characters = result.value.characters.items
                     charactersHasNextPage = result.value.characters.hasNextPage
                     charactersCurrentPage = result.value.characters.currentPage
@@ -185,8 +198,9 @@ internal class MediaDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
+            isLoading = false
         }
     }
 
@@ -202,7 +216,7 @@ internal class MediaDetailStateHolder(
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingCharacters = false
         }
@@ -220,7 +234,7 @@ internal class MediaDetailStateHolder(
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingCharacters = false
         }
@@ -238,9 +252,25 @@ internal class MediaDetailStateHolder(
                     staffHasNextPage = result.value.hasNextPage
                     staffCurrentPage = result.value.currentPage
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingStaff = false
+        }
+    }
+
+    fun toggleFavourite() {
+        val current = detail ?: return
+        if (isTogglingFavourite) return
+        isTogglingFavourite = true
+        scope.launch {
+            when (val result = entryRepository.toggleFavourite(current.id, current.type == MediaDetailType.MANGA)) {
+                is NetworkResult.Success -> {
+                    val latest = detail
+                    if (latest != null) detail = latest.copy(isFavourite = !latest.isFavourite)
+                }
+                is NetworkResult.Failure -> error = result.error
+            }
+            isTogglingFavourite = false
         }
     }
 
@@ -253,7 +283,7 @@ internal class MediaDetailStateHolder(
                 is NetworkResult.Success -> {
                     recommendations = result.value
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingRecommendations = false
         }
@@ -263,9 +293,9 @@ internal class MediaDetailStateHolder(
         currentJob?.cancel()
         currentJob = null
         currentMediaId = null
-        detailState = null
-        loadingState = false
-        errorState = null
+        detail = null
+        isLoading = false
+        error = null
         characters = emptyList()
         staff = emptyList()
         charactersHasNextPage = false
@@ -280,8 +310,9 @@ internal class MediaDetailStateHolder(
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createMediaDetailStateHolder(
     repository: MediaDetailRepository,
+    entryRepository: MediaListEntryRepository,
     scope: CoroutineScope,
     strings: LanguageStrings,
 ): MediaDetailStateHolder {
-    return MediaDetailStateHolder(repository, scope, strings)
+    return MediaDetailStateHolder(repository, entryRepository, scope, strings)
 }

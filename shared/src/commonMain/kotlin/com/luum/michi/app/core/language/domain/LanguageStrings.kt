@@ -87,11 +87,15 @@ interface LanguageStrings {
     val mediaDetailNoCharactersLabel: String
     val mediaDetailNoStaffLabel: String
     val mediaDetailNoRecommendationsLabel: String
+    val mediaDetailCharactersTitle: String
+    val mediaDetailStudiosLabel: String
+    val mediaDetailVoiceLanguageLabel: String
     val mediaDetailLoadMoreAction: String
     val mediaDetailScoreDistributionTitle: String
     val mediaDetailStatusDistributionTitle: String
     val mediaStatsStatusPlanning: String
     val mediaStatsStatusPaused: String
+    val mediaStatsStatusOther: String
     val voiceLanguageJapanese: String
     val voiceLanguageEnglish: String
     val voiceLanguageKorean: String
@@ -196,6 +200,7 @@ interface LanguageStrings {
     val settingsListsSection: String
     val settingsInformationSection: String
     val settingsThemeTitle: String
+    val settingsStyleTitle: String
     val settingsSurfaceTitle: String
     val surfaceGlassLabel: String
     val surfaceSolidLabel: String
@@ -359,6 +364,27 @@ interface LanguageStrings {
     val staffNoCharactersLabel: String
     val yearsActivePresent: String
     val seeAllAction: String
+
+    // Media detail redesign
+    val mediaDetailSeasonLabel: String
+    val mediaDetailStudioLabel: String
+    val mediaDetailFormatLabel: String
+    val mediaDetailStatusLabel: String
+    val mediaDetailStartDateLabel: String
+    val mediaDetailRomajiLabel: String
+    val mediaDetailJapaneseLabel: String
+    val mediaDetailSynonymsLabel: String
+    val mediaDetailVideosTitle: String
+    val mediaDetailInformationTitle: String
+    val mediaDetailTagsTitle: String
+    val mediaDetailExternalLinksTitle: String
+    val mediaDetailSummaryStatsTitle: String
+    val mediaDetailTotalLabel: String
+    val mediaDetailHighestRatedLabel: String
+    val mediaDetailMostPopularLabel: String
+    val mediaDetailAverageScoreLabel: String
+    val mediaDetailAllTimeLabel: String
+    val moreAction: String
 }
 
 fun getLanguageStrings(language: AppLanguage): LanguageStrings {

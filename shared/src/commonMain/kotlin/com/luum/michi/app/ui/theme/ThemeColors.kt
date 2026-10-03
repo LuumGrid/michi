@@ -2,19 +2,21 @@ package com.luum.michi.app.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 
 /**
  * Brand palette, mirroring the language tables (`LanguageStrings` + one
  * class per language). Each palette is a class holding only its seed color;
  * MaterialKolor generates the full ~30-role M3 scheme (light + dark) from it,
- * so no role falls back to generic Material defaults.
+ * so no role falls back to generic Material defaults. The [style] (global,
+ * user-selected) shapes how the scheme is generated from the seed.
  */
 internal interface ThemeColors {
     val seed: Color
 
-    fun scheme(dark: Boolean): ColorScheme =
-        dynamicColorScheme(seedColor = seed, isDark = dark, isAmoled = false)
+    fun scheme(dark: Boolean, style: PaletteStyle = PaletteStyle.TonalSpot): ColorScheme =
+        dynamicColorScheme(seedColor = seed, isDark = dark, isAmoled = false, style = style)
 }
 
 /** Brand palette names travel raw on purpose (like "Michi"): not copy. */
@@ -22,6 +24,10 @@ internal val ThemePalettes: List<Pair<String, ThemeColors>> = listOf(
     "Default" to DefaultTheme(),
     "Ocean" to OceanTheme(),
     "Sakura" to SakuraTheme(),
+    "Forest" to ForestTheme(),
+    "Amber" to AmberTheme(),
+    "Violet" to VioletTheme(),
+    "Mono" to MonoTheme(),
 )
 
 /**
@@ -31,12 +37,20 @@ internal val ThemePalettes: List<Pair<String, ThemeColors>> = listOf(
 internal fun paletteForId(id: String?): ThemeColors = when (id) {
     "ocean" -> OceanTheme()
     "sakura" -> SakuraTheme()
+    "forest" -> ForestTheme()
+    "amber" -> AmberTheme()
+    "violet" -> VioletTheme()
+    "mono" -> MonoTheme()
     else -> DefaultTheme()
 }
 
 internal fun paletteIdOf(palette: ThemeColors): String = when (palette) {
     is OceanTheme -> "ocean"
     is SakuraTheme -> "sakura"
+    is ForestTheme -> "forest"
+    is AmberTheme -> "amber"
+    is VioletTheme -> "violet"
+    is MonoTheme -> "mono"
     else -> "default"
 }
 

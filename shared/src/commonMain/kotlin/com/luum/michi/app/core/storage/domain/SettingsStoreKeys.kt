@@ -8,6 +8,8 @@ package com.luum.michi.app.core.storage.domain
 internal object SettingsStoreKeys {
     const val ThemeMode = "theme_mode"
     const val ThemePalette = "theme_palette"
+    /** Global MaterialKolor palette style (TonalSpot, Vibrant, …). */
+    const val ThemeStyle = "theme_style"
     const val Font = "app_font"
     const val Language = "app_language"
     const val DefaultDiscoverTab = "default_home_tab"

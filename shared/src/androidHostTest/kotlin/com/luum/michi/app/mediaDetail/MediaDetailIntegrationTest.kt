@@ -1,0 +1,268 @@
+package com.luum.michi.app.mediaDetail
+
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
+import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private fun sampleDetail(
+    id: Int,
+    characters: MediaCharactersPage = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
+    staff: MediaStaffPage = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
+) = MediaDetail(
+    id = id,
+    type = MediaDetailType.ANIME,
+    title = "Media $id",
+    coverUrl = null,
+    bannerUrl = null,
+    paletteHex = null,
+    format = "TV",
+    status = "Releasing",
+    episodes = 12,
+    chapters = null,
+    volumes = null,
+    duration = null,
+    genres = emptyList(),
+    studios = emptyList(),
+    source = null,
+    season = null,
+    startedLabel = null,
+    endedLabel = null,
+    averageScore = null,
+    meanScore = null,
+    popularity = null,
+    favourites = null,
+    descriptionPlain = "",
+    isAdult = false,
+    isFavourite = false,
+    viewerEntry = null,
+    relations = emptyList(),
+    scoreDistribution = emptyList(),
+    statusDistribution = emptyList(),
+    characters = characters,
+    staff = staff,
+    titleRomaji = null,
+    titleNative = null,
+    synonyms = emptyList(),
+    rankings = emptyList(),
+    tags = emptyList(),
+    externalLinks = emptyList(),
+    trailer = null,
+)
+
+private fun character(id: Int) = MediaCharacterEntry(
+    edgeKey = "edge-$id",
+    characterId = id,
+    name = "Character $id",
+    imageUrl = null,
+    role = MediaCharacterRole.MAIN,
+    voiceActor = null,
+)
+
+private fun staffEntry(id: Int) = MediaStaffEntry(
+    edgeKey = "staff-$id",
+    staffId = id,
+    name = "Staff $id",
+    imageUrl = null,
+    role = "Director",
+)
+
+/**
+ * Repository double: canned pages per media id, call counters to prove cache
+ * hits and voice-language reloads, and an optional failure switch.
+ */
+private class RecordingDetailRepository(
+    private val charactersPages: Map<Int, MediaCharactersPage> = emptyMap(),
+    private val staffPages: Map<Int, MediaStaffPage> = emptyMap(),
+    private val recommendations: List<MediaRecommendationEntry> = emptyList(),
+    private val failDetail: Boolean = false,
+) : MediaDetailRepository {
+    var detailCalls = 0
+        private set
+    var characterCalls = 0
+        private set
+    var staffCalls = 0
+        private set
+    var lastVoiceLanguage: String? = null
+        private set
+
+    override suspend fun loadDetail(
+        mediaId: Int,
+        voiceLanguage: String,
+        strings: LanguageStrings,
+    ): NetworkResult<MediaDetail> {
+        detailCalls++
+        if (failDetail) return NetworkResult.Failure(NetworkError.Http(500, null))
+        return NetworkResult.Success(
+            sampleDetail(
+                id = mediaId,
+                characters = charactersPages[1] ?: MediaCharactersPage(emptyList(), false, 1),
+                staff = staffPages[1] ?: MediaStaffPage(emptyList(), false, 1),
+            ),
+        )
+    }
+
+    override suspend fun loadCharactersPage(
+        mediaId: Int,
+        page: Int,
+        voiceLanguage: String,
+    ): NetworkResult<MediaCharactersPage> {
+        characterCalls++
+        lastVoiceLanguage = voiceLanguage
+        return NetworkResult.Success(charactersPages[page] ?: MediaCharactersPage(emptyList(), false, page))
+    }
+
+    override suspend fun loadStaffPage(
+        mediaId: Int,
+        page: Int,
+    ): NetworkResult<MediaStaffPage> {
+        staffCalls++
+        return NetworkResult.Success(staffPages[page] ?: MediaStaffPage(emptyList(), false, page))
+    }
+
+    override suspend fun loadRecommendations(
+        mediaId: Int,
+    ): NetworkResult<List<MediaRecommendationEntry>> = NetworkResult.Success(recommendations)
+}
+
+private object NoopEntryRepository : MediaListEntryRepository {
+    override suspend fun saveEntry(
+        mediaId: Int,
+        status: MediaListStatus,
+        progress: Int,
+        progressVolumes: Int?,
+        score: Float,
+        advancedScores: List<Float>?,
+        notes: String,
+        repeat: Int,
+        priority: Int,
+        isPrivate: Boolean,
+        hiddenFromStatusLists: Boolean,
+        startedAtMillis: Long?,
+        completedAtMillis: Long?,
+    ): NetworkResult<MediaListViewerEntry> = NetworkResult.Failure(NetworkError.Unknown(null))
+
+    override suspend fun saveProgress(
+        mediaId: Int,
+        progress: Int?,
+        status: MediaListStatus?,
+        progressVolumes: Int?,
+    ): NetworkResult<Unit> = NetworkResult.Failure(NetworkError.Unknown(null))
+
+    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> =
+        NetworkResult.Failure(NetworkError.Unknown(null))
+
+    override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> =
+        NetworkResult.Failure(NetworkError.Unknown(null))
+}
+
+private fun holderWired(repository: MediaDetailRepository) = MediaDetailStateHolder(
+    repository = repository,
+    entryRepository = NoopEntryRepository,
+    scope = CoroutineScope(Dispatchers.Unconfined),
+    strings = EnglishStrings,
+)
+
+class MediaDetailIntegrationTest {
+
+    @Test
+    fun loadHydratesDetailCharactersAndStaff() {
+        val characters = MediaCharactersPage(listOf(character(1), character(2)), false, 1)
+        val staff = MediaStaffPage(listOf(staffEntry(9)), false, 1)
+        val repository = RecordingDetailRepository(
+            charactersPages = mapOf(1 to characters),
+            staffPages = mapOf(1 to staff),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(5)
+
+        assertEquals("Media 5", holder.detail?.title)
+        assertEquals(2, holder.characters.size)
+        assertEquals(1, holder.staff.size)
+        assertFalse(holder.isLoading)
+        assertNull(holder.error)
+        assertEquals(1, repository.detailCalls)
+    }
+
+    @Test
+    fun cacheHitSkipsNetworkOnRevisit() {
+        val repository = RecordingDetailRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.load(2)
+        holder.load(1)
+
+        // Three loads, two fetches: the third restored from the LRU cache.
+        assertEquals(2, repository.detailCalls)
+        assertEquals(1, holder.detail?.id)
+    }
+
+    @Test
+    fun loadMoreCharactersAppendsNextPage() {
+        val repository = RecordingDetailRepository(
+            charactersPages = mapOf(
+                1 to MediaCharactersPage(listOf(character(1)), hasNextPage = true, currentPage = 1),
+                2 to MediaCharactersPage(listOf(character(2)), hasNextPage = false, currentPage = 2),
+            ),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertEquals(1, holder.characters.size)
+        assertTrue(holder.charactersHasNextPage)
+
+        holder.loadMoreCharacters()
+
+        assertEquals(listOf(1, 2), holder.characters.map { it.characterId })
+        assertFalse(holder.charactersHasNextPage)
+        assertEquals(1, repository.characterCalls)
+    }
+
+    @Test
+    fun selectVoiceLanguageReloadsCharactersPageOne() {
+        val repository = RecordingDetailRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.selectVoiceLanguage("ENGLISH")
+
+        assertEquals("ENGLISH", holder.voiceLanguage)
+        assertEquals("ENGLISH", repository.lastVoiceLanguage)
+        assertEquals(1, repository.characterCalls)
+    }
+
+    @Test
+    fun failureSurfacesErrorAndClearsLoading() {
+        val repository = RecordingDetailRepository(failDetail = true)
+        val holder = holderWired(repository)
+
+        holder.load(1)
+
+        assertNull(holder.detail)
+        assertNotNull(holder.error)
+        assertFalse(holder.isLoading)
+    }
+}

@@ -89,6 +89,13 @@ private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
     statusDistribution = emptyList(),
     characters = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
     staff = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
+    titleRomaji = null,
+    titleNative = null,
+    synonyms = emptyList(),
+    rankings = emptyList(),
+    tags = emptyList(),
+    externalLinks = emptyList(),
+    trailer = null,
 )
 
 private fun existingEntry() = MediaListViewerEntry(

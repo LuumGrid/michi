@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.materialkolor.PaletteStyle
 
 /** Theme selection types. SYSTEM follows the OS; LIGHT/DARK force a scheme. */
 internal enum class ThemeType {
@@ -30,6 +31,7 @@ internal fun Theme(
     type: ThemeType = ThemeType.SYSTEM,
     font: AppFont = AppFont.JAKARTA,
     surfaces: SurfaceStyle = SurfaceStyle.GLASS,
+    style: PaletteStyle = PaletteStyle.TonalSpot,
     content: @Composable () -> Unit,
 ) {
     val dark = type.resolveDarkTheme(isSystemInDarkTheme())
@@ -39,7 +41,7 @@ internal fun Theme(
         LocalSurfaceStyle provides surfaces,
     ) {
         MaterialTheme(
-            colorScheme = palette.scheme(dark),
+            colorScheme = palette.scheme(dark, style),
             typography = appTypography(font),
             content = content,
         )

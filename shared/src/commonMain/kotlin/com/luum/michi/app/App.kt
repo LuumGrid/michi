@@ -47,12 +47,15 @@ import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.theme.paletteForId
 import com.luum.michi.app.ui.theme.paletteIdOf
+import com.luum.michi.app.ui.theme.paletteStyleForId
+import com.luum.michi.app.ui.theme.paletteStyleIdOf
 import com.luum.michi.app.ui.language.LocalStrings
 import com.luum.michi.app.ui.theme.AppFont
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.Theme
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
+import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
 
 /**
@@ -72,6 +75,9 @@ fun App(
     }
     var palette: ThemeColors by remember {
         mutableStateOf(paletteForId(store.getString(SettingsStoreKeys.ThemePalette)))
+    }
+    var themeStyle by remember {
+        mutableStateOf(paletteStyleForId(store.getString(SettingsStoreKeys.ThemeStyle)))
     }
     var themeType by remember {
         mutableStateOf(
@@ -136,6 +142,7 @@ fun App(
             type = themeType,
             font = font,
             surfaces = surfaces,
+            style = themeStyle,
         ) {
             val current = session
             // No login wall: anonymous users enter the shell as guests
@@ -192,6 +199,11 @@ fun App(
                             onPaletteChange = {
                                 palette = it
                                 store.putString(SettingsStoreKeys.ThemePalette, paletteIdOf(it))
+                            },
+                            themeStyle = themeStyle,
+                            onThemeStyleChange = { style ->
+                                themeStyle = style
+                                store.putString(SettingsStoreKeys.ThemeStyle, paletteStyleIdOf(style))
                             },
                             themeType = themeType,
                             onThemeTypeChange = {
