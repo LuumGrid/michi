@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.label
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
 import com.luum.michi.app.ui.components.GlassShape
 
 /**

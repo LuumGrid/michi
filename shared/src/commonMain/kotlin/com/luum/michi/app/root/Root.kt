@@ -42,12 +42,27 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
+import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
+import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
+import com.luum.michi.app.mediaDetail.domain.character.model.aniListUrl as characterAniListUrl
+import com.luum.michi.app.mediaDetail.domain.character.model.shareText as characterShareText
+import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
+import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
+import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
+import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
+import com.luum.michi.app.mediaDetail.ui.character.CharacterDetailScreen
+import com.luum.michi.app.mediaDetail.ui.character.state.createCharacterDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
+import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
+import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
+import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
+import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.ShareLauncher
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
@@ -127,6 +142,9 @@ internal fun Root(
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     mediaDetailRepository: MediaDetailRepository,
+    characterDetailRepository: CharacterDetailRepository,
+    staffDetailRepository: StaffDetailRepository,
+    studioDetailRepository: StudioDetailRepository,
     calendarRepository: CalendarRepository,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
@@ -234,14 +252,28 @@ internal fun Root(
 
     // Media detail holder: session-independent (public data) and shared by
     // guests. Loads on intent when a media destination opens; the holder's
-    // own LRU makes revisits instant. Character/staff/studio destinations
-    // render nothing yet (their screens are Phase 2).
+    // own LRU makes revisits instant. Character/staff/studio holders mirror
+    // the same shape for their own destinations.
     val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, listScope, strings) {
         createMediaDetailStateHolder(mediaDetailRepository, mediaListEntryRepository, listScope, strings)
     }
+    val characterHolder = remember(characterDetailRepository, listScope, strings) {
+        createCharacterDetailStateHolder(characterDetailRepository, listScope, strings, viewerId ?: 0)
+    }
+    val staffHolder = remember(staffDetailRepository, listScope, strings) {
+        createStaffDetailStateHolder(staffDetailRepository, listScope, strings, viewerId ?: 0)
+    }
+    val studioHolder = remember(studioDetailRepository, listScope) {
+        createStudioDetailStateHolder(studioDetailRepository, listScope, viewerId ?: 0)
+    }
     LaunchedEffect(state.currentDetail) {
-        val destination = state.currentDetail
-        if (destination is DetailDestination.Media) mediaDetailHolder.load(destination.id)
+        when (val destination = state.currentDetail) {
+            is DetailDestination.Media -> mediaDetailHolder.load(destination.id)
+            is DetailDestination.Character -> characterHolder.load(destination.id)
+            is DetailDestination.Staff -> staffHolder.load(destination.id)
+            is DetailDestination.Studio -> studioHolder.load(destination.id)
+            null -> {}
+        }
     }
 
     // Deep link (anilist.co/anime|manga/{id}): open the media detail once the
@@ -305,6 +337,33 @@ internal fun Root(
     // offset so it stays glued to the toolbar when collapsing.
     val toolbarScroll = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val hideToolbarOnScroll = hidesToolbarOnScroll(tab, state)
+    // The heart reads the holder that owns the active destination: media
+    // keeps its flag on the detail snapshot, the other scopes expose it
+    // directly.
+    val isDetailFavourite = when (val destination = state.currentDetail) {
+        is DetailDestination.Media -> mediaDetailHolder.detail?.isFavourite == true
+        is DetailDestination.Character -> characterHolder.isFavourite
+        is DetailDestination.Staff -> staffHolder.isFavourite
+        is DetailDestination.Studio -> studioHolder.isFavourite
+        null -> false
+    }
+    // Overflow menu target per active destination: title + canonical AniList
+    // URL + share body. Null while the detail has not hydrated yet.
+    val detailOverflow: DetailOverflow? = when (val destination = state.currentDetail) {
+        is DetailDestination.Media -> mediaDetailHolder.detail?.let {
+            DetailOverflow(it.title, it.aniListUrl(), it.shareText())
+        }
+        is DetailDestination.Character -> characterHolder.detail?.let {
+            DetailOverflow(it.name, it.characterAniListUrl(), it.characterShareText())
+        }
+        is DetailDestination.Staff -> staffHolder.detail?.let {
+            DetailOverflow(it.name, it.staffAniListUrl(), it.staffShareText())
+        }
+        is DetailDestination.Studio -> studioHolder.detail?.let {
+            DetailOverflow(it.name, it.studioAniListUrl(), it.studioShareText())
+        }
+        null -> null
+    }
     val veilOffsetPx = if (hideToolbarOnScroll) {
         toolbarScroll.state.heightOffset.roundToInt()
     } else {
@@ -337,7 +396,8 @@ internal fun Root(
                     isSettingsOpen = state.isSettingsOpen,
                     isCalendarOpen = state.isCalendarOpen,
                     isDetailOpen = state.isDetailOpen,
-                    isDetailFavourite = mediaDetailHolder.detail?.isFavourite == true,
+                    isMediaDetail = state.currentDetail is DetailDestination.Media,
+                    isDetailFavourite = isDetailFavourite,
                     isGuest = viewerId == null,
                     strings = strings,
                 ),
@@ -357,7 +417,13 @@ internal fun Root(
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
-                        ACTION_FAVOURITE -> mediaDetailHolder.toggleFavourite()
+                        ACTION_FAVOURITE -> when (val destination = state.currentDetail) {
+                            is DetailDestination.Media -> mediaDetailHolder.toggleFavourite()
+                            is DetailDestination.Character -> characterHolder.toggleFavourite()
+                            is DetailDestination.Staff -> staffHolder.toggleFavourite()
+                            is DetailDestination.Studio -> studioHolder.toggleFavourite()
+                            null -> {}
+                        }
                         ACTION_MORE -> state.openDetailMenu()
                     }
                 },
@@ -436,8 +502,8 @@ internal fun Root(
                     // Detail page over the current tab (tab bar hidden):
                     // pushes onto detailStack, back pops one at a time.
                     val destination = state.currentDetail
-                    if (destination is DetailDestination.Media) {
-                        MediaDetailScreen(
+                    when (destination) {
+                        is DetailDestination.Media -> MediaDetailScreen(
                             holder = mediaDetailHolder,
                             strings = strings,
                             bottomPadding = padding.calculateBottomPadding(),
@@ -449,9 +515,58 @@ internal fun Root(
                                 }
                             },
                             onOpenMedia = { state.openMedia(it) },
+                            onOpenCharacter = { state.openCharacter(it) },
+                            onOpenStaff = { state.openStaff(it) },
+                            onOpenStudio = { state.openStudio(it) },
                             onEditEntry = { state.openEditor(it) },
                             onOpenUrl = { urlOpener.open(it) },
                         )
+                        is DetailDestination.Character -> CharacterDetailScreen(
+                            holder = characterHolder,
+                            strings = strings,
+                            bottomPadding = padding.calculateBottomPadding(),
+                            onRetry = {
+                                if (characterHolder.detail == null) {
+                                    characterHolder.load(destination.id)
+                                } else {
+                                    characterHolder.refresh()
+                                }
+                            },
+                            onOpenMedia = { state.openMedia(it) },
+                        )
+                        is DetailDestination.Staff -> StaffDetailScreen(
+                            holder = staffHolder,
+                            strings = strings,
+                            bottomPadding = padding.calculateBottomPadding(),
+                            onRetry = {
+                                if (staffHolder.detail == null) {
+                                    staffHolder.load(destination.id)
+                                } else {
+                                    staffHolder.refresh()
+                                }
+                            },
+                            onOpenMedia = { state.openMedia(it) },
+                            onOpenCharacter = { state.openCharacter(it) },
+                        )
+                        is DetailDestination.Studio -> StudioDetailScreen(
+                            holder = studioHolder,
+                            strings = strings,
+                            bottomPadding = padding.calculateBottomPadding(),
+                            onRetry = {
+                                if (studioHolder.detail == null) {
+                                    studioHolder.load(destination.id)
+                                } else {
+                                    studioHolder.refresh()
+                                }
+                            },
+                            onOpenMedia = { state.openMedia(it) },
+                            onAddEntry = if (viewerId != null) {
+                                { state.openEditor(it) }
+                            } else {
+                                null
+                            },
+                        )
+                        null -> {}
                     }
                 } else if (state.isCalendarOpen) {
                     // Airing schedule overlay (fullscreen, tab bar hidden):
@@ -620,7 +735,7 @@ internal fun Root(
                     onDismiss = { state.closeEditor() },
                 )
             }
-            val detailMenu = mediaDetailHolder.detail
+            val detailMenu = detailOverflow
             if (state.isDetailOpen && state.isDetailMenuOpen && detailMenu != null) {
                 ModalSheet(
                     title = detailMenu.title,
@@ -633,7 +748,7 @@ internal fun Root(
                             selected = false,
                             onClick = {
                                 state.closeDetailMenu()
-                                urlOpener.open(detailMenu.aniListUrl())
+                                urlOpener.open(detailMenu.url)
                             },
                             divider = false,
                             trailing = {},
@@ -643,7 +758,7 @@ internal fun Root(
                             selected = false,
                             onClick = {
                                 state.closeDetailMenu()
-                                shareLauncher.share(text = detailMenu.shareText(), subject = detailMenu.title)
+                                shareLauncher.share(text = detailMenu.shareText, subject = detailMenu.title)
                             },
                             trailing = {},
                         )
@@ -721,6 +836,13 @@ internal fun resolveInitialSort(
     return InitialSort(option, order, persist = false)
 }
 
+/** Per-destination overflow payload: what the detail menu opens/shares. */
+private data class DetailOverflow(
+    val title: String,
+    val url: String,
+    val shareText: String,
+)
+
 private const val ACTION_SEARCH = "search"
 private const val ACTION_SETTINGS = "settings"
 private const val ACTION_FILTER = "filter"
@@ -741,6 +863,7 @@ private fun toolbarActions(
     isSettingsOpen: Boolean,
     isCalendarOpen: Boolean,
     isDetailOpen: Boolean,
+    isMediaDetail: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
     strings: LanguageStrings,
@@ -748,23 +871,29 @@ private fun toolbarActions(
     if (isSearching || isSettingsOpen) return emptyList()
     // Detail overlay: edit / favourite / overflow trailing the back chevron.
     // The heart swaps to its filled twin when the entry is favourited.
+    // Character/staff/studio details have no list entry, so only the heart.
     if (isDetailOpen) {
+        val favourite = ToolbarAction(
+            id = ACTION_FAVOURITE,
+            icon = if (isDetailFavourite) AppIcons.FavoriteFilled else AppIcons.Favorite,
+            contentDescription = strings.favouriteLabel,
+        )
+        val more = ToolbarAction(
+            id = ACTION_MORE,
+            icon = AppIcons.More,
+            contentDescription = strings.moreAction,
+        )
+        // Media adds the editor pencil; the other scopes have no list entry.
+        // All four open the overflow (AniList link + share).
+        if (!isMediaDetail) return listOf(favourite, more)
         return listOf(
             ToolbarAction(
                 id = ACTION_EDIT,
                 icon = AppIcons.Edit,
                 contentDescription = strings.editEntryAction,
             ),
-            ToolbarAction(
-                id = ACTION_FAVOURITE,
-                icon = if (isDetailFavourite) AppIcons.FavoriteFilled else AppIcons.Favorite,
-                contentDescription = strings.favouriteLabel,
-            ),
-            ToolbarAction(
-                id = ACTION_MORE,
-                icon = AppIcons.More,
-                contentDescription = strings.moreAction,
-            ),
+            favourite,
+            more,
         )
     }
     // Calendar overlay: lone filter next to the back chevron. Settings

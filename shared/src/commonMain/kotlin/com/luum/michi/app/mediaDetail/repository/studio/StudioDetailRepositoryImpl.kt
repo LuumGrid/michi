@@ -40,6 +40,8 @@ query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}
         title { userPreferred romaji english native }
         coverImage { large color }
         averageScore
+        favourites
+        genres
         startDate { year }
         mediaListEntry { status }
       }
@@ -61,6 +63,8 @@ query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
         title { userPreferred romaji english native }
         coverImage { large color }
         averageScore
+        favourites
+        genres
         startDate { year }
         mediaListEntry { status }
       }
@@ -125,6 +129,8 @@ private data class StudioMediaNodeDto(
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
+    val favourites: Int? = null,
+    val genres: List<String> = emptyList(),
     val startDate: StudioFuzzyYearDto? = null,
     val mediaListEntry: StudioMediaListEntryDto? = null,
 )
@@ -155,6 +161,9 @@ private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
     year = startDate?.year,
     averageScore = averageScore?.takeIf { it > 0 },
     viewerStatus = mediaListEntry?.status,
+    type = type,
+    favourites = favourites?.takeIf { it > 0 },
+    genres = genres.filter { it.isNotBlank() },
 )
 
 private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): StudioMediaPage {

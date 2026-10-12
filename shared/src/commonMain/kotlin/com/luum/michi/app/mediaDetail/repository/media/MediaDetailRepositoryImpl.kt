@@ -48,7 +48,7 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
     seasonYear
     startDate { year month day }
     endDate { year month day }
-    studios(isMain: true) { nodes { id name } }
+    studios { nodes { id name } }
     nextAiringEpisode { episode airingAt timeUntilAiring }
     countryOfOrigin
     isAdult

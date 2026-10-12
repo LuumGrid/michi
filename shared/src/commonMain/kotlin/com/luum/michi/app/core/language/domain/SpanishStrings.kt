@@ -405,6 +405,25 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailAverageScoreLabel = "Puntaje promedio"
     override val mediaDetailAllTimeLabel = "Todos los tiempos"
     override val moreAction = "Más"
+
+    // Shared detail labels (character/staff/studio)
+    override val sortByPopularity = "Popularidad"
+    override val sortByFavourites = "Favoritos"
+    override val mediaDetailGenderLabel = "Género"
+    override val mediaDetailAgeLabel = "Edad"
+    override val mediaDetailBloodTypeLabel = "Tipo de sangre"
+    override val mediaDetailBirthdayLabel = "Cumpleaños"
+    override val mediaDetailDeathLabel = "Fallecimiento"
+    override val mediaDetailYearsActiveLabel = "Años activo"
+    override val mediaDetailHometownLabel = "Lugar de origen"
+    override val mediaDetailOccupationsLabel = "Ocupaciones"
+    override val mediaDetailAppearancesTitle = "Apariciones"
+    override val mediaDetailRolesTitle = "Roles"
+    override val mediaDetailAnimeRolesTitle = "Roles de anime"
+    override val mediaDetailMangaRolesTitle = "Roles de manga"
+    override val mediaDetailMediaTitle = "Series"
+    override val mediaDetailNoMediaLabel = "Sin series"
+    override val mediaDetailAnimeStudioLabel = "Estudio de anime"
 }
 
 private fun monthName(month: Int): String = when (month) {

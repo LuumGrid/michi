@@ -46,7 +46,7 @@ internal data class MediaRailItem(
  */
 @Composable
 internal fun MediaRail(
-    title: String,
+    title: String?,
     items: List<MediaRailItem>,
     modifier: Modifier = Modifier,
     onSelect: ((Int) -> Unit)? = null,
@@ -54,11 +54,13 @@ internal fun MediaRail(
     loadMoreLabel: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
+        if (title != null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),

@@ -39,16 +39,6 @@ import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
 
-/** Section header shared by the detail sections (no padding: callers own it). */
-@Composable
-internal fun MediaDetailSectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = modifier,
-    )
-}
-
 /**
  * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover
  * overlaps the banner's lower edge, centered, and the title/studio/meta live

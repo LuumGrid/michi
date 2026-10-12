@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -36,6 +37,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.glassBorder
@@ -58,6 +60,7 @@ internal fun MediaDetailInformationPanel(
     detail: MediaDetail,
     strings: LanguageStrings,
     isManga: Boolean,
+    onOpenStudio: (Int) -> Unit,
 ) {
     val rows = buildList {
         detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailRomajiLabel to it) }
@@ -76,14 +79,11 @@ internal fun MediaDetailInformationPanel(
         }
         detail.duration?.let { add(strings.mediaDetailDurationLabel to "$it min") }
         detail.season?.let { add(strings.mediaDetailSeasonLabel to it) }
-        if (detail.studios.isNotEmpty()) {
-            add(strings.mediaDetailStudioLabel to detail.studios.joinToString(", ") { it.name })
-        }
         detail.startedLabel?.let { add(strings.mediaDetailStartDateLabel to it) }
         detail.endedLabel?.let { add(strings.mediaDetailEndedLabel to it) }
         detail.source?.let { add(strings.mediaDetailSourceLabel to humanizeSource(it)) }
     }
-    if (rows.isEmpty()) return
+    if (rows.isEmpty() && detail.studios.isEmpty()) return
     val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Column(
         modifier = Modifier
@@ -121,6 +121,21 @@ internal fun MediaDetailInformationPanel(
                             modifier = Modifier.weight(1f),
                         )
                     }
+                }
+                if (detail.studios.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = strings.mediaDetailStudioLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    ChipRail(
+                        tabs = detail.studios.map { ChipTab(value = it.id, label = it.name) },
+                        selected = null,
+                        onSelect = onOpenStudio,
+                        contentPadding = PaddingValues(0.dp),
+                    )
                 }
             }
         }

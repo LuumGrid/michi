@@ -8,6 +8,9 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -52,54 +55,63 @@ internal class StaffDetailStateHolder(
     private val strings: LanguageStrings,
     @Suppress("UNUSED_PARAMETER") viewerId: Int,
 ) {
-    private var detailState: StaffDetail? = null
-    private var loadingState = false
-    private var errorState: NetworkError? = null
+    // Snapshot-backed: the detail screen reads these directly and must
+    // recompose on every load/pagination (plain vars would apply silently).
+    var detail: StaffDetail? by mutableStateOf(null)
+        private set
+    var isLoading: Boolean by mutableStateOf(false)
+        private set
+    var error: NetworkError? by mutableStateOf(null)
+        private set
+
     private var currentStaffId: Int? = null
     private var currentJob: Job? = null
 
     private val detailCache = LruCache<Int, StaffDetailSnapshot>(maxSize = 5)
 
+    /**
+     * Server page order never changes: the API always fetches by popularity,
+     * and [sort] is applied client-side by the screen. This keeps sort changes
+     * instant (no re-query, no list reset, no scroll reset).
+     */
+    private val serverSort = StaffMediaSort.POPULARITY
+
     // ── media list ──
-    var mediaItems: List<StaffMediaItem> = emptyList()
+    var mediaItems: List<StaffMediaItem> by mutableStateOf(emptyList())
         private set
-    var mediaHasNextPage = false
+    var mediaHasNextPage: Boolean by mutableStateOf(false)
         private set
-    var mediaCurrentPage = 1
+    var mediaCurrentPage: Int by mutableStateOf(1)
         private set
-    var isLoadingMoreMedia = false
+    var isLoadingMoreMedia: Boolean by mutableStateOf(false)
         private set
-    var sort = StaffMediaSort.NEWEST
+    var sort: StaffMediaSort by mutableStateOf(StaffMediaSort.NEWEST)
         private set
 
     // ── character list ──
-    var characterItems: List<StaffCharacterItem> = emptyList()
+    var characterItems: List<StaffCharacterItem> by mutableStateOf(emptyList())
         private set
-    var charactersHasNextPage = false
+    var charactersHasNextPage: Boolean by mutableStateOf(false)
         private set
-    var charactersCurrentPage = 1
+    var charactersCurrentPage: Int by mutableStateOf(1)
         private set
-    var isLoadingMoreCharacters = false
+    var isLoadingMoreCharacters: Boolean by mutableStateOf(false)
         private set
 
     // ── favourite ──
-    var isFavourite = false
+    var isFavourite: Boolean by mutableStateOf(false)
         private set
-    var isTogglingFavourite = false
+    var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
-
-    val detail: StaffDetail? get() = detailState
-    val isLoading: Boolean get() = loadingState
-    val error: NetworkError? get() = errorState
 
     fun load(id: Int) {
-        if (currentStaffId == id && (detailState != null || loadingState)) return
+        if (currentStaffId == id && (detail != null || isLoading)) return
 
         val cached = detailCache.get(id)
         if (cached != null) {
             currentStaffId = id
             currentJob?.cancel()
-            detailState = cached.detail
+            detail = cached.detail
             mediaItems = cached.mediaItems
             mediaHasNextPage = cached.mediaHasNextPage
             mediaCurrentPage = cached.mediaCurrentPage
@@ -108,16 +120,16 @@ internal class StaffDetailStateHolder(
             charactersHasNextPage = cached.charactersHasNextPage
             charactersCurrentPage = cached.charactersCurrentPage
             isFavourite = cached.detail.isFavourite
-            errorState = null
-            loadingState = false
+            error = null
+            isLoading = false
             return
         }
 
         currentStaffId = id
         currentJob?.cancel()
-        detailState = null
-        errorState = null
-        loadingState = true
+        detail = null
+        error = null
+        isLoading = true
         mediaItems = emptyList()
         mediaHasNextPage = false
         mediaCurrentPage = 1
@@ -126,10 +138,10 @@ internal class StaffDetailStateHolder(
         charactersCurrentPage = 1
 
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, sort, strings)) {
+            when (val result = repository.loadDetail(id, serverSort, strings)) {
                 is NetworkResult.Success -> {
                     val value = result.value
-                    detailState = value
+                    detail = value
                     mediaItems = value.media.items.distinctBy { it.mediaId }
                     mediaHasNextPage = value.media.hasNextPage
                     mediaCurrentPage = value.media.currentPage
@@ -139,9 +151,35 @@ internal class StaffDetailStateHolder(
                     isFavourite = value.isFavourite
                     detailCache.put(id, buildSnapshot(value))
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
-            loadingState = false
+            isLoading = false
+        }
+    }
+
+    fun refresh() {
+        val id = currentStaffId ?: return
+        // Invalidate cached entry so the page is re-fetched from network.
+        detailCache.remove(id)
+        currentJob?.cancel()
+        isLoading = true
+        currentJob = scope.launch {
+            when (val result = repository.loadDetail(id, serverSort, strings)) {
+                is NetworkResult.Success -> {
+                    val value = result.value
+                    detail = value
+                    mediaItems = value.media.items.distinctBy { it.mediaId }
+                    mediaHasNextPage = value.media.hasNextPage
+                    mediaCurrentPage = value.media.currentPage
+                    characterItems = value.characters.items.distinctRoles()
+                    charactersHasNextPage = value.characters.hasNextPage
+                    charactersCurrentPage = value.characters.currentPage
+                    isFavourite = value.isFavourite
+                    detailCache.put(id, buildSnapshot(value))
+                }
+                is NetworkResult.Failure -> error = result.error
+            }
+            isLoading = false
         }
     }
 
@@ -152,14 +190,14 @@ internal class StaffDetailStateHolder(
         val nextPage = mediaCurrentPage + 1
         scope.launch {
             isLoadingMoreMedia = true
-            when (val result = repository.loadMediaPage(id, nextPage, sort)) {
+            when (val result = repository.loadMediaPage(id, nextPage, serverSort)) {
                 is NetworkResult.Success -> {
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     mediaHasNextPage = result.value.hasNextPage
                     mediaCurrentPage = result.value.currentPage
-                    detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
+                    detail?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingMoreMedia = false
         }
@@ -177,53 +215,22 @@ internal class StaffDetailStateHolder(
                     characterItems = (characterItems + result.value.items).distinctRoles()
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
-                    detailState?.let { d -> detailCache.put(id, buildSnapshot(d)) }
+                    detail?.let { d -> detailCache.put(id, buildSnapshot(d)) }
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingMoreCharacters = false
         }
     }
 
     /**
-     * Changes the sort for the MEDIA list only.
-     * Characters pagination is NOT touched — it keeps its own independent state.
+     * Display-only sort: flips the local order immediately. The loaded media
+     * list is never reset and no network call fires (the screen applies
+     * [sortedFor] to each role group). Characters pagination is untouched.
      */
     fun changeSort(newSort: StaffMediaSort) {
         if (newSort == sort) return
         sort = newSort
-        val id = currentStaffId ?: return
-        // Invalidate only the media portion; don't wipe the character list from cache
-        detailCache.remove(id)
-        currentJob?.cancel()
-        mediaItems = emptyList()
-        mediaHasNextPage = false
-        mediaCurrentPage = 1
-        errorState = null
-        loadingState = true
-
-        currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, newSort, strings)) {
-                is NetworkResult.Success -> {
-                    val value = result.value
-                    detailState = value
-                    mediaItems = value.media.items.distinctBy { it.mediaId }
-                    mediaHasNextPage = value.media.hasNextPage
-                    mediaCurrentPage = value.media.currentPage
-                    // Preserve the already-loaded character list across a sort change.
-                    // Only seed from the fresh response if nothing has been loaded yet.
-                    if (characterItems.isEmpty()) {
-                        characterItems = value.characters.items.distinctRoles()
-                        charactersHasNextPage = value.characters.hasNextPage
-                        charactersCurrentPage = value.characters.currentPage
-                    }
-                    isFavourite = value.isFavourite
-                    detailCache.put(id, buildSnapshot(value))
-                }
-                is NetworkResult.Failure -> errorState = result.error
-            }
-            loadingState = false
-        }
     }
 
     fun toggleFavourite() {
@@ -235,15 +242,15 @@ internal class StaffDetailStateHolder(
         scope.launch {
             when (val result = repository.toggleFavourite(id)) {
                 is NetworkResult.Success -> {
-                    detailState?.let { d ->
+                    detail?.let { d ->
                         val updated = d.copy(isFavourite = isFavourite)
-                        detailState = updated
+                        detail = updated
                         detailCache.put(id, buildSnapshot(updated))
                     }
                 }
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    errorState = result.error
+                    error = result.error
                 }
             }
             isTogglingFavourite = false
@@ -275,4 +282,3 @@ internal fun createStaffDetailStateHolder(
 /** Roles son únicos por (personaje, anime): mismo personaje en dos anime son dos filas. */
 private fun List<StaffCharacterItem>.distinctRoles(): List<StaffCharacterItem> =
     distinctBy { "${it.characterId}_${it.mediaTitle}" }
-

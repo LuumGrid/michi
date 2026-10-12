@@ -63,6 +63,9 @@ internal fun MediaDetailScreen(
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
     onOpenMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit,
     onEditEntry: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -102,6 +105,9 @@ internal fun MediaDetailScreen(
                     strings = strings,
                     bottomPadding = bottomPadding,
                     onOpenMedia = onOpenMedia,
+                    onOpenCharacter = onOpenCharacter,
+                    onOpenStaff = onOpenStaff,
+                    onOpenStudio = onOpenStudio,
                     onOpenUrl = onOpenUrl,
                     modifier = modifier,
                 )
@@ -117,6 +123,9 @@ private fun MediaDetailContent(
     strings: LanguageStrings,
     bottomPadding: Dp,
     onOpenMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
+    onOpenStudio: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,7 +148,12 @@ private fun MediaDetailContent(
             item(key = "synopsis") { Synopsis(text = detail.descriptionPlain, strings = strings) }
         }
         item(key = "information") {
-            MediaDetailInformationPanel(detail = detail, strings = strings, isManga = isManga)
+            MediaDetailInformationPanel(
+                detail = detail,
+                strings = strings,
+                isManga = isManga,
+                onOpenStudio = onOpenStudio,
+            )
         }
         if (detail.tags.any { !it.isMediaSpoiler }) {
             item(key = "tags") { MediaDetailTags(detail = detail, strings = strings) }
@@ -197,6 +211,7 @@ private fun MediaDetailContent(
                             key = character.edgeKey,
                         )
                     },
+                    onSelect = onOpenCharacter,
                     onLoadMore = if (holder.charactersHasNextPage && !holder.isLoadingCharacters) {
                         { holder.loadMoreCharacters() }
                     } else {
@@ -219,6 +234,7 @@ private fun MediaDetailContent(
                             key = entry.edgeKey,
                         )
                     },
+                    onSelect = onOpenStaff,
                     onLoadMore = if (holder.staffHasNextPage && !holder.isLoadingStaff) {
                         { holder.loadMoreStaff() }
                     } else {

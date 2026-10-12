@@ -281,6 +281,7 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
         format = node.format?.toTitleCase(),
         year = node.startDate?.year,
         averageScore = node.averageScore?.takeIf { it > 0 },
+        type = node.type,
     )
 }
 

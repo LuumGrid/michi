@@ -388,6 +388,25 @@ interface LanguageStrings {
     val mediaDetailAverageScoreLabel: String
     val mediaDetailAllTimeLabel: String
     val moreAction: String
+
+    // Shared detail labels (character/staff/studio)
+    val sortByPopularity: String
+    val sortByFavourites: String
+    val mediaDetailGenderLabel: String
+    val mediaDetailAgeLabel: String
+    val mediaDetailBloodTypeLabel: String
+    val mediaDetailBirthdayLabel: String
+    val mediaDetailDeathLabel: String
+    val mediaDetailYearsActiveLabel: String
+    val mediaDetailHometownLabel: String
+    val mediaDetailOccupationsLabel: String
+    val mediaDetailAppearancesTitle: String
+    val mediaDetailRolesTitle: String
+    val mediaDetailAnimeRolesTitle: String
+    val mediaDetailMangaRolesTitle: String
+    val mediaDetailMediaTitle: String
+    val mediaDetailNoMediaLabel: String
+    val mediaDetailAnimeStudioLabel: String
 }
 
 fun getLanguageStrings(language: AppLanguage): LanguageStrings {

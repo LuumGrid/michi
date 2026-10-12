@@ -6,6 +6,9 @@ import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -45,66 +48,75 @@ internal class StudioDetailStateHolder(
     private val scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER") viewerId: Int,
 ) {
-    private var detailState: StudioDetail? = null
-    private var loadingState = false
-    private var errorState: NetworkError? = null
+    // Snapshot-backed: the detail screen reads these directly and must
+    // recompose on every load/pagination (plain vars would apply silently).
+    var detail: StudioDetail? by mutableStateOf(null)
+        private set
+    var isLoading: Boolean by mutableStateOf(false)
+        private set
+    var error: NetworkError? by mutableStateOf(null)
+        private set
+
     private var currentStudioId: Int? = null
     private var currentJob: Job? = null
 
     private val detailCache = LruCache<Int, StudioDetailSnapshot>(maxSize = 5)
 
-    var mediaItems: List<StudioMediaItem> = emptyList()
-        private set
-    var hasNextPage = false
-        private set
-    var currentPage = 1
-        private set
-    var isLoadingMore = false
-        private set
-    var sort = StudioMediaSort.POPULARITY
-        private set
-    var isFavourite = false
-        private set
-    var isTogglingFavourite = false
-        private set
+    /**
+     * Server page order never changes: the API always fetches by popularity,
+     * and [sort] is applied client-side by the screen. This keeps sort changes
+     * instant (no re-query, no list reset, no scroll reset).
+     */
+    private val serverSort = StudioMediaSort.POPULARITY
 
-    val detail: StudioDetail? get() = detailState
-    val isLoading: Boolean get() = loadingState
-    val error: NetworkError? get() = errorState
+    var mediaItems: List<StudioMediaItem> by mutableStateOf(emptyList())
+        private set
+    var hasNextPage: Boolean by mutableStateOf(false)
+        private set
+    var currentPage: Int by mutableStateOf(1)
+        private set
+    var isLoadingMore: Boolean by mutableStateOf(false)
+        private set
+    var sort: StudioMediaSort by mutableStateOf(StudioMediaSort.NEWEST)
+        private set
+    var isFavourite: Boolean by mutableStateOf(false)
+        private set
+    var isTogglingFavourite: Boolean by mutableStateOf(false)
+        private set
 
     fun load(id: Int) {
-        if (currentStudioId == id && (detailState != null || loadingState)) return
+        if (currentStudioId == id && (detail != null || isLoading)) return
 
         val cached = detailCache.get(id)
         if (cached != null) {
             currentStudioId = id
             currentJob?.cancel()
-            detailState = cached.detail
+            detail = cached.detail
             mediaItems = cached.mediaItems
             hasNextPage = cached.hasNextPage
             currentPage = cached.currentPage
             sort = cached.sort
             isFavourite = cached.detail.isFavourite
-            errorState = null
-            loadingState = false
+            error = null
+            isLoading = false
             return
         }
 
         currentStudioId = id
         currentJob?.cancel()
-        detailState = null
-        errorState = null
-        loadingState = true
+        detail = null
+        error = null
+        isLoading = true
         mediaItems = emptyList()
         hasNextPage = false
         currentPage = 1
         isLoadingMore = false
 
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, sort)) {
+            when (val result = repository.loadDetail(id, serverSort)) {
                 is NetworkResult.Success -> {
                     val value = result.value
-                    detailState = value
+                    detail = value
                     mediaItems = value.media.items
                     hasNextPage = value.media.hasNextPage
                     currentPage = value.media.currentPage
@@ -120,9 +132,41 @@ internal class StudioDetailStateHolder(
                         ),
                     )
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
-            loadingState = false
+            isLoading = false
+        }
+    }
+
+    fun refresh() {
+        val id = currentStudioId ?: return
+        // Invalidate cached entry so the page is re-fetched from network.
+        detailCache.remove(id)
+        currentJob?.cancel()
+        isLoading = true
+        currentJob = scope.launch {
+            when (val result = repository.loadDetail(id, serverSort)) {
+                is NetworkResult.Success -> {
+                    val value = result.value
+                    detail = value
+                    mediaItems = value.media.items
+                    hasNextPage = value.media.hasNextPage
+                    currentPage = value.media.currentPage
+                    isFavourite = value.isFavourite
+                    detailCache.put(
+                        id,
+                        StudioDetailSnapshot(
+                            detail = value,
+                            mediaItems = mediaItems,
+                            hasNextPage = hasNextPage,
+                            currentPage = currentPage,
+                            sort = sort,
+                        ),
+                    )
+                }
+                is NetworkResult.Failure -> error = result.error
+            }
+            isLoading = false
         }
     }
 
@@ -132,13 +176,13 @@ internal class StudioDetailStateHolder(
         val nextPage = currentPage + 1
         scope.launch {
             isLoadingMore = true
-            when (val result = repository.loadMediaPage(id, nextPage, sort)) {
+            when (val result = repository.loadMediaPage(id, nextPage, serverSort)) {
                 is NetworkResult.Success -> {
                     mediaItems = mediaItems + result.value.items
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     // Update cache with new page data
-                    detailState?.let { d ->
+                    detail?.let { d ->
                         detailCache.put(
                             id,
                             StudioDetailSnapshot(
@@ -151,49 +195,19 @@ internal class StudioDetailStateHolder(
                         )
                     }
                 }
-                is NetworkResult.Failure -> errorState = result.error
+                is NetworkResult.Failure -> error = result.error
             }
             isLoadingMore = false
         }
     }
 
+    /**
+     * Display-only sort: flips the local order immediately. The loaded list is
+     * never reset and no network call fires (the screen applies [sortedFor]).
+     */
     fun changeSort(newSort: StudioMediaSort) {
         if (newSort == sort) return
         sort = newSort
-        val id = currentStudioId ?: return
-        // Invalidate cache for this studio so the new sort is fetched fresh
-        detailCache.remove(id)
-        currentJob?.cancel()
-        mediaItems = emptyList()
-        hasNextPage = false
-        currentPage = 1
-        errorState = null
-        loadingState = true
-
-        currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, newSort)) {
-                is NetworkResult.Success -> {
-                    val value = result.value
-                    detailState = value
-                    mediaItems = value.media.items
-                    hasNextPage = value.media.hasNextPage
-                    currentPage = value.media.currentPage
-                    isFavourite = value.isFavourite
-                    detailCache.put(
-                        id,
-                        StudioDetailSnapshot(
-                            detail = value,
-                            mediaItems = mediaItems,
-                            hasNextPage = hasNextPage,
-                            currentPage = currentPage,
-                            sort = newSort,
-                        ),
-                    )
-                }
-                is NetworkResult.Failure -> errorState = result.error
-            }
-            loadingState = false
-        }
     }
 
     fun toggleFavourite() {
@@ -207,9 +221,9 @@ internal class StudioDetailStateHolder(
                 is NetworkResult.Success -> {
                     // Keep the cached snapshot in sync so back-navigation shows
                     // the new favourite state instead of the pre-toggle value.
-                    detailState?.let { d ->
+                    detail?.let { d ->
                         val updated = d.copy(isFavourite = isFavourite)
-                        detailState = updated
+                        detail = updated
                         detailCache.put(
                             id,
                             StudioDetailSnapshot(
@@ -224,7 +238,7 @@ internal class StudioDetailStateHolder(
                 }
                 is NetworkResult.Failure -> {
                     isFavourite = previous
-                    errorState = result.error
+                    error = result.error
                 }
             }
             isTogglingFavourite = false
