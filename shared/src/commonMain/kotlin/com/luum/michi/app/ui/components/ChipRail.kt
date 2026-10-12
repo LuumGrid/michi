@@ -61,7 +61,7 @@ internal fun <T> ChipRail(
     ) {
         items(
             items = tabs,
-            key = { it.label },
+            key = { "${it.label}·${it.value}" },
         ) { tab ->
             val isSelected = tab.value == selected
             val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS

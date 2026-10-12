@@ -117,6 +117,25 @@ private fun mediaDetailPageJson() = buildJsonObject {
             put("site", "youtube")
             put("thumbnail", "https://i.ytimg.com/vi/abc123/hqdefault.jpg")
         })
+        // AniList can return the same studio twice (main + sub on the same
+        // node); the mapper must collapse it or the studio chips rail
+        // crashes on the duplicate LazyRow key.
+        put("studios", buildJsonObject {
+            put("nodes", JsonArray(listOf(
+                buildJsonObject {
+                    put("id", 7)
+                    put("name", "Studio Pierrot")
+                },
+                buildJsonObject {
+                    put("id", 7)
+                    put("name", "Studio Pierrot")
+                },
+                buildJsonObject {
+                    put("id", 8)
+                    put("name", "Bones")
+                },
+            )))
+        })
     })
 }
 
@@ -237,5 +256,13 @@ class MediaDetailMapperTest {
         assertEquals("youtube", trailer?.site)
         assertEquals("https://i.ytimg.com/vi/abc123/hqdefault.jpg", trailer?.thumbnailUrl)
         assertEquals("https://youtu.be/abc123", trailer?.videoUrl())
+    }
+
+    @Test
+    fun deduplicatesStudiosById() = runBlocking {
+        val detail = loadDetail()
+
+        assertEquals(2, detail.studios.size)
+        assertEquals(listOf("Studio Pierrot", "Bones"), detail.studios.map { it.name })
     }
 }
