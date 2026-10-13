@@ -17,6 +17,7 @@ import kotlin.time.TimeSource
 private val EmptyFeed = DashboardFeed(
     trendingAnime = emptyList(),
     trendingManga = emptyList(),
+    newReleasesManga = emptyList(),
     thisSeason = emptyList(),
     upcomingNextSeason = emptyList(),
     allTimePopularAnime = emptyList(),
@@ -45,6 +46,7 @@ internal class DashboardStateHolder(
 
     val trendingAnime: List<MediaItem> get() = feedState.trendingAnime
     val trendingManga: List<MediaItem> get() = feedState.trendingManga
+    val newReleasesManga: List<MediaItem> get() = feedState.newReleasesManga
     val thisSeason: List<MediaItem> get() = feedState.thisSeason
     val upcomingNextSeason: List<MediaItem> get() = feedState.upcomingNextSeason
     val allTimePopularAnime: List<MediaItem> get() = feedState.allTimePopularAnime

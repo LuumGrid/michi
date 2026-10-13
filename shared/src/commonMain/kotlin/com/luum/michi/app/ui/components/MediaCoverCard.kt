@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 
@@ -146,6 +147,13 @@ private fun CardCappedDensity(content: @Composable () -> Unit) {
 private const val CardFontScaleCap = 1.2f
 
 private val CardHeight = 172.dp
+
+/**
+ * Portrait cover width used by the list rows: filled at [CardHeight] minus the
+ * row's 2×12dp padding, 3:4. Exposed so surfaces that mirror the list covers
+ * (Discover rails) match the exact size instead of guessing.
+ */
+internal val MediaCoverCardCoverWidth: Dp = (CardHeight - 24.dp) * 3 / 4
 
 @Composable
 private fun MediaCoverImage(

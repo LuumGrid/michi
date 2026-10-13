@@ -38,6 +38,7 @@ private fun page(vararg media: JsonObject): JsonObject =
 private fun dashboardJson(
     trendingAnime: List<JsonObject> = emptyList(),
     trendingManga: List<JsonObject> = emptyList(),
+    newReleasesManga: List<JsonObject> = emptyList(),
     thisSeason: List<JsonObject> = emptyList(),
     upcomingNextSeason: List<JsonObject> = emptyList(),
     allTimePopularAnime: List<JsonObject> = emptyList(),
@@ -47,6 +48,7 @@ private fun dashboardJson(
 ): JsonElement = buildJsonObject {
     put("trendingAnime", page(*trendingAnime.toTypedArray()))
     put("trendingManga", page(*trendingManga.toTypedArray()))
+    put("newReleasesManga", page(*newReleasesManga.toTypedArray()))
     put("thisSeason", page(*thisSeason.toTypedArray()))
     put("upcomingNextSeason", page(*upcomingNextSeason.toTypedArray()))
     put("allTimePopularAnime", page(*allTimePopularAnime.toTypedArray()))
@@ -71,6 +73,7 @@ class DashboardIntegrationTest {
                 dashboardJson(
                     trendingAnime = listOf(mediaJson(1, "Trending A")),
                     trendingManga = listOf(mediaJson(2, "Trending M", format = "MANGA", episodes = null, chapters = 40)),
+                    newReleasesManga = listOf(mediaJson(9, "New M", format = "MANGA", episodes = null, chapters = 30)),
                     thisSeason = listOf(mediaJson(3, "Season A")),
                     upcomingNextSeason = listOf(mediaJson(4, "Next A")),
                     allTimePopularAnime = listOf(mediaJson(5, "Popular A")),
@@ -86,6 +89,7 @@ class DashboardIntegrationTest {
 
         assertEquals(listOf(1), holder.trendingAnime.map { it.id })
         assertEquals(listOf(2), holder.trendingManga.map { it.id })
+        assertEquals(listOf(9), holder.newReleasesManga.map { it.id })
         assertEquals(listOf(3), holder.thisSeason.map { it.id })
         assertEquals(listOf(4), holder.upcomingNextSeason.map { it.id })
         assertEquals(listOf(5), holder.allTimePopularAnime.map { it.id })
@@ -158,6 +162,22 @@ class DashboardIntegrationTest {
 
         assertEquals(2, graphQL.calls)
         assertEquals(listOf(2), holder.trendingAnime.map { it.id })
+    }
+
+    @Test
+    fun newReleasesCarriesTheRecentWindowVariable() {
+        val graphQL = FakeGraphQL(
+            listOf(dashboardJson(newReleasesManga = listOf(mediaJson(9, "New M", format = "MANGA", episodes = null, chapters = 30)))),
+        )
+        val holder = wired(graphQL)
+
+        holder.load()
+
+        val request = graphQL.requests.single()
+        assertTrue(request.query.contains("newReleasesManga"))
+        assertTrue(request.query.contains("startDate_greater"))
+        val start = request.variables?.get("recentMangaStart")?.toString()?.toIntOrNull()
+        assertTrue(start != null && start in 19_000_000..30_000_000, "FuzzyDateInt window present: $start")
     }
 
     @Test

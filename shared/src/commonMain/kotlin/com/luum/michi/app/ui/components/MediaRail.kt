@@ -66,6 +66,10 @@ internal fun MediaRail(
     // Baked 16dp matches the full-width layout; panels (already inset) pass
     // zero to avoid double padding.
     horizontalPadding: Dp = 16.dp,
+    // Portrait card width (height follows via the 3:4 aspect). Default keeps
+    // every existing rail byte-identical; callers that mirror the list covers
+    // pass `MediaCoverCardCoverWidth` (and can scale it as a percentage).
+    cardWidth: Dp = 108.dp,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (title != null) {
@@ -118,7 +122,7 @@ internal fun MediaRail(
                     // a bare id would make duplicate lazy keys and crash.
                     key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
                 ) { _, item ->
-                    RailCard(item = item, onSelect = onSelect)
+                    RailCard(item = item, onSelect = onSelect, cardWidth = cardWidth)
                 }
             }
         }
@@ -129,6 +133,7 @@ internal fun MediaRail(
 private fun RailCard(
     item: MediaRailItem,
     onSelect: ((Int) -> Unit)?,
+    cardWidth: Dp,
 ) {
     val clickable = if (onSelect != null) {
         Modifier.clickable { onSelect(item.id) }
@@ -137,7 +142,7 @@ private fun RailCard(
     }
     Column(
         modifier = Modifier
-            .width(108.dp)
+            .width(cardWidth)
             .then(clickable),
     ) {
         Box(

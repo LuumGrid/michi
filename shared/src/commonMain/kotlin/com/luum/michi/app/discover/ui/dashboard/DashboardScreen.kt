@@ -28,6 +28,7 @@ import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.MediaCoverCardCoverWidth
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.MessagePanel
@@ -35,8 +36,16 @@ import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
-/** One dashboard rail: localized title + its media. */
-private data class DashboardSection(val title: String, val items: List<MediaItem>)
+/** One dashboard rail: localized title + its media (+ its cover size). */
+private data class DashboardSection(
+    val title: String,
+    val items: List<MediaItem>,
+    val cardWidth: Dp = MediaCoverCardCoverWidth,
+)
+
+/** Featured rails (This Season / New releases) stand out: 50% over the
+ *  list-cover size (height follows via the 3:4 aspect). */
+private const val FeaturedCoverScale = 1.5f
 
 /**
  * DISCOVER dashboard: an Anime/Manga selector over the holder's rails.
@@ -152,6 +161,7 @@ private fun DashboardContent(
                                 title = section.title,
                                 items = section.items.mapNotNull { it.toRailItem() },
                                 onSelect = onOpenMedia,
+                                cardWidth = section.cardWidth,
                             )
                         }
                     }
@@ -168,13 +178,24 @@ private fun dashboardSections(
     strings: LanguageStrings,
 ): List<DashboardSection> = when (mediaType) {
     DashboardMediaType.ANIME -> listOf(
+        // This Season leads and stands out (featured cover size).
+        DashboardSection(
+            title = strings.exploreThisSeasonTitle,
+            items = holder.thisSeason,
+            cardWidth = MediaCoverCardCoverWidth * FeaturedCoverScale,
+        ),
         DashboardSection(strings.discoverTrendingAnimeTitle, holder.trendingAnime),
-        DashboardSection(strings.exploreThisSeasonTitle, holder.thisSeason),
         DashboardSection(strings.exploreUpcomingNextSeasonTitle, holder.upcomingNextSeason),
         DashboardSection(strings.exploreAllTimePopularAnimeTitle, holder.allTimePopularAnime),
         DashboardSection(strings.exploreTopAnimeTitle, holder.topAnime),
     )
     DashboardMediaType.MANGA -> listOf(
+        // New releases leads and stands out (featured cover size).
+        DashboardSection(
+            title = strings.discoverNewReleasesMangaTitle,
+            items = holder.newReleasesManga,
+            cardWidth = MediaCoverCardCoverWidth * FeaturedCoverScale,
+        ),
         DashboardSection(strings.discoverTrendingMangaTitle, holder.trendingManga),
         DashboardSection(strings.exploreAllTimePopularMangaTitle, holder.allTimePopularManga),
         DashboardSection(strings.exploreTopMangaTitle, holder.topManga),

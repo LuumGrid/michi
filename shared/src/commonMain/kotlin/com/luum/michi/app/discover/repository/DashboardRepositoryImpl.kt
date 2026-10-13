@@ -14,6 +14,11 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
 
 private const val DashboardQuery = """
 query Dashboard(
@@ -21,6 +26,7 @@ query Dashboard(
   ${'$'}currentYear: Int!,
   ${'$'}nextSeason: MediaSeason!,
   ${'$'}nextYear: Int!,
+  ${'$'}recentMangaStart: FuzzyDateInt,
   ${'$'}isAdult: Boolean
 ) {
   trendingAnime: Page(perPage: 20) {
@@ -32,6 +38,13 @@ query Dashboard(
   }
   trendingManga: Page(perPage: 20) {
     media(sort: TRENDING_DESC, type: MANGA, isAdult: ${'$'}isAdult) {
+      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
+      title { romaji english native userPreferred }
+      coverImage { extraLarge large medium color }
+    }
+  }
+  newReleasesManga: Page(perPage: 20) {
+    media(type: MANGA, startDate_greater: ${'$'}recentMangaStart, sort: [SCORE_DESC], isAdult: ${'$'}isAdult) {
       id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
@@ -99,6 +112,7 @@ internal class DashboardRepositoryImpl(
             "currentYear" to JsonPrimitive(current.year),
             "nextSeason" to JsonPrimitive(next.season.name),
             "nextYear" to JsonPrimitive(next.year),
+            "recentMangaStart" to JsonPrimitive(recentMangaStartFuzzy()),
         )
         // Omit (null) when adult is allowed: the server then returns both.
         // Never send true — that would filter to adult ONLY.
@@ -116,4 +130,11 @@ internal class DashboardRepositoryImpl(
             AniListJson.decodeFromJsonElement(DashboardResponseDto.serializer(), dataJson)
         }.map { it.toDashboardFeed(strings) }
     }
+}
+
+/** FuzzyDateInt (YYYYMMDD) one year back: the "New Releases" manga window. */
+private fun recentMangaStartFuzzy(now: Instant = Clock.System.now()): Int {
+    val date = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val year = date.year - 1
+    return year * 10000 + date.month.number * 100 + date.day
 }

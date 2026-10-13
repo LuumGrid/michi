@@ -7,6 +7,7 @@ import com.luum.michi.app.discover.domain.model.MediaItem
 internal data class DashboardFeed(
     val trendingAnime: List<MediaItem>,
     val trendingManga: List<MediaItem>,
+    val newReleasesManga: List<MediaItem>,
     val thisSeason: List<MediaItem>,
     val upcomingNextSeason: List<MediaItem>,
     val allTimePopularAnime: List<MediaItem>,

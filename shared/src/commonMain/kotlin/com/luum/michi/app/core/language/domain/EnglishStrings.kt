@@ -13,6 +13,7 @@ object EnglishStrings : LanguageStrings {
     override val settingsAction = "Settings"
     override val discoverTrendingAnimeTitle = "Trending anime"
     override val discoverTrendingMangaTitle = "Trending manga"
+    override val discoverNewReleasesMangaTitle = "New releases"
     override val discoverLoadingLabel = "Loading Discover…"
     override val discoverErrorLabel = "Could not load Discover"
     override val discoverEmptyLabel = "Nothing to show right now"

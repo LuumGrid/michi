@@ -13,6 +13,7 @@ interface LanguageStrings {
     val settingsAction: String
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
+    val discoverNewReleasesMangaTitle: String
     val discoverLoadingLabel: String
     val discoverErrorLabel: String
     val discoverEmptyLabel: String

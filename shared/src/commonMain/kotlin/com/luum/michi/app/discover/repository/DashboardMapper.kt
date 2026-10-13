@@ -16,6 +16,9 @@ internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): Das
     trendingManga = trendingManga?.media
         ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
         .orEmpty(),
+    newReleasesManga = newReleasesManga?.media
+        ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
+        .orEmpty(),
     thisSeason = popularThisSeason?.media
         ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
         .orEmpty(),
