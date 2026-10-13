@@ -22,7 +22,7 @@ private fun studioMediaItem(
 ) = StudioMediaItem(
     mediaId = id,
     title = "Media $id",
-    coverUrl = null,
+    cover = null,
     paletteHex = null,
     format = format,
     year = 2020,

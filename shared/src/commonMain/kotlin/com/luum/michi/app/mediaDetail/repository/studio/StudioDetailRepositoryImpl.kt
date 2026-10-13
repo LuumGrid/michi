@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 private const val StudioMediaPerPage = 20
 
@@ -155,7 +156,7 @@ private data class ToggleStudioFavouriteResponseDto(
 private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
     mediaId = id,
     title = title?.bestTitle() ?: "",
-    coverUrl = coverImage?.bestUrl,
+    cover = coverImage?.toCoverSizes(),
     paletteHex = coverImage?.color,
     format = format?.toTitleCase(),
     year = startDate?.year,

@@ -207,7 +207,7 @@ private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
     MediaRailItem(
         id = it,
         title = title,
-        imageUrl = coverUrl,
+        image = cover,
         subtitle = meta,
     )
 }

@@ -10,6 +10,7 @@ import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.StaffDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.StudioDto
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun FavouritesDto.toDomain(): ProfileFavorites = ProfileFavorites(
     anime = anime?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
@@ -22,27 +23,27 @@ internal fun FavouritesDto.toDomain(): ProfileFavorites = ProfileFavorites(
 internal fun MediaDto.toProfileFavoriteMedia(): ProfileFavoriteMedia = ProfileFavoriteMedia(
     id = id,
     title = title.bestTitle(),
-    coverUrl = coverImage?.bestUrl,
+    cover = coverImage?.toCoverSizes(),
     paletteHex = coverImage?.color,
 )
 
 internal fun CharacterDto.toProfileFavoritePerson(): ProfileFavoritePerson = ProfileFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
-    imageUrl = image?.bestUrl,
+    image = image?.toCoverSizes(),
     paletteHex = null,
 )
 
 internal fun StaffDto.toProfileFavoritePerson(): ProfileFavoritePerson = ProfileFavoritePerson(
     id = id,
     name = name?.bestName.orEmpty(),
-    imageUrl = image?.bestUrl,
+    image = image?.toCoverSizes(),
     paletteHex = null,
 )
 
 internal fun StudioDto.toProfileFavoriteStudio(): ProfileFavoriteStudio = ProfileFavoriteStudio(
     id = id,
     name = name,
-    coverUrl = latestCoverImage?.bestUrl,
+    cover = latestCoverImage?.toCoverSizes(),
     paletteHex = latestCoverImage?.color,
 )

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.core.model.CoverSizes
 
 /**
  * Shared cover row: portrait cover + title + optional subtitle + caller-owned
@@ -52,7 +53,7 @@ import coil3.compose.SubcomposeAsyncImage
  */
 @Composable
 internal fun MediaCoverCard(
-    coverUrl: String?,
+    cover: CoverSizes?,
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,7 +82,7 @@ internal fun MediaCoverCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 MediaCoverImage(
-                    coverUrl = coverUrl,
+                    cover = cover,
                     modifier = Modifier
                         .fillMaxHeight()
                         .aspectRatio(3f / 4f),
@@ -157,10 +158,10 @@ internal val MediaCoverCardCoverWidth: Dp = (CardHeight - 24.dp) * 3 / 4
 
 @Composable
 private fun MediaCoverImage(
-    coverUrl: String?,
+    cover: CoverSizes?,
     modifier: Modifier = Modifier,
 ) {
-    if (coverUrl.isNullOrBlank()) {
+    if (cover?.bestUrl.isNullOrBlank()) {
         Box(
             modifier = modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -168,7 +169,7 @@ private fun MediaCoverImage(
         )
     } else {
         SubcomposeAsyncImage(
-            model = coverUrl,
+            model = cover?.bestUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             loading = {

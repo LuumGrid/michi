@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 private const val AnimeCatalogQuery = """
 query AnimeCatalog(
@@ -377,7 +378,7 @@ private fun CharacterDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
     meta = "Character",
-    coverUrl = image?.bestUrl,
+    cover = image?.toCoverSizes(),
     paletteHex = null,
     averageScore = null
 )
@@ -386,7 +387,7 @@ private fun StaffDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
     meta = "Staff",
-    coverUrl = image?.bestUrl,
+    cover = image?.toCoverSizes(),
     paletteHex = null,
     averageScore = null
 )
@@ -395,7 +396,7 @@ private fun StudioDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name,
     meta = "Studio",
-    coverUrl = latestCoverImage?.bestUrl,
+    cover = latestCoverImage?.toCoverSizes(),
     paletteHex = latestCoverImage?.color,
     averageScore = null
 )

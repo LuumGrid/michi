@@ -23,6 +23,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 private const val CharactersPerPage = 12
 private const val StaffPerPage = 12
@@ -361,7 +362,7 @@ internal class MediaDetailRepositoryImpl(
                     MediaRecommendationEntry(
                         id = recMedia.id,
                         title = recMedia.title.bestTitle(),
-                        coverUrl = recMedia.coverImage?.bestUrl,
+                        cover = recMedia.coverImage?.toCoverSizes(),
                         format = recMedia.format?.toTitleCase(),
                         season = parseMediaSeason(recMedia.season),
                         year = recMedia.seasonYear,

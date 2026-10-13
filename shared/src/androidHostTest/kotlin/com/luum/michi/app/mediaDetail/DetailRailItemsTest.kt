@@ -55,7 +55,7 @@ class DetailRailItemsTest {
     private fun relation() = MediaDetailRelation(
         mediaId = 70,
         title = "Related",
-        coverUrl = null,
+        cover = null,
         paletteHex = null,
         kind = MediaRelationKind.SEQUEL,
         format = "TV",
@@ -70,7 +70,7 @@ class DetailRailItemsTest {
     private fun recommendation() = MediaRecommendationEntry(
         id = 9,
         title = "Recommended",
-        coverUrl = null,
+        cover = null,
         format = "MANGA",
         season = MediaSeason.FALL,
         year = 2025,

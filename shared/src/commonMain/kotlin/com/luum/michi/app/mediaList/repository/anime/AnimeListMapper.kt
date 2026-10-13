@@ -11,6 +11,7 @@ import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.toComparableInt
 import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun MediaListEntryDto.toAnimeListEntry(
     index: Int = 0,
@@ -33,7 +34,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(
         score = score,
         nextEpisodeRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
         paletteHex = media.coverImage?.color,
-        coverUrl = media.coverImage?.bestUrl,
+        cover = media.coverImage?.toCoverSizes(),
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,
         startedAtInt = startedAt.toComparableInt(),

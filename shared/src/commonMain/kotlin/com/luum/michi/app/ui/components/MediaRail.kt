@@ -31,12 +31,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.core.model.CoverSizes
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
     val id: Int,
     val title: String,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val subtitle: String? = null,
     // Extra catalog line shown only in the "View all" rows (format · season
     // year · status); the rail stays compact and ignores it.
@@ -152,9 +153,9 @@ private fun RailCard(
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            if (!item.imageUrl.isNullOrBlank()) {
+            if (!item.image?.bestUrl.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = item.imageUrl,
+                    model = item.image?.bestUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +54,7 @@ internal fun CalendarReleaseRow(
     val episodeLine = if (countdown != null) "${item.release} - ${item.time}, $countdown"
     else "${item.release} - ${item.time}"
     MediaCoverCard(
-        coverUrl = item.coverUrl,
+        cover = item.cover,
         title = item.title,
         subtitle = meta,
         onClick = { item.id?.let(onOpenDetail) },

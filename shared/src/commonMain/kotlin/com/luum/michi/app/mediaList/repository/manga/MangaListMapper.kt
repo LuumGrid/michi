@@ -10,6 +10,7 @@ import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun MediaListEntryDto.toMangaListEntry(
     index: Int = 0,
@@ -34,7 +35,7 @@ internal fun MediaListEntryDto.toMangaListEntry(
         tracksByVolume = format.isVolumeBased() || media.chapters == 0,
         score = score,
         paletteHex = media.coverImage?.color,
-        coverUrl = media.coverImage?.bestUrl,
+        cover = media.coverImage?.toCoverSizes(),
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,
         startedAtInt = startedAt.toComparableInt(),

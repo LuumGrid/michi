@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 private fun characterMediaItem(id: Int) = CharacterMediaItem(
     mediaId = id,
     title = "Media $id",
-    coverUrl = null,
+    cover = null,
     paletteHex = null,
     role = null,
     format = null,
@@ -27,7 +27,7 @@ private fun characterMediaItem(id: Int) = CharacterMediaItem(
     averageScore = null,
     viewerStatus = null,
     voiceActorName = null,
-    voiceActorImageUrl = null,
+    voiceActorImage = null,
     voiceActorLanguage = null,
     voiceActorId = null,
 )
@@ -41,7 +41,7 @@ private fun characterDetail(
     name = "Character $id",
     nativeName = null,
     alternativeNames = emptyList(),
-    imageUrl = null,
+    image = null,
     descriptionPlain = "",
     gender = null,
     age = null,

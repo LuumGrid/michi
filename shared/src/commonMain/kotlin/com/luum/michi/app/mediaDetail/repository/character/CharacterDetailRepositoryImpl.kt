@@ -21,6 +21,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.model.CoverSizes
 
 private const val CharacterMediaPerPage = 20
 
@@ -29,7 +31,7 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
   Character(id: ${'$'}id) {
     id
     name { userPreferred native alternative }
-    image { large }
+    image { large medium }
     description(asHtml: true)
     gender
     age
@@ -44,7 +46,7 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
         voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE, LANGUAGE]) {
           id
           name { userPreferred }
-          image { large }
+          image { large medium }
           languageV2
         }
         node {
@@ -74,7 +76,7 @@ query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, 
         voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE, LANGUAGE]) {
           id
           name { userPreferred }
-          image { large }
+          image { large medium }
           languageV2
         }
         node {
@@ -144,6 +146,7 @@ private data class CharacterNameDto(
 @Serializable
 private data class CharacterImageDto(
     val large: String? = null,
+    val medium: String? = null,
 )
 
 @Serializable
@@ -228,7 +231,7 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
     return CharacterMediaItem(
         mediaId = node.id,
         title = node.title?.bestTitle() ?: "",
-        coverUrl = node.coverImage?.bestUrl,
+        cover = node.coverImage?.toCoverSizes(),
         paletteHex = node.coverImage?.color,
         role = normalizeCharacterRole(characterRole),
         format = node.format?.toTitleCase(),
@@ -236,7 +239,7 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
         averageScore = node.averageScore?.takeIf { it > 0 },
         viewerStatus = node.mediaListEntry?.status,
         voiceActorName = va?.name?.userPreferred,
-        voiceActorImageUrl = va?.image?.large,
+        voiceActorImage = va?.image?.let { CoverSizes(medium = it.medium, large = it.large) },
         voiceActorLanguage = va?.languageV2,
         voiceActorId = va?.id,
     )
@@ -294,7 +297,7 @@ internal class CharacterDetailRepositoryImpl(
                             nativeName = character.name?.native?.takeIf { it.isNotBlank() },
                             alternativeNames = character.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
-                            imageUrl = character.image?.large,
+                            image = character.image?.let { CoverSizes(medium = it.medium, large = it.large) },
                             descriptionPlain = character.description?.stripHtml().orEmpty(),
                             gender = character.gender?.takeIf { it.isNotBlank() },
                             age = character.age?.takeIf { it.isNotBlank() },

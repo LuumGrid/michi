@@ -7,6 +7,7 @@ import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.model.CoverSizes
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 
@@ -16,8 +17,7 @@ internal data class MediaDetail(
     val id: Int,
     val type: MediaDetailType,
     val title: String,
-    val coverUrl: String?,
-    val coverFullUrl: String? = null,
+    val cover: CoverSizes?,
     val bannerUrl: String?,
     val paletteHex: String?,
     val format: String?,
@@ -126,7 +126,7 @@ internal data class MediaCharacterEntry(
     val edgeKey: String,
     val characterId: Int,
     val name: String,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val role: MediaCharacterRole,
 )
 
@@ -140,7 +140,7 @@ internal data class MediaStaffEntry(
     val edgeKey: String,
     val staffId: Int,
     val name: String,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val role: String?,
 )
 
@@ -172,7 +172,7 @@ internal fun MediaRelationKind.label(strings: LanguageStrings): String = when (t
 internal data class MediaDetailRelation(
     val mediaId: Int,
     val title: String,
-    val coverUrl: String?,
+    val cover: CoverSizes?,
     val paletteHex: String?,
     val kind: MediaRelationKind,
     val format: String?,
@@ -187,7 +187,7 @@ internal data class MediaDetailRelation(
 internal data class MediaRecommendationEntry(
     val id: Int,
     val title: String,
-    val coverUrl: String?,
+    val cover: CoverSizes?,
     val format: String?,
     val season: MediaSeason? = null,
     val year: Int?,

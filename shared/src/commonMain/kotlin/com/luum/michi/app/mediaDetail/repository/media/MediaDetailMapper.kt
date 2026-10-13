@@ -34,13 +34,13 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = MediaDetail(
     id = id,
     type = parseType(type),
     title = title.bestTitle(),
-    coverUrl = coverImage?.bestUrl,
-    coverFullUrl = coverImage?.bestUrl,
+    cover = coverImage?.toCoverSizes(),
     bannerUrl = bannerImage,
     paletteHex = coverImage?.color,
     format = format?.toTitleCase(),
@@ -140,7 +140,7 @@ private fun MediaCharacterEdgeDto.toEntry(page: Int, index: Int): MediaCharacter
         edgeKey = edgeKey,
         characterId = node.id,
         name = node.name?.bestName.orEmpty(),
-        imageUrl = node.image?.bestUrl,
+        image = node.image?.toCoverSizes(),
         role = parseCharacterRole(role),
     )
 }
@@ -152,7 +152,7 @@ private fun MediaStaffEdgeDto.toEntry(page: Int, index: Int): MediaStaffEntry? {
         edgeKey = edgeKey,
         staffId = node.id,
         name = node.name?.bestName.orEmpty(),
-        imageUrl = node.image?.bestUrl,
+        image = node.image?.toCoverSizes(),
         role = role,
     )
 }
@@ -169,7 +169,7 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
     return MediaDetailRelation(
         mediaId = node.id,
         title = node.title.bestTitle(),
-        coverUrl = node.coverImage?.bestUrl,
+        cover = node.coverImage?.toCoverSizes(),
         paletteHex = node.coverImage?.color,
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),

@@ -124,7 +124,7 @@ private fun RowsList(
             key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
         ) { _, item ->
             MediaCoverCard(
-                coverUrl = item.imageUrl,
+                cover = item.image,
                 title = item.title,
                 // Catalog line as the subtitle: same slot/size as the lists
                 // and calendar (`bodyMedium` via MediaCoverCard).
@@ -209,9 +209,9 @@ private fun ListCard(item: MediaRailItem, onSelect: (Int) -> Unit) {
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            if (!item.imageUrl.isNullOrBlank()) {
+            if (!item.image?.bestUrl.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = item.imageUrl,
+                    model = item.image?.bestUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

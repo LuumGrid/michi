@@ -38,7 +38,7 @@ private fun sampleDetail(
     id = id,
     type = MediaDetailType.ANIME,
     title = "Media $id",
-    coverUrl = null,
+    cover = null,
     bannerUrl = null,
     paletteHex = null,
     format = "TV",
@@ -77,7 +77,7 @@ private fun character(id: Int) = MediaCharacterEntry(
     edgeKey = "edge-$id",
     characterId = id,
     name = "Character $id",
-    imageUrl = null,
+    image = null,
     role = MediaCharacterRole.MAIN,
 )
 
@@ -85,14 +85,14 @@ private fun staffEntry(id: Int) = MediaStaffEntry(
     edgeKey = "staff-$id",
     staffId = id,
     name = "Staff $id",
-    imageUrl = null,
+    image = null,
     role = "Director",
 )
 
 private fun recommendation(id: Int) = MediaRecommendationEntry(
     id = id,
     title = "Recommendation $id",
-    coverUrl = null,
+    cover = null,
     format = "TV",
     year = 2026,
     episodesCount = 12,

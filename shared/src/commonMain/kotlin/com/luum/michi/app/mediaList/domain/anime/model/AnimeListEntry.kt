@@ -6,6 +6,7 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.MediaReleaseDateTime
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
+import com.luum.michi.app.core.model.CoverSizes
 
 internal data class AnimeListEntry(
     override val id: Int,
@@ -20,7 +21,7 @@ internal data class AnimeListEntry(
     override val score: Double,
     val nextEpisodeRelease: MediaReleaseDateTime?,
     val paletteHex: String?,
-    val coverUrl: String? = null,
+    val cover: CoverSizes? = null,
     override val originalIndex: Int = 0,
     override val updatedAt: Long = 0L,
     override val startedAtInt: Int = 0,

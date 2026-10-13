@@ -23,6 +23,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.model.CoverSizes
 
 private const val StaffPerPage = 20
 
@@ -31,7 +33,7 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
   Staff(id: ${'$'}id) {
     id
     name { userPreferred native alternative }
-    image { large }
+    image { large medium }
     description(asHtml: true)
     primaryOccupations
     gender
@@ -62,7 +64,7 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
       pageInfo { hasNextPage currentPage }
       edges {
         node { id title { userPreferred romaji english native } }
-        characters { id name { userPreferred native } image { large } }
+        characters { id name { userPreferred native } image { large medium } }
       }
     }
   }
@@ -100,7 +102,7 @@ query StaffCharacterPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) 
       pageInfo { hasNextPage currentPage }
       edges {
         node { id title { userPreferred romaji english native } }
-        characters { id name { userPreferred native } image { large } }
+        characters { id name { userPreferred native } image { large medium } }
       }
     }
   }
@@ -174,6 +176,7 @@ private data class StaffNameDto(
 @Serializable
 private data class StaffImageDto(
     val large: String? = null,
+    val medium: String? = null,
 )
 
 @Serializable
@@ -270,7 +273,7 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
     return StaffMediaItem(
         mediaId = node.id,
         title = node.title?.bestTitle() ?: "",
-        coverUrl = node.coverImage?.bestUrl,
+        cover = node.coverImage?.toCoverSizes(),
         paletteHex = node.coverImage?.color,
         staffRole = staffRole?.takeIf { it.isNotBlank() },
         format = node.format?.toTitleCase(),
@@ -285,7 +288,7 @@ private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
         StaffCharacterItem(
             characterId = char.id,
             name = char.name?.userPreferred ?: char.name?.native ?: "",
-            imageUrl = char.image?.large,
+            image = char.image?.let { CoverSizes(medium = it.medium, large = it.large) },
             mediaTitle = mediaTitle,
         )
     }
@@ -347,7 +350,7 @@ internal class StaffDetailRepositoryImpl(
                             nativeName = staff.name?.native?.takeIf { it.isNotBlank() },
                             alternativeNames = staff.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
-                            imageUrl = staff.image?.large,
+                            image = staff.image?.let { CoverSizes(medium = it.medium, large = it.large) },
                             descriptionPlain = staff.description?.stripHtml().orEmpty(),
                             gender = staff.gender?.takeIf { it.isNotBlank() },
                             age = staff.age?.takeIf { it.isNotBlank() },

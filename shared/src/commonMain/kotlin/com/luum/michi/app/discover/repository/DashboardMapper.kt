@@ -8,6 +8,7 @@ import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): DashboardFeed = DashboardFeed(
     trendingAnime = trendingAnime?.media
@@ -45,7 +46,7 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): MediaItem =
         meta = metaFor(this),
         paletteHex = coverImage?.color,
         id = id,
-        coverUrl = coverImage?.bestUrl,
+        cover = coverImage?.toCoverSizes(),
         averageScore = averageScore,
         favourites = favourites,
         isUserFavorited = isFavourite == true,

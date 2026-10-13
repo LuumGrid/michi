@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 private fun staffMediaItem(id: Int) = StaffMediaItem(
     mediaId = id,
     title = "Media $id",
-    coverUrl = null,
+    cover = null,
     paletteHex = null,
     staffRole = "Director",
     format = null,
@@ -32,7 +32,7 @@ private fun staffMediaItem(id: Int) = StaffMediaItem(
 private fun staffCharacterItem(id: Int) = StaffCharacterItem(
     characterId = id,
     name = "Character $id",
-    imageUrl = null,
+    image = null,
     mediaTitle = "Media $id",
 )
 
@@ -46,7 +46,7 @@ private fun staffDetail(
     name = "Staff $id",
     nativeName = null,
     alternativeNames = emptyList(),
-    imageUrl = null,
+    image = null,
     descriptionPlain = "",
     gender = null,
     age = null,

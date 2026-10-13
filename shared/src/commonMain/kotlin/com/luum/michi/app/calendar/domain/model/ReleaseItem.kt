@@ -4,6 +4,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.model.CoverSizes
 
 internal data class ReleaseItem(
     val title: String,
@@ -12,7 +13,7 @@ internal data class ReleaseItem(
     val airingAtEpoch: Long,
     val paletteHex: String?,
     val id: Int? = null,
-    val coverUrl: String? = null,
+    val cover: CoverSizes? = null,
     val format: MediaFormat? = null,
     val mediaStatus: MediaWorkStatus? = null,
     val averageScore: Int? = null,

@@ -76,7 +76,7 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                     .width(COVER_WIDTH)
                     .aspectRatio(3f / 4f),
             ) {
-                val image = detail.coverFullUrl ?: detail.coverUrl
+                val image = detail.cover?.bestUrl
                 if (!image.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = image,

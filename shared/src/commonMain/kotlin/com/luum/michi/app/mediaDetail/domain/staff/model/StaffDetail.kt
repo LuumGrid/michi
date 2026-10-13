@@ -1,4 +1,5 @@
 package com.luum.michi.app.mediaDetail.domain.staff.model
+import com.luum.michi.app.core.model.CoverSizes
 
 
 
@@ -7,7 +8,7 @@ internal data class StaffDetail(
     val name: String,
     val nativeName: String?,
     val alternativeNames: List<String>,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val descriptionPlain: String,
     val gender: String?,
     val age: String?,
@@ -27,7 +28,7 @@ internal data class StaffDetail(
 internal data class StaffMediaItem(
     val mediaId: Int,
     val title: String,
-    val coverUrl: String?,
+    val cover: CoverSizes?,
     val paletteHex: String?,
     val staffRole: String?,
     val format: String?,
@@ -44,7 +45,7 @@ internal data class StaffMediaPage(
 internal data class StaffCharacterItem(
     val characterId: Int,
     val name: String,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val mediaTitle: String?,
 )
 

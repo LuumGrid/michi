@@ -102,7 +102,7 @@ private fun CharacterDetailContent(
             MediaDetailPersonHero(
                 name = detail.name,
                 nativeName = detail.nativeName,
-                imageUrl = detail.imageUrl,
+                image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
             )
@@ -234,7 +234,7 @@ private fun VoiceActorsSection(
                 MediaRailItem(
                     id = actorId,
                     title = item.voiceActorName.orEmpty(),
-                    imageUrl = item.voiceActorImageUrl,
+                    image = item.voiceActorImage,
                     subtitle = voiceLanguageLabel(item.voiceActorLanguage, strings),
                 )
             },

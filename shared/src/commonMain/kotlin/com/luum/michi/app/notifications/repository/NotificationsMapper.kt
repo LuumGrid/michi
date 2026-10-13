@@ -9,6 +9,8 @@ import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
+import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.model.CoverSizes
 
 private fun MediaTitleDto?.bestTitle(): String? {
     if (this == null) return null
@@ -37,8 +39,8 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
     val notificationType = type ?: return null
     val category = categoryFor(notificationType)
 
-    val imageUrl = media?.coverImage?.let { it.extraLarge ?: it.large ?: it.medium }
-        ?: user?.avatar?.let { it.large ?: it.medium }
+    val image = media?.coverImage?.toCoverSizes()
+        ?: user?.avatar?.let { CoverSizes(medium = it.medium, large = it.large) }
 
     val target: NotificationTarget = when {
         media?.id != null -> NotificationTarget.Media(media.id)
@@ -53,7 +55,7 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
     return AppNotification(
         id = notificationId,
         category = category,
-        imageUrl = imageUrl,
+        image = image,
         createdAtEpochSeconds = createdAt ?: 0L,
         target = target,
         episode = episode,

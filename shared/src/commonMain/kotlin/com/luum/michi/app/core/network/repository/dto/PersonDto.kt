@@ -21,9 +21,7 @@ internal data class PersonNameDto(
 internal data class PersonImageDto(
     val large: String? = null,
     val medium: String? = null,
-) {
-    val bestUrl: String? get() = large ?: medium
-}
+)
 
 @Serializable
 internal data class CharacterDto(

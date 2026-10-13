@@ -5,6 +5,7 @@ import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): ExploreResult {
     val titleText = title?.userPreferred ?: title?.english ?: title?.romaji ?: title?.native ?: ""
@@ -12,7 +13,7 @@ internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): Explo
         id = id,
         title = titleText,
         meta = buildMeta(strings),
-        coverUrl = coverImage?.bestUrl,
+        cover = coverImage?.toCoverSizes(),
         paletteHex = coverImage?.color,
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,

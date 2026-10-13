@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.studio.model
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.CoverSizes
 
 
 internal data class StudioDetail(
@@ -15,7 +16,7 @@ internal data class StudioDetail(
 internal data class StudioMediaItem(
     val mediaId: Int,
     val title: String,
-    val coverUrl: String?,
+    val cover: CoverSizes?,
     val paletteHex: String?,
     val format: String?,
     val year: Int?,

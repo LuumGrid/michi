@@ -86,7 +86,7 @@ private fun StaffDetailContent(
             MediaDetailPersonHero(
                 name = detail.name,
                 nativeName = detail.nativeName,
-                imageUrl = detail.imageUrl,
+                image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
             )

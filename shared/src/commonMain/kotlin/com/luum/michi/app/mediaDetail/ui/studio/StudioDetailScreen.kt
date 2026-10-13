@@ -253,9 +253,9 @@ private fun StudioMediaGridCard(
                     .aspectRatio(3f / 4f)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                if (!item.coverUrl.isNullOrBlank()) {
+                if (!item.cover?.bestUrl.isNullOrBlank()) {
                     SubcomposeAsyncImage(
-                        model = item.coverUrl,
+                        model = item.cover?.bestUrl,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         loading = {},

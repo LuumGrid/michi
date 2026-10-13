@@ -22,7 +22,7 @@ import com.luum.michi.app.ui.components.MediaRailItem
 internal fun MediaCharacterEntry.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
     id = characterId,
     title = name,
-    imageUrl = imageUrl,
+    image = image,
     subtitle = characterRoleLabel(role.name, strings),
     key = edgeKey,
 )
@@ -30,7 +30,7 @@ internal fun MediaCharacterEntry.toRailItem(strings: LanguageStrings): MediaRail
 internal fun MediaStaffEntry.toRailItem(): MediaRailItem = MediaRailItem(
     id = staffId,
     title = name,
-    imageUrl = imageUrl,
+    image = image,
     subtitle = role,
     key = edgeKey,
 )
@@ -38,7 +38,7 @@ internal fun MediaStaffEntry.toRailItem(): MediaRailItem = MediaRailItem(
 internal fun MediaDetailRelation.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
     id = mediaId,
     title = title,
-    imageUrl = coverUrl,
+    image = cover,
     subtitle = kind.label(strings),
     meta = catalogMeta(format, season, year, workStatus, strings, isManga),
 )
@@ -46,14 +46,14 @@ internal fun MediaDetailRelation.toRailItem(strings: LanguageStrings, isManga: B
 internal fun MediaRecommendationEntry.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
     id = id,
     title = title,
-    imageUrl = coverUrl,
+    image = cover,
     meta = catalogMeta(format, season, year, workStatus, strings, isManga),
 )
 
 internal fun CharacterMediaItem.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
     id = mediaId,
     title = title,
-    imageUrl = coverUrl,
+    image = cover,
     subtitle = listOfNotNull(
         characterRoleLabel(role, strings),
         voiceActorName,
@@ -63,14 +63,14 @@ internal fun CharacterMediaItem.toRailItem(strings: LanguageStrings): MediaRailI
 internal fun StaffMediaItem.toRailItem(): MediaRailItem = MediaRailItem(
     id = mediaId,
     title = title,
-    imageUrl = coverUrl,
+    image = cover,
     subtitle = staffRole?.takeIf { it.isNotBlank() },
 )
 
 internal fun StaffCharacterItem.toRailItem(): MediaRailItem = MediaRailItem(
     id = characterId,
     title = name,
-    imageUrl = imageUrl,
+    image = image,
     subtitle = mediaTitle?.takeIf { it.isNotBlank() },
 )
 

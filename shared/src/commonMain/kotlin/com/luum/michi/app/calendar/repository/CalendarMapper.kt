@@ -10,6 +10,7 @@ import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
+import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
     val media = media ?: return null
@@ -22,7 +23,7 @@ internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
         airingAtEpoch = airingAt,
         paletteHex = media.coverImage?.color,
         id = media.id,
-        coverUrl = media.coverImage?.bestUrl,
+        cover = media.coverImage?.toCoverSizes(),
         format = parseMediaFormat(media.format),
         mediaStatus = parseMediaWorkStatus(media.status),
         averageScore = media.averageScore,

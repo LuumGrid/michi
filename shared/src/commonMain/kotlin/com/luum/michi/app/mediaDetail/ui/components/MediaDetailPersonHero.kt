@@ -26,6 +26,7 @@ import com.luum.michi.app.ui.components.glassBorder
 import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
+import com.luum.michi.app.core.model.CoverSizes
 
 /**
  * Shared person hero (character/staff): centered portrait + name + native
@@ -36,7 +37,7 @@ import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 internal fun MediaDetailPersonHero(
     name: String,
     nativeName: String?,
-    imageUrl: String?,
+    image: CoverSizes?,
     favourites: Int?,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
@@ -56,9 +57,9 @@ internal fun MediaDetailPersonHero(
                 .width(140.dp)
                 .aspectRatio(3f / 4f),
         ) {
-            if (!imageUrl.isNullOrBlank()) {
+            if (!image?.bestUrl.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = imageUrl,
+                    model = image?.bestUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

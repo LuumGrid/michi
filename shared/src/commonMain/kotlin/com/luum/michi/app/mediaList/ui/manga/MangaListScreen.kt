@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaSeason
@@ -186,7 +185,7 @@ internal fun MangaListScreen(
                             entry.mediaStatus?.label(strings, isManga = true),
                         ).joinToString(" · ")
                         MediaCoverCard(
-                            coverUrl = entry.coverUrl,
+                            cover = entry.cover,
                             title = entry.title,
                             subtitle = meta,
                             onClick = { onOpenDetail(entry.id) },

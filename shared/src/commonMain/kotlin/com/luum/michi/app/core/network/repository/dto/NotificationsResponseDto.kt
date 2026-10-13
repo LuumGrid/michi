@@ -56,6 +56,4 @@ internal data class NotificationUserDto(
 internal data class NotificationAvatarDto(
     val large: String? = null,
     val medium: String? = null,
-) {
-    val bestUrl: String? get() = large ?: medium
-}
+)

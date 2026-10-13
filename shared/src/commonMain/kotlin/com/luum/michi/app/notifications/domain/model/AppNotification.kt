@@ -1,4 +1,5 @@
 package com.luum.michi.app.notifications.domain.model
+import com.luum.michi.app.core.model.CoverSizes
 
 internal enum class NotificationCategory { AIRING, FOLLOWING, ACTIVITY, FORUM, MESSAGE, MEDIA_CHANGE, REPLIES, OTHER }
 
@@ -11,7 +12,7 @@ internal sealed interface NotificationTarget {
 internal data class AppNotification(
     val id: Int,
     val category: NotificationCategory,
-    val imageUrl: String?,
+    val image: CoverSizes?,
     val createdAtEpochSeconds: Long,
     val target: NotificationTarget,
     val episode: Int? = null,

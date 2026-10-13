@@ -59,13 +59,7 @@ internal data class MediaCoverImageDto(
     val large: String? = null,
     val medium: String? = null,
     val color: String? = null,
-) {
-    /** Highest-resolution cover (extraLarge ≈460px). Used app-wide (lists,
-     *  rails, grids, detail hero): high-DPI phones render our covers at
-     *  ~330px+, where `large` (≈230px) reads soft. This is the ceiling
-     *  AniList serves for covers. */
-    val bestUrl: String? get() = extraLarge ?: large ?: medium
-}
+)
 
 @Serializable
 internal data class MediaNextAiringEpisodeDto(
