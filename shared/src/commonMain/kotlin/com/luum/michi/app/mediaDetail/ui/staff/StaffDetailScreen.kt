@@ -17,9 +17,9 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
-import com.luum.michi.app.mediaDetail.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import com.luum.michi.app.ui.components.ChipRail
@@ -95,7 +95,7 @@ private fun StaffDetailContent(
         if (chips.isNotEmpty()) {
             item(key = "occupations") {
                 MediaDetailPanel {
-                    MediaDetailSectionHeader(strings.mediaDetailOccupationsLabel)
+                    SectionHeader(strings.mediaDetailOccupationsLabel)
                     Spacer(modifier = Modifier.height(12.dp))
                     ChipRail(
                         tabs = chips.map { ChipTab(value = it, label = it) },
@@ -168,7 +168,7 @@ private fun StaffInformationPanel(detail: StaffDetail, strings: LanguageStrings)
     }
     if (rows.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
+        SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
         rows.forEach { (label, value) -> MediaDetailInfoRow(label = label, value = value) }
     }

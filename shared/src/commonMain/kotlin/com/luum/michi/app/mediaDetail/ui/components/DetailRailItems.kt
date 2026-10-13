@@ -12,6 +12,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.label
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
+import com.luum.michi.app.ui.components.MediaRailItem
 
 /**
  * Domain-entry → [MediaRailItem] mappers shared by the detail rails and the

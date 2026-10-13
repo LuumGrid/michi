@@ -58,7 +58,7 @@ class LiveAnonymousTest {
     @Test
     fun dashboardLoads() {
         assumeLive()
-        val result = runBlocking { DashboardRepositoryImpl(liveClient()).loadFeed(EnglishStrings) }
+        val result = runBlocking { DashboardRepositoryImpl(liveClient()).loadFeed(hideAdult = false, EnglishStrings) }
         assumeNotForbidden("dashboardLoads", result)
         assertTrue(result is NetworkResult.Success)
         assertTrue(result.value.trendingAnime.isNotEmpty())

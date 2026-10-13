@@ -4,6 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlin.time.Duration.Companion.milliseconds
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.network.domain.NetworkError
@@ -19,25 +23,25 @@ internal class ExploreStateHolder(
     private val scope: CoroutineScope,
     private val strings: LanguageStrings,
 ) {
-    var query = ""
-    var category = ExploreCategory.ANIME
-    var season: String? = null
-    var genres = emptyList<String>()
-    var formats = emptyList<String>()
-    var year: Int? = null
-    var sort = "TRENDING_DESC"
-    var onList: Boolean? = null
-    var hideAdult = true
-    var currentSortOption = UserListSort.TRENDING
-    var currentSortOrder = UserListOrder.DESCENDING
-    var isSortPersisted = false
-    var focusSearchRequested = false
+    var query by mutableStateOf("")
+    var category by mutableStateOf(ExploreCategory.ANIME)
+    var season by mutableStateOf<String?>(null)
+    var genres by mutableStateOf(emptyList<String>())
+    var formats by mutableStateOf(emptyList<String>())
+    var year by mutableStateOf<Int?>(null)
+    var sort by mutableStateOf("TRENDING_DESC")
+    var onList by mutableStateOf<Boolean?>(null)
+    var hideAdult by mutableStateOf(true)
+    var currentSortOption by mutableStateOf(UserListSort.TRENDING)
+    var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
+    var isSortPersisted by mutableStateOf(false)
+    var focusSearchRequested by mutableStateOf(false)
 
-    private val resultsBacking = mutableListOf<ExploreResult>()
-    private var loadingState = false
-    private var loadingMoreState = false
-    private var errorState: NetworkError? = null
-    private var hasNextPageState = false
+    private val resultsBacking = mutableStateListOf<ExploreResult>()
+    private var loadingState by mutableStateOf(false)
+    private var loadingMoreState by mutableStateOf(false)
+    private var errorState by mutableStateOf<NetworkError?>(null)
+    private var hasNextPageState by mutableStateOf(false)
     private var currentPage = 1
 
     val results: List<ExploreResult> get() = resultsBacking

@@ -28,13 +28,13 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
 import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageOptions
-import com.luum.michi.app.mediaDetail.ui.components.MediaRail
-import com.luum.michi.app.mediaDetail.ui.components.MediaRailItem
+import com.luum.michi.app.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.ui.components.ChipRail
@@ -111,7 +111,7 @@ private fun CharacterDetailContent(
         if (chips.isNotEmpty()) {
             item(key = "roles") {
                 MediaDetailPanel {
-                    MediaDetailSectionHeader(strings.mediaDetailRolesTitle)
+                    SectionHeader(strings.mediaDetailRolesTitle)
                     Spacer(modifier = Modifier.height(12.dp))
                     ChipRail(
                         tabs = chips.map { ChipTab(value = it, label = it) },
@@ -192,7 +192,7 @@ private fun CharacterInformationPanel(detail: CharacterDetail, strings: Language
     }
     if (rows.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
+        SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
         rows.forEach { (label, value) -> MediaDetailInfoRow(label = label, value = value) }
     }
@@ -213,7 +213,7 @@ private fun VoiceActorsSection(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MediaDetailSectionHeader(
+            SectionHeader(
                 title = strings.mediaDetailVoiceActorsTitle,
                 modifier = Modifier.weight(1f),
             )

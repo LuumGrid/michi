@@ -18,6 +18,10 @@ internal data class DashboardFeed(
 internal interface DashboardRepository {
     /**
      * Fetches trending, seasonal, and popular media in a single GraphQL round trip.
+     *
+     * [hideAdult] drives the client-side 18+ gate: when true the query pins
+     * `isAdult: false`; when false the variable is omitted (null = both).
+     * Never sends `isAdult: true` (that would filter to adult ONLY).
      */
-    suspend fun loadFeed(strings: LanguageStrings): NetworkResult<DashboardFeed>
+    suspend fun loadFeed(hideAdult: Boolean, strings: LanguageStrings): NetworkResult<DashboardFeed>
 }

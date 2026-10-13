@@ -13,6 +13,7 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
 /**
@@ -37,6 +38,8 @@ internal class State(
     var selectedTab: TabSection by mutableStateOf(initialTab)
     var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
     var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
+    /** DISCOVER selector: which catalog the dashboard rails show (session only). */
+    var dashboardMediaType by mutableStateOf(DashboardMediaType.ANIME)
     var currentProfile: ProfileDraft by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
     var editorMediaId: Int? by mutableStateOf(null)

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.ui.components.SectionHeader
 
 /**
  * Collapsible long-text section shared by every detail scope (media
@@ -42,7 +43,7 @@ internal fun MediaDetailExpandableText(
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding),
     ) {
-        MediaDetailSectionHeader(title)
+        SectionHeader(title)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = text,

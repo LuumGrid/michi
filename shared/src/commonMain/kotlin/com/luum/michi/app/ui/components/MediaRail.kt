@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.ui.components
+package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,7 +75,7 @@ internal fun MediaRail(
                     .padding(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MediaDetailSectionHeader(
+                SectionHeader(
                     title = title,
                     modifier = Modifier.weight(1f),
                 )

@@ -233,6 +233,7 @@ fun App(
                             staffDetailRepository = dependencies.staffDetailRepository,
                             studioDetailRepository = dependencies.studioDetailRepository,
                             calendarRepository = dependencies.calendarRepository,
+                            dashboardRepository = dependencies.dashboardRepository,
                             urlOpener = dependencies.urlOpener,
                             shareLauncher = dependencies.shareLauncher,
                             sortPersistence = sortPersistence,

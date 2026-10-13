@@ -40,6 +40,7 @@ import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.ui.components.MediaCoverCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import com.luum.michi.app.ui.components.MediaRailItem
 
 /** How a [DetailListScreen] lays its items out. */
 internal enum class DetailListLayout {

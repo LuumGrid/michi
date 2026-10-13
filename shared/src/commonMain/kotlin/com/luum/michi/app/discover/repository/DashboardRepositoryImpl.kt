@@ -20,59 +20,60 @@ query Dashboard(
   ${'$'}currentSeason: MediaSeason!,
   ${'$'}currentYear: Int!,
   ${'$'}nextSeason: MediaSeason!,
-  ${'$'}nextYear: Int!
+  ${'$'}nextYear: Int!,
+  ${'$'}isAdult: Boolean
 ) {
   trendingAnime: Page(perPage: 20) {
-    media(sort: TRENDING_DESC, type: ANIME) {
+    media(sort: TRENDING_DESC, type: ANIME, isAdult: ${'$'}isAdult) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   trendingManga: Page(perPage: 20) {
-    media(sort: TRENDING_DESC, type: MANGA) {
+    media(sort: TRENDING_DESC, type: MANGA, isAdult: ${'$'}isAdult) {
       id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   thisSeason: Page(perPage: 20) {
-    media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC) {
+    media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   upcomingNextSeason: Page(perPage: 20) {
-    media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC) {
+    media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   allTimePopularAnime: Page(perPage: 20) {
-    media(type: ANIME, sort: POPULARITY_DESC) {
+    media(type: ANIME, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   allTimePopularManga: Page(perPage: 20) {
-    media(type: MANGA, sort: POPULARITY_DESC) {
+    media(type: MANGA, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
       id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   topAnime: Page(perPage: 20) {
-    media(type: ANIME, sort: SCORE_DESC) {
+    media(type: ANIME, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
       id format episodes averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
     }
   }
   topManga: Page(perPage: 20) {
-    media(type: MANGA, sort: SCORE_DESC) {
+    media(type: MANGA, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
       id format chapters averageScore favourites isFavourite mediaListEntry { id score }
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
@@ -86,20 +87,28 @@ internal class DashboardRepositoryImpl(
     private val seasonProvider: () -> MediaSeasonYear = { currentSeasonAndYear() },
 ) : DashboardRepository {
 
-    override suspend fun loadFeed(strings: LanguageStrings): NetworkResult<DashboardFeed> {
+    override suspend fun loadFeed(
+        hideAdult: Boolean,
+        strings: LanguageStrings,
+    ): NetworkResult<DashboardFeed> {
         val current = seasonProvider()
         val next = current.next()
 
+        val variables = mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
+            "currentSeason" to JsonPrimitive(current.season.name),
+            "currentYear" to JsonPrimitive(current.year),
+            "nextSeason" to JsonPrimitive(next.season.name),
+            "nextYear" to JsonPrimitive(next.year),
+        )
+        // Omit (null) when adult is allowed: the server then returns both.
+        // Never send true — that would filter to adult ONLY.
+        if (hideAdult) {
+            variables["isAdult"] = JsonPrimitive(false)
+        }
+
         val request = AniListGraphQLRequest(
             query = DashboardQuery,
-            variables = JsonObject(
-                mapOf(
-                    "currentSeason" to JsonPrimitive(current.season.name),
-                    "currentYear" to JsonPrimitive(current.year),
-                    "nextSeason" to JsonPrimitive(next.season.name),
-                    "nextYear" to JsonPrimitive(next.year),
-                ),
-            ),
+            variables = JsonObject(variables),
             operationName = "Dashboard",
         )
 

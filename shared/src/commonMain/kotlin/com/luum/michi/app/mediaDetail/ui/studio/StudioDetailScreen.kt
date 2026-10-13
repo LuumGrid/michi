@@ -42,7 +42,7 @@ import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
 import com.luum.michi.app.mediaDetail.ui.studio.components.studioFilterSummary
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
@@ -181,7 +181,7 @@ private fun StudioFilterSummary(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            MediaDetailSectionHeader(title = title)
+            SectionHeader(title = title)
             Text(
                 text = summary,
                 style = MaterialTheme.typography.bodySmall,

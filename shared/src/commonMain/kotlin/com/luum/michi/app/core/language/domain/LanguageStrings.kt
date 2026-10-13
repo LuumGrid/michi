@@ -13,6 +13,9 @@ interface LanguageStrings {
     val settingsAction: String
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
+    val discoverLoadingLabel: String
+    val discoverErrorLabel: String
+    val discoverEmptyLabel: String
     val searchTitle: String
     val filterAction: String
     val sortAction: String

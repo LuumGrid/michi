@@ -40,7 +40,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.icons.AppIcons
@@ -84,7 +84,7 @@ internal fun MediaDetailInformationPanel(
     }
     if (shortRows.isEmpty() && wideRows.isEmpty() && detail.studios.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
+        SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(12.dp))
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -166,7 +166,7 @@ private fun InfoCell(
 internal fun MediaDetailGenres(detail: MediaDetail, strings: LanguageStrings) {
     if (detail.genres.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(strings.mediaDetailGenresTitle)
+        SectionHeader(strings.mediaDetailGenresTitle)
         Spacer(modifier = Modifier.height(12.dp))
         ChipRail(
             tabs = detail.genres.map { ChipTab(value = it, label = it) },
@@ -183,7 +183,7 @@ internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
     val tags = detail.tags.filter { !it.isMediaSpoiler }
     if (tags.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(strings.mediaDetailTagsTitle)
+        SectionHeader(strings.mediaDetailTagsTitle)
         Spacer(modifier = Modifier.height(12.dp))
         ChipRail(
             tabs = tags.map { ChipTab(value = it.name, label = "${it.name} ${it.rank}%") },
@@ -204,7 +204,7 @@ internal fun MediaDetailExternalLinks(
 ) {
     if (links.isEmpty()) return
     MediaDetailPanel {
-        MediaDetailSectionHeader(title)
+        SectionHeader(title)
         Spacer(modifier = Modifier.height(4.dp))
         links.forEach { link ->
             LinkRow(link = link, strings = strings, onOpenUrl = onOpenUrl)
@@ -279,7 +279,7 @@ internal fun MediaDetailVideos(
     val trailer = detail.trailer ?: return
     val url = trailer.videoUrl()
     Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
+        SectionHeader(
             title = strings.mediaDetailVideosTitle,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )

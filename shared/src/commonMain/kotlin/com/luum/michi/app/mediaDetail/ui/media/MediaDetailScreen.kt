@@ -15,7 +15,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
-import com.luum.michi.app.mediaDetail.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailExternalLinks
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailGenres

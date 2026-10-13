@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.IntOffset
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.CalendarScreen
 import com.luum.michi.app.calendar.ui.state.createCalendarStateHolder
+import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
+import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.UserListOrder
@@ -152,6 +155,7 @@ internal fun Root(
     staffDetailRepository: StaffDetailRepository,
     studioDetailRepository: StudioDetailRepository,
     calendarRepository: CalendarRepository,
+    dashboardRepository: DashboardRepository,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -254,6 +258,13 @@ internal fun Root(
     }
     LaunchedEffect(state.isCalendarOpen) {
         if (state.isCalendarOpen) calendarHolder.load()
+    }
+
+    // Discover dashboard holder: session-independent (public catalog) and
+    // shared by guests. Loads are explicit from the screen; the TTL dedups
+    // revisits and the 18+ gate lives in the holder.
+    val dashboardHolder = remember(dashboardRepository, listScope, strings) {
+        createDashboardStateHolder(dashboardRepository, listScope, strings)
     }
 
     // Media detail holder: session-independent (public data) and shared by
@@ -764,6 +775,18 @@ internal fun Root(
                         icon = AppIcons.Search,
                         actionLabel = null,
                         onAction = {},
+                    )
+                } else if (activeTab == TabSection.DISCOVER) {
+                    // Discover dashboard: public catalog, guests included.
+                    // The branch above still owns the active-query state
+                    // (Explore search lands later).
+                    DashboardScreen(
+                        holder = dashboardHolder,
+                        mediaType = state.dashboardMediaType,
+                        onSelectMediaType = { state.dashboardMediaType = it },
+                        onOpenMedia = { state.openMedia(it) },
+                        hideAdult = !settingsState.displayAdultContent,
+                        bottomPadding = padding.calculateBottomPadding(),
                     )
                 } else if (
                     (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||
