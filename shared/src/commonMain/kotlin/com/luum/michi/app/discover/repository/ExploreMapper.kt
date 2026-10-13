@@ -12,7 +12,7 @@ internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): Explo
         id = id,
         title = titleText,
         meta = buildMeta(strings),
-        coverUrl = coverImage?.thumbnailUrl,
+        coverUrl = coverImage?.bestUrl,
         paletteHex = coverImage?.color,
         averageScore = averageScore?.takeIf { it > 0 },
         favourites = favourites,

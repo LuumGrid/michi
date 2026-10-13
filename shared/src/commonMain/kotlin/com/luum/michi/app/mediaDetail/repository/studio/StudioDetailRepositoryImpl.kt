@@ -38,7 +38,7 @@ query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}
         type
         format
         title { userPreferred romaji english native }
-        coverImage { large color }
+        coverImage { extraLarge large medium color }
         averageScore
         favourites
         genres
@@ -61,7 +61,7 @@ query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
         type
         format
         title { userPreferred romaji english native }
-        coverImage { large color }
+        coverImage { extraLarge large medium color }
         averageScore
         favourites
         genres
@@ -155,7 +155,7 @@ private data class ToggleStudioFavouriteResponseDto(
 private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
     mediaId = id,
     title = title?.bestTitle() ?: "",
-    coverUrl = coverImage?.thumbnailUrl,
+    coverUrl = coverImage?.bestUrl,
     paletteHex = coverImage?.color,
     format = format?.toTitleCase(),
     year = startDate?.year,

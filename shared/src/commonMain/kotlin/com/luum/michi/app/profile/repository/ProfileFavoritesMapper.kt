@@ -22,7 +22,7 @@ internal fun FavouritesDto.toDomain(): ProfileFavorites = ProfileFavorites(
 internal fun MediaDto.toProfileFavoriteMedia(): ProfileFavoriteMedia = ProfileFavoriteMedia(
     id = id,
     title = title.bestTitle(),
-    coverUrl = coverImage?.thumbnailUrl,
+    coverUrl = coverImage?.bestUrl,
     paletteHex = coverImage?.color,
 )
 
@@ -43,6 +43,6 @@ internal fun StaffDto.toProfileFavoritePerson(): ProfileFavoritePerson = Profile
 internal fun StudioDto.toProfileFavoriteStudio(): ProfileFavoriteStudio = ProfileFavoriteStudio(
     id = id,
     name = name,
-    coverUrl = latestCoverImage?.thumbnailUrl,
+    coverUrl = latestCoverImage?.bestUrl,
     paletteHex = latestCoverImage?.color,
 )

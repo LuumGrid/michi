@@ -44,6 +44,7 @@ import com.luum.michi.app.root.Root
 import com.luum.michi.app.settings.ui.state.rememberSettingsState
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.tabFadeSpec
+import com.luum.michi.app.ui.installImageLoader
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.theme.paletteForId
 import com.luum.michi.app.ui.theme.paletteIdOf
@@ -67,6 +68,8 @@ import kotlinx.coroutines.launch
 fun App(
     dependencies: MichiDependencies,
 ) {
+    // One-time Coil setup: crossfade + heap-capped memory cache.
+    installImageLoader()
     // Local prefs: hydrated from the store once, persisted on every change.
     // Unknown/corrupt values fall back to defaults, never crash.
     val store = dependencies.settingsStore

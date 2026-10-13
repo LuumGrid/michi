@@ -395,7 +395,7 @@ private fun StudioDto.toExploreResult(): ExploreResult = ExploreResult(
     id = id,
     title = name,
     meta = "Studio",
-    coverUrl = latestCoverImage?.thumbnailUrl,
+    coverUrl = latestCoverImage?.bestUrl,
     paletteHex = latestCoverImage?.color,
     averageScore = null
 )

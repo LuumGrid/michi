@@ -361,7 +361,7 @@ internal class MediaDetailRepositoryImpl(
                     MediaRecommendationEntry(
                         id = recMedia.id,
                         title = recMedia.title.bestTitle(),
-                        coverUrl = recMedia.coverImage?.thumbnailUrl,
+                        coverUrl = recMedia.coverImage?.bestUrl,
                         format = recMedia.format?.toTitleCase(),
                         season = parseMediaSeason(recMedia.season),
                         year = recMedia.seasonYear,

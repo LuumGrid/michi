@@ -22,7 +22,7 @@ internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
         airingAtEpoch = airingAt,
         paletteHex = media.coverImage?.color,
         id = media.id,
-        coverUrl = media.coverImage?.thumbnailUrl,
+        coverUrl = media.coverImage?.bestUrl,
         format = parseMediaFormat(media.format),
         mediaStatus = parseMediaWorkStatus(media.status),
         averageScore = media.averageScore,

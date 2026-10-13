@@ -34,7 +34,7 @@ internal fun MediaListEntryDto.toMangaListEntry(
         tracksByVolume = format.isVolumeBased() || media.chapters == 0,
         score = score,
         paletteHex = media.coverImage?.color,
-        coverUrl = media.coverImage?.thumbnailUrl,
+        coverUrl = media.coverImage?.bestUrl,
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,
         startedAtInt = startedAt.toComparableInt(),

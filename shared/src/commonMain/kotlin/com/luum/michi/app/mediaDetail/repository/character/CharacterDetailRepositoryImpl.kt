@@ -52,7 +52,7 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
           type
           format
           title { userPreferred romaji english native }
-          coverImage { large color }
+          coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
           mediaListEntry { status }
@@ -82,7 +82,7 @@ query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, 
           type
           format
           title { userPreferred romaji english native }
-          coverImage { large color }
+          coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
           mediaListEntry { status }
@@ -228,7 +228,7 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
     return CharacterMediaItem(
         mediaId = node.id,
         title = node.title?.bestTitle() ?: "",
-        coverUrl = node.coverImage?.thumbnailUrl,
+        coverUrl = node.coverImage?.bestUrl,
         paletteHex = node.coverImage?.color,
         role = normalizeCharacterRole(characterRole),
         format = node.format?.toTitleCase(),

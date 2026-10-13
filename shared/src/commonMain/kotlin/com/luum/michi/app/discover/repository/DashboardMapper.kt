@@ -45,7 +45,7 @@ private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): MediaItem =
         meta = metaFor(this),
         paletteHex = coverImage?.color,
         id = id,
-        coverUrl = coverImage?.thumbnailUrl,
+        coverUrl = coverImage?.bestUrl,
         averageScore = averageScore,
         favourites = favourites,
         isUserFavorited = isFavourite == true,

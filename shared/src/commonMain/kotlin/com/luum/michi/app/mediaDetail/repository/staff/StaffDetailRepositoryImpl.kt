@@ -51,7 +51,7 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
           id
           format
           title { userPreferred romaji english native }
-          coverImage { large color }
+          coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
           mediaListEntry { status }
@@ -81,7 +81,7 @@ query StaffMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
           id
           format
           title { userPreferred romaji english native }
-          coverImage { large color }
+          coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
           mediaListEntry { status }
@@ -270,7 +270,7 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
     return StaffMediaItem(
         mediaId = node.id,
         title = node.title?.bestTitle() ?: "",
-        coverUrl = node.coverImage?.thumbnailUrl,
+        coverUrl = node.coverImage?.bestUrl,
         paletteHex = node.coverImage?.color,
         staffRole = staffRole?.takeIf { it.isNotBlank() },
         format = node.format?.toTitleCase(),

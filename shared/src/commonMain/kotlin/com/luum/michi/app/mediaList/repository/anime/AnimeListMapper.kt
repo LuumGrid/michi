@@ -33,7 +33,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(
         score = score,
         nextEpisodeRelease = media.nextAiringEpisode.toMediaReleaseDateTime(),
         paletteHex = media.coverImage?.color,
-        coverUrl = media.coverImage?.thumbnailUrl,
+        coverUrl = media.coverImage?.bestUrl,
         originalIndex = index,
         updatedAt = updatedAt ?: 0L,
         startedAtInt = startedAt.toComparableInt(),

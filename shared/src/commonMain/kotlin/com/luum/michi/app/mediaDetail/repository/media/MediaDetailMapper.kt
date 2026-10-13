@@ -39,7 +39,7 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
     id = id,
     type = parseType(type),
     title = title.bestTitle(),
-    coverUrl = coverImage?.thumbnailUrl,
+    coverUrl = coverImage?.bestUrl,
     coverFullUrl = coverImage?.bestUrl,
     bannerUrl = bannerImage,
     paletteHex = coverImage?.color,
@@ -169,7 +169,7 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
     return MediaDetailRelation(
         mediaId = node.id,
         title = node.title.bestTitle(),
-        coverUrl = node.coverImage?.thumbnailUrl,
+        coverUrl = node.coverImage?.bestUrl,
         paletteHex = node.coverImage?.color,
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),
