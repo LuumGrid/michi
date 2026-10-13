@@ -34,19 +34,19 @@ internal fun MediaStaffEntry.toRailItem(): MediaRailItem = MediaRailItem(
     key = edgeKey,
 )
 
-internal fun MediaDetailRelation.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
+internal fun MediaDetailRelation.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
     id = mediaId,
     title = title,
     imageUrl = coverUrl,
     subtitle = kind.label(strings),
-    meta = catalogMeta(format, season, year, workStatus, strings),
+    meta = catalogMeta(format, season, year, workStatus, strings, isManga),
 )
 
-internal fun MediaRecommendationEntry.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
+internal fun MediaRecommendationEntry.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
     id = id,
     title = title,
     imageUrl = coverUrl,
-    meta = catalogMeta(format, season, year, workStatus, strings),
+    meta = catalogMeta(format, season, year, workStatus, strings, isManga),
 )
 
 internal fun CharacterMediaItem.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
@@ -81,19 +81,21 @@ internal fun characterRoleLabel(role: String?, strings: LanguageStrings): String
     else -> null
 }
 
-/** `TV · Summer 2026 · Airing` — the lists/calendar meta line (manga status
- *  label reads as anime, matching the calendar cards). */
+/** `TV · Summer 2026 · Airing` — the lists/calendar meta line. `isManga`
+ *  picks the manga status wording (Publishing/Finished) so a manga detail
+ *  reads like the manga list, not the anime one. */
 private fun catalogMeta(
     format: String?,
     season: MediaSeason?,
     year: Int?,
     status: MediaWorkStatus?,
     strings: LanguageStrings,
+    isManga: Boolean,
 ): String? {
     val seasonYear = season?.let { s ->
         year?.let { "${s.coreModelLabel(strings)} $it" } ?: s.coreModelLabel(strings)
     } ?: year?.toString()
-    return listOfNotNull(format, seasonYear, status?.coreModelLabel(strings, isManga = false))
+    return listOfNotNull(format, seasonYear, status?.coreModelLabel(strings, isManga))
         .joinToString(" · ")
         .ifBlank { null }
 }

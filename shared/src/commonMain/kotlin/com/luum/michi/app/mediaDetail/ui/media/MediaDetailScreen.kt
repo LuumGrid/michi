@@ -187,7 +187,7 @@ private fun MediaDetailContent(
             item(key = "related") {
                 MediaRail(
                     title = strings.mediaDetailRelationsTitle,
-                    items = detail.relations.take(RailPreviewCount).map { it.toRailItem(strings) },
+                    items = detail.relations.take(RailPreviewCount).map { it.toRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RELATED) },
                     viewAllLabel = strings.viewAllAction,
@@ -198,7 +198,7 @@ private fun MediaDetailContent(
             item(key = "recommendations") {
                 MediaRail(
                     title = strings.mediaDetailTabRecommendations,
-                    items = holder.recommendations.take(RailPreviewCount).map { it.toRailItem(strings) },
+                    items = holder.recommendations.take(RailPreviewCount).map { it.toRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RECOMMENDATIONS) },
                     viewAllLabel = strings.viewAllAction,

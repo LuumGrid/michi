@@ -89,6 +89,21 @@ private fun staffEntry(id: Int) = MediaStaffEntry(
     role = "Director",
 )
 
+private fun recommendation(id: Int) = MediaRecommendationEntry(
+    id = id,
+    title = "Recommendation $id",
+    coverUrl = null,
+    format = "TV",
+    year = 2026,
+    episodesCount = 12,
+    chaptersCount = null,
+    volumesCount = null,
+    averageScore = null,
+    favouritesCount = null,
+    likesCount = 0,
+    viewerStatus = null,
+)
+
 /**
  * Repository double: canned pages per media id, call counters to prove cache
  * hits and voice-language reloads, and an optional failure switch.
@@ -96,7 +111,7 @@ private fun staffEntry(id: Int) = MediaStaffEntry(
 private class RecordingDetailRepository(
     private val charactersPages: Map<Int, MediaCharactersPage> = emptyMap(),
     private val staffPages: Map<Int, MediaStaffPage> = emptyMap(),
-    private val recommendations: List<MediaRecommendationEntry> = emptyList(),
+    private val recommendationsPages: Map<Int, MediaRecommendationsPage> = emptyMap(),
     private val failDetail: Boolean = false,
     private val viewerEntry: MediaListViewerEntry? = null,
 ) : MediaDetailRepository {
@@ -105,6 +120,8 @@ private class RecordingDetailRepository(
     var characterCalls = 0
         private set
     var staffCalls = 0
+        private set
+    var recommendationCalls = 0
         private set
 
     override suspend fun loadDetail(
@@ -142,9 +159,12 @@ private class RecordingDetailRepository(
     override suspend fun loadRecommendations(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaRecommendationsPage> = NetworkResult.Success(
-        MediaRecommendationsPage(items = recommendations, hasNextPage = false, currentPage = page),
-    )
+    ): NetworkResult<MediaRecommendationsPage> {
+        recommendationCalls++
+        return NetworkResult.Success(
+            recommendationsPages[page] ?: MediaRecommendationsPage(emptyList(), false, page),
+        )
+    }
 }
 
 private object NoopEntryRepository : MediaListEntryRepository {
@@ -255,6 +275,49 @@ class MediaDetailIntegrationTest {
         assertEquals(listOf(1, 2), holder.characters.map { it.characterId })
         assertFalse(holder.charactersHasNextPage)
         assertEquals(1, repository.characterCalls)
+    }
+
+    @Test
+    fun loadMoreRecommendationsAppendsNextPage() {
+        val repository = RecordingDetailRepository(
+            recommendationsPages = mapOf(
+                1 to MediaRecommendationsPage(listOf(recommendation(1)), hasNextPage = true, currentPage = 1),
+                2 to MediaRecommendationsPage(listOf(recommendation(2)), hasNextPage = false, currentPage = 2),
+            ),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.loadRecommendations()
+
+        assertEquals(listOf(1), holder.recommendations.map { it.id })
+        assertTrue(holder.recommendationsHasNextPage)
+
+        holder.loadMoreRecommendations()
+
+        assertEquals(listOf(1, 2), holder.recommendations.map { it.id })
+        assertFalse(holder.recommendationsHasNextPage)
+        assertEquals(2, repository.recommendationCalls)
+    }
+
+    @Test
+    fun cacheRestoreDropsThePreviousMediasRecommendations() {
+        // The "View all" list re-binds the parent holder on back and refetches
+        // page 1; a cached restore must not keep another media's recommendations.
+        val repository = RecordingDetailRepository(
+            recommendationsPages = mapOf(
+                1 to MediaRecommendationsPage(listOf(recommendation(1)), hasNextPage = false, currentPage = 1),
+            ),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.loadRecommendations()
+        holder.load(2)
+        holder.load(1)
+
+        assertEquals(1, holder.detail?.id)
+        assertTrue(holder.recommendations.isEmpty())
     }
 
     @Test

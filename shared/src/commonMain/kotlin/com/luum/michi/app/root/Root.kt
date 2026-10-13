@@ -45,6 +45,7 @@ import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
 import com.luum.michi.app.mediaDetail.domain.character.model.aniListUrl as characterAniListUrl
@@ -277,8 +278,26 @@ internal fun Root(
             is DetailDestination.Character -> characterHolder.load(destination.id)
             is DetailDestination.Staff -> staffHolder.load(destination.id)
             is DetailDestination.Studio -> studioHolder.load(destination.id)
-            // The list reuses the parent's already-loaded holder: no fetch.
-            is DetailDestination.DetailList -> {}
+            // The list renders the parent's holder. Re-bind that holder to
+            // [parentId] because an item opened from the list may have swapped
+            // it for another media/character/staff; `load` is a no-op when the
+            // parent is already current (or restores its snapshot from cache).
+            is DetailDestination.DetailList -> when (destination.kind) {
+                DetailListKind.MEDIA_CHARACTERS,
+                DetailListKind.MEDIA_STAFF,
+                DetailListKind.MEDIA_RELATED,
+                DetailListKind.MEDIA_RECOMMENDATIONS -> {
+                    mediaDetailHolder.load(destination.parentId)
+                    // Recommendations are a per-visit query, not cached: refetch
+                    // the parent's page 1 so the "View all" list is not empty.
+                    if (destination.kind == DetailListKind.MEDIA_RECOMMENDATIONS) {
+                        mediaDetailHolder.loadRecommendations()
+                    }
+                }
+                DetailListKind.CHARACTER_MEDIA -> characterHolder.load(destination.parentId)
+                DetailListKind.STAFF_MEDIA,
+                DetailListKind.STAFF_CHARACTERS -> staffHolder.load(destination.parentId)
+            }
             null -> {}
         }
     }
@@ -587,6 +606,7 @@ internal fun Root(
                         )
                         is DetailDestination.DetailList -> {
                             val listBottom = padding.calculateBottomPadding()
+                            val isManga = mediaDetailHolder.detail?.type == MediaDetailType.MANGA
                             when (destination.kind) {
                                 DetailListKind.MEDIA_CHARACTERS -> DetailListScreen(
                                     items = mediaDetailHolder.characters.map { it.toRailItem(strings) },
@@ -607,13 +627,13 @@ internal fun Root(
                                     onLoadMore = { mediaDetailHolder.loadMoreStaff() },
                                 )
                                 DetailListKind.MEDIA_RELATED -> DetailListScreen(
-                                    items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings) },
+                                    items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings, isManga) },
                                     layout = DetailListLayout.ROWS,
                                     onSelect = { state.openMedia(it) },
                                     bottomPadding = listBottom,
                                 )
                                 DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
-                                    items = mediaDetailHolder.recommendations.map { it.toRailItem(strings) },
+                                    items = mediaDetailHolder.recommendations.map { it.toRailItem(strings, isManga) },
                                     layout = DetailListLayout.ROWS,
                                     onSelect = { state.openMedia(it) },
                                     bottomPadding = listBottom,
