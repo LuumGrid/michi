@@ -14,6 +14,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
@@ -32,6 +33,7 @@ private fun sampleDetail(
     id: Int,
     characters: MediaCharactersPage = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
     staff: MediaStaffPage = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
+    viewerEntry: MediaListViewerEntry? = null,
 ) = MediaDetail(
     id = id,
     type = MediaDetailType.ANIME,
@@ -58,10 +60,8 @@ private fun sampleDetail(
     descriptionPlain = "",
     isAdult = false,
     isFavourite = false,
-    viewerEntry = null,
+    viewerEntry = viewerEntry,
     relations = emptyList(),
-    scoreDistribution = emptyList(),
-    statusDistribution = emptyList(),
     characters = characters,
     staff = staff,
     titleRomaji = null,
@@ -79,7 +79,6 @@ private fun character(id: Int) = MediaCharacterEntry(
     name = "Character $id",
     imageUrl = null,
     role = MediaCharacterRole.MAIN,
-    voiceActor = null,
 )
 
 private fun staffEntry(id: Int) = MediaStaffEntry(
@@ -99,6 +98,7 @@ private class RecordingDetailRepository(
     private val staffPages: Map<Int, MediaStaffPage> = emptyMap(),
     private val recommendations: List<MediaRecommendationEntry> = emptyList(),
     private val failDetail: Boolean = false,
+    private val viewerEntry: MediaListViewerEntry? = null,
 ) : MediaDetailRepository {
     var detailCalls = 0
         private set
@@ -106,12 +106,9 @@ private class RecordingDetailRepository(
         private set
     var staffCalls = 0
         private set
-    var lastVoiceLanguage: String? = null
-        private set
 
     override suspend fun loadDetail(
         mediaId: Int,
-        voiceLanguage: String,
         strings: LanguageStrings,
     ): NetworkResult<MediaDetail> {
         detailCalls++
@@ -121,6 +118,7 @@ private class RecordingDetailRepository(
                 id = mediaId,
                 characters = charactersPages[1] ?: MediaCharactersPage(emptyList(), false, 1),
                 staff = staffPages[1] ?: MediaStaffPage(emptyList(), false, 1),
+                viewerEntry = viewerEntry,
             ),
         )
     }
@@ -128,10 +126,8 @@ private class RecordingDetailRepository(
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-        voiceLanguage: String,
     ): NetworkResult<MediaCharactersPage> {
         characterCalls++
-        lastVoiceLanguage = voiceLanguage
         return NetworkResult.Success(charactersPages[page] ?: MediaCharactersPage(emptyList(), false, page))
     }
 
@@ -145,7 +141,10 @@ private class RecordingDetailRepository(
 
     override suspend fun loadRecommendations(
         mediaId: Int,
-    ): NetworkResult<List<MediaRecommendationEntry>> = NetworkResult.Success(recommendations)
+        page: Int,
+    ): NetworkResult<MediaRecommendationsPage> = NetworkResult.Success(
+        MediaRecommendationsPage(items = recommendations, hasNextPage = false, currentPage = page),
+    )
 }
 
 private object NoopEntryRepository : MediaListEntryRepository {
@@ -178,6 +177,21 @@ private object NoopEntryRepository : MediaListEntryRepository {
     override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> =
         NetworkResult.Failure(NetworkError.Unknown(null))
 }
+
+private fun viewerEntry(progress: Int, status: MediaListStatus? = MediaListStatus.CURRENT) = MediaListViewerEntry(
+    id = 7,
+    status = status,
+    progress = progress,
+    progressVolumes = null,
+    score = 0f,
+    notes = "",
+    repeat = 0,
+    priority = 0,
+    isPrivate = false,
+    hiddenFromStatusLists = false,
+    startedAtMillis = null,
+    completedAtMillis = null,
+)
 
 private fun holderWired(repository: MediaDetailRepository) = MediaDetailStateHolder(
     repository = repository,
@@ -244,19 +258,6 @@ class MediaDetailIntegrationTest {
     }
 
     @Test
-    fun selectVoiceLanguageReloadsCharactersPageOne() {
-        val repository = RecordingDetailRepository()
-        val holder = holderWired(repository)
-
-        holder.load(1)
-        holder.selectVoiceLanguage("ENGLISH")
-
-        assertEquals("ENGLISH", holder.voiceLanguage)
-        assertEquals("ENGLISH", repository.lastVoiceLanguage)
-        assertEquals(1, repository.characterCalls)
-    }
-
-    @Test
     fun aniListUrlUsesTypeSegment() {
         assertEquals("https://anilist.co/anime/5", sampleDetail(5).aniListUrl())
         assertEquals(
@@ -280,5 +281,19 @@ class MediaDetailIntegrationTest {
         assertNull(holder.detail)
         assertNotNull(holder.error)
         assertFalse(holder.isLoading)
+    }
+
+    @Test
+    fun entryChangedDropsCachedSnapshot() {
+        val repository = RecordingDetailRepository(viewerEntry = viewerEntry(5))
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.load(2)
+        // Editor saved media 1 while 2 is showing: 1 must refetch next visit.
+        holder.onEntryChanged(1)
+        holder.load(1)
+
+        assertEquals(3, repository.detailCalls)
     }
 }

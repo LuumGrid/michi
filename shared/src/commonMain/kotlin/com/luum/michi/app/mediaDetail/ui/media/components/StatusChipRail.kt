@@ -23,14 +23,6 @@ import com.luum.michi.app.ui.theme.SurfaceStyleProvider
  * Single-select status chips in a horizontal rail (the editor goes rail,
  * not rows, for the 6 statuses). Plain Row + manual scroll on purpose:
  * a LazyRow nested in the sheet's scroll column mismeasures (overlapping
- * rows); this one sizes itself like any other row. Auto-scrolls to the
- * selection; no counts (unlike the list section rails) — selection is
- * the only state.
- */
-/**
- * Single-select status chips in a horizontal rail (the editor goes rail,
- * not rows, for the 6 statuses). Plain Row + manual scroll on purpose:
- * a LazyRow nested in the sheet's scroll column mismeasures (overlapping
  * rows); this one sizes itself like any other row. No auto-scroll (the
  * first chips are always visible; the rest are tapped in view) and no
  * counts (unlike the list section rails) — selection is the only state.

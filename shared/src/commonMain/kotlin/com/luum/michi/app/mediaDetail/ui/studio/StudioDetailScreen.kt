@@ -24,17 +24,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,24 +41,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
-import com.luum.michi.app.mediaDetail.domain.studio.model.label
-import com.luum.michi.app.mediaDetail.domain.studio.model.sortedFor
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.mediaDetail.ui.studio.components.studioFilterSummary
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.ui.components.MessagePanel
-import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * Studio detail page: name hero + a 2-column media grid with its own local
- * score/year sort and client-side type/format filters. The `+` button (signed
+ * Studio detail page: name hero + a 2-column media grid. Sort and the
+ * client-side type/format filters live in the holder and are edited from
+ * [com.luum.michi.app.mediaDetail.ui.studio.components.StudioFilterSheet]
+ * (toolbar filter or the grid's summary line). The `+` button (signed
  * in only) opens the entry editor. Reached from a media information panel
  * studio chip via [com.luum.michi.app.root.state.State.openStudio].
  */
@@ -75,57 +65,32 @@ internal fun StudioDetailScreen(
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
     onOpenMedia: (Int) -> Unit,
+    onOpenFilter: () -> Unit,
     onAddEntry: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    when {
-        detail == null && holder.isLoading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = strings.mediaDetailLoadingLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
-        detail == null && holder.error != null -> {
-            MessagePanel(
-                title = strings.mediaDetailErrorLabel,
-                message = holder.error?.let { strings.networkErrorMessage(it) },
-                icon = Icons.Filled.Warning,
-                actionLabel = strings.retryAction,
-                onAction = onRetry,
-                modifier = modifier,
+    MediaDetailStateContainer(
+        hasContent = detail != null,
+        isLoading = holder.isLoading,
+        error = holder.error,
+        strings = strings,
+        onRetry = onRetry,
+        modifier = modifier,
+    ) {
+        if (detail != null) {
+            StudioDetailGrid(
+                detail = detail,
+                holder = holder,
+                strings = strings,
+                bottomPadding = bottomPadding,
+                onOpenMedia = onOpenMedia,
+                onOpenFilter = onOpenFilter,
+                onAddEntry = onAddEntry,
             )
-        }
-        detail != null -> {
-            PullRefresh(isRefreshing = holder.isLoading, onRefresh = onRetry) {
-                StudioDetailGrid(
-                    detail = detail,
-                    holder = holder,
-                    strings = strings,
-                    bottomPadding = bottomPadding,
-                    onOpenMedia = onOpenMedia,
-                    onAddEntry = onAddEntry,
-                    modifier = modifier,
-                )
-            }
         }
     }
 }
-
-private val StudioSortOptions = listOf(
-    StudioMediaSort.SCORE,
-    StudioMediaSort.NEWEST,
-    StudioMediaSort.OLDEST,
-)
 
 @Composable
 private fun StudioDetailGrid(
@@ -134,23 +99,13 @@ private fun StudioDetailGrid(
     strings: LanguageStrings,
     bottomPadding: Dp,
     onOpenMedia: (Int) -> Unit,
+    onOpenFilter: () -> Unit,
     onAddEntry: ((Int) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    // Filter/sort are screen-local: switching them never touches the holder
-    // or the network (the list is already loaded, ordered by popularity).
-    var typeFilter by remember { mutableStateOf<String?>(null) }
-    var formatFilter by remember { mutableStateOf<String?>(null) }
-
-    val formats = remember(holder.mediaItems) {
-        holder.mediaItems.mapNotNull { it.format }.filter { it.isNotBlank() }.distinct().sorted()
-    }
-    val filtered = holder.mediaItems
-        .sortedFor(holder.sort)
-        .filter { item ->
-            (typeFilter == null || item.type == typeFilter) &&
-                (formatFilter == null || item.format == formatFilter)
-        }
+    // Sort/filters live in the holder (the filter sheet edits them from
+    // Root) and are display-only: the loaded list is never re-queried.
+    val filtered = holder.visibleItems
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -168,15 +123,11 @@ private fun StudioDetailGrid(
             StudioHero(detail = detail, strings = strings)
         }
         item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
-            StudioFilterControls(
-                strings = strings,
-                selectedSort = holder.sort,
-                onSelectSort = holder::changeSort,
-                typeFilter = typeFilter,
-                onSelectType = { typeFilter = it },
-                formats = formats,
-                formatFilter = formatFilter,
-                onSelectFormat = { formatFilter = it },
+            StudioFilterSummary(
+                title = strings.mediaDetailMediaTitle,
+                summary = studioFilterSummary(holder, strings),
+                filterLabel = strings.filterAction,
+                onClick = onOpenFilter,
             )
         }
         if (filtered.isEmpty() && !holder.isLoading) {
@@ -215,54 +166,35 @@ private fun StudioDetailGrid(
     }
 }
 
+/** Section title + one-line sort/filter state; the whole row opens the filter sheet. */
 @Composable
-private fun StudioFilterControls(
-    strings: LanguageStrings,
-    selectedSort: StudioMediaSort,
-    onSelectSort: (StudioMediaSort) -> Unit,
-    typeFilter: String?,
-    onSelectType: (String?) -> Unit,
-    formats: List<String>,
-    formatFilter: String?,
-    onSelectFormat: (String?) -> Unit,
+private fun StudioFilterSummary(
+    title: String,
+    summary: String,
+    filterLabel: String,
+    onClick: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
-            title = strings.mediaDetailMediaTitle,
-            modifier = Modifier.padding(horizontal = 8.dp),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ChipRail(
-            tabs = StudioSortOptions.map { ChipTab(value = it, label = it.label(strings)) },
-            selected = selectedSort,
-            onSelect = onSelectSort,
-            contentPadding = PaddingValues(horizontal = 8.dp),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        val typeTabs: List<ChipTab<String?>> = listOf(
-            ChipTab(value = null, label = strings.sectionAll),
-            ChipTab(value = "ANIME", label = strings.animeLabel),
-            ChipTab(value = "MANGA", label = strings.mangaLabel),
-        )
-        ChipRail(
-            tabs = typeTabs,
-            selected = typeFilter,
-            onSelect = onSelectType,
-            contentPadding = PaddingValues(horizontal = 8.dp),
-        )
-        if (formats.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            val formatTabs: List<ChipTab<String?>> = buildList {
-                add(ChipTab(value = null, label = strings.sectionAll))
-                formats.forEach { add(ChipTab(value = it, label = it)) }
-            }
-            ChipRail(
-                tabs = formatTabs,
-                selected = formatFilter,
-                onSelect = onSelectFormat,
-                contentPadding = PaddingValues(horizontal = 8.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            MediaDetailSectionHeader(title = title)
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Icon(
+            imageVector = AppIcons.Filter,
+            contentDescription = filterLabel,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

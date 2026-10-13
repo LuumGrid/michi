@@ -1,8 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.character
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,11 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,33 +17,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
-import com.luum.michi.app.mediaDetail.domain.character.model.label
-import com.luum.michi.app.mediaDetail.domain.character.model.sortedFor
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailChipRow
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
+import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageOptions
 import com.luum.michi.app.mediaDetail.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.MediaRailItem
+import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
+import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.ui.components.MessagePanel
-import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * Character detail page: person hero + person chips + description +
- * information panel + voice actors + appearances rail with its own local
- * sort. Reached from a media character rail via
+ * Character detail page: person hero + framed roles chips + description +
+ * information panel + voice actors (with their language picker) + appearances
+ * rail with its own local sort. Reached from a media character rail via
  * [com.luum.michi.app.root.state.State.openCharacter].
  */
 @Composable
@@ -60,46 +54,29 @@ internal fun CharacterDetailScreen(
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
     onOpenMedia: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
+    onViewAll: (DetailListKind) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    when {
-        detail == null && holder.isLoading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = strings.mediaDetailLoadingLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
-        detail == null && holder.error != null -> {
-            MessagePanel(
-                title = strings.mediaDetailErrorLabel,
-                message = holder.error?.let { strings.networkErrorMessage(it) },
-                icon = Icons.Filled.Warning,
-                actionLabel = strings.retryAction,
-                onAction = onRetry,
-                modifier = modifier,
+    MediaDetailStateContainer(
+        hasContent = detail != null,
+        isLoading = holder.isLoading,
+        error = holder.error,
+        strings = strings,
+        onRetry = onRetry,
+        modifier = modifier,
+    ) {
+        if (detail != null) {
+            CharacterDetailContent(
+                detail = detail,
+                holder = holder,
+                strings = strings,
+                bottomPadding = bottomPadding,
+                onOpenMedia = onOpenMedia,
+                onOpenStaff = onOpenStaff,
+                onViewAll = onViewAll,
             )
-        }
-        detail != null -> {
-            PullRefresh(isRefreshing = holder.isLoading, onRefresh = onRetry) {
-                CharacterDetailContent(
-                    detail = detail,
-                    holder = holder,
-                    strings = strings,
-                    bottomPadding = bottomPadding,
-                    onOpenMedia = onOpenMedia,
-                    modifier = modifier,
-                )
-            }
         }
     }
 }
@@ -111,8 +88,11 @@ private fun CharacterDetailContent(
     strings: LanguageStrings,
     bottomPadding: Dp,
     onOpenMedia: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
+    onViewAll: (DetailListKind) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var isVoiceLanguageOpen by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
@@ -129,32 +109,69 @@ private fun CharacterDetailContent(
         }
         val chips = characterChips(detail, strings)
         if (chips.isNotEmpty()) {
-            item(key = "chips") { MediaDetailChipRow(chips = chips) }
+            item(key = "roles") {
+                MediaDetailPanel {
+                    MediaDetailSectionHeader(strings.mediaDetailRolesTitle)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ChipRail(
+                        tabs = chips.map { ChipTab(value = it, label = it) },
+                        selected = null,
+                        onSelect = {},
+                        contentPadding = PaddingValues(0.dp),
+                    )
+                }
+            }
         }
         if (detail.descriptionPlain.isNotBlank()) {
             item(key = "description") {
-                PersonDescription(text = detail.descriptionPlain, strings = strings)
+                MediaDetailExpandableText(
+                    title = strings.mediaDetailDescriptionTitle,
+                    text = detail.descriptionPlain,
+                    strings = strings,
+                )
             }
         }
         item(key = "information") {
             CharacterInformationPanel(detail = detail, strings = strings)
         }
-        val voiceActors = holder.mediaItems.distinctVoiceActors()
-        if (voiceActors.isNotEmpty()) {
+        // Kept visible while the character has media, so the language picker
+        // stays reachable even when the chosen language has no cast.
+        if (holder.mediaItems.isNotEmpty()) {
             item(key = "voice-actors") {
-                VoiceActorsSection(voiceActors = voiceActors, strings = strings)
+                VoiceActorsSection(
+                    voiceActors = holder.mediaItems.distinctVoiceActors(),
+                    strings = strings,
+                    language = holder.voiceLanguage,
+                    onOpenLanguagePicker = { isVoiceLanguageOpen = true },
+                    onOpenStaff = onOpenStaff,
+                )
             }
         }
         item(key = "media") {
-            AppearancesSection(holder = holder, strings = strings, onOpenMedia = onOpenMedia)
+            AppearancesSection(
+                holder = holder,
+                strings = strings,
+                onOpenMedia = onOpenMedia,
+                onViewAll = { onViewAll(DetailListKind.CHARACTER_MEDIA) },
+            )
         }
+    }
+    if (isVoiceLanguageOpen) {
+        MediaDetailVoiceLanguageSheet(
+            selected = holder.voiceLanguage,
+            onSelect = {
+                holder.selectVoiceLanguage(it)
+                isVoiceLanguageOpen = false
+            },
+            onDismiss = { isVoiceLanguageOpen = false },
+            strings = strings,
+        )
     }
 }
 
-/** Favourites + the primary roles this character appears in. */
+/** The primary roles this character appears in (favourites live in the hero). */
 private fun characterChips(detail: CharacterDetail, strings: LanguageStrings): List<String> =
     buildList {
-        detail.favourites?.let { add("$it ${strings.favoritesLabel}") }
         detail.media.items
             .mapNotNull { characterRoleLabel(it.role, strings) }
             .distinct()
@@ -164,7 +181,6 @@ private fun characterChips(detail: CharacterDetail, strings: LanguageStrings): L
 @Composable
 private fun CharacterInformationPanel(detail: CharacterDetail, strings: LanguageStrings) {
     val rows = buildList {
-        detail.nativeName?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailJapaneseLabel to it) }
         detail.gender?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailGenderLabel to it) }
         detail.age?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailAgeLabel to it) }
         detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBloodTypeLabel to it) }
@@ -173,34 +189,59 @@ private fun CharacterInformationPanel(detail: CharacterDetail, strings: Language
             .filter { it.isNotBlank() }
             .takeIf { it.isNotEmpty() }
             ?.let { add(strings.mediaDetailSynonymsLabel to it.joinToString(", ")) }
-        detail.favourites?.let { add(strings.favoritesLabel to it.toString()) }
     }
+    if (rows.isEmpty()) return
     MediaDetailPanel {
         MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
-        rows.forEach { (label, value) -> InfoRow(label = label, value = value) }
+        rows.forEach { (label, value) -> MediaDetailInfoRow(label = label, value = value) }
     }
 }
 
 @Composable
-private fun VoiceActorsSection(voiceActors: List<CharacterMediaItem>, strings: LanguageStrings) {
+private fun VoiceActorsSection(
+    voiceActors: List<CharacterMediaItem>,
+    strings: LanguageStrings,
+    language: String,
+    onOpenLanguagePicker: () -> Unit,
+    onOpenStaff: (Int) -> Unit,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
-            title = strings.mediaDetailVoiceLanguageLabel,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MediaDetailSectionHeader(
+                title = strings.mediaDetailVoiceActorsTitle,
+                modifier = Modifier.weight(1f),
+            )
+            MediaDetailVoiceLanguagePill(
+                label = voiceLanguageOptions(strings)
+                    .firstOrNull { it.value == language }
+                    ?.label
+                    ?: language,
+                onClick = onOpenLanguagePicker,
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         MediaRail(
             title = null,
-            items = voiceActors.map { item ->
+            items = voiceActors.mapNotNull { item ->
+                // Only actors with an id are reachable; the rest are dropped.
+                val actorId = item.voiceActorId ?: return@mapNotNull null
                 MediaRailItem(
-                    id = item.voiceActorId ?: item.mediaId,
+                    id = actorId,
                     title = item.voiceActorName.orEmpty(),
                     imageUrl = item.voiceActorImageUrl,
                     subtitle = voiceLanguageLabel(item.voiceActorLanguage, strings),
                 )
             },
-            onSelect = null,
+            onSelect = onOpenStaff,
+            // No cast in the chosen language: say so instead of dropping the
+            // whole section (which would hide the language picker).
+            emptyLabel = strings.mediaDetailNoVoiceActorsLabel,
         )
     }
 }
@@ -210,59 +251,20 @@ private fun AppearancesSection(
     holder: CharacterDetailStateHolder,
     strings: LanguageStrings,
     onOpenMedia: (Int) -> Unit,
+    onViewAll: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
-            title = strings.mediaDetailAppearancesTitle,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ChipRail(
-            tabs = CharacterMediaSort.entries.map { ChipTab(value = it, label = it.label(strings)) },
-            selected = holder.sort,
-            onSelect = holder::changeSort,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        if (holder.mediaItems.isEmpty() && !holder.isLoading) {
-            Text(
-                text = strings.mediaDetailNoMediaLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        } else {
-            MediaRail(
-                title = null,
-                items = holder.mediaItems.sortedFor(holder.sort).map { item ->
-                    MediaRailItem(
-                        id = item.mediaId,
-                        title = item.title,
-                        imageUrl = item.coverUrl,
-                        subtitle = listOfNotNull(
-                            characterRoleLabel(item.role, strings),
-                            item.voiceActorName,
-                        ).joinToString(" · ").takeIf { it.isNotBlank() },
-                    )
-                },
-                onSelect = onOpenMedia,
-                onLoadMore = if (holder.hasNextPage && !holder.isLoadingMore) {
-                    { holder.loadMore() }
-                } else {
-                    null
-                },
-                loadMoreLabel = strings.mediaDetailLoadMoreAction,
-            )
-        }
-    }
+    MediaRail(
+        title = strings.mediaDetailAppearancesTitle,
+        items = holder.mediaItems.take(RailPreviewCount).map { it.toRailItem(strings) },
+        onSelect = onOpenMedia,
+        onViewAll = onViewAll,
+        viewAllLabel = strings.viewAllAction,
+        emptyLabel = strings.mediaDetailNoMediaLabel.takeIf { !holder.isLoading },
+    )
 }
 
-/** Localized role for the chip/rail subtitle; unknown values fall through. */
-private fun characterRoleLabel(role: String?, strings: LanguageStrings): String? = when (role) {
-    "MAIN" -> strings.mediaDetailCharacterRoleMain
-    "SUPPORTING" -> strings.mediaDetailCharacterRoleSupporting
-    "BACKGROUND" -> strings.mediaDetailCharacterRoleBackground
-    else -> null
-}
+/** Rail preview cap: the rail shows the first N, "View all" shows the rest. */
+private const val RailPreviewCount = 10
 
 /** One row per voice actor id (an actor can voice several of the media). */
 private fun List<CharacterMediaItem>.distinctVoiceActors(): List<CharacterMediaItem> =
@@ -285,58 +287,5 @@ private fun voiceLanguageLabel(raw: String?, strings: LanguageStrings): String? 
         raw.contains("Hebrew", ignoreCase = true) -> strings.voiceLanguageHebrew
         raw.contains("Hungarian", ignoreCase = true) -> strings.voiceLanguageHungarian
         else -> raw
-    }
-}
-
-@Composable
-private fun PersonDescription(text: String, strings: LanguageStrings) {
-    var expanded by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-    ) {
-        Text(
-            text = strings.mediaDetailDescriptionTitle,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = if (expanded) Int.MAX_VALUE else 5,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = if (expanded) strings.mediaDetailReadLessAction else strings.mediaDetailReadMoreAction,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(vertical = 4.dp),
-        )
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
     }
 }

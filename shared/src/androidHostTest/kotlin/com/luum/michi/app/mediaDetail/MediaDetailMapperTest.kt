@@ -2,9 +2,12 @@ package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
+import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
 import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
 import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
@@ -117,6 +120,11 @@ private fun mediaDetailPageJson() = buildJsonObject {
             put("site", "youtube")
             put("thumbnail", "https://i.ytimg.com/vi/abc123/hqdefault.jpg")
         })
+        put("nextAiringEpisode", buildJsonObject {
+            put("episode", 3)
+            put("airingAt", 1_700_000_000L)
+            put("timeUntilAiring", 345_600L)
+        })
         // AniList can return the same studio twice (main + sub on the same
         // node); the mapper must collapse it or the studio chips rail
         // crashes on the duplicate LazyRow key.
@@ -136,6 +144,21 @@ private fun mediaDetailPageJson() = buildJsonObject {
                 },
             )))
         })
+        put("relations", buildJsonObject {
+            put("edges", JsonArray(listOf(
+                buildJsonObject {
+                    put("relationType", "SEQUEL")
+                    put("node", buildJsonObject {
+                        put("id", 77)
+                        put("format", "TV")
+                        put("status", "RELEASING")
+                        put("season", "SUMMER")
+                        put("seasonYear", 2026)
+                        put("title", buildJsonObject { put("romaji", "Sequel Show") })
+                    })
+                },
+            )))
+        })
     })
 }
 
@@ -143,7 +166,7 @@ class MediaDetailMapperTest {
 
     private suspend fun loadDetail(): MediaDetail {
         val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(mediaDetailPageJson())))
-        val result = repository.loadDetail(42, voiceLanguage = "JAPANESE", strings = EnglishStrings)
+        val result = repository.loadDetail(42, strings = EnglishStrings)
         assertIs<NetworkResult.Success<MediaDetail>>(result)
         return result.value
     }
@@ -224,7 +247,7 @@ class MediaDetailMapperTest {
     @Test
     fun detailQueryRequestsExternalLinkLanguage() = runBlocking {
         val graphQL = FakeGraphQL(listOf(mediaDetailPageJson()))
-        MediaDetailRepositoryImpl(graphQL).loadDetail(42, voiceLanguage = "JAPANESE", strings = EnglishStrings)
+        MediaDetailRepositoryImpl(graphQL).loadDetail(42, strings = EnglishStrings)
 
         val query = graphQL.requests.single().query
         assertTrue(query.contains("externalLinks { id site url type icon color language }"), query)
@@ -264,5 +287,59 @@ class MediaDetailMapperTest {
 
         assertEquals(2, detail.studios.size)
         assertEquals(listOf("Studio Pierrot", "Bones"), detail.studios.map { it.name })
+    }
+
+    @Test
+    fun mapsNextAiringEpisode() = runBlocking {        val detail = loadDetail()
+
+        val next = detail.nextEpisode
+        assertEquals(3, next?.episode)
+        assertEquals(1_700_000_000L, next?.airingAtEpochSeconds)
+        assertEquals(345_600L, next?.timeUntilAiringSeconds)
+    }
+
+    @Test
+    fun mapsRelationSeasonAndWorkStatus() = runBlocking {
+        val detail = loadDetail()
+
+        val relation = detail.relations.single()
+        assertEquals("Sequel Show", relation.title)
+        assertEquals("TV", relation.format)
+        assertEquals(MediaSeason.SUMMER, relation.season)
+        assertEquals(2026, relation.year)
+        assertEquals(MediaWorkStatus.RELEASING, relation.workStatus)
+    }
+
+    @Test
+    fun mapsRecommendationsPageWithPaging() = runBlocking {
+        val page = buildJsonObject {
+            put("Media", buildJsonObject {
+                put("id", 42)
+                put("recommendations", buildJsonObject {
+                    put("pageInfo", buildJsonObject {
+                        put("hasNextPage", true)
+                        put("currentPage", 2)
+                    })
+                    put("nodes", JsonArray(listOf(
+                        buildJsonObject {
+                            put("id", 5)
+                            put("rating", 7)
+                            put("mediaRecommendation", buildJsonObject {
+                                put("id", 99)
+                                put("title", buildJsonObject { put("romaji", "Recommended") })
+                            })
+                        },
+                    )))
+                })
+            })
+        }
+
+        val result = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
+            .loadRecommendations(42, page = 2)
+
+        assertIs<NetworkResult.Success<MediaRecommendationsPage>>(result)
+        assertEquals(listOf(99), result.value.items.map { it.id })
+        assertEquals(true, result.value.hasNextPage)
+        assertEquals(2, result.value.currentPage)
     }
 }

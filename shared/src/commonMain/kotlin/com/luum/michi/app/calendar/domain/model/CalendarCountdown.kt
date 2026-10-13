@@ -14,7 +14,8 @@ internal fun airingCountdownLabel(
 ): String? {
     val remaining = airingAtEpochSeconds - nowEpochSeconds
     if (remaining <= 0) return null
-    val hours = (remaining / 3600).toInt()
+    val days = (remaining / 86_400).toInt()
+    val hours = ((remaining % 86_400) / 3600).toInt()
     val minutes = ((remaining % 3600) / 60).toInt()
-    return strings.airingCountdownLabel(hours, minutes)
+    return strings.airingCountdownLabel(days, hours, minutes)
 }

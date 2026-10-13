@@ -1,0 +1,255 @@
+package com.luum.michi.app.mediaDetail.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.ui.components.MediaCoverCard
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+
+/** How a [DetailListScreen] lays its items out. */
+internal enum class DetailListLayout {
+    /** Full-width cover rows (media: relations, recommendations, works). */
+    ROWS,
+
+    /** Portrait cards in a grid (people: characters, staff). */
+    GRID,
+}
+
+/**
+ * Full-screen "View all" list for a detail section. Stateless: the caller
+ * reads its holder and passes the items + paging. Auto-loads the next page
+ * when the footer scrolls into view, so the user just keeps scrolling. The
+ * section title lives in the toolbar, not here.
+ */
+@Composable
+internal fun DetailListScreen(
+    items: List<MediaRailItem>,
+    layout: DetailListLayout,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp,
+    hasMore: Boolean = false,
+    isLoadingMore: Boolean = false,
+    onLoadMore: (() -> Unit)? = null,
+) {
+    val paged = hasMore && (onLoadMore != null || isLoadingMore)
+    when (layout) {
+        DetailListLayout.ROWS -> RowsList(
+            items = items,
+            onSelect = onSelect,
+            bottomPadding = bottomPadding,
+            paged = paged,
+            isLoadingMore = isLoadingMore,
+            onLoadMore = onLoadMore,
+            modifier = modifier,
+        )
+        DetailListLayout.GRID -> GridList(
+            items = items,
+            onSelect = onSelect,
+            bottomPadding = bottomPadding,
+            paged = paged,
+            isLoadingMore = isLoadingMore,
+            onLoadMore = onLoadMore,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun RowsList(
+    items: List<MediaRailItem>,
+    onSelect: (Int) -> Unit,
+    bottomPadding: Dp,
+    paged: Boolean,
+    isLoadingMore: Boolean,
+    onLoadMore: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+    if (paged) {
+        LaunchedEffect(listState, items.size) {
+            snapshotFlow {
+                listState.layoutInfo.visibleItemsInfo.any { it.key == LOAD_MORE_KEY }
+            }
+                .distinctUntilChanged()
+                .filter { it }
+                .collect { currentOnLoadMore?.invoke() }
+        }
+    }
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp + bottomPadding),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        itemsIndexed(
+            items = items,
+            key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+        ) { _, item ->
+            MediaCoverCard(
+                coverUrl = item.imageUrl,
+                title = item.title,
+                // Catalog line as the subtitle: same slot/size as the lists
+                // and calendar (`bodyMedium` via MediaCoverCard).
+                subtitle = item.meta ?: item.subtitle,
+                onClick = { onSelect(item.id) },
+                content = {
+                    // Extra row (the relation kind): same type and color as
+                    // the calendar's episode line. Only when a meta subtitle
+                    // took the line above, so it never replaces the title info.
+                    if (item.meta != null) {
+                        item.subtitle?.let { extra ->
+                            Text(
+                                text = extra,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                },
+            )
+        }
+        if (paged) {
+            item(key = LOAD_MORE_KEY) { LoadMoreFooter(isLoading = isLoadingMore) }
+        }
+    }
+}
+
+@Composable
+private fun GridList(
+    items: List<MediaRailItem>,
+    onSelect: (Int) -> Unit,
+    bottomPadding: Dp,
+    paged: Boolean,
+    isLoadingMore: Boolean,
+    onLoadMore: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val gridState = rememberLazyGridState()
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+    if (paged) {
+        LaunchedEffect(gridState, items.size) {
+            snapshotFlow {
+                gridState.layoutInfo.visibleItemsInfo.any { it.key == LOAD_MORE_KEY }
+            }
+                .distinctUntilChanged()
+                .filter { it }
+                .collect { currentOnLoadMore?.invoke() }
+        }
+    }
+    LazyVerticalGrid(
+        state = gridState,
+        // Two columns: portraits stay large enough to read the role line.
+        columns = GridCells.Fixed(2),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp + bottomPadding),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        itemsIndexed(
+            items = items,
+            key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+        ) { _, item ->
+            ListCard(item = item, onSelect = onSelect)
+        }
+        if (paged) {
+            item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                LoadMoreFooter(isLoading = isLoadingMore)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListCard(item: MediaRailItem, onSelect: (Int) -> Unit) {
+    Column(modifier = Modifier.clickable { onSelect(item.id) }) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(3f / 4f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            if (!item.imageUrl.isNullOrBlank()) {
+                SubcomposeAsyncImage(
+                    model = item.imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    loading = {},
+                    error = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (item.subtitle != null) {
+            Text(
+                text = item.subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreFooter(isLoading: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+private const val LOAD_MORE_KEY = "detail-list-load-more"

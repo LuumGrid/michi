@@ -1,20 +1,14 @@
 package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
 import com.luum.michi.app.mediaDetail.domain.character.model.aniListUrl as characterAniListUrl
 import com.luum.michi.app.mediaDetail.domain.character.model.shareText as characterShareText
-import com.luum.michi.app.mediaDetail.domain.character.model.sortedFor as characterSortedFor
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
-import com.luum.michi.app.mediaDetail.domain.staff.model.sortedFor as staffSortedFor
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
@@ -26,33 +20,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 // ────────────── fixtures ──────────────
-
-private fun characterMedia(id: Int, score: Int? = null, year: Int? = null) = CharacterMediaItem(
-    mediaId = id,
-    title = "Media $id",
-    coverUrl = null,
-    paletteHex = null,
-    role = null,
-    format = null,
-    year = year,
-    averageScore = score,
-    viewerStatus = null,
-    voiceActorName = null,
-    voiceActorImageUrl = null,
-    voiceActorLanguage = null,
-    voiceActorId = null,
-)
-
-private fun staffMedia(id: Int, score: Int? = null, year: Int? = null) = StaffMediaItem(
-    mediaId = id,
-    title = "Media $id",
-    coverUrl = null,
-    paletteHex = null,
-    staffRole = null,
-    format = null,
-    year = year,
-    averageScore = score,
-)
 
 private fun studioMedia(id: Int, score: Int? = null, year: Int? = null) = StudioMediaItem(
     mediaId = id,
@@ -116,38 +83,6 @@ private fun studioDetail(id: Int, name: String) = StudioDetail(
 class DetailHelpersTest {
 
     // ── client-side ordering ──
-
-    @Test
-    fun characterSortedForScoreYearAndFallback() {
-        val items = listOf(
-            characterMedia(1, score = 70, year = 2001),
-            characterMedia(2, score = 95, year = 1999),
-            characterMedia(3, score = null, year = 2020),
-        )
-
-        assertEquals(listOf(2, 1, 3), items.characterSortedFor(CharacterMediaSort.SCORE).map { it.mediaId })
-        assertEquals(listOf(3, 1, 2), items.characterSortedFor(CharacterMediaSort.NEWEST).map { it.mediaId })
-        assertEquals(listOf(2, 1, 3), items.characterSortedFor(CharacterMediaSort.OLDEST).map { it.mediaId })
-        // No client ordering: the server popularity order is preserved.
-        assertEquals(listOf(1, 2, 3), items.characterSortedFor(CharacterMediaSort.POPULARITY).map { it.mediaId })
-        assertEquals(listOf(1, 2, 3), items.characterSortedFor(CharacterMediaSort.FAVOURITES).map { it.mediaId })
-    }
-
-    @Test
-    fun staffSortedForScoreYearAndTitle() {
-        val items = listOf(
-            staffMedia(1, score = 70, year = 2001).copy(title = "Beta"),
-            staffMedia(2, score = 95, year = 1999).copy(title = "alpha"),
-            staffMedia(3, score = null, year = 2020).copy(title = "Gamma"),
-        )
-
-        assertEquals(listOf(2, 1, 3), items.staffSortedFor(StaffMediaSort.SCORE).map { it.mediaId })
-        assertEquals(listOf(3, 1, 2), items.staffSortedFor(StaffMediaSort.NEWEST).map { it.mediaId })
-        assertEquals(listOf(2, 1, 3), items.staffSortedFor(StaffMediaSort.OLDEST).map { it.mediaId })
-        // Title is case-insensitive.
-        assertEquals(listOf(2, 1, 3), items.staffSortedFor(StaffMediaSort.TITLE).map { it.mediaId })
-        assertEquals(listOf(1, 2, 3), items.staffSortedFor(StaffMediaSort.POPULARITY).map { it.mediaId })
-    }
 
     @Test
     fun studioSortedForScoreYearAndFallback() {

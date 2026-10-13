@@ -12,9 +12,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -46,13 +48,31 @@ internal fun ModalSheet(
     // editor): opens full and stays full instead of landing mid-travel.
     // Default keeps every other sheet wrapping its content.
     fullscreen: Boolean = false,
+    // Unsaved-work guard (the entry editor): while [dismissBlocked], a swipe,
+    // scrim tap or system back is vetoed and reported through
+    // [onDismissBlocked] instead, so the caller can ask before discarding.
+    // The X still goes straight to [onDismiss]: the caller decides there.
+    dismissBlocked: Boolean = false,
+    onDismissBlocked: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val blocked = rememberUpdatedState(dismissBlocked)
+    val onBlocked = rememberUpdatedState(onDismissBlocked)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         dragHandle = { SheetDragHandle() },
         modifier = modifier,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullscreen),
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = fullscreen,
+            confirmValueChange = { target ->
+                if (target == SheetValue.Hidden && blocked.value) {
+                    onBlocked.value()
+                    false
+                } else {
+                    true
+                }
+            },
+        ),
     ) {
         Column(
             modifier = Modifier

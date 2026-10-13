@@ -8,13 +8,13 @@ import com.luum.michi.app.core.network.repository.dto.MediaRelationEdgeDto
 import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
 import com.luum.michi.app.core.network.repository.dto.MediaStaffEdgeDto
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
-import com.luum.michi.app.core.network.repository.dto.MediaVoiceActorDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.model.CalendarDateParts
 import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.calendarPartsToMillis
 import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
@@ -22,6 +22,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTag
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
@@ -30,12 +31,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaScoreBucket
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStatsStatus
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStatusBucket
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaVoiceActor
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 
 internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = MediaDetail(
@@ -65,18 +62,18 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
     descriptionPlain = description?.stripHtml().orEmpty(),
     isAdult = isAdult ?: false,
     isFavourite = isFavourite ?: false,
+    nextEpisode = nextAiringEpisode?.let {
+        MediaNextEpisode(
+            episode = it.episode,
+            airingAtEpochSeconds = it.airingAt,
+            timeUntilAiringSeconds = it.timeUntilAiring,
+        )
+    },
     viewerEntry = mediaListEntry?.toViewerEntry(),
     relations = relations?.edges
         ?.mapNotNull { it.toRelation() }
         .orEmpty()
         .distinctBy { it.mediaId },
-    scoreDistribution = stats?.scoreDistribution
-        ?.map { MediaScoreBucket(score = it.score, amount = it.amount) }
-        ?.sortedBy { it.score }
-        .orEmpty(),
-    statusDistribution = stats?.statusDistribution
-        ?.map { MediaStatusBucket(status = parseStatsStatus(it.status), amount = it.amount) }
-        .orEmpty(),
     characters = characters.toCharactersPage(currentPage = 1),
     staff = staff.toStaffPage(currentPage = 1),
     titleRomaji = title?.romaji,
@@ -145,16 +142,8 @@ private fun MediaCharacterEdgeDto.toEntry(page: Int, index: Int): MediaCharacter
         name = node.name?.bestName.orEmpty(),
         imageUrl = node.image?.bestUrl,
         role = parseCharacterRole(role),
-        voiceActor = voiceActors.firstOrNull()?.toVoiceActor(),
     )
 }
-
-private fun MediaVoiceActorDto.toVoiceActor(): MediaVoiceActor = MediaVoiceActor(
-    id = id,
-    name = name?.bestName.orEmpty(),
-    imageUrl = image?.bestUrl,
-    language = languageV2,
-)
 
 private fun MediaStaffEdgeDto.toEntry(page: Int, index: Int): MediaStaffEntry? {
     val node = node ?: return null
@@ -175,16 +164,6 @@ private fun parseCharacterRole(raw: String?): MediaCharacterRole = when (raw) {
     else -> MediaCharacterRole.OTHER
 }
 
-private fun parseStatsStatus(raw: String?): MediaStatsStatus = when (raw) {
-    "CURRENT" -> MediaStatsStatus.CURRENT
-    "PLANNING" -> MediaStatsStatus.PLANNING
-    "COMPLETED" -> MediaStatsStatus.COMPLETED
-    "DROPPED" -> MediaStatsStatus.DROPPED
-    "PAUSED" -> MediaStatsStatus.PAUSED
-    "REPEATING" -> MediaStatsStatus.REPEATING
-    else -> MediaStatsStatus.OTHER
-}
-
 private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
     val node = node ?: return null
     return MediaDetailRelation(
@@ -194,7 +173,9 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
         paletteHex = node.coverImage?.color,
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),
+        season = parseMediaSeason(node.season),
         year = node.seasonYear ?: node.startDate?.year,
+        workStatus = parseMediaWorkStatus(node.status),
         averageScore = node.averageScore?.takeIf { it > 0 },
         favourites = node.favourites?.takeIf { it > 0 },
         viewerStatus = node.mediaListEntry?.status,

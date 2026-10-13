@@ -2,6 +2,7 @@ package com.luum.michi.app.mediaDetail.ui.media.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,27 +34,23 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailSectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.ui.components.glassBorder
-import com.luum.michi.app.ui.components.glassContainerColor
-import com.luum.michi.app.ui.components.solidBorder
-import com.luum.michi.app.ui.components.solidContainerColor
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
 
 /**
- * Framed information panel: key/value rows for the identity fields that do
- * not already live in the hero (romaji/native titles, synonyms, format,
- * status, counts, duration, season, studios, dates, source). Style-aware:
- * glass or solid recipe, same layout in both.
+ * Framed information panel: a two-column grid of the short identity fields
+ * (type, status, counts, runtime, season, dates, source) with the long ones
+ * (titles, synonyms) full width below, then tappable studio chips. Style-
+ * aware: glass or solid recipe, same layout in both.
  */
 @Composable
 internal fun MediaDetailInformationPanel(
@@ -62,181 +59,217 @@ internal fun MediaDetailInformationPanel(
     isManga: Boolean,
     onOpenStudio: (Int) -> Unit,
 ) {
-    val rows = buildList {
-        detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailRomajiLabel to it) }
-        detail.titleNative?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailJapaneseLabel to it) }
+    val shortRows = buildList {
+        detail.format?.let { add(InfoEntry(strings.mediaDetailFormatLabel, it)) }
+        detail.workStatusLabel(strings)?.let { add(InfoEntry(strings.mediaDetailStatusLabel, it)) }
+        if (isManga) {
+            detail.chapters?.let { add(InfoEntry(strings.chaptersLabel, it.toString())) }
+            detail.volumes?.let { add(InfoEntry(strings.volumesLabel, it.toString())) }
+        } else {
+            detail.episodes?.let { add(InfoEntry(strings.mediaDetailEpisodesLabel, it.toString())) }
+        }
+        detail.duration?.let { add(InfoEntry(strings.mediaDetailDurationLabel, "$it min")) }
+        detail.season?.let { add(InfoEntry(strings.mediaDetailSeasonLabel, it)) }
+        detail.startedLabel?.let { add(InfoEntry(strings.mediaDetailStartDateLabel, it)) }
+        detail.endedLabel?.let { add(InfoEntry(strings.mediaDetailEndedLabel, it)) }
+        detail.source?.let { add(InfoEntry(strings.mediaDetailSourceLabel, humanizeSource(it))) }
+    }
+    val wideRows = buildList {
+        detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(InfoEntry(strings.mediaDetailRomajiLabel, it)) }
+        detail.titleNative?.takeIf { it.isNotBlank() }?.let { add(InfoEntry(strings.mediaDetailNativeLabel, it)) }
         detail.synonyms
             .filter { it.isNotBlank() }
             .takeIf { it.isNotEmpty() }
-            ?.let { add(strings.mediaDetailSynonymsLabel to it.joinToString(", ")) }
-        detail.format?.let { add(strings.mediaDetailFormatLabel to it) }
-        detail.workStatusLabel(strings)?.let { add(strings.mediaDetailStatusLabel to it) }
-        if (isManga) {
-            detail.chapters?.let { add(strings.chaptersLabel to it.toString()) }
-            detail.volumes?.let { add(strings.volumesLabel to it.toString()) }
-        } else {
-            detail.episodes?.let { add(strings.mediaDetailEpisodesLabel to it.toString()) }
-        }
-        detail.duration?.let { add(strings.mediaDetailDurationLabel to "$it min") }
-        detail.season?.let { add(strings.mediaDetailSeasonLabel to it) }
-        detail.startedLabel?.let { add(strings.mediaDetailStartDateLabel to it) }
-        detail.endedLabel?.let { add(strings.mediaDetailEndedLabel to it) }
-        detail.source?.let { add(strings.mediaDetailSourceLabel to humanizeSource(it)) }
+            ?.let { add(InfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
     }
-    if (rows.isEmpty() && detail.studios.isEmpty()) return
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = if (glass) glassContainerColor() else solidContainerColor(),
-            border = if (glass) glassBorder() else solidBorder(),
+    if (shortRows.isEmpty() && wideRows.isEmpty() && detail.studios.isEmpty()) return
+    MediaDetailPanel {
+        MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(
             modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-            ) {
-                MediaDetailSectionHeader(strings.mediaDetailInformationTitle)
-                Spacer(modifier = Modifier.height(8.dp))
-                rows.forEach { (label, value) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = value,
-                            style = MaterialTheme.typography.bodyMedium,
+            shortRows.chunked(2).forEach { pair ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    pair.forEach { entry ->
+                        InfoCell(
+                            label = entry.label,
+                            value = entry.value,
                             modifier = Modifier.weight(1f),
                         )
                     }
-                }
-                if (detail.studios.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = strings.mediaDetailStudioLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    ChipRail(
-                        tabs = detail.studios.map { ChipTab(value = it.id, label = it.name) },
-                        selected = null,
-                        onSelect = onOpenStudio,
-                        contentPadding = PaddingValues(0.dp),
-                    )
+                    // Odd tail: keep the lone cell half width, not stretched.
+                    if (pair.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
             }
+            wideRows.forEach { entry ->
+                InfoCell(
+                    label = entry.label,
+                    value = entry.value,
+                    valueMaxLines = 3,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        if (detail.studios.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = strings.mediaDetailStudioLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            ChipRail(
+                tabs = detail.studios.map { ChipTab(value = it.id, label = it.name) },
+                selected = null,
+                onSelect = onOpenStudio,
+                contentPadding = PaddingValues(0.dp),
+            )
         }
     }
 }
 
-/** Non-spoiler tag chips: `"name rank%"`, display-only. */
+private data class InfoEntry(val label: String, val value: String)
+
+/** Label above value: reads cleanly in a two-column grid and full width alike. */
+@Composable
+private fun InfoCell(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueMaxLines: Int = 2,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = valueMaxLines,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** Genres as display-only pills inside a framed panel. */
+@Composable
+internal fun MediaDetailGenres(detail: MediaDetail, strings: LanguageStrings) {
+    if (detail.genres.isEmpty()) return
+    MediaDetailPanel {
+        MediaDetailSectionHeader(strings.mediaDetailGenresTitle)
+        Spacer(modifier = Modifier.height(12.dp))
+        ChipRail(
+            tabs = detail.genres.map { ChipTab(value = it, label = it) },
+            selected = null,
+            onSelect = {},
+            contentPadding = PaddingValues(0.dp),
+        )
+    }
+}
+
+/** Non-spoiler tag pills: `"name rank%"`, display-only, inside a framed panel. */
 @Composable
 internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
     val tags = detail.tags.filter { !it.isMediaSpoiler }
     if (tags.isEmpty()) return
-    Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
-            title = strings.mediaDetailTagsTitle,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
+    MediaDetailPanel {
+        MediaDetailSectionHeader(strings.mediaDetailTagsTitle)
+        Spacer(modifier = Modifier.height(12.dp))
         ChipRail(
             tabs = tags.map { ChipTab(value = it.name, label = "${it.name} ${it.rank}%") },
             selected = null,
             onSelect = {},
+            contentPadding = PaddingValues(0.dp),
         )
     }
 }
 
-/** External link rows: site icon (or brand dot) + site name, tap opens the URL. */
+/** Framed link list: site icon (or brand dot) + site name, tap opens the URL. */
 @Composable
 internal fun MediaDetailExternalLinks(
-    detail: MediaDetail,
+    links: List<MediaExternalLink>,
+    title: String,
     strings: LanguageStrings,
     onOpenUrl: (String) -> Unit,
 ) {
-    if (detail.externalLinks.isEmpty()) return
-    Column(modifier = Modifier.fillMaxWidth()) {
-        MediaDetailSectionHeader(
-            title = strings.mediaDetailExternalLinksTitle,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-        detail.externalLinks.forEach { link ->
-            val accent = link.color?.let { brandColor(it) }?.takeIf { it != Color.Transparent }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenUrl(link.url) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (link.isOfficialSite()) {
-                    Icon(
-                        imageVector = AppIcons.Web,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
-                    )
-                } else if (!link.iconUrl.isNullOrBlank()) {
-                    SubcomposeAsyncImage(
-                        model = link.iconUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        loading = {},
-                        error = {},
-                        modifier = Modifier.size(24.dp),
-                    )
-                } else if (accent != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(accent),
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = link.siteLabel(strings),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                link.language?.takeIf { it.isNotBlank() }?.let { language ->
-                    Text(
-                        text = "($language)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
-                if (accent != null && !link.iconUrl.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(accent),
-                    )
-                }
-            }
+    if (links.isEmpty()) return
+    MediaDetailPanel {
+        MediaDetailSectionHeader(title)
+        Spacer(modifier = Modifier.height(4.dp))
+        links.forEach { link ->
+            LinkRow(link = link, strings = strings, onOpenUrl = onOpenUrl)
         }
     }
 }
 
-/** Trailer thumbnail card; taps open the external video URL when there is one. */
+@Composable
+private fun LinkRow(
+    link: MediaExternalLink,
+    strings: LanguageStrings,
+    onOpenUrl: (String) -> Unit,
+) {
+    val accent = link.color?.let { brandColor(it) }?.takeIf { it != Color.Transparent }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpenUrl(link.url) }
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (link.isOfficialSite()) {
+            Icon(
+                imageVector = AppIcons.Web,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
+            )
+        } else if (!link.iconUrl.isNullOrBlank()) {
+            SubcomposeAsyncImage(
+                model = link.iconUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                loading = {},
+                error = {},
+                modifier = Modifier.size(24.dp),
+            )
+        } else if (accent != null) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(accent),
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = link.siteLabel(strings),
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        link.language?.takeIf { it.isNotBlank() }?.let { language ->
+            Text(
+                text = "($language)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** Trailer card; taps open the external video URL when there is one. */
 @Composable
 internal fun MediaDetailVideos(
     detail: MediaDetail,

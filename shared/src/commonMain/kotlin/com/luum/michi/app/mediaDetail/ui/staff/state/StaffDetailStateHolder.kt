@@ -7,7 +7,6 @@ import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,8 +32,9 @@ private class LruCache<K, V>(private val maxSize: Int) {
 }
 
 /**
- * Cache snapshot holds BOTH paginated lists independently so that sort changes
- * on media-only don't evict the already-loaded character list and vice versa.
+ * Cache snapshot holds BOTH paginated lists independently so that a page
+ * loaded on media-only doesn't evict the already-loaded character list and
+ * vice versa.
  */
 private data class StaffDetailSnapshot(
     val detail: StaffDetail,
@@ -42,7 +42,6 @@ private data class StaffDetailSnapshot(
     val mediaItems: List<StaffMediaItem>,
     val mediaHasNextPage: Boolean,
     val mediaCurrentPage: Int,
-    val sort: StaffMediaSort,
     // ── character list state ──
     val characterItems: List<StaffCharacterItem>,
     val charactersHasNextPage: Boolean,
@@ -69,13 +68,6 @@ internal class StaffDetailStateHolder(
 
     private val detailCache = LruCache<Int, StaffDetailSnapshot>(maxSize = 5)
 
-    /**
-     * Server page order never changes: the API always fetches by popularity,
-     * and [sort] is applied client-side by the screen. This keeps sort changes
-     * instant (no re-query, no list reset, no scroll reset).
-     */
-    private val serverSort = StaffMediaSort.POPULARITY
-
     // ── media list ──
     var mediaItems: List<StaffMediaItem> by mutableStateOf(emptyList())
         private set
@@ -84,8 +76,6 @@ internal class StaffDetailStateHolder(
     var mediaCurrentPage: Int by mutableStateOf(1)
         private set
     var isLoadingMoreMedia: Boolean by mutableStateOf(false)
-        private set
-    var sort: StaffMediaSort by mutableStateOf(StaffMediaSort.NEWEST)
         private set
 
     // ── character list ──
@@ -115,7 +105,6 @@ internal class StaffDetailStateHolder(
             mediaItems = cached.mediaItems
             mediaHasNextPage = cached.mediaHasNextPage
             mediaCurrentPage = cached.mediaCurrentPage
-            sort = cached.sort
             characterItems = cached.characterItems
             charactersHasNextPage = cached.charactersHasNextPage
             charactersCurrentPage = cached.charactersCurrentPage
@@ -138,7 +127,7 @@ internal class StaffDetailStateHolder(
         charactersCurrentPage = 1
 
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, serverSort, strings)) {
+            when (val result = repository.loadDetail(id, strings)) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
@@ -164,7 +153,7 @@ internal class StaffDetailStateHolder(
         currentJob?.cancel()
         isLoading = true
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, serverSort, strings)) {
+            when (val result = repository.loadDetail(id, strings)) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
@@ -190,7 +179,7 @@ internal class StaffDetailStateHolder(
         val nextPage = mediaCurrentPage + 1
         scope.launch {
             isLoadingMoreMedia = true
-            when (val result = repository.loadMediaPage(id, nextPage, serverSort)) {
+            when (val result = repository.loadMediaPage(id, nextPage)) {
                 is NetworkResult.Success -> {
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     mediaHasNextPage = result.value.hasNextPage
@@ -223,16 +212,6 @@ internal class StaffDetailStateHolder(
         }
     }
 
-    /**
-     * Display-only sort: flips the local order immediately. The loaded media
-     * list is never reset and no network call fires (the screen applies
-     * [sortedFor] to each role group). Characters pagination is untouched.
-     */
-    fun changeSort(newSort: StaffMediaSort) {
-        if (newSort == sort) return
-        sort = newSort
-    }
-
     fun toggleFavourite() {
         if (isTogglingFavourite) return
         val id = currentStaffId ?: return
@@ -262,7 +241,6 @@ internal class StaffDetailStateHolder(
         mediaItems = mediaItems,
         mediaHasNextPage = mediaHasNextPage,
         mediaCurrentPage = mediaCurrentPage,
-        sort = sort,
         characterItems = characterItems,
         charactersHasNextPage = charactersHasNextPage,
         charactersCurrentPage = charactersCurrentPage,

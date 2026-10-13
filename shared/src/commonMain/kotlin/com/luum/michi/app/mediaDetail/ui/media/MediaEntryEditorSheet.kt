@@ -2,21 +2,21 @@ package com.luum.michi.app.mediaDetail.ui.media
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +50,8 @@ import com.luum.michi.app.ui.language.Strings
  * score, notes, repeat, priority, flags, dates, favourite, save and
  * delete. Takes the holder (like SettingsScreen takes SettingsState) —
  * primitives would be a 30-param call. Applies nothing until Save;
- * the lists refresh on [onSaved]/[onDeleted].
+ * the lists refresh on [onSaved]/[onDeleted]. Closing with unsaved edits
+ * asks first.
  */
 @Composable
 internal fun MediaEntryEditorSheet(
@@ -66,14 +67,21 @@ internal fun MediaEntryEditorSheet(
     modifier: Modifier = Modifier,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmDiscard by remember { mutableStateOf(false) }
     val busy = editor.isSaving || editor.isDeleting || editor.isLoadingDetail
+    // Every close path (X, swipe, scrim, back) funnels here.
+    fun requestClose() {
+        if (editor.hasChanges) confirmDiscard = true else onDismiss()
+    }
     ModalSheet(
         // No title: the media title opens the body, actions float right.
         title = "",
         dismissLabel = strings.dismissAction,
-        onDismiss = onDismiss,
+        onDismiss = { requestClose() },
         modifier = modifier,
         fullscreen = true,
+        dismissBlocked = editor.hasChanges,
+        onDismissBlocked = { confirmDiscard = true },
         headerActions = listOf(
             ToolbarAction(
                 id = ACTION_FAVOURITE,
@@ -105,7 +113,7 @@ internal fun MediaEntryEditorSheet(
                         PrimaryButton(
                             label = strings.saveAction,
                             onClick = { editor.save(onSaved) },
-                            enabled = !busy,
+                            enabled = !busy && editor.isDirty,
                         )
                     }
                 }
@@ -178,6 +186,40 @@ internal fun MediaEntryEditorSheet(
         ) {
             Text(
                 text = strings.deleteEntryConfirmMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
+    if (confirmDiscard) {
+        ModalSheet(
+            title = strings.discardChangesConfirmTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { confirmDiscard = false },
+            footer = {
+                SheetActionBar {
+                    Box(modifier = Modifier.weight(1f)) {
+                        GlassButton(
+                            label = strings.keepEditingAction,
+                            onClick = { confirmDiscard = false },
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        GlassButton(
+                            label = strings.discardChangesConfirmAction,
+                            onClick = {
+                                confirmDiscard = false
+                                onDismiss()
+                            },
+                            contentColor = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            },
+        ) {
+            Text(
+                text = strings.discardChangesConfirmMessage,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

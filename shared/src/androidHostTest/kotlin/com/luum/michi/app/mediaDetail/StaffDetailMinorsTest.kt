@@ -5,7 +5,6 @@ import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import com.luum.michi.app.mediaDetail.repository.staff.StaffDetailRepositoryImpl
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -40,8 +39,7 @@ private fun staffData(yearsActive: List<Int>, charName: JsonObject, mediaTitle: 
         })
     }
 
-private fun fakeClient(data: JsonElement) = object : AniListGraphQLClient {
-    override suspend fun <T> execute(
+private fun fakeClient(data: JsonElement) = object : AniListGraphQLClient {    override suspend fun <T> execute(
         request: AniListGraphQLRequest,
         parseData: (JsonElement) -> T,
     ): NetworkResult<T> = NetworkResult.Success(parseData(data))
@@ -50,7 +48,7 @@ private fun fakeClient(data: JsonElement) = object : AniListGraphQLClient {
 private fun loadDetail(data: JsonElement): StaffDetail {
     val result = runBlocking {
         StaffDetailRepositoryImpl(fakeClient(data))
-            .loadDetail(1, StaffMediaSort.POPULARITY, EnglishStrings)
+            .loadDetail(1, EnglishStrings)
     }
     assertTrue(result is NetworkResult.Success, "expected Success but was $result")
     return result.value
@@ -65,6 +63,25 @@ private fun titleOf(userPreferred: String?, native: String?): JsonObject = build
     if (userPreferred != null) put("userPreferred", userPreferred)
     if (native != null) put("native", native)
 }
+
+/** `staffMedia` edges for one media id with several roles (same node twice). */
+private fun staffMediaData(mediaId: Int, roles: List<String>): JsonElement =
+    buildJsonObject {
+        put("Staff", buildJsonObject {
+            put("id", 1)
+            put("staffMedia", buildJsonObject {
+                put("edges", JsonArray(roles.map { role ->
+                    buildJsonObject {
+                        put("staffRole", role)
+                        put("node", buildJsonObject {
+                            put("id", mediaId)
+                            put("title", titleOf("Title", null))
+                        })
+                    }
+                }))
+            })
+        })
+    }
 
 class StaffDetailMinorsTest {
 
@@ -116,5 +133,16 @@ class StaffDetailMinorsTest {
         )
         assertEquals(2005, detail.yearsActiveStart)
         assertEquals(2020, detail.yearsActiveEnd)
+    }
+
+    @Test
+    fun sameMediaWithTwoRolesStaysTwoItems() {
+        // A staff can hold several roles in one title: the API returns one
+        // edge per role, so the same media id repeats. The rail must render
+        // both (its lazy keys are index-suffixed, not bare ids).
+        val detail = loadDetail(staffMediaData(mediaId = 150321, roles = listOf("Director", "Writer")))
+
+        assertEquals(2, detail.media.items.size)
+        assertEquals(listOf(150321, 150321), detail.media.items.map { it.mediaId })
     }
 }

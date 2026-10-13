@@ -6,6 +6,7 @@ import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
+import com.luum.michi.app.mediaDetail.domain.studio.model.sortedFor
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -77,15 +78,42 @@ internal class StudioDetailStateHolder(
         private set
     var isLoadingMore: Boolean by mutableStateOf(false)
         private set
-    var sort: StudioMediaSort by mutableStateOf(StudioMediaSort.NEWEST)
+    var sort: StudioMediaSort by mutableStateOf(DEFAULT_SORT)
+        private set
+    /** Display-only type filter ("ANIME" / "MANGA"; null = all). Never re-queries. */
+    var typeFilter: String? by mutableStateOf(null)
+        private set
+    /** Display-only format filter (a raw format from [availableFormats]; null = all). */
+    var formatFilter: String? by mutableStateOf(null)
         private set
     var isFavourite: Boolean by mutableStateOf(false)
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
 
+    /** Formats present in the loaded list, narrowed by the current type filter. */
+    val availableFormats: List<String>
+        get() = mediaItems
+            .filter { typeFilter == null || it.type == typeFilter }
+            .mapNotNull { it.format }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+
+    /** Loaded media after the local sort and filters: what the grid shows. */
+    val visibleItems: List<StudioMediaItem>
+        get() = mediaItems
+            .sortedFor(sort)
+            .filter { item ->
+                (typeFilter == null || item.type == typeFilter) &&
+                    (formatFilter == null || item.format == formatFilter)
+            }
+
     fun load(id: Int) {
         if (currentStudioId == id && (detail != null || isLoading)) return
+        // A different studio never inherits the previous one's filters.
+        typeFilter = null
+        formatFilter = null
 
         val cached = detailCache.get(id)
         if (cached != null) {
@@ -117,7 +145,7 @@ internal class StudioDetailStateHolder(
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items
+                    mediaItems = value.media.items.distinctBy { it.mediaId }
                     hasNextPage = value.media.hasNextPage
                     currentPage = value.media.currentPage
                     isFavourite = value.isFavourite
@@ -149,7 +177,7 @@ internal class StudioDetailStateHolder(
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items
+                    mediaItems = value.media.items.distinctBy { it.mediaId }
                     hasNextPage = value.media.hasNextPage
                     currentPage = value.media.currentPage
                     isFavourite = value.isFavourite
@@ -178,7 +206,7 @@ internal class StudioDetailStateHolder(
             isLoadingMore = true
             when (val result = repository.loadMediaPage(id, nextPage, serverSort)) {
                 is NetworkResult.Success -> {
-                    mediaItems = mediaItems + result.value.items
+                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     // Update cache with new page data
@@ -208,6 +236,24 @@ internal class StudioDetailStateHolder(
     fun changeSort(newSort: StudioMediaSort) {
         if (newSort == sort) return
         sort = newSort
+    }
+
+    /** Display-only; drops a format that the new type no longer offers. */
+    fun changeTypeFilter(type: String?) {
+        if (type == typeFilter) return
+        typeFilter = type
+        if (formatFilter != null && formatFilter !in availableFormats) formatFilter = null
+    }
+
+    fun changeFormatFilter(format: String?) {
+        formatFilter = format
+    }
+
+    /** Filter sheet Reset: no filters and the default sort. */
+    fun resetFilters() {
+        typeFilter = null
+        formatFilter = null
+        sort = DEFAULT_SORT
     }
 
     fun toggleFavourite() {
@@ -245,6 +291,8 @@ internal class StudioDetailStateHolder(
         }
     }
 }
+
+private val DEFAULT_SORT = StudioMediaSort.NEWEST
 
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createStudioDetailStateHolder(

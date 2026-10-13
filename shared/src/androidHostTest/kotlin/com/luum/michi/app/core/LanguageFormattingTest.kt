@@ -52,4 +52,33 @@ class LanguageFormattingTest {
         assertEquals("Ep. 12 - 5 Mar 2025, 09:05", EnglishStrings.nextEpisodeReleaseLabel(12, dateTime))
         assertEquals("5 Mar 2025, 09:05", EnglishStrings.notificationDateLabel(dateTime))
     }
+
+    @Test
+    fun countdownCountsDaysThenHours() {
+        assertEquals("in 4 days 7 hours", EnglishStrings.airingCountdownLabel(days = 4, hours = 7, minutes = 30))
+        assertEquals("en 4 días 7 horas", SpanishStrings.airingCountdownLabel(days = 4, hours = 7, minutes = 30))
+        assertEquals("in 1 day 5 hours", EnglishStrings.airingCountdownLabel(days = 1, hours = 5, minutes = 0))
+        assertEquals("en 3 horas 40 minutos", SpanishStrings.airingCountdownLabel(days = 0, hours = 3, minutes = 40))
+    }
+
+    @Test
+    fun nextEpisodeBandShowsReleaseLineWithCountdown() {
+        val dateTime = MediaReleaseDateTime(day = 17, month = 10, year = 2026, hour = 8, minute = 0)
+        assertEquals(
+            "Ep. 3 - 17 Oct 2026, 08:00 (in 4 days 7 hours)",
+            EnglishStrings.mediaDetailNextEpisodeReleaseLabel(
+                episode = 3,
+                releaseDateTime = dateTime,
+                countdown = EnglishStrings.airingCountdownLabel(days = 4, hours = 7, minutes = 0),
+            ),
+        )
+        assertEquals(
+            "Ep. 3 - 17 oct 2026, 08:00 (en 4 días 7 horas)",
+            SpanishStrings.mediaDetailNextEpisodeReleaseLabel(
+                episode = 3,
+                releaseDateTime = dateTime,
+                countdown = SpanishStrings.airingCountdownLabel(days = 4, hours = 7, minutes = 0),
+            ),
+        )
+    }
 }

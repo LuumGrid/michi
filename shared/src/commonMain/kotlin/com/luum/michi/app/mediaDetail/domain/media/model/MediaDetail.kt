@@ -4,6 +4,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaWorkStatus
@@ -41,8 +42,6 @@ internal data class MediaDetail(
     val isFavourite: Boolean,
     val viewerEntry: MediaListViewerEntry?,
     val relations: List<MediaDetailRelation>,
-    val scoreDistribution: List<MediaScoreBucket>,
-    val statusDistribution: List<MediaStatusBucket>,
     val characters: MediaCharactersPage,
     val staff: MediaStaffPage,
     val titleRomaji: String?,
@@ -52,6 +51,14 @@ internal data class MediaDetail(
     val tags: List<MediaTag>,
     val externalLinks: List<MediaExternalLink>,
     val trailer: MediaTrailer?,
+    val nextEpisode: MediaNextEpisode? = null,
+)
+
+/** Next airing episode of a releasing show (null for finished/unknown). */
+internal data class MediaNextEpisode(
+    val episode: Int,
+    val airingAtEpochSeconds: Long,
+    val timeUntilAiringSeconds: Long?,
 )
 
 internal data class MediaRank(
@@ -93,24 +100,11 @@ internal data class MediaTrailer(
     val thumbnailUrl: String?,
 )
 
-internal data class MediaScoreBucket(val score: Int, val amount: Int)
-
-internal enum class MediaStatsStatus {
-    CURRENT, PLANNING, COMPLETED, DROPPED, PAUSED, REPEATING, OTHER,
-}
-
-/** Localized stats-status label (reuses the list-status wording). */
-internal fun MediaStatsStatus.label(strings: LanguageStrings, isManga: Boolean): String = when (this) {
-    MediaStatsStatus.CURRENT -> MediaListStatus.CURRENT.label(strings, isManga)
-    MediaStatsStatus.PLANNING -> MediaListStatus.PLANNING.label(strings, isManga)
-    MediaStatsStatus.COMPLETED -> MediaListStatus.COMPLETED.label(strings, isManga)
-    MediaStatsStatus.DROPPED -> MediaListStatus.DROPPED.label(strings, isManga)
-    MediaStatsStatus.PAUSED -> MediaListStatus.PAUSED.label(strings, isManga)
-    MediaStatsStatus.REPEATING -> MediaListStatus.REPEATING.label(strings, isManga)
-    MediaStatsStatus.OTHER -> strings.mediaStatsStatusOther
-}
-
-internal data class MediaStatusBucket(val status: MediaStatsStatus, val amount: Int)
+internal data class MediaRecommendationsPage(
+    val items: List<MediaRecommendationEntry>,
+    val hasNextPage: Boolean,
+    val currentPage: Int,
+)
 
 /** Localized work-release status (raw RELEASING → Airing/Publishing, etc.). */
 internal fun MediaDetail.workStatusLabel(strings: LanguageStrings): String? {
@@ -129,20 +123,12 @@ internal fun MediaDetail.shareText(): String = "$title\n${aniListUrl()}"
 
 internal enum class MediaCharacterRole { MAIN, SUPPORTING, BACKGROUND, OTHER }
 
-internal data class MediaVoiceActor(
-    val id: Int,
-    val name: String,
-    val imageUrl: String?,
-    val language: String?,
-)
-
 internal data class MediaCharacterEntry(
     val edgeKey: String,
     val characterId: Int,
     val name: String,
     val imageUrl: String?,
     val role: MediaCharacterRole,
-    val voiceActor: MediaVoiceActor?,
 )
 
 internal data class MediaCharactersPage(
@@ -191,7 +177,9 @@ internal data class MediaDetailRelation(
     val paletteHex: String?,
     val kind: MediaRelationKind,
     val format: String?,
+    val season: MediaSeason? = null,
     val year: Int?,
+    val workStatus: MediaWorkStatus? = null,
     val averageScore: Int?,
     val favourites: Int?,
     val viewerStatus: String?,
@@ -202,7 +190,9 @@ internal data class MediaRecommendationEntry(
     val title: String,
     val coverUrl: String?,
     val format: String?,
+    val season: MediaSeason? = null,
     val year: Int?,
+    val workStatus: MediaWorkStatus? = null,
     val episodesCount: Int?,
     val chaptersCount: Int?,
     val volumesCount: Int?,

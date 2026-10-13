@@ -3,8 +3,11 @@ package com.luum.michi.app.mediaDetail.repository.media
 import com.luum.michi.app.core.network.repository.dto.MediaCharacterConnectionDto
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.core.network.repository.dto.MediaDetailResponseDto
+import com.luum.michi.app.core.network.repository.dto.MediaPageInfoDto
 import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -15,6 +18,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -22,9 +26,10 @@ import kotlinx.serialization.json.JsonPrimitive
 
 private const val CharactersPerPage = 12
 private const val StaffPerPage = 12
+private const val RecommendationsPerPage = 20
 
 private const val MediaDetailQuery = """
-query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
+query MediaDetail(${'$'}id: Int!) {
   Media(id: ${'$'}id) {
     id
     type
@@ -66,19 +71,17 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
           id
           type
           format
+          status
           title { romaji english native userPreferred }
           coverImage { extraLarge large medium color }
           averageScore
           favourites
+          season
           seasonYear
           startDate { year month day }
           mediaListEntry { status }
         }
       }
-    }
-    stats {
-      scoreDistribution { score amount }
-      statusDistribution { status amount }
     }
     characters(page: 1, perPage: $CharactersPerPage, sort: [ROLE, RELEVANCE]) {
       pageInfo { hasNextPage currentPage }
@@ -86,12 +89,6 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
         id
         role
         node { id name { full native userPreferred } image { large medium } }
-        voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE]) {
-          id
-          name { full native userPreferred }
-          image { large medium }
-          languageV2
-        }
       }
     }
     staff(page: 1, perPage: $StaffPerPage, sort: [RELEVANCE]) {
@@ -107,7 +104,7 @@ query MediaDetail(${'$'}id: Int!, ${'$'}voiceLanguage: StaffLanguage) {
 """
 
 private const val MediaCharactersPageQuery = """
-query MediaCharactersPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}voiceLanguage: StaffLanguage) {
+query MediaCharactersPage(${'$'}id: Int!, ${'$'}page: Int!) {
   Media(id: ${'$'}id) {
     id
     characters(page: ${'$'}page, perPage: $CharactersPerPage, sort: [ROLE, RELEVANCE]) {
@@ -116,12 +113,6 @@ query MediaCharactersPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}voiceLanguage:
         id
         role
         node { id name { full native userPreferred } image { large medium } }
-        voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE]) {
-          id
-          name { full native userPreferred }
-          image { large medium }
-          languageV2
-        }
       }
     }
   }
@@ -145,10 +136,11 @@ query MediaStaffPage(${'$'}id: Int!, ${'$'}page: Int!) {
 """
 
 private const val MediaRecommendationsPageQuery = """
-query MediaRecommendationsPage(${'$'}mediaId: Int!) {
+query MediaRecommendationsPage(${'$'}mediaId: Int!, ${'$'}page: Int!) {
   Media(id: ${'$'}mediaId) {
     id
-    recommendations(page: 1, perPage: 15, sort: [RATING_DESC]) {
+    recommendations(page: ${'$'}page, perPage: $RecommendationsPerPage, sort: [RATING_DESC]) {
+      pageInfo { hasNextPage currentPage }
       nodes {
         id
         rating
@@ -156,6 +148,8 @@ query MediaRecommendationsPage(${'$'}mediaId: Int!) {
           id
           type
           format
+          status
+          season
           seasonYear
           episodes
           chapters
@@ -185,6 +179,7 @@ private data class MediaRecommendationsPageWrapperDto(
 
 @Serializable
 private data class MediaRecommendationsConnectionDto(
+    val pageInfo: MediaPageInfoDto? = null,
     val nodes: List<MediaRecommendationNodeDto> = emptyList(),
 )
 
@@ -206,6 +201,8 @@ private data class MediaRecommendationMediaDto(
     val title: com.luum.michi.app.core.network.repository.dto.MediaTitleDto? = null,
     val coverImage: com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto? = null,
     val format: String? = null,
+    val status: String? = null,
+    val season: String? = null,
     val seasonYear: Int? = null,
     val episodes: Int? = null,
     val chapters: Int? = null,
@@ -243,16 +240,12 @@ internal class MediaDetailRepositoryImpl(
 
     override suspend fun loadDetail(
         mediaId: Int,
-        voiceLanguage: String,
         strings: LanguageStrings,
     ): NetworkResult<MediaDetail> {
         val request = AniListGraphQLRequest(
             query = MediaDetailQuery,
             variables = JsonObject(
-                mapOf(
-                    "id" to JsonPrimitive(mediaId),
-                    "voiceLanguage" to JsonPrimitive(voiceLanguage),
-                ),
+                mapOf("id" to JsonPrimitive(mediaId)),
             ),
             operationName = "MediaDetail",
         )
@@ -278,7 +271,6 @@ internal class MediaDetailRepositoryImpl(
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-        voiceLanguage: String,
     ): NetworkResult<MediaCharactersPage> {
         val request = AniListGraphQLRequest(
             query = MediaCharactersPageQuery,
@@ -286,7 +278,6 @@ internal class MediaDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(mediaId),
                     "page" to JsonPrimitive(page),
-                    "voiceLanguage" to JsonPrimitive(voiceLanguage),
                 ),
             ),
             operationName = "MediaCharactersPage",
@@ -345,12 +336,14 @@ internal class MediaDetailRepositoryImpl(
 
     override suspend fun loadRecommendations(
         mediaId: Int,
-    ): NetworkResult<List<MediaRecommendationEntry>> {
+        page: Int,
+    ): NetworkResult<MediaRecommendationsPage> {
         val request = AniListGraphQLRequest(
             query = MediaRecommendationsPageQuery,
             variables = JsonObject(
                 mapOf(
                     "mediaId" to JsonPrimitive(mediaId),
+                    "page" to JsonPrimitive(page),
                 ),
             ),
             operationName = "MediaRecommendationsPage",
@@ -360,16 +353,19 @@ internal class MediaDetailRepositoryImpl(
         }
         return when (result) {
             is NetworkResult.Success -> {
+                val connection = result.value.Media?.recommendations
                 // Un mismo media puede venir repetido (un nodo por recomendación
                 // de usuario): se colapsa por id para no romper las keys del grid.
-                val items = result.value.Media?.recommendations?.nodes?.mapNotNull { node ->
+                val items = connection?.nodes?.mapNotNull { node ->
                     val recMedia = node.mediaRecommendation ?: return@mapNotNull null
                     MediaRecommendationEntry(
                         id = recMedia.id,
                         title = recMedia.title.bestTitle(),
                         coverUrl = recMedia.coverImage?.thumbnailUrl,
                         format = recMedia.format?.toTitleCase(),
+                        season = parseMediaSeason(recMedia.season),
                         year = recMedia.seasonYear,
+                        workStatus = parseMediaWorkStatus(recMedia.status),
                         episodesCount = recMedia.episodes,
                         chaptersCount = recMedia.chapters,
                         volumesCount = recMedia.volumes,
@@ -379,7 +375,13 @@ internal class MediaDetailRepositoryImpl(
                         viewerStatus = recMedia.mediaListEntry?.status,
                     )
                 }.orEmpty().distinctBy { it.id }
-                NetworkResult.Success(items)
+                NetworkResult.Success(
+                    MediaRecommendationsPage(
+                        items = items,
+                        hasNextPage = connection?.pageInfo?.hasNextPage == true,
+                        currentPage = connection?.pageInfo?.currentPage ?: page,
+                    ),
+                )
             }
             is NetworkResult.Failure -> result
         }

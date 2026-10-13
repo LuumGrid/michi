@@ -57,7 +57,6 @@ internal data class MediaDetailDto(
     val isFavourite: Boolean? = null,
     val mediaListEntry: MediaViewerListEntryDto? = null,
     val relations: MediaRelationConnectionDto? = null,
-    val stats: MediaStatsDto? = null,
     val characters: MediaCharacterConnectionDto? = null,
     val staff: MediaStaffConnectionDto? = null,
     val rankings: List<MediaRankingDto> = emptyList(),
@@ -93,24 +92,6 @@ internal data class MediaTrailerDto(
 )
 
 @Serializable
-internal data class MediaStatsDto(
-    val scoreDistribution: List<ScoreDistributionBucketDto> = emptyList(),
-    val statusDistribution: List<StatusDistributionBucketDto> = emptyList(),
-)
-
-@Serializable
-internal data class ScoreDistributionBucketDto(
-    val score: Int = 0,
-    val amount: Int = 0,
-)
-
-@Serializable
-internal data class StatusDistributionBucketDto(
-    val status: String? = null,
-    val amount: Int = 0,
-)
-
-@Serializable
 internal data class MediaPageInfoDto(
     val hasNextPage: Boolean = false,
     val currentPage: Int = 1,
@@ -127,7 +108,6 @@ internal data class MediaCharacterEdgeDto(
     val id: Int? = null,
     val role: String? = null,
     val node: MediaCharacterNodeDto? = null,
-    val voiceActors: List<MediaVoiceActorDto> = emptyList(),
 )
 
 @Serializable
@@ -135,14 +115,6 @@ internal data class MediaCharacterNodeDto(
     val id: Int,
     val name: PersonNameDto? = null,
     val image: PersonImageDto? = null,
-)
-
-@Serializable
-internal data class MediaVoiceActorDto(
-    val id: Int,
-    val name: PersonNameDto? = null,
-    val image: PersonImageDto? = null,
-    val languageV2: String? = null,
 )
 
 @Serializable
@@ -186,10 +158,12 @@ internal data class MediaRelationNodeDto(
     val id: Int,
     val type: String? = null,
     val format: String? = null,
+    val status: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
     val favourites: Int? = null,
+    val season: String? = null,
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
     val mediaListEntry: MediaRelationListEntryDto? = null,

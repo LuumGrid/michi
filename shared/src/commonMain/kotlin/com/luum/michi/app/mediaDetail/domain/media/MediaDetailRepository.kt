@@ -7,14 +7,12 @@ import com.luum.michi.app.mediaDetail.domain.media.model.*
 internal interface MediaDetailRepository {
     suspend fun loadDetail(
         mediaId: Int,
-        voiceLanguage: String = "JAPANESE",
         strings: LanguageStrings,
     ): NetworkResult<MediaDetail>
 
     suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-        voiceLanguage: String,
     ): NetworkResult<MediaCharactersPage>
 
     suspend fun loadStaffPage(
@@ -24,5 +22,6 @@ internal interface MediaDetailRepository {
 
     suspend fun loadRecommendations(
         mediaId: Int,
-    ): NetworkResult<List<MediaRecommendationEntry>>
+        page: Int = 1,
+    ): NetworkResult<MediaRecommendationsPage>
 }

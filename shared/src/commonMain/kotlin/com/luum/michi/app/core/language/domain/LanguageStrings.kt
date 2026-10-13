@@ -91,11 +91,9 @@ interface LanguageStrings {
     val mediaDetailStudiosLabel: String
     val mediaDetailVoiceLanguageLabel: String
     val mediaDetailLoadMoreAction: String
-    val mediaDetailScoreDistributionTitle: String
     val mediaDetailStatusDistributionTitle: String
     val mediaStatsStatusPlanning: String
     val mediaStatsStatusPaused: String
-    val mediaStatsStatusOther: String
     val voiceLanguageJapanese: String
     val voiceLanguageEnglish: String
     val voiceLanguageKorean: String
@@ -163,7 +161,7 @@ interface LanguageStrings {
     fun episodesBehind(count: Int): String
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
-    fun airingCountdownLabel(hours: Int, minutes: Int): String
+    fun airingCountdownLabel(days: Int, hours: Int, minutes: Int): String
     fun notificationDateLabel(dateTime: MediaReleaseDateTime): String
     /** Short month name used by preformatted date labels (media airing dates, birthdays). */
     fun monthShortName(month: Int): String
@@ -266,6 +264,7 @@ interface LanguageStrings {
     val authConfigurationMissing: String
     val authLoadingLabel: String
     val retryAction: String
+    val viewAllAction: String
     val listsLoadingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
@@ -341,7 +340,6 @@ interface LanguageStrings {
     val sortByOldest: String
     val sortByScore: String
 
-    // Character detail
     val characterDetailTitle: String
     val characterTabMedia: String
     val characterNoMediaLabel: String
@@ -352,7 +350,6 @@ interface LanguageStrings {
     val infoAgeLabel: String
     val infoBirthdayLabel: String
     val infoBloodTypeLabel: String
-
     // Staff detail
     val staffDetailTitle: String
     val staffTabMedia: String
@@ -378,11 +375,15 @@ interface LanguageStrings {
     val mediaDetailInformationTitle: String
     val mediaDetailTagsTitle: String
     val mediaDetailExternalLinksTitle: String
+    val mediaDetailStreamingLinksTitle: String
+    fun mediaDetailNextEpisodeReleaseLabel(
+        episode: Int,
+        releaseDateTime: MediaReleaseDateTime,
+        countdown: String,
+    ): String
     val mediaDetailOfficialSiteLabel: String
     val mediaDetailOpenInAniListAction: String
     val mediaDetailShareAction: String
-    val mediaDetailSummaryStatsTitle: String
-    val mediaDetailTotalLabel: String
     val mediaDetailHighestRatedLabel: String
     val mediaDetailMostPopularLabel: String
     val mediaDetailAverageScoreLabel: String
@@ -407,6 +408,17 @@ interface LanguageStrings {
     val mediaDetailMediaTitle: String
     val mediaDetailNoMediaLabel: String
     val mediaDetailAnimeStudioLabel: String
+
+    // Entry editor redesign
+    val discardChangesConfirmTitle: String
+    val discardChangesConfirmMessage: String
+    val discardChangesConfirmAction: String
+    val keepEditingAction: String
+
+    // Person pages
+    val mediaDetailNativeLabel: String
+    val mediaDetailVoiceActorsTitle: String
+    val mediaDetailNoVoiceActorsLabel: String
 }
 
 fun getLanguageStrings(language: AppLanguage): LanguageStrings {

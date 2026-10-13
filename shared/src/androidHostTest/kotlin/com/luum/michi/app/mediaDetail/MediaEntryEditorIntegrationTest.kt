@@ -10,7 +10,7 @@ import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
@@ -34,14 +34,12 @@ private class StubDetailRepository(
 ) : MediaDetailRepository {
     override suspend fun loadDetail(
         mediaId: Int,
-        voiceLanguage: String,
         strings: LanguageStrings,
     ): NetworkResult<MediaDetail> = NetworkResult.Success(detail)
 
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-        voiceLanguage: String,
     ): NetworkResult<MediaCharactersPage> =
         NetworkResult.Failure(NetworkError.Http(500, null))
 
@@ -53,7 +51,8 @@ private class StubDetailRepository(
 
     override suspend fun loadRecommendations(
         mediaId: Int,
-    ): NetworkResult<List<MediaRecommendationEntry>> =
+        page: Int,
+    ): NetworkResult<MediaRecommendationsPage> =
         NetworkResult.Failure(NetworkError.Http(500, null))
 }
 
@@ -85,8 +84,6 @@ private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
     isFavourite = false,
     viewerEntry = viewerEntry,
     relations = emptyList(),
-    scoreDistribution = emptyList(),
-    statusDistribution = emptyList(),
     characters = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
     staff = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
     titleRomaji = null,
@@ -120,6 +117,9 @@ private fun editorWired(
     advancedScoringEnabled: Boolean = false,
     advancedScoringAnimeNames: List<String> = emptyList(),
     scoreMax: Float = 10f,
+    initialStatusOverride: MediaListStatus? = null,
+    initialProgressOverride: Int? = null,
+    todayMillis: () -> Long = { TODAY },
 ): MediaEntryEditorState = MediaEntryEditorState(
     entryRepository = MediaListEntryRepositoryImpl(graphQL),
     detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
@@ -129,7 +129,13 @@ private fun editorWired(
     advancedScoringEnabled = advancedScoringEnabled,
     advancedScoringAnimeNames = advancedScoringAnimeNames,
     scoreMax = scoreMax,
+    initialStatusOverride = initialStatusOverride,
+    initialProgressOverride = initialProgressOverride,
+    todayMillis = todayMillis,
 )
+
+// UTC-midnight millis, like the date pickers speak (2026-01-15).
+private const val TODAY = 1_768_435_200_000L
 
 class MediaEntryEditorIntegrationTest {
 
@@ -320,7 +326,7 @@ class MediaEntryEditorIntegrationTest {
         }
         val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
 
-        val result = runBlocking { repository.loadDetail(1, "JAPANESE", EnglishStrings) }
+        val result = runBlocking { repository.loadDetail(1, EnglishStrings) }
 
         assertIs<NetworkResult.Success<MediaDetail>>(result)
         assertEquals(emptyMap(), result.value.viewerEntry?.advancedScores)
@@ -344,12 +350,126 @@ class MediaEntryEditorIntegrationTest {
         }
         val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
 
-        val result = runBlocking { repository.loadDetail(1, "JAPANESE", EnglishStrings) }
+        val result = runBlocking { repository.loadDetail(1, EnglishStrings) }
 
         assertIs<NetworkResult.Success<MediaDetail>>(result)
         assertEquals(
             mapOf("Story" to 80f, "Animation" to 70f),
             result.value.viewerEntry?.advancedScores,
         )
+    }
+
+    @Test
+    fun completedFillsProgressAndStampsToday() {
+        val editor = editorWired(FakeGraphQL(listOf(buildJsonObject {})), existingEntry())
+
+        editor.load()
+        editor.updateStatus(MediaListStatus.COMPLETED)
+
+        assertEquals(12, editor.progress, "progress fills to the episode total")
+        assertEquals(TODAY, editor.completedAtMillis)
+        assertNull(editor.startedAtMillis, "completing does not invent a start date")
+    }
+
+    @Test
+    fun completedKeepsAnExistingCompletionDate() {
+        val entry = existingEntry().copy(completedAtMillis = 123L)
+        val editor = editorWired(FakeGraphQL(listOf(buildJsonObject {})), entry)
+
+        editor.load()
+        editor.updateStatus(MediaListStatus.COMPLETED)
+
+        assertEquals(123L, editor.completedAtMillis)
+    }
+
+    @Test
+    fun currentStampsStartOnlyWhenEmpty() {
+        val fresh = editorWired(FakeGraphQL(listOf(buildJsonObject {})), viewerEntry = null)
+        val started = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            existingEntry().copy(startedAtMillis = 99L),
+        )
+
+        fresh.load()
+        started.load()
+        fresh.updateStatus(MediaListStatus.CURRENT)
+        started.updateStatus(MediaListStatus.CURRENT)
+
+        assertEquals(TODAY, fresh.startedAtMillis)
+        assertEquals(99L, started.startedAtMillis)
+    }
+
+    @Test
+    fun otherStatusesLeaveProgressAndDatesAlone() {
+        val editor = editorWired(FakeGraphQL(listOf(buildJsonObject {})), existingEntry())
+
+        editor.load()
+        editor.updateStatus(MediaListStatus.PAUSED)
+
+        assertEquals(5, editor.progress)
+        assertNull(editor.startedAtMillis)
+        assertNull(editor.completedAtMillis)
+    }
+
+    @Test
+    fun existingEntryIsCleanUntilEditedAndCleanAgainWhenReverted() {
+        val editor = editorWired(FakeGraphQL(listOf(buildJsonObject {})), existingEntry())
+
+        editor.load()
+        assertFalse(editor.hasChanges)
+        assertFalse(editor.isDirty, "nothing to save yet")
+
+        editor.updateNotes("changed")
+        assertTrue(editor.hasChanges)
+        assertTrue(editor.isDirty)
+
+        editor.updateNotes("note")
+        assertFalse(editor.hasChanges)
+        assertFalse(editor.isDirty)
+    }
+
+    @Test
+    fun newEntryCanBeSavedAsIsButHasNoChangesToDiscard() {
+        val editor = editorWired(FakeGraphQL(listOf(buildJsonObject {})), viewerEntry = null)
+
+        editor.load()
+
+        assertFalse(editor.hasChanges, "closing a pristine add flow must not prompt")
+        assertTrue(editor.isDirty, "add-to-list saves straight to Planning")
+    }
+
+    @Test
+    fun openForCompletionOverrideCountsAsAnUnsavedEdit() {
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            existingEntry(),
+            initialStatusOverride = MediaListStatus.COMPLETED,
+            initialProgressOverride = 12,
+        )
+
+        editor.load()
+
+        assertEquals(MediaListStatus.COMPLETED, editor.status)
+        assertTrue(editor.hasChanges)
+        assertTrue(editor.isDirty)
+    }
+
+    @Test
+    fun saveSendsAutomatedProgressAndCompletionDate() {
+        val saveAck = buildJsonObject {
+            put("SaveMediaListEntry", buildJsonObject { put("id", 7) })
+        }
+        val graphQL = FakeGraphQL(listOf(saveAck))
+        val editor = editorWired(graphQL, existingEntry())
+
+        editor.load()
+        editor.updateStatus(MediaListStatus.COMPLETED)
+        var saved = false
+        editor.save { saved = true }
+
+        assertTrue(saved)
+        val variables = graphQL.requests.single().variables
+        assertEquals("12", variables?.get("progress")?.toString())
+        assertTrue(variables?.get("completedAt") != null, "stamped completion date is sent")
     }
 }

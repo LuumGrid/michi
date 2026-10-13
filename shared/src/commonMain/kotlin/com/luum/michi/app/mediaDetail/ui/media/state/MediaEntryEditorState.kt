@@ -8,6 +8,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.todayCalendarMillis
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,6 +27,9 @@ internal class MediaEntryEditorState(
     private val advancedScoringAnimeNames: List<String> = emptyList(),
     private val advancedScoringMangaNames: List<String> = emptyList(),
     private val scoreMax: Float = 10f,
+    // Injectable so status automations (started/completed = today) are
+    // deterministic in tests; same UTC-midnight millis the date pickers speak.
+    private val todayMillis: () -> Long = { todayCalendarMillis() },
 ) {
     var detail: MediaDetail? by mutableStateOf(null)
         private set
@@ -79,6 +83,18 @@ internal class MediaEntryEditorState(
     val maxProgressVolumes: Int? get() = detail?.volumes
     val isExisting: Boolean get() = detail?.viewerEntry != null
 
+    /** Editable fields as loaded (or as defaults for a new entry): the dirty-tracking baseline. */
+    private var baseline: EditorSnapshot? by mutableStateOf(null)
+
+    /** Any editable field differs from what was loaded. Drives the discard prompt. */
+    val hasChanges: Boolean get() = baseline?.let { it != snapshot() } ?: false
+
+    /**
+     * Save gate: an existing entry needs a real edit; a new entry (the user
+     * pressed "add to list") can always be saved as-is, e.g. straight to Planning.
+     */
+    val isDirty: Boolean get() = detail != null && (!isExisting || hasChanges)
+
     /**
      * Explicit load (no auto-load in init): Root calls this from a
      * LaunchedEffect when the editor opens; retries call it again.
@@ -112,10 +128,18 @@ internal class MediaEntryEditorState(
                         advancedScoreValues = advancedScoringNames.map { name ->
                             ((existing.advancedScores[name] ?: 0f) / 10f).coerceIn(0f, 10f)
                         }
+                        // Baseline is the stored entry: a status/progress override
+                        // (e.g. open-for-completion) is an unsaved edit, so Save
+                        // stays enabled for it.
+                        baseline = snapshot().copy(
+                            status = existing.status ?: MediaListStatus.CURRENT,
+                            progress = existing.progress,
+                        )
                     } else {
                         status = initialStatusOverride ?: MediaListStatus.PLANNING
                         progress = initialProgressOverride ?: 0
                         advancedScoreValues = List(advancedScoringNames.size) { 0f }
+                        baseline = snapshot()
                     }
                 }
                 is NetworkResult.Failure -> loadError = result.error
@@ -124,7 +148,26 @@ internal class MediaEntryEditorState(
         }
     }
 
-    fun updateStatus(value: MediaListStatus) { status = value }
+    /**
+     * Status change plus the small conveniences every list client has:
+     * Completed fills progress to the known total (volumes too for manga)
+     * and stamps today as the completion date; Current stamps today as the
+     * start date. Dates already set are never overwritten.
+     */
+    fun updateStatus(value: MediaListStatus) {
+        status = value
+        when (value) {
+            MediaListStatus.COMPLETED -> {
+                maxProgress?.let { progress = it }
+                if (isManga) maxProgressVolumes?.let { progressVolumes = it }
+                if (completedAtMillis == null) completedAtMillis = todayMillis()
+            }
+            MediaListStatus.CURRENT -> {
+                if (startedAtMillis == null) startedAtMillis = todayMillis()
+            }
+            else -> {}
+        }
+    }
 
     fun updateProgress(value: Int) {
         val max = maxProgress
@@ -163,6 +206,21 @@ internal class MediaEntryEditorState(
     fun updateHiddenFromStatusLists(value: Boolean) { hiddenFromStatusLists = value }
     fun updateStartedAt(value: Long?) { startedAtMillis = value }
     fun updateCompletedAt(value: Long?) { completedAtMillis = value }
+
+    private fun snapshot() = EditorSnapshot(
+        status = status,
+        progress = progress,
+        progressVolumes = progressVolumes,
+        score = score,
+        advancedScoreValues = advancedScoreValues,
+        notes = notes,
+        repeat = repeat,
+        priority = priority,
+        isPrivate = isPrivate,
+        hiddenFromStatusLists = hiddenFromStatusLists,
+        startedAtMillis = startedAtMillis,
+        completedAtMillis = completedAtMillis,
+    )
 
     fun toggleFavourite() {
         if (isTogglingFavourite || isLoadingDetail) return
@@ -229,6 +287,22 @@ internal class MediaEntryEditorState(
     }
 }
 
+/** Value snapshot of every editable field (favourite toggles instantly and is not part of it). */
+private data class EditorSnapshot(
+    val status: MediaListStatus,
+    val progress: Int,
+    val progressVolumes: Int,
+    val score: Float,
+    val advancedScoreValues: List<Float>,
+    val notes: String,
+    val repeat: Int,
+    val priority: Int,
+    val isPrivate: Boolean,
+    val hiddenFromStatusLists: Boolean,
+    val startedAtMillis: Long?,
+    val completedAtMillis: Long?,
+)
+
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createMediaEntryEditorState(
     mediaId: Int,
@@ -242,6 +316,7 @@ internal fun createMediaEntryEditorState(
     advancedScoringAnimeNames: List<String> = emptyList(),
     advancedScoringMangaNames: List<String> = emptyList(),
     scoreMax: Float = 10f,
+    todayMillis: () -> Long = { todayCalendarMillis() },
 ): MediaEntryEditorState {
     return MediaEntryEditorState(
         entryRepository = entryRepository,
@@ -255,6 +330,7 @@ internal fun createMediaEntryEditorState(
         advancedScoringAnimeNames = advancedScoringAnimeNames,
         advancedScoringMangaNames = advancedScoringMangaNames,
         scoreMax = scoreMax,
+        todayMillis = todayMillis,
     )
 }
 

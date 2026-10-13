@@ -23,8 +23,15 @@ class CalendarCountdownTest {
     }
 
     @Test
-    fun singularUnitsAndMinutesOnly() {
+    fun daysAwayShowsDaysAndHours() {
         val now = 1_000_000L
+        val inFourDays = now + 4 * 86_400 + 7 * 3600 + 30 * 60
+        assertEquals("in 4 days 7 hours", airingCountdownLabel(EnglishStrings, inFourDays, now))
+        assertEquals("en 4 días 7 horas", airingCountdownLabel(SpanishStrings, inFourDays, now))
+    }
+
+    @Test
+    fun singularUnitsAndMinutesOnly() {        val now = 1_000_000L
         assertEquals(
             "in 1 hour 1 minute",
             airingCountdownLabel(EnglishStrings, now + 3600 + 60, now),

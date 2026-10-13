@@ -18,10 +18,8 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -29,7 +27,7 @@ import kotlinx.serialization.json.JsonPrimitive
 private const val StaffPerPage = 20
 
 private const val StaffDetailQuery = """
-query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
+query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}perPage: Int!) {
   Staff(id: ${'$'}id) {
     id
     name { userPreferred native alternative }
@@ -45,13 +43,12 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
     dateOfDeath { year month day }
     favourites
     isFavourite
-    staffMedia(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    staffMedia(page: ${'$'}page, perPage: ${'$'}perPage, sort: [POPULARITY_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
         staffRole
         node {
           id
-          type
           format
           title { userPreferred romaji english native }
           coverImage { large color }
@@ -73,16 +70,15 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
 """
 
 private const val StaffMediaPageQuery = """
-query StaffMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
+query StaffMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
   Staff(id: ${'$'}id) {
     id
-    staffMedia(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    staffMedia(page: ${'$'}page, perPage: ${'$'}perPage, sort: [POPULARITY_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
         staffRole
         node {
           id
-          type
           format
           title { userPreferred romaji english native }
           coverImage { large color }
@@ -213,7 +209,6 @@ private data class StaffCharacterMediaEdgeDto(
 @Serializable
 private data class StaffMediaNodeDto(
     val id: Int,
-    val type: String? = null,
     val format: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
@@ -281,7 +276,6 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
         format = node.format?.toTitleCase(),
         year = node.startDate?.year,
         averageScore = node.averageScore?.takeIf { it > 0 },
-        type = node.type,
     )
 }
 
@@ -319,7 +313,7 @@ internal class StaffDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : StaffDetailRepository {
 
-    override suspend fun loadDetail(id: Int, sort: StaffMediaSort, strings: LanguageStrings): NetworkResult<StaffDetail> {
+    override suspend fun loadDetail(id: Int, strings: LanguageStrings): NetworkResult<StaffDetail> {
         val request = AniListGraphQLRequest(
             query = StaffDetailQuery,
             variables = JsonObject(
@@ -328,7 +322,6 @@ internal class StaffDetailRepositoryImpl(
                     "page" to JsonPrimitive(1),
                     "charPage" to JsonPrimitive(1),
                     "perPage" to JsonPrimitive(StaffPerPage),
-                    "sort" to JsonArray(listOf(JsonPrimitive(sort.apiValue))),
                 ),
             ),
             operationName = "StaffDetail",
@@ -382,7 +375,6 @@ internal class StaffDetailRepositoryImpl(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: StaffMediaSort,
     ): NetworkResult<StaffMediaPage> {
         val request = AniListGraphQLRequest(
             query = StaffMediaPageQuery,
@@ -391,7 +383,6 @@ internal class StaffDetailRepositoryImpl(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
                     "perPage" to JsonPrimitive(StaffPerPage),
-                    "sort" to JsonArray(listOf(JsonPrimitive(sort.apiValue))),
                 ),
             ),
             operationName = "StaffMediaPage",

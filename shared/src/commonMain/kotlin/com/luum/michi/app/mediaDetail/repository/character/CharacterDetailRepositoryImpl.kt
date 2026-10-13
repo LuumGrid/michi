@@ -4,7 +4,6 @@ import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
 import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
@@ -19,7 +18,6 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.stripHtml
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -27,7 +25,7 @@ import kotlinx.serialization.json.JsonPrimitive
 private const val CharacterMediaPerPage = 20
 
 private const val CharacterDetailQuery = """
-query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
+query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}voiceLanguage: StaffLanguage) {
   Character(id: ${'$'}id) {
     id
     name { userPreferred native alternative alternativeSpoiler }
@@ -39,11 +37,11 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
     dateOfBirth { year month day }
     favourites
     isFavourite
-    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: [POPULARITY_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
         characterRole
-        voiceActors(sort: [RELEVANCE, LANGUAGE]) {
+        voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE, LANGUAGE]) {
           id
           name { userPreferred }
           image { large }
@@ -66,14 +64,14 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
 """
 
 private const val CharacterMediaPageQuery = """
-query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
+query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}voiceLanguage: StaffLanguage) {
   Character(id: ${'$'}id) {
     id
-    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: [POPULARITY_DESC]) {
       pageInfo { hasNextPage currentPage }
       edges {
         characterRole
-        voiceActors(sort: [RELEVANCE, LANGUAGE]) {
+        voiceActors(language: ${'$'}voiceLanguage, sort: [RELEVANCE, LANGUAGE]) {
           id
           name { userPreferred }
           image { large }
@@ -260,7 +258,11 @@ internal class CharacterDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : CharacterDetailRepository {
 
-    override suspend fun loadDetail(id: Int, sort: CharacterMediaSort, strings: LanguageStrings): NetworkResult<CharacterDetail> {
+    override suspend fun loadDetail(
+        id: Int,
+        voiceLanguage: String,
+        strings: LanguageStrings,
+    ): NetworkResult<CharacterDetail> {
         val request = AniListGraphQLRequest(
             query = CharacterDetailQuery,
             variables = JsonObject(
@@ -268,7 +270,7 @@ internal class CharacterDetailRepositoryImpl(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(1),
                     "perPage" to JsonPrimitive(CharacterMediaPerPage),
-                    "sort" to JsonArray(listOf(JsonPrimitive(sort.apiValue))),
+                    "voiceLanguage" to JsonPrimitive(voiceLanguage),
                 ),
             ),
             operationName = "CharacterDetail",
@@ -315,7 +317,7 @@ internal class CharacterDetailRepositoryImpl(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: CharacterMediaSort,
+        voiceLanguage: String,
     ): NetworkResult<CharacterMediaPage> {
         val request = AniListGraphQLRequest(
             query = CharacterMediaPageQuery,
@@ -324,7 +326,7 @@ internal class CharacterDetailRepositoryImpl(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
                     "perPage" to JsonPrimitive(CharacterMediaPerPage),
-                    "sort" to JsonArray(listOf(JsonPrimitive(sort.apiValue))),
+                    "voiceLanguage" to JsonPrimitive(voiceLanguage),
                 ),
             ),
             operationName = "CharacterMediaPage",

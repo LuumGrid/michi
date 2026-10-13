@@ -3,7 +3,6 @@ package com.luum.michi.app.mediaDetail.ui.character.state
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -36,7 +35,7 @@ private data class CharacterDetailSnapshot(
     val mediaItems: List<CharacterMediaItem>,
     val hasNextPage: Boolean,
     val currentPage: Int,
-    val sort: CharacterMediaSort,
+    val voiceLanguage: String,
 )
 
 internal class CharacterDetailStateHolder(
@@ -59,13 +58,6 @@ internal class CharacterDetailStateHolder(
 
     private val detailCache = LruCache<Int, CharacterDetailSnapshot>(maxSize = 5)
 
-    /**
-     * Server page order never changes: the API always fetches by popularity,
-     * and [sort] is applied client-side by the screen. This keeps sort changes
-     * instant (no re-query, no list reset, no scroll reset).
-     */
-    private val serverSort = CharacterMediaSort.POPULARITY
-
     var mediaItems: List<CharacterMediaItem> by mutableStateOf(emptyList())
         private set
     var hasNextPage: Boolean by mutableStateOf(false)
@@ -74,7 +66,8 @@ internal class CharacterDetailStateHolder(
         private set
     var isLoadingMore: Boolean by mutableStateOf(false)
         private set
-    var sort: CharacterMediaSort by mutableStateOf(CharacterMediaSort.NEWEST)
+    /** Voice-actor language for the media edges; changing it re-fetches. */
+    var voiceLanguage: String by mutableStateOf("JAPANESE")
         private set
     var isFavourite: Boolean by mutableStateOf(false)
         private set
@@ -85,14 +78,13 @@ internal class CharacterDetailStateHolder(
         if (currentCharacterId == id && (detail != null || isLoading)) return
 
         val cached = detailCache.get(id)
-        if (cached != null) {
+        if (cached != null && cached.voiceLanguage == voiceLanguage) {
             currentCharacterId = id
             currentJob?.cancel()
             detail = cached.detail
             mediaItems = cached.mediaItems
             hasNextPage = cached.hasNextPage
             currentPage = cached.currentPage
-            sort = cached.sort
             isFavourite = cached.detail.isFavourite
             error = null
             isLoading = false
@@ -110,7 +102,7 @@ internal class CharacterDetailStateHolder(
         isLoadingMore = false
 
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, serverSort, strings)) {
+            when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
@@ -125,7 +117,7 @@ internal class CharacterDetailStateHolder(
                             mediaItems = mediaItems,
                             hasNextPage = hasNextPage,
                             currentPage = currentPage,
-                            sort = sort,
+                            voiceLanguage = voiceLanguage,
                         ),
                     )
                 }
@@ -142,7 +134,7 @@ internal class CharacterDetailStateHolder(
         currentJob?.cancel()
         isLoading = true
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, serverSort, strings)) {
+            when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
@@ -157,7 +149,7 @@ internal class CharacterDetailStateHolder(
                             mediaItems = mediaItems,
                             hasNextPage = hasNextPage,
                             currentPage = currentPage,
-                            sort = sort,
+                            voiceLanguage = voiceLanguage,
                         ),
                     )
                 }
@@ -173,7 +165,7 @@ internal class CharacterDetailStateHolder(
         val nextPage = currentPage + 1
         scope.launch {
             isLoadingMore = true
-            when (val result = repository.loadMediaPage(id, nextPage, serverSort)) {
+            when (val result = repository.loadMediaPage(id, nextPage, voiceLanguage)) {
                 is NetworkResult.Success -> {
                     mediaItems = mediaItems + result.value.items
                     hasNextPage = result.value.hasNextPage
@@ -186,7 +178,7 @@ internal class CharacterDetailStateHolder(
                                 mediaItems = mediaItems,
                                 hasNextPage = hasNextPage,
                                 currentPage = currentPage,
-                                sort = sort,
+                                    voiceLanguage = voiceLanguage,
                             ),
                         )
                     }
@@ -197,13 +189,11 @@ internal class CharacterDetailStateHolder(
         }
     }
 
-    /**
-     * Display-only sort: flips the local order immediately. The loaded list is
-     * never reset and no network call fires (the screen applies [sortedFor]).
-     */
-    fun changeSort(newSort: CharacterMediaSort) {
-        if (newSort == sort) return
-        sort = newSort
+    /** Voice-actor language change: drop the cache and re-fetch with the new cast. */
+    fun selectVoiceLanguage(language: String) {
+        if (language == voiceLanguage) return
+        voiceLanguage = language
+        refresh()
     }
 
     fun toggleFavourite() {
@@ -225,7 +215,7 @@ internal class CharacterDetailStateHolder(
                                 mediaItems = mediaItems,
                                 hasNextPage = hasNextPage,
                                 currentPage = currentPage,
-                                sort = sort,
+                                    voiceLanguage = voiceLanguage,
                             ),
                         )
                     }

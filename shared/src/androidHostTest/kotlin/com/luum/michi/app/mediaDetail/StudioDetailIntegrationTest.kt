@@ -15,16 +15,20 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private fun studioMediaItem(id: Int) = StudioMediaItem(
+private fun studioMediaItem(
+    id: Int,
+    format: String? = "TV",
+    type: String? = "ANIME",
+) = StudioMediaItem(
     mediaId = id,
     title = "Media $id",
     coverUrl = null,
     paletteHex = null,
-    format = "TV",
+    format = format,
     year = 2020,
     averageScore = null,
     viewerStatus = null,
-    type = "ANIME",
+    type = type,
     favourites = 42,
     genres = listOf("Action", "Comedy"),
 )
@@ -172,5 +176,74 @@ class StudioDetailIntegrationTest {
 
         holder.toggleFavourite()
         assertFalse(holder.isFavourite)
+    }
+
+    private fun mixedStudio() = RecordingStudioRepository(
+        mediaPages = mapOf(
+            1 to StudioMediaPage(
+                listOf(
+                    studioMediaItem(1, format = "TV", type = "ANIME"),
+                    studioMediaItem(2, format = "MOVIE", type = "ANIME"),
+                    studioMediaItem(3, format = "MANGA", type = "MANGA"),
+                ),
+                hasNextPage = false,
+                currentPage = 1,
+            ),
+        ),
+    )
+
+    @Test
+    fun typeAndFormatFiltersNarrowTheVisibleItemsWithoutReload() {
+        val repository = mixedStudio()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertEquals(3, holder.visibleItems.size)
+
+        holder.changeTypeFilter("ANIME")
+        assertEquals(listOf(1, 2), holder.visibleItems.map { it.mediaId })
+        assertEquals(listOf("MOVIE", "TV"), holder.availableFormats)
+
+        holder.changeFormatFilter("MOVIE")
+        assertEquals(listOf(2), holder.visibleItems.map { it.mediaId })
+        assertEquals(1, repository.detailCalls, "filters are display-only")
+    }
+
+    @Test
+    fun changingTypeDropsAFormatTheNewTypeDoesNotOffer() {
+        val holder = holderWired(mixedStudio())
+
+        holder.load(1)
+        holder.changeFormatFilter("MOVIE")
+        holder.changeTypeFilter("MANGA")
+
+        assertNull(holder.formatFilter)
+        assertEquals(listOf(3), holder.visibleItems.map { it.mediaId })
+    }
+
+    @Test
+    fun resetFiltersRestoresDefaultSortAndClearsFilters() {
+        val holder = holderWired(mixedStudio())
+
+        holder.load(1)
+        holder.changeTypeFilter("ANIME")
+        holder.changeFormatFilter("TV")
+        holder.changeSort(StudioMediaSort.SCORE)
+        holder.resetFilters()
+
+        assertNull(holder.typeFilter)
+        assertNull(holder.formatFilter)
+        assertEquals(StudioMediaSort.NEWEST, holder.sort)
+    }
+
+    @Test
+    fun anotherStudioDoesNotInheritFilters() {
+        val holder = holderWired(mixedStudio())
+
+        holder.load(1)
+        holder.changeTypeFilter("MANGA")
+        holder.load(2)
+
+        assertNull(holder.typeFilter)
     }
 }

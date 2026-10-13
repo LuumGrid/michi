@@ -100,7 +100,6 @@ class LiveAnonymousTest {
         val result = runBlocking {
             MediaDetailRepositoryImpl(liveClient()).loadDetail(
                 mediaId = 1,
-                voiceLanguage = "JAPANESE",
                 strings = EnglishStrings,
             )
         }

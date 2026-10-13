@@ -6,25 +6,31 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.ui.icons.AppIcons
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -32,6 +38,9 @@ internal data class MediaRailItem(
     val title: String,
     val imageUrl: String?,
     val subtitle: String? = null,
+    // Extra catalog line shown only in the "View all" rows (format · season
+    // year · status); the rail stays compact and ignores it.
+    val meta: String? = null,
     // Stable identity for LazyRow. Defaults to the id, but callers whose id
     // can repeat (staff with multiple roles) pass a unique edge key.
     val key: String = "",
@@ -39,10 +48,11 @@ internal data class MediaRailItem(
 
 /**
  * Horizontal rail of media/character/staff covers with a section header.
- * Shared by the detail page sections (relations, recommendations, characters,
- * staff). A null [onSelect] renders display-only cards (character/staff taps
- * land with their own screens); [onLoadMore] adds a footer when more pages
- * exist. Pure primitives + a lambda, so any detail scope reuses it.
+ * Display-only: it never fetches its own pages. The header carries an optional
+ * "View all" action ([onViewAll] + [viewAllLabel]) that opens the full list;
+ * the rail itself shows only the first items the caller passes. A null
+ * [onSelect] renders display-only cards; [emptyLabel] replaces an empty rail
+ * with a line of text so a header-only section never looks broken.
  */
 @Composable
 internal fun MediaRail(
@@ -50,36 +60,67 @@ internal fun MediaRail(
     items: List<MediaRailItem>,
     modifier: Modifier = Modifier,
     onSelect: ((Int) -> Unit)? = null,
-    onLoadMore: (() -> Unit)? = null,
-    loadMoreLabel: String? = null,
+    onViewAll: (() -> Unit)? = null,
+    viewAllLabel: String? = null,
+    emptyLabel: String? = null,
+    // Baked 16dp matches the full-width layout; panels (already inset) pass
+    // zero to avoid double padding.
+    horizontalPadding: Dp = 16.dp,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(items = items, key = { it.key.ifBlank { it.id.toString() } }) { item ->
-                RailCard(item = item, onSelect = onSelect)
-            }
-        }
-        if (onLoadMore != null && loadMoreLabel != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = loadMoreLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onLoadMore)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MediaDetailSectionHeader(
+                    title = title,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onViewAll != null && viewAllLabel != null) {
+                    Row(
+                        modifier = Modifier.clickable(onClick = onViewAll),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = viewAllLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Icon(
+                            imageVector = AppIcons.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+        }
+        if (items.isEmpty() && emptyLabel != null) {
+            Text(
+                text = emptyLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp),
             )
+        } else {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = horizontalPadding),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                itemsIndexed(
+                    items = items,
+                    // Index-suffixed: the same media can appear more than once
+                    // (a staff/character with multiple roles in one title), and
+                    // a bare id would make duplicate lazy keys and crash.
+                    key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+                ) { _, item ->
+                    RailCard(item = item, onSelect = onSelect)
+                }
+            }
         }
     }
 }

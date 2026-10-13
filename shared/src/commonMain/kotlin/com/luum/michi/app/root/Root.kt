@@ -53,6 +53,9 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniL
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
 import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
+import com.luum.michi.app.mediaDetail.ui.components.DetailListLayout
+import com.luum.michi.app.mediaDetail.ui.components.DetailListScreen
+import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.character.CharacterDetailScreen
 import com.luum.michi.app.mediaDetail.ui.character.state.createCharacterDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
@@ -62,8 +65,10 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
+import com.luum.michi.app.mediaDetail.ui.studio.components.StudioFilterSheet
 import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.ShareLauncher
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
@@ -272,6 +277,8 @@ internal fun Root(
             is DetailDestination.Character -> characterHolder.load(destination.id)
             is DetailDestination.Staff -> staffHolder.load(destination.id)
             is DetailDestination.Studio -> studioHolder.load(destination.id)
+            // The list reuses the parent's already-loaded holder: no fetch.
+            is DetailDestination.DetailList -> {}
             null -> {}
         }
     }
@@ -345,6 +352,7 @@ internal fun Root(
         is DetailDestination.Character -> characterHolder.isFavourite
         is DetailDestination.Staff -> staffHolder.isFavourite
         is DetailDestination.Studio -> studioHolder.isFavourite
+        is DetailDestination.DetailList -> false
         null -> false
     }
     // Overflow menu target per active destination: title + canonical AniList
@@ -362,6 +370,7 @@ internal fun Root(
         is DetailDestination.Studio -> studioHolder.detail?.let {
             DetailOverflow(it.name, it.studioAniListUrl(), it.studioShareText())
         }
+        is DetailDestination.DetailList -> null
         null -> null
     }
     val veilOffsetPx = if (hideToolbarOnScroll) {
@@ -384,7 +393,8 @@ internal fun Root(
             ) {
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
-                title = if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
+                title = detailListTitle(state.currentDetail, strings)
+                    ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
                 navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
                     ToolbarNavigation.Back(strings.backButton)
                 } else {
@@ -397,6 +407,8 @@ internal fun Root(
                     isCalendarOpen = state.isCalendarOpen,
                     isDetailOpen = state.isDetailOpen,
                     isMediaDetail = state.currentDetail is DetailDestination.Media,
+                    isStudioDetail = state.currentDetail is DetailDestination.Studio,
+                    isDetailList = state.currentDetail is DetailDestination.DetailList,
                     isDetailFavourite = isDetailFavourite,
                     isGuest = viewerId == null,
                     strings = strings,
@@ -411,7 +423,10 @@ internal fun Root(
                         ACTION_SETTINGS -> state.openSettings()
                         // List tools only exist on ANIME/MANGA (see
                         // toolbarActions), so these always target a list tab.
-                        ACTION_FILTER -> state.openSectionFilter()
+                        // A detail page owns the filter action while it is open
+                        // (studio): it must not reach the tab's section filter below it.
+                        ACTION_FILTER ->
+                            if (state.isDetailOpen) state.openDetailFilter() else state.openSectionFilter()
                         ACTION_SORT -> state.openListSort()
                         // TODO: wire to the schedule surface when it lands.
                         ACTION_CALENDAR -> state.openCalendar()
@@ -422,6 +437,7 @@ internal fun Root(
                             is DetailDestination.Character -> characterHolder.toggleFavourite()
                             is DetailDestination.Staff -> staffHolder.toggleFavourite()
                             is DetailDestination.Studio -> studioHolder.toggleFavourite()
+                            is DetailDestination.DetailList -> {}
                             null -> {}
                         }
                         ACTION_MORE -> state.openDetailMenu()
@@ -518,8 +534,8 @@ internal fun Root(
                             onOpenCharacter = { state.openCharacter(it) },
                             onOpenStaff = { state.openStaff(it) },
                             onOpenStudio = { state.openStudio(it) },
-                            onEditEntry = { state.openEditor(it) },
                             onOpenUrl = { urlOpener.open(it) },
+                            onViewAll = { state.openDetailList(it, destination.id) },
                         )
                         is DetailDestination.Character -> CharacterDetailScreen(
                             holder = characterHolder,
@@ -533,6 +549,8 @@ internal fun Root(
                                 }
                             },
                             onOpenMedia = { state.openMedia(it) },
+                            onOpenStaff = { state.openStaff(it) },
+                            onViewAll = { state.openDetailList(it, destination.id) },
                         )
                         is DetailDestination.Staff -> StaffDetailScreen(
                             holder = staffHolder,
@@ -547,6 +565,7 @@ internal fun Root(
                             },
                             onOpenMedia = { state.openMedia(it) },
                             onOpenCharacter = { state.openCharacter(it) },
+                            onViewAll = { state.openDetailList(it, destination.id) },
                         )
                         is DetailDestination.Studio -> StudioDetailScreen(
                             holder = studioHolder,
@@ -560,12 +579,78 @@ internal fun Root(
                                 }
                             },
                             onOpenMedia = { state.openMedia(it) },
+                            onOpenFilter = { state.openDetailFilter() },
                             onAddEntry = if (viewerId != null) {
                                 { state.openEditor(it) }
                             } else {
                                 null
                             },
                         )
+                        is DetailDestination.DetailList -> {
+                            val listBottom = padding.calculateBottomPadding()
+                            when (destination.kind) {
+                                DetailListKind.MEDIA_CHARACTERS -> DetailListScreen(
+                                    items = mediaDetailHolder.characters.map { it.toRailItem(strings) },
+                                    layout = DetailListLayout.GRID,
+                                    onSelect = { state.openCharacter(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = mediaDetailHolder.charactersHasNextPage,
+                                    isLoadingMore = mediaDetailHolder.isLoadingCharacters,
+                                    onLoadMore = { mediaDetailHolder.loadMoreCharacters() },
+                                )
+                                DetailListKind.MEDIA_STAFF -> DetailListScreen(
+                                    items = mediaDetailHolder.staff.map { it.toRailItem() },
+                                    layout = DetailListLayout.GRID,
+                                    onSelect = { state.openStaff(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = mediaDetailHolder.staffHasNextPage,
+                                    isLoadingMore = mediaDetailHolder.isLoadingStaff,
+                                    onLoadMore = { mediaDetailHolder.loadMoreStaff() },
+                                )
+                                DetailListKind.MEDIA_RELATED -> DetailListScreen(
+                                    items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings) },
+                                    layout = DetailListLayout.ROWS,
+                                    onSelect = { state.openMedia(it) },
+                                    bottomPadding = listBottom,
+                                )
+                                DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
+                                    items = mediaDetailHolder.recommendations.map { it.toRailItem(strings) },
+                                    layout = DetailListLayout.ROWS,
+                                    onSelect = { state.openMedia(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = mediaDetailHolder.recommendationsHasNextPage,
+                                    isLoadingMore = mediaDetailHolder.isLoadingRecommendations,
+                                    onLoadMore = { mediaDetailHolder.loadMoreRecommendations() },
+                                )
+                                DetailListKind.CHARACTER_MEDIA -> DetailListScreen(
+                                    items = characterHolder.mediaItems.map { it.toRailItem(strings) },
+                                    layout = DetailListLayout.ROWS,
+                                    onSelect = { state.openMedia(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = characterHolder.hasNextPage,
+                                    isLoadingMore = characterHolder.isLoadingMore,
+                                    onLoadMore = { characterHolder.loadMore() },
+                                )
+                                DetailListKind.STAFF_MEDIA -> DetailListScreen(
+                                    items = staffHolder.mediaItems.map { it.toRailItem() },
+                                    layout = DetailListLayout.ROWS,
+                                    onSelect = { state.openMedia(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = staffHolder.mediaHasNextPage,
+                                    isLoadingMore = staffHolder.isLoadingMoreMedia,
+                                    onLoadMore = { staffHolder.loadMoreMedia() },
+                                )
+                                DetailListKind.STAFF_CHARACTERS -> DetailListScreen(
+                                    items = staffHolder.characterItems.map { it.toRailItem() },
+                                    layout = DetailListLayout.GRID,
+                                    onSelect = { state.openCharacter(it) },
+                                    bottomPadding = listBottom,
+                                    hasMore = staffHolder.charactersHasNextPage,
+                                    isLoadingMore = staffHolder.isLoadingMoreCharacters,
+                                    onLoadMore = { staffHolder.loadMoreCharacters() },
+                                )
+                            }
+                        }
                         null -> {}
                     }
                 } else if (state.isCalendarOpen) {
@@ -727,12 +812,20 @@ internal fun Root(
                     onSaved = {
                         state.closeEditor()
                         refreshLists()
+                        mediaDetailHolder.onEntryChanged(editorId)
                     },
                     onDeleted = {
                         state.closeEditor()
                         refreshLists()
+                        mediaDetailHolder.onEntryChanged(editorId)
                     },
                     onDismiss = { state.closeEditor() },
+                )
+            }
+            if (state.isDetailOpen && state.isDetailFilterOpen && state.currentDetail is DetailDestination.Studio) {
+                StudioFilterSheet(
+                    holder = studioHolder,
+                    onDismiss = { state.closeDetailFilter() },
                 )
             }
             val detailMenu = detailOverflow
@@ -864,6 +957,8 @@ private fun toolbarActions(
     isCalendarOpen: Boolean,
     isDetailOpen: Boolean,
     isMediaDetail: Boolean,
+    isStudioDetail: Boolean,
+    isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
     strings: LanguageStrings,
@@ -873,6 +968,8 @@ private fun toolbarActions(
     // The heart swaps to its filled twin when the entry is favourited.
     // Character/staff/studio details have no list entry, so only the heart.
     if (isDetailOpen) {
+        // A "View all" list has nothing but its back chevron.
+        if (isDetailList) return emptyList()
         val favourite = ToolbarAction(
             id = ACTION_FAVOURITE,
             icon = if (isDetailFavourite) AppIcons.FavoriteFilled else AppIcons.Favorite,
@@ -883,8 +980,20 @@ private fun toolbarActions(
             icon = AppIcons.More,
             contentDescription = strings.moreAction,
         )
-        // Media adds the editor pencil; the other scopes have no list entry.
-        // All four open the overflow (AniList link + share).
+        // Media adds the editor pencil, studio adds its media filter; the
+        // other scopes have no list entry. All four open the overflow
+        // (AniList link + share).
+        if (isStudioDetail) {
+            return listOf(
+                ToolbarAction(
+                    id = ACTION_FILTER,
+                    icon = AppIcons.Filter,
+                    contentDescription = strings.filterAction,
+                ),
+                favourite,
+                more,
+            )
+        }
         if (!isMediaDetail) return listOf(favourite, more)
         return listOf(
             ToolbarAction(
@@ -987,4 +1096,19 @@ private fun toolbarTitle(
     strings.calendarTitle
 } else {
     tab.label(strings)
+}
+
+/** Toolbar title for a "View all" list; null for every other destination
+ *  (detail pages keep the title in the hero, tabs in [toolbarTitle]). */
+private fun detailListTitle(destination: DetailDestination?, strings: LanguageStrings): String? {
+    val list = destination as? DetailDestination.DetailList ?: return null
+    return when (list.kind) {
+        DetailListKind.MEDIA_CHARACTERS -> strings.mediaDetailCharactersTitle
+        DetailListKind.MEDIA_STAFF -> strings.mediaDetailTabStaff
+        DetailListKind.MEDIA_RELATED -> strings.mediaDetailRelationsTitle
+        DetailListKind.MEDIA_RECOMMENDATIONS -> strings.mediaDetailTabRecommendations
+        DetailListKind.CHARACTER_MEDIA -> strings.mediaDetailAppearancesTitle
+        DetailListKind.STAFF_MEDIA -> strings.mediaDetailRolesTitle
+        DetailListKind.STAFF_CHARACTERS -> strings.mediaDetailCharactersTitle
+    }
 }

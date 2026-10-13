@@ -9,7 +9,6 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaSort
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,17 +77,13 @@ private class RecordingStaffRepository(
         private set
     var characterCalls = 0
         private set
-    var lastSort: StaffMediaSort? = null
-        private set
     private var favourite = false
 
     override suspend fun loadDetail(
         id: Int,
-        sort: StaffMediaSort,
         strings: LanguageStrings,
     ): NetworkResult<StaffDetail> {
         detailCalls++
-        lastSort = sort
         return NetworkResult.Success(
             staffDetail(
                 id = id,
@@ -102,7 +97,6 @@ private class RecordingStaffRepository(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: StaffMediaSort,
     ): NetworkResult<StaffMediaPage> {
         mediaCalls++
         return NetworkResult.Success(mediaPages[page] ?: StaffMediaPage(emptyList(), false, page))
@@ -177,20 +171,6 @@ class StaffDetailIntegrationTest {
         assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
         assertFalse(holder.mediaHasNextPage)
         assertEquals(1, repository.mediaCalls)
-    }
-
-    @Test
-    fun changeSortAppliesLocallyWithoutReload() {
-        val repository = RecordingStaffRepository()
-        val holder = holderWired(repository)
-
-        holder.load(1)
-        holder.changeSort(StaffMediaSort.TITLE)
-
-        assertEquals(StaffMediaSort.TITLE, holder.sort)
-        // Display sort is client-side: the server is always queried by popularity.
-        assertEquals(StaffMediaSort.POPULARITY, repository.lastSort)
-        assertEquals(1, repository.detailCalls)
     }
 
     @Test

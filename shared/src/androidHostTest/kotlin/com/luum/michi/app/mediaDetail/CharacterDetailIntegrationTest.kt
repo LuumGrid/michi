@@ -7,7 +7,6 @@ import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaSort
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,19 +64,16 @@ private class RecordingCharacterRepository(
         private set
     var mediaCalls = 0
         private set
-    var lastSort: CharacterMediaSort? = null
-        private set
     var toggleCalls = 0
         private set
     private var favourite = false
 
     override suspend fun loadDetail(
         id: Int,
-        sort: CharacterMediaSort,
+        voiceLanguage: String,
         strings: LanguageStrings,
     ): NetworkResult<CharacterDetail> {
         detailCalls++
-        lastSort = sort
         return NetworkResult.Success(
             characterDetail(
                 id = id,
@@ -90,7 +86,7 @@ private class RecordingCharacterRepository(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: CharacterMediaSort,
+        voiceLanguage: String,
     ): NetworkResult<CharacterMediaPage> {
         mediaCalls++
         return NetworkResult.Success(mediaPages[page] ?: CharacterMediaPage(emptyList(), false, page))
@@ -162,20 +158,6 @@ class CharacterDetailIntegrationTest {
     }
 
     @Test
-    fun changeSortAppliesLocallyWithoutReload() {
-        val repository = RecordingCharacterRepository()
-        val holder = holderWired(repository)
-
-        holder.load(1)
-        holder.changeSort(CharacterMediaSort.SCORE)
-
-        assertEquals(CharacterMediaSort.SCORE, holder.sort)
-        // Display sort is client-side: the server is always queried by popularity.
-        assertEquals(CharacterMediaSort.POPULARITY, repository.lastSort)
-        assertEquals(1, repository.detailCalls)
-    }
-
-    @Test
     fun toggleFavouriteFlips() {
         val repository = RecordingCharacterRepository()
         val holder = holderWired(repository)
@@ -189,5 +171,31 @@ class CharacterDetailIntegrationTest {
         holder.toggleFavourite()
         assertFalse(holder.isFavourite)
         assertEquals(2, repository.toggleCalls)
+    }
+
+    @Test
+    fun selectVoiceLanguageRefetchesWithTheNewCast() {
+        val repository = RecordingCharacterRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertEquals("JAPANESE", holder.voiceLanguage)
+        assertEquals(1, repository.detailCalls)
+
+        holder.selectVoiceLanguage("ENGLISH")
+
+        assertEquals("ENGLISH", holder.voiceLanguage)
+        assertEquals(2, repository.detailCalls)
+    }
+
+    @Test
+    fun selectVoiceLanguageIgnoresTheSameValue() {
+        val repository = RecordingCharacterRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.selectVoiceLanguage("JAPANESE")
+
+        assertEquals(1, repository.detailCalls)
     }
 }

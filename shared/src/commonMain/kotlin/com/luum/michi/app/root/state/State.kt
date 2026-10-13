@@ -9,9 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
-import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.session.domain.Viewer
+import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
@@ -48,6 +49,8 @@ internal class State(
     var isSectionFilterOpen by mutableStateOf(false)
     var isCalendarFilterOpen by mutableStateOf(false)
     var isDetailMenuOpen by mutableStateOf(false)
+    /** Filter sheet of the open detail page (studio today). Closes with the page. */
+    var isDetailFilterOpen by mutableStateOf(false)
     var isListSortOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
@@ -96,7 +99,7 @@ internal class State(
     fun nextBackStep(): BackStep = when {
         isSearchActive -> BackStep.CloseSearch
         isExploreFilterOpen || isSectionFilterOpen || isListSortOpen || isCalendarFilterOpen ||
-            isDetailMenuOpen -> BackStep.CloseSheet
+            isDetailMenuOpen || isDetailFilterOpen -> BackStep.CloseSheet
         // Surfaces drawn ABOVE the detail page (modal sheets + settings).
         isEditorOpen || isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
         // The detail page sits over the tab content and over the overlays
@@ -121,6 +124,7 @@ internal class State(
             isListSortOpen = false
             isCalendarFilterOpen = false
             isDetailMenuOpen = false
+            isDetailFilterOpen = false
             true
         }
         BackStep.CloseOverlay -> {
@@ -142,6 +146,7 @@ internal class State(
 
     private fun push(dest: DetailDestination) {
         isDetailMenuOpen = false
+        isDetailFilterOpen = false
         if (detailStack.lastOrNull() != dest) detailStack.add(dest)
     }
 
@@ -149,8 +154,11 @@ internal class State(
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
+    fun openDetailList(kind: DetailListKind, parentId: Int) =
+        push(DetailDestination.DetailList(kind, parentId))
     fun closeDetail() {
         isDetailMenuOpen = false
+        isDetailFilterOpen = false
         if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex)
     }
 
@@ -160,6 +168,14 @@ internal class State(
 
     fun closeDetailMenu() {
         isDetailMenuOpen = false
+    }
+
+    fun openDetailFilter() {
+        isDetailFilterOpen = true
+    }
+
+    fun closeDetailFilter() {
+        isDetailFilterOpen = false
     }
 
     fun openEditor(id: Int) {

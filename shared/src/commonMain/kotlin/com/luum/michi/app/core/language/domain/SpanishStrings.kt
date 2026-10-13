@@ -90,11 +90,9 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailStudiosLabel = "Estudios"
     override val mediaDetailVoiceLanguageLabel = "Idioma de voz"
     override val mediaDetailLoadMoreAction = "Cargar más"
-    override val mediaDetailScoreDistributionTitle = "Distribución de puntuación"
     override val mediaDetailStatusDistributionTitle = "Distribución de estado"
     override val mediaStatsStatusPlanning = "Pendiente"
     override val mediaStatsStatusPaused = "En pausa"
-    override val mediaStatsStatusOther = "Otro"
     override val voiceLanguageJapanese = "Japonés"
     override val voiceLanguageEnglish = "Inglés"
     override val voiceLanguageKorean = "Coreano"
@@ -172,10 +170,15 @@ object SpanishStrings : LanguageStrings {
     override fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String {
         return "Ep. $episodeNumber - ${releaseDateTime.formatReadableDateTime(::monthName)}"
     }
-    override fun airingCountdownLabel(hours: Int, minutes: Int): String {
+    override fun airingCountdownLabel(days: Int, hours: Int, minutes: Int): String {
+        val dayUnit = if (days == 1) "día" else "días"
         val hourUnit = if (hours == 1) "hora" else "horas"
         val minuteUnit = if (minutes == 1) "minuto" else "minutos"
-        return if (hours > 0) "en $hours $hourUnit $minutes $minuteUnit" else "en $minutes $minuteUnit"
+        return when {
+            days > 0 -> "en $days $dayUnit $hours $hourUnit"
+            hours > 0 -> "en $hours $hourUnit $minutes $minuteUnit"
+            else -> "en $minutes $minuteUnit"
+        }
     }
     override fun notificationDateLabel(dateTime: MediaReleaseDateTime): String {
         return dateTime.formatReadableDateTime(::monthName)
@@ -284,6 +287,7 @@ object SpanishStrings : LanguageStrings {
     override val authConfigurationMissing = "Falta configurar anilistClientId en local.properties."
     override val authLoadingLabel = "Cargando..."
     override val retryAction = "Reintentar"
+    override val viewAllAction = "Ver todo"
     override val listsLoadingLabel = "Cargando tu lista..."
     override val listsEmptyLabel = "Tu lista esta vacia"
     override val listsErrorLabel = "No se pudo cargar tu lista"
@@ -358,7 +362,6 @@ object SpanishStrings : LanguageStrings {
     override val sortByOldest = "Más antiguo"
     override val sortByScore = "Puntuación"
 
-    // Character detail
     override val characterDetailTitle = "Personaje"
     override val characterTabMedia = "Apariciones"
     override val characterNoMediaLabel = "Sin apariciones"
@@ -369,7 +372,6 @@ object SpanishStrings : LanguageStrings {
     override val infoAgeLabel = "Edad"
     override val infoBirthdayLabel = "Cumpleaños"
     override val infoBloodTypeLabel = "Tipo de sangre"
-
     // Staff detail
     override val staffDetailTitle = "Staff"
     override val staffTabMedia = "Obras"
@@ -395,11 +397,15 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailInformationTitle = "Información"
     override val mediaDetailTagsTitle = "Etiquetas"
     override val mediaDetailExternalLinksTitle = "Enlaces externos"
+    override val mediaDetailStreamingLinksTitle = "Streaming"
+    override fun mediaDetailNextEpisodeReleaseLabel(
+        episode: Int,
+        releaseDateTime: MediaReleaseDateTime,
+        countdown: String,
+    ) = "Ep. $episode - ${releaseDateTime.formatReadableDateTime(::monthName)} ($countdown)"
     override val mediaDetailOfficialSiteLabel = "Sitio oficial"
     override val mediaDetailOpenInAniListAction = "Abrir en AniList"
     override val mediaDetailShareAction = "Compartir"
-    override val mediaDetailSummaryStatsTitle = "Estadísticas"
-    override val mediaDetailTotalLabel = "Total"
     override val mediaDetailHighestRatedLabel = "Mejor calificado"
     override val mediaDetailMostPopularLabel = "Más popular"
     override val mediaDetailAverageScoreLabel = "Puntaje promedio"
@@ -424,6 +430,17 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailMediaTitle = "Series"
     override val mediaDetailNoMediaLabel = "Sin series"
     override val mediaDetailAnimeStudioLabel = "Estudio de anime"
+
+    // Entry editor redesign
+    override val discardChangesConfirmTitle = "¿Descartar cambios?"
+    override val discardChangesConfirmMessage = "Tus cambios en esta entrada no se han guardado."
+    override val discardChangesConfirmAction = "Descartar"
+    override val keepEditingAction = "Seguir editando"
+
+    // Person pages
+    override val mediaDetailNativeLabel = "Nativo"
+    override val mediaDetailVoiceActorsTitle = "Actores de voz"
+    override val mediaDetailNoVoiceActorsLabel = "Sin actores de voz en este idioma"
 }
 
 private fun monthName(month: Int): String = when (month) {
