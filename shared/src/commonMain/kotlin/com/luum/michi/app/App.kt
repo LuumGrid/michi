@@ -45,6 +45,8 @@ import com.luum.michi.app.settings.ui.state.rememberSettingsState
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.installImageLoader
+import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.core.model.resolved
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.theme.paletteForId
 import com.luum.michi.app.ui.theme.paletteIdOf
@@ -140,7 +142,11 @@ fun App(
     val autoOpenSignIn =
         session is SessionState.Anonymous && !store.getBoolean(SettingsStoreKeys.SeenSignIn, false)
 
-    CompositionLocalProvider(LocalStrings provides strings) {
+    CompositionLocalProvider(
+        LocalStrings provides strings,
+        LocalImageQuality provides settingsState.imageQuality
+            .resolved(dependencies.connectivity.isUnmetered()),
+    ) {
         Theme(
             palette = palette,
             type = themeType,

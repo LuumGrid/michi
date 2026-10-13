@@ -41,6 +41,8 @@ import com.luum.michi.app.ui.components.MediaCoverCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import com.luum.michi.app.ui.components.MediaRailItem
+import com.luum.michi.app.core.model.forQuality
+import com.luum.michi.app.ui.LocalImageQuality
 
 /** How a [DetailListScreen] lays its items out. */
 internal enum class DetailListLayout {
@@ -209,9 +211,9 @@ private fun ListCard(item: MediaRailItem, onSelect: (Int) -> Unit) {
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            if (!item.image?.bestUrl.isNullOrBlank()) {
+            if (!item.image?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = item.image?.bestUrl,
+                    model = item.image?.forQuality(LocalImageQuality.current),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

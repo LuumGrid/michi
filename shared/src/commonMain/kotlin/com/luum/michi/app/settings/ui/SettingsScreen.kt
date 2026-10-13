@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.MichiBuildConfig
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
@@ -104,6 +105,7 @@ internal fun SettingsScreen(
     var fontSheet by remember { mutableStateOf(false) }
     var surfaceSheet by remember { mutableStateOf(false) }
     var styleSheet by remember { mutableStateOf(false) }
+    var imageQualitySheet by remember { mutableStateOf(false) }
     var titleLanguageSheet by remember { mutableStateOf(false) }
     var staffNameLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
@@ -153,6 +155,11 @@ internal fun SettingsScreen(
                         label = strings.settingsStyleTitle,
                         value = paletteStyleDisplayName(themeStyle),
                         onClick = { styleSheet = true },
+                    )
+                    SettingsRow(
+                        label = strings.settingsImageQualityTitle,
+                        value = imageQualityLabel(settingsState.imageQuality, strings),
+                        onClick = { imageQualitySheet = true },
                     )
                 }
             }
@@ -397,6 +404,25 @@ internal fun SettingsScreen(
                         onClick = {
                             onThemeStyleChange(option)
                         },
+                        divider = index > 0,
+                    )
+                }
+            }
+        }
+    }
+
+    if (imageQualitySheet) {
+        ModalSheet(
+            title = strings.settingsImageQualityTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { imageQualitySheet = false },
+        ) {
+            OptionGroup(title = null) {
+                ImageQuality.entries.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = imageQualityLabel(option, strings),
+                        selected = option == settingsState.imageQuality,
+                        onClick = { settingsState.imageQuality = option },
                         divider = index > 0,
                     )
                 }
@@ -874,4 +900,11 @@ private fun ThemeType.label(strings: LanguageStrings): String = when (this) {
 private fun SurfaceStyle.label(strings: LanguageStrings): String = when (this) {
     SurfaceStyle.GLASS -> strings.surfaceGlassLabel
     SurfaceStyle.SOLID -> strings.surfaceSolidLabel
+}
+
+
+private fun imageQualityLabel(quality: ImageQuality, strings: LanguageStrings): String = when (quality) {
+    ImageQuality.AUTO -> strings.settingsImageQualityAuto
+    ImageQuality.HIGH -> strings.settingsImageQualityHigh
+    ImageQuality.LOW -> strings.settingsImageQualityLow
 }

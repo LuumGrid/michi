@@ -6,6 +6,7 @@ import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStor
 import com.luum.michi.app.core.navigation.repository.AndroidUrlOpener
 import com.luum.michi.app.core.navigation.repository.AndroidShareLauncher
 import com.luum.michi.app.core.storage.repository.SharedPreferencesSettingsStore
+import com.luum.michi.app.core.network.repository.AndroidConnectivity
 
 /**
  * Constructs the app's shared dependencies for Android. Called from
@@ -18,4 +19,5 @@ fun createMichiDependencies(context: Context): MichiDependencies = MichiDependen
     urlOpener = AndroidUrlOpener(context.applicationContext),
     shareLauncher = AndroidShareLauncher(context.applicationContext),
     settingsStore = SharedPreferencesSettingsStore(context.applicationContext),
+    connectivity = AndroidConnectivity(context.applicationContext),
 )

@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.model.forQuality
+import com.luum.michi.app.ui.LocalImageQuality
 
 /**
  * Shared cover row: portrait cover + title + optional subtitle + caller-owned
@@ -161,7 +163,7 @@ private fun MediaCoverImage(
     cover: CoverSizes?,
     modifier: Modifier = Modifier,
 ) {
-    if (cover?.bestUrl.isNullOrBlank()) {
+    if (cover?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
         Box(
             modifier = modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -169,7 +171,7 @@ private fun MediaCoverImage(
         )
     } else {
         SubcomposeAsyncImage(
-            model = cover?.bestUrl,
+            model = cover?.forQuality(LocalImageQuality.current),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             loading = {

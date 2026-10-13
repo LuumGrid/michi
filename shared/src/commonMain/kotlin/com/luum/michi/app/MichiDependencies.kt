@@ -22,6 +22,8 @@ import com.luum.michi.app.core.session.domain.AniListViewerRepository
 import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.core.network.domain.AlwaysUnmeteredConnectivity
+import com.luum.michi.app.core.network.domain.Connectivity
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.DashboardRepository
@@ -64,6 +66,8 @@ class MichiDependencies internal constructor(
     internal val urlOpener: UrlOpener,
     internal val shareLauncher: ShareLauncher,
     internal val settingsStore: SettingsStore,
+    /** Network metering for AUTO image quality; platform impls override it. */
+    internal val connectivity: Connectivity = AlwaysUnmeteredConnectivity(),
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 

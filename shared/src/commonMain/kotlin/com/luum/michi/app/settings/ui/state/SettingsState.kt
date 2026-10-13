@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.ListSort
@@ -29,6 +30,7 @@ private const val KeySplitCompletedManga = "split_completed_manga"
 private const val KeyAdvancedScoring = "advanced_scoring"
 private const val KeyAdvancedScoringAnimeNames = "advanced_scoring_anime_names"
 private const val KeyAdvancedScoringMangaNames = "advanced_scoring_manga_names"
+private const val KeyImageQuality = "image_quality"
 private const val KeyPersistListSort = "persist_list_sort"
 private const val KeyNotificationAiring = "notification_airing"
 private const val KeyNotificationActivity = "notification_activity"
@@ -151,6 +153,15 @@ internal class SettingsState(
             store.putBoolean(KeyPersistListSort, value)
         }
 
+    // Local-only (never synced): how sharp the covers render.
+    private val imageQualityState = mutableStateOf(ImageQuality.AUTO)
+    var imageQuality: ImageQuality
+        get() = imageQualityState.value
+        set(value) {
+            imageQualityState.value = value
+            store.putString(KeyImageQuality, value.name)
+        }
+
     private val notificationsState = mutableStateOf(NotificationPreferences())
     var notifications: NotificationPreferences
         get() = notificationsState.value
@@ -244,6 +255,11 @@ internal class SettingsState(
         advancedScoringManga = decodeNames(store.getString(KeyAdvancedScoringMangaNames))
         persistListSortState.value =
             store.getBoolean(KeyPersistListSort, true)
+        store.getString(KeyImageQuality)?.let { saved ->
+            ImageQuality.entries.firstOrNull { it.name == saved }?.let {
+                imageQualityState.value = it
+            }
+        }
         notificationsState.value = NotificationPreferences(
             airing = store.getBoolean(KeyNotificationAiring, notificationsState.value.airing),
             activity = store.getBoolean(KeyNotificationActivity, notificationsState.value.activity),

@@ -10,7 +10,14 @@ internal data class CoverSizes(
     val medium: String? = null,
     val large: String? = null,
     val extraLarge: String? = null,
-) {
-    /** Highest resolution available (AniList's cover ceiling). */
-    val bestUrl: String? get() = extraLarge ?: large ?: medium
+)
+
+/**
+ * URL for [quality]. AUTO must be resolved first (`ImageQuality.resolved`);
+ * it falls back to the top size here only defensively. Each level falls back
+ * across the available sizes so people images (no extraLarge) still render.
+ */
+internal fun CoverSizes?.forQuality(quality: ImageQuality): String? = when (quality) {
+    ImageQuality.HIGH, ImageQuality.AUTO -> this?.extraLarge ?: this?.large ?: this?.medium
+    ImageQuality.LOW -> this?.large ?: this?.medium ?: this?.extraLarge
 }

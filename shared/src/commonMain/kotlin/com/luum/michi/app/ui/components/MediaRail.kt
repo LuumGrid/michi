@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.model.forQuality
+import com.luum.michi.app.ui.LocalImageQuality
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -153,9 +155,9 @@ private fun RailCard(
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            if (!item.image?.bestUrl.isNullOrBlank()) {
+            if (!item.image?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = item.image?.bestUrl,
+                    model = item.image?.forQuality(LocalImageQuality.current),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

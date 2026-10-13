@@ -183,6 +183,10 @@ interface LanguageStrings {
     val settingsThemeTitle: String
     val settingsStyleTitle: String
     val settingsSurfaceTitle: String
+    val settingsImageQualityTitle: String
+    val settingsImageQualityAuto: String
+    val settingsImageQualityHigh: String
+    val settingsImageQualityLow: String
     val surfaceGlassLabel: String
     val surfaceSolidLabel: String
     val settingsThemeSystem: String
