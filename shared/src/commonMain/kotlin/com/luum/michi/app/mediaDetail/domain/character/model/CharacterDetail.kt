@@ -7,7 +7,6 @@ internal data class CharacterDetail(
     val name: String,
     val nativeName: String?,
     val alternativeNames: List<String>,
-    val alternativeSpoilerNames: List<String>,
     val imageUrl: String?,
     val descriptionPlain: String,
     val gender: String?,

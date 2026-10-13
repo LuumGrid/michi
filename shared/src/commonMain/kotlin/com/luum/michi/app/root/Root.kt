@@ -428,7 +428,6 @@ internal fun Root(
                         ACTION_FILTER ->
                             if (state.isDetailOpen) state.openDetailFilter() else state.openSectionFilter()
                         ACTION_SORT -> state.openListSort()
-                        // TODO: wire to the schedule surface when it lands.
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }

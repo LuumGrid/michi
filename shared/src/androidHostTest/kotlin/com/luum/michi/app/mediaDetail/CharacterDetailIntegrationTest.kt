@@ -41,7 +41,6 @@ private fun characterDetail(
     name = "Character $id",
     nativeName = null,
     alternativeNames = emptyList(),
-    alternativeSpoilerNames = emptyList(),
     imageUrl = null,
     descriptionPlain = "",
     gender = null,

@@ -1,7 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.media.model
 
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
-import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.MediaSeason

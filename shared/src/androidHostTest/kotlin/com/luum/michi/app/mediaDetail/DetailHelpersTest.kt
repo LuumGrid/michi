@@ -37,7 +37,6 @@ private fun characterDetail(id: Int, name: String) = CharacterDetail(
     name = name,
     nativeName = null,
     alternativeNames = emptyList(),
-    alternativeSpoilerNames = emptyList(),
     imageUrl = null,
     descriptionPlain = "",
     gender = null,

@@ -28,7 +28,7 @@ private const val CharacterDetailQuery = """
 query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}voiceLanguage: StaffLanguage) {
   Character(id: ${'$'}id) {
     id
-    name { userPreferred native alternative alternativeSpoiler }
+    name { userPreferred native alternative }
     image { large }
     description(asHtml: true)
     gender
@@ -139,7 +139,6 @@ private data class CharacterNameDto(
     val userPreferred: String? = null,
     val native: String? = null,
     val alternative: List<String> = emptyList(),
-    val alternativeSpoiler: List<String> = emptyList(),
 )
 
 @Serializable
@@ -294,8 +293,6 @@ internal class CharacterDetailRepositoryImpl(
                             name = character.name?.userPreferred ?: "",
                             nativeName = character.name?.native?.takeIf { it.isNotBlank() },
                             alternativeNames = character.name?.alternative
-                                ?.filter { it.isNotBlank() }.orEmpty(),
-                            alternativeSpoilerNames = character.name?.alternativeSpoiler
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             imageUrl = character.image?.large,
                             descriptionPlain = character.description?.stripHtml().orEmpty(),

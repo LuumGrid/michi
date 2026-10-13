@@ -11,7 +11,6 @@ import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
-import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
@@ -277,17 +276,6 @@ internal class State(
     }
 }
 
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createState(
-    viewer: Viewer,
-    initialTab: TabSection = TabSection.DISCOVER,
-): State {
-    return State(
-        initialProfile = viewer.toProfileDraft(),
-        initialTab = initialTab,
-    )
-}
-
 /** Composition factory: shell preview entry (empty profile until session routing lands). */
 @Composable
 internal fun rememberState(
@@ -304,11 +292,3 @@ internal fun rememberState(
         initialTab = initialTab,
     )
 }
-
-private fun Viewer.toProfileDraft(): ProfileDraft = ProfileDraft(
-    username = name,
-    displayName = name,
-    avatarUrl = avatarUrl,
-    bannerUrl = bannerUrl,
-    bio = about.orEmpty(),
-)

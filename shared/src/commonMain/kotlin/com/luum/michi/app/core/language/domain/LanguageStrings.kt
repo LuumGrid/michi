@@ -10,10 +10,7 @@ interface LanguageStrings {
     val animeLabel: String
     val mangaLabel: String
     val profileLabel: String
-    val filterByLabel: String
-    val orderByLabel: String
     val settingsAction: String
-    val inUseLabel: String
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
     val searchTitle: String
@@ -59,8 +56,6 @@ interface LanguageStrings {
     val dayFriday: String
     val daySaturday: String
     val daySunday: String
-    val mediaDetailTitle: String
-    val overviewTitle: String
     val mediaDetailDescriptionTitle: String
     val mediaDetailGenresTitle: String
     val mediaDetailRelationsTitle: String
@@ -77,23 +72,15 @@ interface LanguageStrings {
     val mediaRelationSummary: String
     val mediaRelationCharacter: String
     val mediaRelationOther: String
-    val mediaDetailTabConnections: String
     val mediaDetailTabStaff: String
     val mediaDetailTabRecommendations: String
-    val mediaDetailTabStats: String
     val mediaDetailCharacterRoleMain: String
     val mediaDetailCharacterRoleSupporting: String
     val mediaDetailCharacterRoleBackground: String
     val mediaDetailNoCharactersLabel: String
-    val mediaDetailNoStaffLabel: String
-    val mediaDetailNoRecommendationsLabel: String
     val mediaDetailCharactersTitle: String
-    val mediaDetailStudiosLabel: String
     val mediaDetailVoiceLanguageLabel: String
     val mediaDetailLoadMoreAction: String
-    val mediaDetailStatusDistributionTitle: String
-    val mediaStatsStatusPlanning: String
-    val mediaStatsStatusPaused: String
     val voiceLanguageJapanese: String
     val voiceLanguageEnglish: String
     val voiceLanguageKorean: String
@@ -106,17 +93,13 @@ interface LanguageStrings {
     val voiceLanguageHungarian: String
     val mediaDetailEpisodesLabel: String
     val mediaDetailDurationLabel: String
-    val mediaDetailMeanScoreLabel: String
     val popularityLabel: String
     val favoritesLabel: String
     val mediaDetailSourceLabel: String
     val mediaDetailEndedLabel: String
     val mediaDetailLoadingLabel: String
     val mediaDetailErrorLabel: String
-    val mediaDetailAddToListAction: String
     val editEntryAction: String
-    val mediaDetailEditorSavingLabel: String
-    val mediaDetailEditorSaveErrorLabel: String
     val cancelAction: String
     val mediaDetailEditorDeleteAction: String
     val deleteEntryConfirmTitle: String
@@ -144,20 +127,16 @@ interface LanguageStrings {
     val notesLabel: String
     val startedLabel: String
     val completedLabel: String
-    val dateNotSetLabel: String
     val datePickerOkAction: String
     val selectDateAction: String
     val datePickerClearAction: String
     val todayLabel: String
-    val totalRewatchesLabel: String
-    val totalRereadsLabel: String
     val favouriteLabel: String
     val priorityLabel: String
     val repeatLabel: String
     val privateLabel: String
     val hiddenFromStatusListsLabel: String
     val saveAction: String
-    val entriesLabel: String
     fun episodesBehind(count: Int): String
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String
@@ -284,16 +263,13 @@ interface LanguageStrings {
     val errorUnknownLabel: String
 
     // Filter Sheet & Filter/Order Labels
-    val filterPersistLabel: String
     val filterOrderDirectionTitle: String
     val filterSortCriterionTitle: String
     val filterResetAction: String
-    val filterApplyAction: String
 
     val sortFollowList: String
     val sortTitle: String
     val sortScore: String
-    val sortProgressManga: String
     val sortLastUpdated: String
     val sortLastAdded: String
     val sortStartDate: String
@@ -333,34 +309,12 @@ interface LanguageStrings {
     val notifMediaChangeLabel: String
 
     // Studio detail
-    val studioDetailTitle: String
-    val studioAnimeLabel: String
-    val studioNoMediaLabel: String
     val sortByNewest: String
     val sortByOldest: String
     val sortByScore: String
 
-    val characterDetailTitle: String
-    val characterTabMedia: String
-    val characterNoMediaLabel: String
-    val showSpoilersAction: String
-    val hideSpoilersAction: String
-    val alternativeNamesLabel: String
-    val infoGenderLabel: String
-    val infoAgeLabel: String
-    val infoBirthdayLabel: String
-    val infoBloodTypeLabel: String
     // Staff detail
-    val staffDetailTitle: String
-    val staffTabMedia: String
-    val infoDeathLabel: String
-    val infoYearsActiveLabel: String
-    val infoHometownLabel: String
-    val infoOccupationsLabel: String
-    val staffNoMediaLabel: String
-    val staffNoCharactersLabel: String
     val yearsActivePresent: String
-    val seeAllAction: String
 
     // Media detail redesign
     val mediaDetailSeasonLabel: String
@@ -369,7 +323,6 @@ interface LanguageStrings {
     val mediaDetailStatusLabel: String
     val mediaDetailStartDateLabel: String
     val mediaDetailRomajiLabel: String
-    val mediaDetailJapaneseLabel: String
     val mediaDetailSynonymsLabel: String
     val mediaDetailVideosTitle: String
     val mediaDetailInformationTitle: String
@@ -384,8 +337,6 @@ interface LanguageStrings {
     val mediaDetailOfficialSiteLabel: String
     val mediaDetailOpenInAniListAction: String
     val mediaDetailShareAction: String
-    val mediaDetailHighestRatedLabel: String
-    val mediaDetailMostPopularLabel: String
     val mediaDetailAverageScoreLabel: String
     val mediaDetailAllTimeLabel: String
     val moreAction: String
@@ -403,8 +354,6 @@ interface LanguageStrings {
     val mediaDetailOccupationsLabel: String
     val mediaDetailAppearancesTitle: String
     val mediaDetailRolesTitle: String
-    val mediaDetailAnimeRolesTitle: String
-    val mediaDetailMangaRolesTitle: String
     val mediaDetailMediaTitle: String
     val mediaDetailNoMediaLabel: String
     val mediaDetailAnimeStudioLabel: String
