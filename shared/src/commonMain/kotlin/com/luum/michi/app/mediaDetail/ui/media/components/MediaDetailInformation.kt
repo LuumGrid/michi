@@ -33,13 +33,13 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
-import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
-import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
+import com.luum.michi.app.core.model.ExternalLink
+
+
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkItem
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
+import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
@@ -196,22 +196,13 @@ internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
 /** Framed link list: maps media links onto the shared link section. */
 @Composable
 internal fun MediaDetailExternalLinks(
-    links: List<MediaExternalLink>,
+    links: List<ExternalLink>,
     title: String,
     strings: LanguageStrings,
     onOpenUrl: (String) -> Unit,
 ) {
     MediaDetailLinkSection(
-        links = links.map { link ->
-            MediaDetailLinkItem(
-                label = link.siteLabel(strings),
-                url = link.url,
-                iconUrl = link.iconUrl,
-                colorHex = link.color,
-                isOfficialSite = link.isOfficialSite(),
-                language = link.language,
-            )
-        },
+        links = links.map { it.toLinkItem(strings) },
         title = title,
         onOpenUrl = onOpenUrl,
     )

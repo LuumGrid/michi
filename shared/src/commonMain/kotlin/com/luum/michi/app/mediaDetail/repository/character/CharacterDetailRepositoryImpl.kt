@@ -24,6 +24,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
+import com.luum.michi.app.core.network.domain.resolveWithCatalog
 
 
 private const val CharacterDetailQuery = """
@@ -258,6 +260,7 @@ private fun CharacterMediaConnectionDto?.toMediaPage(fallbackPage: Int): Charact
 
 internal class CharacterDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
+    private val externalLinkCatalog: ExternalLinkCatalogRepository,
 ) : CharacterDetailRepository {
 
     override suspend fun loadDetail(
@@ -300,7 +303,7 @@ internal class CharacterDetailRepositoryImpl(
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             image = character.image?.let { CoverSizes(medium = it.medium, large = it.large) },
                             descriptionPlain = bio?.text.orEmpty(),
-                            links = bio?.links.orEmpty(),
+                            links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                             gender = character.gender?.takeIf { it.isNotBlank() },
                             age = character.age?.takeIf { it.isNotBlank() },
                             bloodType = character.bloodType?.takeIf { it.isNotBlank() },

@@ -52,6 +52,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
+import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
+import com.luum.michi.app.core.network.repository.ExternalLinkCatalogRepositoryImpl
 
 /**
  * App-level composition root. Lives exactly once per process: owned by
@@ -94,6 +96,9 @@ class MichiDependencies internal constructor(
     internal val profileRepository: ProfileRepository =
         ProfileRepositoryImpl(graphQLClient)
 
+    internal val externalLinkCatalogRepository: ExternalLinkCatalogRepository =
+        ExternalLinkCatalogRepositoryImpl(graphQLClient, settingsStore)
+
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)
 
@@ -119,10 +124,10 @@ class MichiDependencies internal constructor(
         StudioDetailRepositoryImpl(graphQLClient)
 
     internal val characterDetailRepository: CharacterDetailRepository =
-        CharacterDetailRepositoryImpl(graphQLClient)
+        CharacterDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository)
 
     internal val staffDetailRepository: StaffDetailRepository =
-        StaffDetailRepositoryImpl(graphQLClient)
+        StaffDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository)
 
     internal val settingsRepository: SettingsRepository =
         SettingsRepositoryImpl(graphQLClient)

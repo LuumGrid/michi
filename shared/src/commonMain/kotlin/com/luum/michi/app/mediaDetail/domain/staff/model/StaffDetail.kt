@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.staff.model
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.model.PersonLink
+import com.luum.michi.app.core.model.ExternalLink
 
 
 
@@ -11,7 +11,7 @@ internal data class StaffDetail(
     val alternativeNames: List<String>,
     val image: CoverSizes?,
     val descriptionPlain: String,
-    val links: List<PersonLink>,
+    val links: List<ExternalLink>,
     val gender: String?,
     val age: String?,
     val birthday: String?,

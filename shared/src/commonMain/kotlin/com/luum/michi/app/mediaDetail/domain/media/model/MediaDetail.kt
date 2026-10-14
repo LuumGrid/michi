@@ -8,6 +8,7 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.model.ExternalLink
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 
@@ -48,7 +49,7 @@ internal data class MediaDetail(
     val synonyms: List<String>,
     val rankings: List<MediaRank>,
     val tags: List<MediaTag>,
-    val externalLinks: List<MediaExternalLink>,
+    val externalLinks: List<ExternalLink>,
     val trailer: MediaTrailer?,
     val nextEpisode: MediaNextEpisode? = null,
 )
@@ -75,23 +76,6 @@ internal data class MediaTag(
     val rank: Int,
     val isMediaSpoiler: Boolean,
 )
-
-internal data class MediaExternalLink(
-    val site: String,
-    val url: String,
-    val type: String?,
-    val iconUrl: String?,
-    val color: String?,
-    val language: String? = null,
-)
-
-/** The API marks the official site by name (its `type` is a generic INFO). */
-internal fun MediaExternalLink.isOfficialSite(): Boolean =
-    site.equals("Official Site", ignoreCase = true)
-
-/** Localized label for a known external-link site name (API sends English). */
-internal fun MediaExternalLink.siteLabel(strings: LanguageStrings): String =
-    if (isOfficialSite()) strings.mediaDetailOfficialSiteLabel else site
 
 internal data class MediaTrailer(
     val videoId: String,

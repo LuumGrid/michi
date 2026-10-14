@@ -1,9 +1,6 @@
 package com.luum.michi.app.core.network.repository
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -15,12 +12,15 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Android metering for the AUTO image-quality setting. Seeds from the active
  * network and recomputes from it on every connectivity change (never trusting
- * the callback's own value). Data Saver counts as metered; unknown or absent
- * capabilities count as unmetered, so images never degrade on a false negative.
+ * the callback's own value). Unknown or absent capabilities count as unmetered,
+ * so images never degrade on a false negative.
+ *
+ * Data Saver is intentionally not consulted: Android only applies it to metered
+ * networks, which are already metered here, so a Wi-Fi connection stays HIGH.
  */
 internal class AndroidConnectivity(context: Context) : Connectivity {
-    private val appContext = context.applicationContext
-    private val manager = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+    private val manager = context.applicationContext
+        .getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
 
     private val unmeteredState = MutableStateFlow(currentUnmetered())
     override val isUnmetered: StateFlow<Boolean> = unmeteredState.asStateFlow()
@@ -31,18 +31,8 @@ internal class AndroidConnectivity(context: Context) : Connectivity {
         override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = recompute()
     }
 
-    private val dataSaverReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) = recompute()
-    }
-
     init {
         manager?.registerDefaultNetworkCallback(networkCallback)
-        // System broadcast: must be registered at runtime (no manifest entry).
-        appContext.registerReceiver(
-            dataSaverReceiver,
-            IntentFilter(ConnectivityManager.ACTION_RESTRICT_BACKGROUND_CHANGED),
-            Context.RECEIVER_NOT_EXPORTED,
-        )
     }
 
     private fun recompute() {
@@ -51,8 +41,6 @@ internal class AndroidConnectivity(context: Context) : Connectivity {
 
     private fun currentUnmetered(): Boolean {
         val cm = manager ?: return true
-        // Data Saver on: honor the user's data cap → metered.
-        if (cm.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) return false
         val capabilities = cm.getNetworkCapabilities(cm.activeNetwork) ?: return true
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) ||
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED)

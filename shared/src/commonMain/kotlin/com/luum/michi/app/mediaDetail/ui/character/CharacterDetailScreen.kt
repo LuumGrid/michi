@@ -42,8 +42,8 @@ import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkItem
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
+import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 
 /**
  * Character detail page: person hero + framed roles chips + description +
@@ -143,7 +143,7 @@ private fun CharacterDetailContent(
         if (detail.links.isNotEmpty()) {
             item(key = "links") {
                 MediaDetailLinkSection(
-                    links = detail.links.map { MediaDetailLinkItem(label = it.label, url = it.url) },
+                    links = detail.links.map { it.toLinkItem(strings) },
                     title = strings.mediaDetailExternalLinksTitle,
                     onOpenUrl = onOpenUrl,
                 )

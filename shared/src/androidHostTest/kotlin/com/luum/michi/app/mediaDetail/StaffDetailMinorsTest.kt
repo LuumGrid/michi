@@ -17,6 +17,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
 
 private fun staffData(yearsActive: List<Int>, charName: JsonObject, mediaTitle: JsonObject): JsonElement =
     buildJsonObject {
@@ -47,7 +49,7 @@ private fun fakeClient(data: JsonElement) = object : AniListGraphQLClient {    o
 
 private fun loadDetail(data: JsonElement): StaffDetail {
     val result = runBlocking {
-        StaffDetailRepositoryImpl(fakeClient(data))
+        StaffDetailRepositoryImpl(fakeClient(data), NoopExternalLinkCatalog)
             .loadDetail(1, EnglishStrings)
     }
     assertTrue(result is NetworkResult.Success, "expected Success but was $result")
@@ -145,4 +147,8 @@ class StaffDetailMinorsTest {
         assertEquals(2, detail.media.items.size)
         assertEquals(listOf(150321, 150321), detail.media.items.map { it.mediaId })
     }
+}
+
+private object NoopExternalLinkCatalog : ExternalLinkCatalogRepository {
+    override suspend fun sites(): List<ExternalLink> = emptyList()
 }

@@ -98,6 +98,10 @@ private class InMemoryDashboardFeedCache : DashboardFeedCache {
             savedAtMillis = Clock.System.now().toEpochMilliseconds(),
         )
     }
+
+    override fun clear() {
+        store.clear()
+    }
 }
 
 private fun wired(graphQL: FakeGraphQL): DashboardStateHolder =
@@ -408,6 +412,113 @@ class DashboardIntegrationTest {
 
         holder.preloadOther() // other type already warm: guarded
         assertEquals(2, graphQL.calls)
+    }
+
+    @Test
+    fun coldStartHydratesFromCacheWithoutASpinner() {
+        val cache = InMemoryDashboardFeedCache().apply {
+            save(
+                mediaType = DashboardMediaType.ANIME,
+                hideAdult = true,
+                feed = DashboardFeed(
+                    mapOf(DashboardSectionKind.TRENDING_ANIME to listOf(MediaItem(title = "Cached", meta = "Anime", id = 5))),
+                ),
+            )
+        }
+        val graphQL = FakeGraphQL(emptyList())
+        val holder = wiredWithCache(graphQL, cache)
+
+        holder.load()
+
+        assertEquals(listOf(5), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+        assertFalse(holder.isLoading, "a fresh cache shows content, not a spinner")
+        assertEquals(0, graphQL.calls)
+    }
+
+    @Test
+    fun gateChangeDuringLoadDiscardsTheStaleResponse() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "Old"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "New"))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val holder = wired(graphQL)
+        val gate = graphQL.gate!!
+
+        holder.load() // in flight with gate = true
+        holder.setHideAdult(false) // gate flips mid-flight
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertEquals(2, graphQL.calls, "the deferred reload ran with the new gate")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
+    fun preloadWithFreshCacheSkipsTheNetwork() {
+        val cache = InMemoryDashboardFeedCache().apply {
+            save(
+                mediaType = DashboardMediaType.MANGA,
+                hideAdult = true,
+                feed = DashboardFeed(
+                    mapOf(DashboardSectionKind.TRENDING_MANGA to listOf(MediaItem(title = "Cached", meta = "Manga", id = 7))),
+                ),
+            )
+        }
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
+        val holder = wiredWithCache(graphQL, cache)
+
+        holder.load() // anime only
+        holder.preloadOther() // manga is fresh in cache -> no request
+
+        assertEquals(1, graphQL.calls)
+    }
+
+    @Test
+    fun selectDuringPreloadJoinsInsteadOfDuplicating() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 1))),
+            ),
+        )
+        val holder = wired(graphQL)
+        holder.load() // anime (call 1)
+
+        graphQL.gate = CompletableDeferred()
+        holder.preloadOther() // manga in flight (call 2)
+        val gate = graphQL.gate!!
+        holder.selectType(DashboardMediaType.MANGA) // joins the in-flight preload
+
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertEquals(2, graphQL.calls, "the select joined the preload instead of fetching again")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+    }
+
+    @Test
+    fun clearCacheAndReloadDropsTheCache() {
+        val cache = InMemoryDashboardFeedCache()
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "B"))),
+            ),
+        )
+        val holder = wiredWithCache(graphQL, cache)
+
+        holder.load() // call 1, writes the cache
+        holder.clearCacheAndReload() // language change: drop + reload
+
+        assertEquals(2, graphQL.calls)
+        // The reload rewrote the cache with the fresh (re-localized) feed.
+        assertEquals(
+            listOf(2),
+            cache.load(DashboardMediaType.ANIME, true)
+                ?.feed?.sections?.get(DashboardSectionKind.TRENDING_ANIME)?.map { it.id },
+        )
     }
 
     @Test

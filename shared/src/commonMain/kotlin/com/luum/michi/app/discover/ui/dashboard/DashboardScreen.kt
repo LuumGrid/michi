@@ -50,7 +50,7 @@ internal fun DashboardScreen(
     // TabBar. Never a per-feature constant.
     bottomPadding: Dp = 0.dp,
 ) {
-    LaunchedEffect(hideAdult) {
+    LaunchedEffect(holder, hideAdult) {
         holder.setHideAdult(hideAdult)
         holder.load()
     }

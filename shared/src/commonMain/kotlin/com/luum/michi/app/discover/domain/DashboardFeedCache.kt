@@ -16,4 +16,7 @@ internal data class CachedDashboardFeed(
 internal interface DashboardFeedCache {
     fun load(mediaType: DashboardMediaType, hideAdult: Boolean): CachedDashboardFeed?
     fun save(mediaType: DashboardMediaType, hideAdult: Boolean, feed: DashboardFeed)
+
+    /** Drop every key (e.g. the localized `meta` goes stale on a language change). */
+    fun clear()
 }

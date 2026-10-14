@@ -94,6 +94,13 @@ internal class SettingsStoreDashboardFeedCache(
         store.putString(key(mediaType, hideAdult), json.encodeToString(dto))
     }
 
+    override fun clear() {
+        DashboardMediaType.entries.forEach { type ->
+            store.putString(key(type, hideAdult = true), "")
+            store.putString(key(type, hideAdult = false), "")
+        }
+    }
+
     private fun key(mediaType: DashboardMediaType, hideAdult: Boolean): String =
         "dashboard_${mediaType.name}_$hideAdult"
 }

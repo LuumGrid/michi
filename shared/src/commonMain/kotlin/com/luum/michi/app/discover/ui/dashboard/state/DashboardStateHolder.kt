@@ -15,6 +15,7 @@ import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.TimeSource
@@ -33,6 +34,9 @@ internal class DashboardStateHolder(
     private val feeds = mutableStateMapOf<DashboardMediaType, DashboardFeed>()
     private val errors = mutableStateMapOf<DashboardMediaType, NetworkError>()
     private val lastLoaded = mutableMapOf<DashboardMediaType, TimeSource.Monotonic.ValueTimeMark>()
+
+    // One request per type at a time: a select during a preload joins it.
+    private val inFlight = mutableMapOf<DashboardMediaType, Job>()
     private val timeMark = TimeSource.Monotonic
 
     private var loadingState: Boolean by mutableStateOf(false)
@@ -45,10 +49,8 @@ internal class DashboardStateHolder(
     // A load request that arrives while another is in flight would be dropped;
     // remember it (and whether it was forced) so the in-flight response is
     // followed by a reload with the selection/value in effect at that point.
-    private var inFlightType: DashboardMediaType? = null
     private var pendingReload = false
     private var pendingForce = false
-    private var preloading = false
 
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
@@ -60,11 +62,10 @@ internal class DashboardStateHolder(
     val sections: Map<DashboardSectionKind, List<MediaItem>>
         get() = feeds[mediaType]?.sections ?: emptyMap()
 
-    /** Selector: switching hydrates from disk (instant) then revalidates. */
+    /** Selector: switching to an unloaded type hydrates from disk then revalidates. */
     fun selectType(type: DashboardMediaType) {
         if (mediaType == type) return
         mediaType = type
-        if (feeds[type] == null) hydrateFromCache(type)
         load()
     }
 
@@ -78,46 +79,86 @@ internal class DashboardStateHolder(
         load(forceRefresh = true)
     }
 
+    /** The app language changed: the cached `meta` is localized, so drop it all. */
+    fun clearCacheAndReload() {
+        cache.clear()
+        feeds.clear()
+        lastLoaded.clear()
+        errors.clear()
+        load(forceRefresh = true)
+    }
+
     /** Load the current type's rails, skipping the network within the TTL. */
     fun load(forceRefresh: Boolean = false) {
         val type = mediaType
-        val gate = hideAdultState
+        // Cold start (or a fresh holder): hydrate from disk before deciding on
+        // the network, so a cached rail never flashes a spinner.
+        if (feeds[type] == null) hydrateFromCache(type)
         val hasData = feeds[type]?.sections?.isNotEmpty() == true
         val mark = lastLoaded[type]
         if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && hasData) return
-        // Drop overlapping loads so a slower (stale) response cannot overwrite
-        // a newer one. Defer instead of losing: a forced reload, or a load for
-        // a type other than the one in flight (the selector changed mid-load).
-        if (loadingState || refreshingState) {
-            if (forceRefresh || inFlightType != type) {
+        // Join an in-flight request for this type (e.g. a preload) instead of
+        // firing a second one for the same type+gate.
+        if (inFlight[type]?.isActive == true) {
+            if (forceRefresh) {
                 pendingReload = true
-                pendingForce = pendingForce || forceRefresh
+                pendingForce = true
+            } else if (hasData) {
+                refreshingState = true
+            } else {
+                loadingState = true
             }
             return
         }
-        val isRefresh = forceRefresh && hasData
-        if (isRefresh) {
-            refreshingState = true
-        } else {
-            loadingState = true
+        launchLoad(type = type, gate = hideAdultState, forceRefresh = forceRefresh, visible = true)
+    }
+
+    /** Warm the other type once: hydrate first, skip the network when fresh. */
+    fun preloadOther() {
+        val other = if (mediaType == DashboardMediaType.ANIME) DashboardMediaType.MANGA else DashboardMediaType.ANIME
+        if (inFlight[other]?.isActive == true) return
+        if (feeds[other] == null) hydrateFromCache(other)
+        val mark = lastLoaded[other]
+        if (mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL &&
+            feeds[other]?.sections?.isNotEmpty() == true
+        ) {
+            return
         }
-        inFlightType = type
+        launchLoad(type = other, gate = hideAdultState, forceRefresh = false, visible = false)
+    }
+
+    private fun launchLoad(
+        type: DashboardMediaType,
+        gate: Boolean,
+        forceRefresh: Boolean,
+        visible: Boolean,
+    ) {
+        val hasData = feeds[type]?.sections?.isNotEmpty() == true
+        val isRefresh = forceRefresh && hasData
+        if (visible) {
+            if (isRefresh) refreshingState = true else loadingState = true
+        }
         errors.remove(type)
-        scope.launch {
+        inFlight[type] = scope.launch {
             try {
                 when (val result = repository.loadFeed(type, gate, strings)) {
                     is NetworkResult.Success -> {
-                        feeds[type] = result.value
-                        lastLoaded[type] = timeMark.markNow()
+                        // Discard a response whose gate is no longer in effect.
+                        if (gate == hideAdultState) {
+                            feeds[type] = result.value
+                            lastLoaded[type] = timeMark.markNow()
+                        }
                         cache.save(type, gate, result.value)
                     }
-                    is NetworkResult.Failure -> errors[type] = result.error
+                    is NetworkResult.Failure ->
+                        if (visible && gate == hideAdultState) errors[type] = result.error
                 }
             } finally {
-                loadingState = false
-                refreshingState = false
-                inFlightType = null
-                // Run the deferred request (if any) with the value in effect now.
+                inFlight.remove(type)
+                if (type == mediaType) {
+                    loadingState = false
+                    refreshingState = false
+                }
                 if (pendingReload) {
                     val force = pendingForce
                     pendingReload = false
@@ -128,36 +169,13 @@ internal class DashboardStateHolder(
         }
     }
 
-    /** Hydrate the selected type from disk without a spinner (stale-while-revalidate). */
+    /** Hydrate [type] from disk (no spinner); a fresh cache counts as loaded. */
     private fun hydrateFromCache(type: DashboardMediaType) {
         val cached = cache.load(type, hideAdultState) ?: return
         feeds[type] = cached.feed
         val ageMs = Clock.System.now().toEpochMilliseconds() - cached.savedAtMillis
         if (ageMs in 0 until AniListNetworkPolicy.CACHE_TTL.inWholeMilliseconds) {
-            // Fresh enough: treat as loaded so the immediate load() is a no-op.
             lastLoaded[type] = timeMark.markNow()
-        }
-    }
-
-    /** Warm the other type once (respects the in-memory cache; no error surface). */
-    fun preloadOther() {
-        val other = if (mediaType == DashboardMediaType.ANIME) DashboardMediaType.MANGA else DashboardMediaType.ANIME
-        if (preloading || feeds[other]?.sections?.isNotEmpty() == true) return
-        val gate = hideAdultState
-        preloading = true
-        scope.launch {
-            try {
-                when (val result = repository.loadFeed(other, gate, strings)) {
-                    is NetworkResult.Success -> {
-                        feeds[other] = result.value
-                        lastLoaded[other] = timeMark.markNow()
-                        cache.save(other, gate, result.value)
-                    }
-                    is NetworkResult.Failure -> Unit
-                }
-            } finally {
-                preloading = false
-            }
         }
     }
 }

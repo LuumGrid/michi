@@ -34,7 +34,7 @@ internal data class MediaDetailLinkItem(
     val iconUrl: String? = null,
     val colorHex: String? = null,
     val isOfficialSite: Boolean = false,
-    val language: String? = null,
+    val detail: String? = null,
 )
 
 /**
@@ -101,7 +101,7 @@ private fun MediaDetailLinkRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        item.language?.takeIf { it.isNotBlank() }?.let { language ->
+        item.detail?.takeIf { it.isNotBlank() }?.let { language ->
             Text(
                 text = "($language)",
                 style = MaterialTheme.typography.bodySmall,

@@ -265,8 +265,17 @@ internal fun Root(
     // Discover dashboard holder: session-independent (public catalog) and
     // shared by guests. Loads are explicit from the screen; the TTL dedups
     // revisits and the 18+ gate lives in the holder.
-    val dashboardHolder = remember(dashboardRepository, listScope, strings) {
+    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, listScope, strings) {
         createDashboardStateHolder(dashboardRepository, dashboardFeedCache, listScope, strings)
+    }
+    // The cached rail meta is localized: a language change drops the disk cache
+    // (the recreated holder reloads through the screen effect).
+    var lastDashboardLanguage by remember { mutableStateOf(language) }
+    LaunchedEffect(language) {
+        if (language != lastDashboardLanguage) {
+            lastDashboardLanguage = language
+            dashboardFeedCache.clear()
+        }
     }
 
     // Media detail holder: session-independent (public data) and shared by

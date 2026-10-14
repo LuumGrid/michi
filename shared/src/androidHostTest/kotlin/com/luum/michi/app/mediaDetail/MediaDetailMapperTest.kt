@@ -6,12 +6,12 @@ import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
+import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
 import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
-import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
-import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
+import com.luum.michi.app.core.model.isOfficialSite
+import com.luum.michi.app.core.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaList.FakeGraphQL
@@ -240,7 +240,7 @@ class MediaDetailMapperTest {
         assertEquals("https://crunchyroll.com/42", link.url)
         assertEquals("STREAMING", link.type)
         assertEquals("https://crunchyroll.com/favicon.ico", link.iconUrl)
-        assertEquals("#F47521", link.color)
+        assertEquals("#F47521", link.colorHex)
         assertEquals("English", link.language)
     }
 
@@ -255,12 +255,12 @@ class MediaDetailMapperTest {
 
     @Test
     fun officialSiteLabelLocalizes() {
-        val official = MediaExternalLink(
+        val official = ExternalLink(
             site = "Official Site",
             url = "https://example.com",
             type = "INFO",
             iconUrl = null,
-            color = null,
+            colorHex = null,
         )
         assertTrue(official.isOfficialSite())
         assertEquals("Official site", official.siteLabel(EnglishStrings))

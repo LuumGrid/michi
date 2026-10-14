@@ -26,6 +26,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
+import com.luum.michi.app.core.network.domain.resolveWithCatalog
 
 
 private const val StaffDetailQuery = """
@@ -314,6 +316,7 @@ private fun StaffCharacterMediaConnectionDto?.toCharacterPage(fallbackPage: Int)
 
 internal class StaffDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
+    private val externalLinkCatalog: ExternalLinkCatalogRepository,
 ) : StaffDetailRepository {
 
     override suspend fun loadDetail(id: Int, strings: LanguageStrings): NetworkResult<StaffDetail> {
@@ -353,7 +356,7 @@ internal class StaffDetailRepositoryImpl(
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             image = staff.image?.let { CoverSizes(medium = it.medium, large = it.large) },
                             descriptionPlain = bio?.text.orEmpty(),
-                            links = bio?.links.orEmpty(),
+                            links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                             gender = staff.gender?.takeIf { it.isNotBlank() },
                             age = staff.age?.takeIf { it.isNotBlank() },
                             birthday = staff.dateOfBirth?.formatDate(strings),

@@ -21,7 +21,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaExternalLink
+import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTag
@@ -99,12 +99,12 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
         if (dto.isDisabled == true) return@mapNotNull null
         dto.url?.takeIf { it.isNotBlank() }?.let { url ->
             dto.site?.takeIf { it.isNotBlank() }?.let { site ->
-                MediaExternalLink(
+                ExternalLink(
                     site = site,
                     url = url,
                     type = dto.type,
                     iconUrl = dto.icon,
-                    color = dto.color,
+                    colorHex = dto.color,
                     language = dto.language,
                 )
             }
