@@ -7,6 +7,7 @@ import com.luum.michi.app.core.navigation.repository.IosUrlOpener
 import com.luum.michi.app.core.navigation.repository.IosShareLauncher
 import com.luum.michi.app.core.storage.repository.NSUserDefaultsSettingsStore
 import com.luum.michi.app.core.network.repository.IosConnectivity
+import kotlin.native.Platform
 import platform.UIKit.UIViewController
 
 /**
@@ -42,6 +43,7 @@ private object IosMichiDependencies {
             shareLauncher = IosShareLauncher(),
             settingsStore = NSUserDefaultsSettingsStore(),
             connectivity = IosConnectivity(),
+            isDebug = Platform.isDebugBinary,
         ).also {
             current = it
             it.bootstrap()

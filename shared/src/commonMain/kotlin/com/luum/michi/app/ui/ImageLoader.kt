@@ -9,8 +9,9 @@ import coil3.request.crossfade
 /**
  * App-wide Coil loader. Crossfade softens the load and the memory cache is
  * capped to a fraction of the app heap, so high-resolution covers
- * (`extraLarge`, now the app default) never balloon it. Disk cache stays
- * platform-default. Call once from [App], before the first image composes.
+ * (`extraLarge`, now the app default) never balloon it. Coil 3 already adds a
+ * default disk cache (`singletonDiskCache()`) when none is set, so this builder
+ * keeps it. Call once from [App], before the first image composes.
  */
 @Composable
 internal fun installImageLoader() {

@@ -36,7 +36,7 @@ private const val NewReleasesMinPopularity = 1000
 private const val MediaFields = """
       id format episodes chapters
       title { romaji english native userPreferred }
-      coverImage { extraLarge large medium }
+      coverImage { extraLarge large medium color }
 """
 
 private val AnimeDashboardQuery = """

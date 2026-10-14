@@ -19,6 +19,7 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -66,18 +67,26 @@ internal class KtorAniListGraphQLClient(
     private val tokenProvider: suspend () -> AniListToken?,
     private val json: Json = AniListJson,
     private val rateLimiter: AniListRateLimiter = AniListRateLimiter(),
+    // Debug builds only: logs each operation's duration (operationName + ms).
+    private val debugLogging: Boolean = false,
 ) : AniListGraphQLClient {
 
     override suspend fun <T> execute(
         request: AniListGraphQLRequest,
         parseData: (JsonElement) -> T,
     ): NetworkResult<T> {
+        val start = TimeSource.Monotonic.markNow()
         return try {
             executeWithRetry(request, parseData, retriesLeft = AniListNetworkPolicy.MAX_RATE_LIMIT_RETRIES)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
             NetworkResult.Failure(throwableToNetworkError(throwable))
+        } finally {
+            if (debugLogging) {
+                val ms = start.elapsedNow().inWholeMilliseconds
+                println("[Michi] GraphQL ${request.operationName ?: "?"} ${ms}ms")
+            }
         }
     }
 

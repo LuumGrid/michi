@@ -48,9 +48,8 @@ import com.luum.michi.app.mediaDetail.ui.studio.components.studioFilterSummary
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
-import com.luum.michi.app.core.model.forQuality
-import com.luum.michi.app.ui.LocalImageQuality
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.ui.rememberCoverUrl
 
 /**
  * Studio detail page: name hero + a 2-column media grid. Sort and the
@@ -258,9 +257,10 @@ private fun StudioMediaGridCard(
                     .aspectRatio(3f / 4f)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                if (!item.cover?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
+                val url = rememberCoverUrl(item.cover, 160.dp)
+                if (!url.isNullOrBlank()) {
                     SubcomposeAsyncImage(
-                        model = item.cover?.forQuality(LocalImageQuality.current),
+                        model = url,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         loading = {},

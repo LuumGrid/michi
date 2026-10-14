@@ -11,4 +11,6 @@ internal data class MediaItem(
     val meta: String,
     val id: Int? = null,
     val cover: CoverSizes? = null,
+    /** Cover color: paints the card while the image loads. */
+    val placeholderHex: String? = null,
 )

@@ -55,6 +55,7 @@ private fun MediaDto.toMediaItem(strings: LanguageStrings, isManga: Boolean): Me
         meta = if (isManga) mangaMeta(this, strings) else animeMeta(this, strings),
         id = id,
         cover = coverImage?.toCoverSizes(),
+        placeholderHex = coverImage?.color,
     )
 
 private fun animeMeta(media: MediaDto, strings: LanguageStrings): String {

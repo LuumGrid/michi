@@ -21,6 +21,7 @@ import com.luum.michi.app.core.network.repository.createAniListHttpClient
 import com.luum.michi.app.core.session.domain.AniListViewerRepository
 import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
+import com.luum.michi.app.core.session.repository.SettingsStoreCachedViewerStore
 import com.luum.michi.app.core.storage.domain.SettingsStore
 import com.luum.michi.app.core.network.domain.AlwaysUnmeteredConnectivity
 import com.luum.michi.app.core.network.domain.Connectivity
@@ -49,6 +50,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.luum.michi.app.discover.domain.DashboardFeedCache
+import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
 
 /**
  * App-level composition root. Lives exactly once per process: owned by
@@ -68,6 +71,8 @@ class MichiDependencies internal constructor(
     internal val settingsStore: SettingsStore,
     /** Network metering for AUTO image quality; platform impls override it. */
     internal val connectivity: Connectivity = AlwaysUnmeteredConnectivity(),
+    /** Debug builds log GraphQL timing; platform entries pass the real flag. */
+    internal val isDebug: Boolean = false,
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -75,6 +80,7 @@ class MichiDependencies internal constructor(
     internal val graphQLClient: AniListGraphQLClient = KtorAniListGraphQLClient(
         httpClient = httpClient,
         tokenProvider = { tokenStorage.load() },
+        debugLogging = isDebug,
     )
     internal val viewerRepository: AniListViewerRepository =
         AniListViewerRepositoryImpl(graphQLClient)
@@ -90,6 +96,9 @@ class MichiDependencies internal constructor(
 
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)
+
+    internal val dashboardFeedCache: DashboardFeedCache =
+        SettingsStoreDashboardFeedCache(settingsStore)
 
     internal val exploreRepository: ExploreRepository =
         ExploreRepositoryImpl(graphQLClient)
@@ -119,7 +128,7 @@ class MichiDependencies internal constructor(
         SettingsRepositoryImpl(graphQLClient)
 
     internal val sessionManager: SessionManager =
-        SessionManager(tokenStorage, viewerRepository)
+        SessionManager(tokenStorage, viewerRepository, SettingsStoreCachedViewerStore(settingsStore))
 
     /**
      * Bootstraps the app: checks persisted token, fetches viewer if present.

@@ -39,8 +39,7 @@ import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
-import com.luum.michi.app.core.model.forQuality
-import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.ui.rememberCoverUrl
 
 /**
  * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover
@@ -78,7 +77,7 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                     .width(COVER_WIDTH)
                     .aspectRatio(3f / 4f),
             ) {
-                val image = detail.cover?.forQuality(LocalImageQuality.current)
+                val image = rememberCoverUrl(detail.cover, COVER_WIDTH)
                 if (!image.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = image,

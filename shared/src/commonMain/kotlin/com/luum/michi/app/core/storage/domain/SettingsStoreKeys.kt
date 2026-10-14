@@ -17,4 +17,6 @@ internal object SettingsStoreKeys {
     const val SeenSignIn = "seen_sign_in"
     /** Sheet/chrome surface style (Settings toggle). */
     const val SurfaceStyle = "surface_style"
+    /** Last resolved Viewer, for an instant shell on cold start. */
+    const val CachedViewer = "cached_viewer"
 }

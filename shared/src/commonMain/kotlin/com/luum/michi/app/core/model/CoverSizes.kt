@@ -12,12 +12,26 @@ internal data class CoverSizes(
     val extraLarge: String? = null,
 )
 
+/** AniList cover widths (px): medium ≈100, large ≈230, extraLarge ≈460. */
+private const val MediumWidthPx = 100
+private const val LargeWidthPx = 230
+
 /**
- * URL for [quality]. AUTO must be resolved first (`ImageQuality.resolved`);
- * it falls back to the top size here only defensively. Each level falls back
- * across the available sizes so people images (no extraLarge) still render.
+ * URL for a cover drawn at [widthPx]: the smallest variant that still covers
+ * it (so small rails fetch `medium`, the hero fetches `extraLarge`). [quality]
+ * `LOW` steps one tier down; missing variants fall back across the sizes (so
+ * people images without `extraLarge` still render).
  */
-internal fun CoverSizes?.forQuality(quality: ImageQuality): String? = when (quality) {
-    ImageQuality.HIGH, ImageQuality.AUTO -> this?.extraLarge ?: this?.large ?: this?.medium
-    ImageQuality.LOW -> this?.large ?: this?.medium ?: this?.extraLarge
+internal fun CoverSizes?.forWidthPx(widthPx: Int, quality: ImageQuality): String? {
+    val tier = when {
+        widthPx <= MediumWidthPx -> 0
+        widthPx <= LargeWidthPx -> 1
+        else -> 2
+    }
+    val adjusted = if (quality == ImageQuality.LOW) (tier - 1).coerceAtLeast(0) else tier
+    return when (adjusted) {
+        0 -> this?.medium ?: this?.large ?: this?.extraLarge
+        1 -> this?.large ?: this?.extraLarge ?: this?.medium
+        else -> this?.extraLarge ?: this?.large ?: this?.medium
+    }
 }

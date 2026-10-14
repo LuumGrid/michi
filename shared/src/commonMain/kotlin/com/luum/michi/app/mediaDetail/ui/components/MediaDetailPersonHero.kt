@@ -27,8 +27,7 @@ import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.model.forQuality
-import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.ui.rememberCoverUrl
 
 /**
  * Shared person hero (character/staff): centered portrait + name + native
@@ -59,9 +58,10 @@ internal fun MediaDetailPersonHero(
                 .width(140.dp)
                 .aspectRatio(3f / 4f),
         ) {
-            if (!image?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
+            val url = rememberCoverUrl(image, 140.dp)
+            if (!url.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = image?.forQuality(LocalImageQuality.current),
+                    model = url,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

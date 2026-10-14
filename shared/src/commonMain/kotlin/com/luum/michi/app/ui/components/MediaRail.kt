@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.model.forQuality
-import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.ui.rememberCoverUrl
+import com.luum.michi.app.ui.theme.brandColor
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -47,6 +47,8 @@ internal data class MediaRailItem(
     // Stable identity for LazyRow. Defaults to the id, but callers whose id
     // can repeat (staff with multiple roles) pass a unique edge key.
     val key: String = "",
+    /** Cover color painted while the image loads (dashboard rails). */
+    val placeholderHex: String? = null,
 )
 
 /**
@@ -153,11 +155,12 @@ private fun RailCard(
                 .fillMaxWidth()
                 .aspectRatio(3f / 4f)
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(item.placeholderHex?.let { brandColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            if (!item.image?.forQuality(LocalImageQuality.current).isNullOrBlank()) {
+            val url = rememberCoverUrl(item.image, cardWidth)
+            if (!url.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = item.image?.forQuality(LocalImageQuality.current),
+                    model = url,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

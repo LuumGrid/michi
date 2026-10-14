@@ -1,6 +1,7 @@
 package com.luum.michi.app
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import com.luum.michi.app.core.auth.repository.ChromeCustomTabsOAuthLauncher
 import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStorage
 import com.luum.michi.app.core.navigation.repository.AndroidUrlOpener
@@ -20,4 +21,5 @@ fun createMichiDependencies(context: Context): MichiDependencies = MichiDependen
     shareLauncher = AndroidShareLauncher(context.applicationContext),
     settingsStore = SharedPreferencesSettingsStore(context.applicationContext),
     connectivity = AndroidConnectivity(context.applicationContext),
+    isDebug = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
 )

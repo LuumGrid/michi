@@ -83,6 +83,11 @@ private fun DashboardContent(
                 ?.let { kind to it }
         }
     val errorMessage = holder.error?.let { strings.networkErrorMessage(it) }
+    // Once the visible type has content, warm the other type in the background
+    // (guarded inside; respects the cache, never surfaces an error).
+    LaunchedEffect(sections.isNotEmpty()) {
+        if (sections.isNotEmpty()) holder.preloadOther()
+    }
     Column(modifier = modifier.fillMaxSize()) {
         ChipRail(
             tabs = listOf(
@@ -183,5 +188,6 @@ private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
         title = title,
         image = cover,
         subtitle = meta,
+        placeholderHex = placeholderHex,
     )
 }

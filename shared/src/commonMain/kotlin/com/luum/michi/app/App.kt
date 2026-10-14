@@ -243,6 +243,7 @@ fun App(
                             studioDetailRepository = dependencies.studioDetailRepository,
                             calendarRepository = dependencies.calendarRepository,
                             dashboardRepository = dependencies.dashboardRepository,
+                            dashboardFeedCache = dependencies.dashboardFeedCache,
                             urlOpener = dependencies.urlOpener,
                             shareLauncher = dependencies.shareLauncher,
                             sortPersistence = sortPersistence,

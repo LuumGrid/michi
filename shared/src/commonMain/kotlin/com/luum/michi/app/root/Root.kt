@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.IntOffset
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.CalendarScreen
 import com.luum.michi.app.calendar.ui.state.createCalendarStateHolder
+import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
@@ -156,6 +157,7 @@ internal fun Root(
     studioDetailRepository: StudioDetailRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
+    dashboardFeedCache: DashboardFeedCache,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -264,7 +266,7 @@ internal fun Root(
     // shared by guests. Loads are explicit from the screen; the TTL dedups
     // revisits and the 18+ gate lives in the holder.
     val dashboardHolder = remember(dashboardRepository, listScope, strings) {
-        createDashboardStateHolder(dashboardRepository, listScope, strings)
+        createDashboardStateHolder(dashboardRepository, dashboardFeedCache, listScope, strings)
     }
 
     // Media detail holder: session-independent (public data) and shared by

@@ -20,6 +20,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.luum.michi.app.discover.domain.CachedDashboardFeed
+import com.luum.michi.app.discover.domain.DashboardFeed
+import com.luum.michi.app.discover.domain.DashboardFeedCache
+import com.luum.michi.app.discover.domain.model.MediaItem
+import kotlin.time.Clock
 
 private fun mediaJson(
     id: Int,
@@ -81,9 +86,27 @@ private fun dashboardJson(
     put("bestManhua", page(*bestManhua.toTypedArray()))
 }
 
+private class InMemoryDashboardFeedCache : DashboardFeedCache {
+    private val store = mutableMapOf<String, CachedDashboardFeed>()
+
+    override fun load(mediaType: DashboardMediaType, hideAdult: Boolean): CachedDashboardFeed? =
+        store["${mediaType.name}_$hideAdult"]
+
+    override fun save(mediaType: DashboardMediaType, hideAdult: Boolean, feed: DashboardFeed) {
+        store["${mediaType.name}_$hideAdult"] = CachedDashboardFeed(
+            feed = feed,
+            savedAtMillis = Clock.System.now().toEpochMilliseconds(),
+        )
+    }
+}
+
 private fun wired(graphQL: FakeGraphQL): DashboardStateHolder =
+    wiredWithCache(graphQL, InMemoryDashboardFeedCache())
+
+private fun wiredWithCache(graphQL: FakeGraphQL, cache: DashboardFeedCache): DashboardStateHolder =
     createDashboardStateHolder(
         repository = DashboardRepositoryImpl(graphQL),
+        cache = cache,
         scope = CoroutineScope(Dispatchers.Unconfined),
         strings = EnglishStrings,
     )
@@ -336,6 +359,55 @@ class DashboardIntegrationTest {
         val mangaQuery = mangaGraphQL.requests.single().query
         assertTrue(mangaQuery.contains("countryOfOrigin: JP"))
         assertTrue(mangaQuery.contains("format_in: [MANGA, ONE_SHOT]"))
+    }
+
+    @Test
+    fun hydratesFromTheDiskCacheWithoutAFetch() {
+        val cache = InMemoryDashboardFeedCache().apply {
+            save(
+                mediaType = DashboardMediaType.MANGA,
+                hideAdult = true,
+                feed = DashboardFeed(
+                    mapOf(
+                        DashboardSectionKind.TRENDING_MANGA to listOf(
+                            MediaItem(title = "Cached", meta = "Manga", id = 7),
+                        ),
+                    ),
+                ),
+            )
+        }
+        val graphQL = FakeGraphQL(emptyList()) // any call would crash
+        val holder = wiredWithCache(graphQL, cache)
+
+        holder.selectType(DashboardMediaType.MANGA)
+
+        assertEquals(listOf(7), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+        assertEquals(0, graphQL.calls, "a fresh cache skips the network")
+    }
+
+    @Test
+    fun preloadOtherWarmsTheOtherTypeOnce() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 1))),
+            ),
+        )
+        val holder = wired(graphQL)
+
+        holder.load()
+        assertEquals(1, graphQL.calls)
+
+        holder.preloadOther()
+        assertEquals(2, graphQL.calls)
+
+        // The warmed type is served from memory (no extra fetch).
+        holder.selectType(DashboardMediaType.MANGA)
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+        assertEquals(2, graphQL.calls)
+
+        holder.preloadOther() // other type already warm: guarded
+        assertEquals(2, graphQL.calls)
     }
 
     @Test

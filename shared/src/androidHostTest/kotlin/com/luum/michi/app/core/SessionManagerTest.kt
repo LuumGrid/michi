@@ -7,6 +7,7 @@ import com.luum.michi.app.core.auth.domain.currentEpochSeconds
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.session.domain.AniListViewerRepository
+import com.luum.michi.app.core.session.domain.CachedViewerStore
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.core.session.domain.Viewer
@@ -27,6 +28,20 @@ private class FakeViewerRepository(
     }
 }
 
+private class InMemoryCachedViewerStore(initial: Viewer? = null) : CachedViewerStore {
+    var stored: Viewer? = initial
+        private set
+
+    override fun load(): Viewer? = stored
+    override fun save(viewer: Viewer) {
+        stored = viewer
+    }
+
+    override fun clear() {
+        stored = null
+    }
+}
+
 private fun viewer() = Viewer(id = 1, name = "user")
 
 private fun freshToken() = AniListToken(
@@ -44,9 +59,11 @@ private fun expiredToken() = AniListToken(
 private fun manager(
     storage: AniListTokenStorage,
     viewerResult: NetworkResult<Viewer>,
-): Pair<SessionManager, FakeViewerRepository> {
+    cached: Viewer? = null,
+): Triple<SessionManager, FakeViewerRepository, InMemoryCachedViewerStore> {
     val repository = FakeViewerRepository(viewerResult)
-    return SessionManager(storage, repository) to repository
+    val cache = InMemoryCachedViewerStore(cached)
+    return Triple(SessionManager(storage, repository, cache), repository, cache)
 }
 
 class SessionManagerTest {
@@ -54,7 +71,7 @@ class SessionManagerTest {
     @Test
     fun bootstrapWithoutTokenGoesAnonymousWithoutFetching() {
         val storage = InMemoryAniListTokenStorage()
-        val (manager, repository) = manager(storage, NetworkResult.Success(viewer()))
+        val (manager, repository, _) = manager(storage, NetworkResult.Success(viewer()))
         runBlocking { manager.bootstrap() }
         assertTrue(manager.state.value is SessionState.Anonymous)
         assertEquals(0, repository.calls)
@@ -64,7 +81,7 @@ class SessionManagerTest {
     fun bootstrapWithExpiredTokenGoesAnonymous() {
         val storage = InMemoryAniListTokenStorage()
         runBlocking { storage.save(expiredToken()) }
-        val (manager, repository) = manager(storage, NetworkResult.Success(viewer()))
+        val (manager, repository, _) = manager(storage, NetworkResult.Success(viewer()))
         runBlocking { manager.bootstrap() }
         assertTrue(manager.state.value is SessionState.Anonymous)
         assertEquals(0, repository.calls)
@@ -74,7 +91,7 @@ class SessionManagerTest {
     fun bootstrapWithValidTokenAuthenticates() {
         val storage = InMemoryAniListTokenStorage()
         runBlocking { storage.save(freshToken()) }
-        val (manager) = manager(storage, NetworkResult.Success(viewer()))
+        val (manager, _, _) = manager(storage, NetworkResult.Success(viewer()))
         runBlocking { manager.bootstrap() }
         val state = manager.state.value
         assertTrue(state is SessionState.Authenticated)
@@ -82,11 +99,11 @@ class SessionManagerTest {
     }
 
     @Test
-    fun bootstrapFailureSurfacesError() {
+    fun bootstrapFailureSurfacesErrorWithoutCache() {
         val storage = InMemoryAniListTokenStorage()
         runBlocking { storage.save(freshToken()) }
         val error = NetworkError.Http(500, null)
-        val (manager) = manager(storage, NetworkResult.Failure(error))
+        val (manager, _, _) = manager(storage, NetworkResult.Failure(error))
         runBlocking { manager.bootstrap() }
         val state = manager.state.value
         assertTrue(state is SessionState.Error)
@@ -94,25 +111,80 @@ class SessionManagerTest {
     }
 
     @Test
+    fun cachedViewerEntersTheShellAndRefreshes() {
+        val storage = InMemoryAniListTokenStorage()
+        runBlocking { storage.save(freshToken()) }
+        val (manager, _, cache) = manager(
+            storage,
+            NetworkResult.Success(Viewer(id = 1, name = "fresh")),
+            cached = Viewer(id = 1, name = "cached"),
+        )
+
+        runBlocking { manager.bootstrap() }
+
+        val state = manager.state.value
+        assertTrue(state is SessionState.Authenticated)
+        assertEquals("fresh", state.viewer.name)
+        assertEquals("fresh", cache.stored?.name, "the fresh viewer is cached")
+    }
+
+    @Test
+    fun cachedViewerSurvivesANetworkError() {
+        val storage = InMemoryAniListTokenStorage()
+        runBlocking { storage.save(freshToken()) }
+        val (manager, _, cache) = manager(
+            storage,
+            NetworkResult.Failure(NetworkError.Http(500, null)),
+            cached = Viewer(id = 1, name = "cached"),
+        )
+
+        runBlocking { manager.bootstrap() }
+
+        val state = manager.state.value
+        assertTrue(state is SessionState.Authenticated, "keeps the cached shell, not Error")
+        assertEquals("cached", state.viewer.name)
+        assertEquals("cached", cache.stored?.name)
+    }
+
+    @Test
+    fun unauthorizedClearsTokenAndCache() {
+        val storage = InMemoryAniListTokenStorage()
+        runBlocking { storage.save(freshToken()) }
+        val (manager, _, cache) = manager(
+            storage,
+            NetworkResult.Failure(NetworkError.Unauthorized(null)),
+            cached = Viewer(id = 1, name = "cached"),
+        )
+
+        runBlocking { manager.bootstrap() }
+
+        assertTrue(manager.state.value is SessionState.Anonymous)
+        runBlocking { assertNull(storage.load()) }
+        assertNull(cache.stored)
+    }
+
+    @Test
     fun oAuthCallbackSavesAndAuthenticates() {
         val storage = InMemoryAniListTokenStorage()
-        val (manager) = manager(storage, NetworkResult.Success(viewer()))
+        val (manager, _, cache) = manager(storage, NetworkResult.Success(viewer()))
         val token = freshToken()
         runBlocking { manager.onOAuthCallback(token) }
         runBlocking { assertEquals(token, storage.load()) }
         assertTrue(manager.state.value is SessionState.Authenticated)
+        assertEquals("user", cache.stored?.name)
     }
 
     @Test
-    fun logoutClearsAndGoesAnonymous() {
+    fun logoutClearsTokenAndCache() {
         val storage = InMemoryAniListTokenStorage()
         runBlocking { storage.save(freshToken()) }
-        val (manager) = manager(storage, NetworkResult.Success(viewer()))
+        val (manager, _, cache) = manager(storage, NetworkResult.Success(viewer()))
         runBlocking {
             manager.bootstrap()
             manager.logout()
             assertNull(storage.load())
         }
+        assertNull(cache.stored)
         assertTrue(manager.state.value is SessionState.Anonymous)
     }
 }

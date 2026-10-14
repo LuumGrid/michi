@@ -20,6 +20,8 @@ import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import com.luum.michi.app.core.session.domain.CachedViewerStore
+import com.luum.michi.app.core.session.domain.Viewer
 
 /**
  * Live checks with a real user token (opt-in only, never CI).
@@ -41,7 +43,7 @@ private class LiveStack(private val token: String) {
         rateLimiter = AniListRateLimiter(),
     )
     private val viewerRepository = AniListViewerRepositoryImpl(graphQLClient)
-    val sessionManager = SessionManager(storage, viewerRepository)
+    val sessionManager = SessionManager(storage, viewerRepository, NoopCachedViewerStore())
     val animeListRepository: AnimeListRepository = AnimeListRepositoryImpl(graphQLClient)
     val mangaListRepository: MangaListRepository = MangaListRepositoryImpl(graphQLClient)
     val profileRepository = ProfileRepositoryImpl(graphQLClient)
@@ -103,4 +105,10 @@ class LiveAuthenticatedTest {
             assertTrue(loaded)
         }
     }
+}
+
+private class NoopCachedViewerStore : CachedViewerStore {
+    override fun load(): Viewer? = null
+    override fun save(viewer: Viewer) = Unit
+    override fun clear() = Unit
 }
