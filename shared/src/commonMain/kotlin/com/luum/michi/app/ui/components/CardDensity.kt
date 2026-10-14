@@ -9,8 +9,9 @@ import androidx.compose.ui.unit.Density
 /**
  * Caps the OS font scale inside dense cards (list rows, rail cards), so large
  * text settings degrade to ellipsis instead of clipping the content or pushing
- * cover badges into each other. Full-scale access lives on the detail screens
- * (unbounded layouts).
+ * cover badges into each other (1.3× still keeps the badge row apart on the
+ * smallest cover). Full-scale access lives on the detail screens (unbounded
+ * layouts).
  */
 @Composable
 internal fun CardCappedDensity(content: @Composable () -> Unit) {
@@ -21,4 +22,4 @@ internal fun CardCappedDensity(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalDensity provides capped, content = content)
 }
 
-internal const val CardFontScaleCap = 1.2f
+internal const val CardFontScaleCap = 1.3f

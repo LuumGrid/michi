@@ -1,7 +1,10 @@
 package com.luum.michi.app.root
 
+import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.State
+import com.luum.michi.app.root.state.detailSurfaceKey
+import com.luum.michi.app.root.state.detailSurfaceKeys
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -80,5 +83,34 @@ class StateDetailEntryTest {
 
         assertEquals(first, state.currentDetailEntryId)
         assertEquals(1, state.detailEntryIds.size)
+    }
+
+    @Test
+    fun aPoppedEntryDropsEveryTabVariantOfItsKey() {
+        val state = state()
+        state.selectTab(TabSection.ANIME)
+        state.openMedia(5)
+        val id = state.currentDetailEntryId
+
+        // The saved surface is keyed by the composing slot's tab, which may not
+        // be the tab selected when the entry pops (a deep link or a tab change),
+        // so pruning has to cover every tab.
+        state.selectTab(TabSection.MANGA)
+        state.closeDetail()
+
+        assertTrue(state.detailEntryIds.isEmpty())
+        val keys = detailSurfaceKeys(id)
+        assertEquals(TabSection.entries.size, keys.size)
+        assertEquals(keys.distinct(), keys, "no key is built twice")
+        TabSection.entries.forEach { tab ->
+            assertTrue(detailSurfaceKey(tab, id) in keys, "missing ${tab.name}")
+        }
+    }
+
+    @Test
+    fun pruningOneEntryNeverTouchesAnother() {
+        assertTrue(
+            detailSurfaceKeys(1L).intersect(detailSurfaceKeys(2L).toSet()).isEmpty(),
+        )
     }
 }

@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.filter
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.rememberCoverUrl
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.GridCoverSizeProvider
 import androidx.compose.foundation.layout.width
 import com.luum.michi.app.ui.components.coverSize
 
@@ -179,43 +180,45 @@ private fun GridList(
                 .collect { currentOnLoadMore?.invoke() }
         }
     }
-    LazyVerticalGrid(
-        state = gridState,
-        // The grid adapts the number of columns; the poster is always the
-        // standard size (never the leftover cell width). Two columns on a
-        // phone, more on a tablet.
-        columns = GridCells.Adaptive(minSize = CoverSize.Featured.width),
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp + bottomPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        itemsIndexed(
-            items = items,
-            key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
-        ) { _, item ->
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                ListCard(item = item, onSelect = onSelect)
+    GridCoverSizeProvider { coverSize ->
+        LazyVerticalGrid(
+            state = gridState,
+            // Cells are exactly a standard poster (the token the provider picked
+            // from the available width); the leftover becomes even air instead of
+            // a wide gutter inside every cell.
+            columns = GridCells.FixedSize(coverSize.width),
+            modifier = modifier.fillMaxSize(),
+            // No horizontal padding: SpaceEvenly owns all the side air, so the
+            // gutter between columns equals the one at the edges.
+            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp + bottomPadding),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            itemsIndexed(
+                items = items,
+                key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+            ) { _, item ->
+                ListCard(item = item, size = coverSize, onSelect = onSelect)
             }
-        }
-        if (paged) {
-            item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                LoadMoreFooter(isLoading = isLoadingMore)
+            if (paged) {
+                item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                    LoadMoreFooter(isLoading = isLoadingMore)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ListCard(item: MediaRailItem, onSelect: (Int) -> Unit) {
-    Column(modifier = Modifier.width(CoverSize.Featured.width).clickable { onSelect(item.id) }) {
+private fun ListCard(item: MediaRailItem, size: CoverSize, onSelect: (Int) -> Unit) {
+    Column(modifier = Modifier.width(size.width).clickable { onSelect(item.id) }) {
         Box(
             modifier = Modifier
-                .coverSize(CoverSize.Featured)
+                .coverSize(size)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            val url = rememberCoverUrl(item.image, CoverSize.Featured)
+            val url = rememberCoverUrl(item.image, size)
             if (!url.isNullOrBlank()) {
                 SubcomposeAsyncImage(
                     model = url,

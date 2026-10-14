@@ -41,6 +41,7 @@ import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.ui.components.CoverStat
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.GridCoverSizeProvider
 import com.luum.michi.app.ui.components.CoverStatBadge
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.rememberResetGridState
@@ -117,64 +118,66 @@ private fun StudioDetailGrid(
         listOf(holder.sort, holder.typeFilter, holder.formatFilter),
     )
 
-    LazyVerticalGrid(
-        // The grid adapts the number of columns; the poster is always the
-        // standard size (never the leftover cell width).
-        columns = GridCells.Adaptive(minSize = CoverSize.Featured.width),
-        state = gridState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 16.dp,
-            end = 16.dp,
-            top = 8.dp,
-            bottom = 24.dp + bottomPadding,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item(key = "hero", span = { GridItemSpan(maxLineSpan) }) {
-            StudioHero(detail = detail, strings = strings)
-        }
-        item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
-            StudioFilterSummary(
-                title = strings.mediaDetailMediaTitle,
-                summary = studioFilterSummary(holder, strings),
-                filterLabel = strings.filterAction,
-                onClick = onOpenFilter,
-            )
-        }
-        if (filtered.isEmpty() && !holder.isLoading) {
-            item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = strings.mediaDetailNoMediaLabel,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+    GridCoverSizeProvider { coverSize ->
+        LazyVerticalGrid(
+            // Cells are exactly a standard poster (the token the provider picked
+            // from the available width); the leftover becomes even air instead of
+            // a wide gutter inside every cell.
+            columns = GridCells.FixedSize(coverSize.width),
+            state = gridState,
+            modifier = modifier.fillMaxSize(),
+            // No horizontal padding: SpaceEvenly owns all the side air, so the
+            // gutter between columns equals the one at the edges.
+            contentPadding = PaddingValues(
+                top = 8.dp,
+                bottom = 24.dp + bottomPadding,
+            ),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            item(key = "hero", span = { GridItemSpan(maxLineSpan) }) {
+                StudioHero(detail = detail, strings = strings)
+            }
+            item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
+                StudioFilterSummary(
+                    title = strings.mediaDetailMediaTitle,
+                    summary = studioFilterSummary(holder, strings),
+                    filterLabel = strings.filterAction,
+                    onClick = onOpenFilter,
                 )
             }
-        } else {
-            items(items = filtered, key = { it.mediaId }) { item ->
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (filtered.isEmpty() && !holder.isLoading) {
+                item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = strings.mediaDetailNoMediaLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            } else {
+                items(items = filtered, key = { it.mediaId }) { item ->
                     StudioMediaGridCard(
                         item = item,
+                        size = coverSize,
                         strings = strings,
                         onOpenMedia = onOpenMedia,
                         onAddEntry = onAddEntry,
                     )
                 }
-            }
-            if (holder.hasNextPage) {
-                item(key = "load-more", span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        text = strings.mediaDetailLoadMoreAction,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = !holder.isLoadingMore) { holder.loadMore() }
-                            .padding(vertical = 8.dp),
-                        textAlign = TextAlign.Center,
-                    )
+                if (holder.hasNextPage) {
+                    item(key = "load-more", span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            text = strings.mediaDetailLoadMoreAction,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !holder.isLoadingMore) { holder.loadMore() }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
         }
@@ -193,7 +196,7 @@ private fun StudioFilterSummary(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -218,7 +221,7 @@ private fun StudioHero(detail: StudioDetail, strings: LanguageStrings) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -251,13 +254,14 @@ private fun StudioHero(detail: StudioDetail, strings: LanguageStrings) {
 @Composable
 private fun StudioMediaGridCard(
     item: StudioMediaItem,
+    size: CoverSize,
     strings: LanguageStrings,
     onOpenMedia: (Int) -> Unit,
     onAddEntry: ((Int) -> Unit)?,
 ) {
     Surface(
         onClick = { onOpenMedia(item.mediaId) },
-        modifier = Modifier.width(CoverSize.Featured.width),
+        modifier = Modifier.width(size.width),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -265,10 +269,10 @@ private fun StudioMediaGridCard(
         Column {
             Box(
                 modifier = Modifier
-                    .coverSize(CoverSize.Featured)
+                    .coverSize(size)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                val url = rememberCoverUrl(item.cover, CoverSize.Featured)
+                val url = rememberCoverUrl(item.cover, size)
                 if (!url.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = url,

@@ -108,6 +108,8 @@ import com.luum.michi.app.settings.ui.model.SettingsChoice
 import com.luum.michi.app.settings.ui.model.StartDestinationChoice
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.label
+import com.luum.michi.app.root.state.detailSurfaceKey
+import com.luum.michi.app.root.state.detailSurfaceKeys
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.settings.ui.state.SettingsState
@@ -358,7 +360,10 @@ internal fun Root(
     var lastDetailEntryIds by remember { mutableStateOf(detailEntryIds) }
     LaunchedEffect(detailEntryIds) {
         val gone = lastDetailEntryIds.toSet() - detailEntryIds.toSet()
-        gone.forEach { surfaceStates.removeState("${state.selectedTab.name}:detail:$it") }
+        // An entry is saved under the tab of the slot that composed it, which
+        // may no longer be the selected tab (a deep link or a tab change), so
+        // drop every tab variant instead of guessing.
+        gone.forEach { id -> detailSurfaceKeys(id).forEach(surfaceStates::removeState) }
         lastDetailEntryIds = detailEntryIds
     }
     // The cached rail meta is localized: a language change drops disk + memory
@@ -1276,7 +1281,7 @@ private fun detailListTitle(destination: DetailDestination?, strings: LanguageSt
 /** Which saved surface the content area shows: the slot's tab + the view. */
 private fun surfaceKey(tab: TabSection, state: State): String = when {
     state.isSettingsOpen -> "${tab.name}:settings"
-    state.isDetailOpen -> "${tab.name}:detail:${state.currentDetailEntryId}"
+    state.isDetailOpen -> detailSurfaceKey(tab, state.currentDetailEntryId)
     state.isCalendarOpen -> "${tab.name}:calendar"
     state.isExploreOpen -> "${tab.name}:explore"
     state.isNotificationsOpen -> "${tab.name}:notifications"

@@ -198,6 +198,10 @@ private fun RailCard(
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.bodySmall,
+                // Reserve both lines: the card height is content-driven, so a
+                // one-line title would leave the rail uneven and shift the
+                // subtitle below it.
+                minLines = 2,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
