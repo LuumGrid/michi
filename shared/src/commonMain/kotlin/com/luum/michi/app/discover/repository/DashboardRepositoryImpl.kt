@@ -35,6 +35,7 @@ private const val NewReleasesMinPopularity = 1000
 
 private const val MediaFields = """
       id format episodes chapters
+      averageScore popularity favourites
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
 """

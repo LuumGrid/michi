@@ -2,12 +2,10 @@ package com.luum.michi.app.mediaDetail.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,6 +26,8 @@ import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.ui.rememberCoverUrl
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.coverSize
 
 /**
  * Shared person hero (character/staff): centered portrait + name + native
@@ -54,11 +54,9 @@ internal fun MediaDetailPersonHero(
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             border = if (glass) glassBorder() else solidBorder(),
-            modifier = Modifier
-                .width(140.dp)
-                .aspectRatio(3f / 4f),
+            modifier = Modifier.coverSize(CoverSize.Featured),
         ) {
-            val url = rememberCoverUrl(image, 140.dp)
+            val url = rememberCoverUrl(image, CoverSize.Featured)
             if (!url.isNullOrBlank()) {
                 SubcomposeAsyncImage(
                     model = url,

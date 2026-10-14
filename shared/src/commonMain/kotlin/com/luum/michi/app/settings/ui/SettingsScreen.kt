@@ -46,6 +46,8 @@ import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
+import com.luum.michi.app.settings.ui.model.StartDestinationChoice
+import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.label
 import com.luum.michi.app.core.session.domain.Viewer
@@ -94,6 +96,9 @@ internal fun SettingsScreen(
     onFontChange: (AppFont) -> Unit,
     surfaces: SurfaceStyle,
     onSurfacesChange: (SurfaceStyle) -> Unit,
+    startDestination: StartDestinationChoice = StartDestinationChoice(),
+    onStartTabChange: (StartTabOption) -> Unit = {},
+    onStartSectionChange: (String) -> Unit = {},
     viewer: Viewer?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
@@ -106,6 +111,8 @@ internal fun SettingsScreen(
     var surfaceSheet by remember { mutableStateOf(false) }
     var styleSheet by remember { mutableStateOf(false) }
     var imageQualitySheet by remember { mutableStateOf(false) }
+    var startTabSheet by remember { mutableStateOf(false) }
+    var startSectionSheet by remember { mutableStateOf(false) }
     var titleLanguageSheet by remember { mutableStateOf(false) }
     var staffNameLanguageSheet by remember { mutableStateOf(false) }
     var scoreFormatSheet by remember { mutableStateOf(false) }
@@ -161,6 +168,22 @@ internal fun SettingsScreen(
                         value = imageQualityLabel(settingsState.imageQuality, strings),
                         onClick = { imageQualitySheet = true },
                     )
+                    SettingsRow(
+                        label = strings.settingsStartTabTitle,
+                        value = startDestination.tab.label(strings),
+                        onClick = { startTabSheet = true },
+                    )
+                    // Dependent sub-choice: only the tabs that have one show it.
+                    startDestination.sectionTitle?.let { sectionTitle ->
+                        SettingsRow(
+                            label = sectionTitle,
+                            value = startDestination.sectionChoices
+                                .firstOrNull { it.value == startDestination.sectionValue }
+                                ?.label
+                                .orEmpty(),
+                            onClick = { startSectionSheet = true },
+                        )
+                    }
                 }
             }
             if (settingsState.canSync) {
@@ -425,6 +448,47 @@ internal fun SettingsScreen(
                         onClick = { settingsState.imageQuality = option },
                         divider = index > 0,
                     )
+                }
+            }
+        }
+    }
+
+    if (startTabSheet) {
+        ModalSheet(
+            title = strings.settingsStartTabTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { startTabSheet = false },
+        ) {
+            OptionGroup(title = null) {
+                StartTabOption.entries.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = option.label(strings),
+                        selected = option == startDestination.tab,
+                        onClick = { onStartTabChange(option) },
+                        divider = index > 0,
+                    )
+                }
+            }
+        }
+    }
+
+    if (startSectionSheet) {
+        val sectionTitle = startDestination.sectionTitle
+        if (sectionTitle != null) {
+            ModalSheet(
+                title = sectionTitle,
+                dismissLabel = strings.dismissAction,
+                onDismiss = { startSectionSheet = false },
+            ) {
+                OptionGroup(title = null) {
+                    startDestination.sectionChoices.forEachIndexed { index, choice ->
+                        OptionRow(
+                            label = choice.label,
+                            selected = choice.value == startDestination.sectionValue,
+                            onClick = { onStartSectionChange(choice.value) },
+                            divider = index > 0,
+                        )
+                    }
                 }
             }
         }

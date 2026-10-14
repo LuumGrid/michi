@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,6 +48,9 @@ internal data class MediaRailItem(
     val key: String = "",
     /** Cover color painted while the image loads (dashboard rails). */
     val placeholderHex: String? = null,
+    // Up to two badges painted over the cover (first = top-start). Empty keeps
+    // every existing rail byte-identical.
+    val stats: List<CoverStat> = emptyList(),
 )
 
 /**
@@ -71,11 +73,14 @@ internal fun MediaRail(
     // Baked 16dp matches the full-width layout; panels (already inset) pass
     // zero to avoid double padding.
     horizontalPadding: Dp = 16.dp,
-    // Portrait card width (height follows via the 3:4 aspect). Default keeps
-    // every existing rail byte-identical; callers that mirror the list covers
-    // pass `MediaCoverCardCoverWidth` (and can scale it as a percentage).
-    cardWidth: Dp = 108.dp,
+    // Standard poster size for the rail cards: a token, never a raw width.
+    // Only the dashboard's featured rail passes a different one.
+    size: CoverSize = CoverSize.Rail,
+    // When the caller's item set changes because of a filter/order, it passes
+    // the filter value here and the rail returns to the start (scroll rule).
+    resetKey: Any? = null,
 ) {
+    val rowState = rememberResetListState(resetKey)
     Column(modifier = modifier.fillMaxWidth()) {
         if (title != null) {
             Row(
@@ -117,6 +122,7 @@ internal fun MediaRail(
             )
         } else {
             LazyRow(
+                state = rowState,
                 contentPadding = PaddingValues(horizontal = horizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -127,7 +133,7 @@ internal fun MediaRail(
                     // a bare id would make duplicate lazy keys and crash.
                     key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
                 ) { _, item ->
-                    RailCard(item = item, onSelect = onSelect, cardWidth = cardWidth)
+                    RailCard(item = item, onSelect = onSelect, size = size)
                 }
             }
         }
@@ -138,52 +144,72 @@ internal fun MediaRail(
 private fun RailCard(
     item: MediaRailItem,
     onSelect: ((Int) -> Unit)?,
-    cardWidth: Dp,
+    size: CoverSize,
 ) {
     val clickable = if (onSelect != null) {
         Modifier.clickable { onSelect(item.id) }
     } else {
         Modifier
     }
-    Column(
-        modifier = Modifier
-            .width(cardWidth)
-            .then(clickable),
-    ) {
-        Box(
+    // Capped font scale: the badges and the title must not collide on a dense
+    // card (same rule as MediaCoverCard).
+    CardCappedDensity {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(3f / 4f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(item.placeholderHex?.let { brandColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant),
+                .width(size.width)
+                .then(clickable),
         ) {
-            val url = rememberCoverUrl(item.image, cardWidth)
-            if (!url.isNullOrBlank()) {
-                SubcomposeAsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    loading = {},
-                    error = {},
-                    modifier = Modifier.fillMaxSize(),
-                )
+            Box(
+                modifier = Modifier
+                    .coverSize(size)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(item.placeholderHex?.let { brandColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                val url = rememberCoverUrl(item.image, size)
+                if (!url.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        loading = {},
+                        error = {},
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                // First badge top-start, second top-end (max two by design).
+                item.stats.getOrNull(0)?.let {
+                    CoverStatBadge(
+                        stat = it,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp),
+                    )
+                }
+                item.stats.getOrNull(1)?.let {
+                    CoverStatBadge(
+                        stat = it,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp),
+                    )
+                }
             }
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (item.subtitle != null) {
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = item.subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                text = item.title,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (item.subtitle != null) {
+                Text(
+                    text = item.subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

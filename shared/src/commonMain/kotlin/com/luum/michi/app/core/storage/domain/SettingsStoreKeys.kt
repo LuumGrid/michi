@@ -12,7 +12,11 @@ internal object SettingsStoreKeys {
     const val ThemeStyle = "theme_style"
     const val Font = "app_font"
     const val Language = "app_language"
-    const val DefaultDiscoverTab = "default_home_tab"
+    /** Where the shell opens ("Pestaña al abrir") + its dependent sub-choice. */
+    const val StartTab = "default_home_tab"
+    const val StartAnimeSection = "start_anime_section"
+    const val StartMangaSection = "start_manga_section"
+    const val StartCatalogType = "start_catalog_type"
     /** Sign-in modal auto-opened once (first anonymous launch, never again). */
     const val SeenSignIn = "seen_sign_in"
     /** Sheet/chrome surface style (Settings toggle). */

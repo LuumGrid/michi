@@ -33,12 +33,18 @@ internal sealed interface BackStep {
 internal class State(
     initialProfile: ProfileDraft,
     initialTab: TabSection = TabSection.DISCOVER,
+    initialAnimeSection: AnimeListSection = AnimeListSection.ALL,
+    initialMangaSection: MangaListSection = MangaListSection.ALL,
 ) {
     var selectedTab: TabSection by mutableStateOf(initialTab)
-    var selectedAnimeSection by mutableStateOf(AnimeListSection.ALL)
-    var selectedMangaSection by mutableStateOf(MangaListSection.ALL)
+    var selectedAnimeSection by mutableStateOf(initialAnimeSection)
+    var selectedMangaSection by mutableStateOf(initialMangaSection)
     var currentProfile: ProfileDraft by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
+    // Monotonic identity per stack entry: each detail page keeps its own
+    // scroll state, and a re-push of the same media is a different entry.
+    private val entryIds = mutableStateListOf<Long>()
+    private var nextEntryId = 1L
     var editorMediaId: Int? by mutableStateOf(null)
     var editorInitialStatus: MediaListStatus? by mutableStateOf(null)
     var editorInitialProgress: Int? by mutableStateOf(null)
@@ -64,6 +70,12 @@ internal class State(
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
+
+    /** Identity of the top detail entry (0 when the stack is empty). */
+    val currentDetailEntryId: Long get() = entryIds.lastOrNull() ?: 0L
+
+    /** Live entry identities, in stack order: Root keys and prunes per-entry state. */
+    val detailEntryIds: List<Long> get() = entryIds
     // Compat: several places compare against the open media id
     val selectedMediaId: Int? get() = (currentDetail as? DetailDestination.Media)?.id
 
@@ -146,7 +158,10 @@ internal class State(
     private fun push(dest: DetailDestination) {
         isDetailMenuOpen = false
         isDetailFilterOpen = false
-        if (detailStack.lastOrNull() != dest) detailStack.add(dest)
+        if (detailStack.lastOrNull() != dest) {
+            detailStack.add(dest)
+            entryIds.add(nextEntryId++)
+        }
     }
 
     fun openMedia(id: Int) = push(DetailDestination.Media(id))
@@ -158,7 +173,10 @@ internal class State(
     fun closeDetail() {
         isDetailMenuOpen = false
         isDetailFilterOpen = false
-        if (detailStack.isNotEmpty()) detailStack.removeAt(detailStack.lastIndex)
+        if (detailStack.isNotEmpty()) {
+            detailStack.removeAt(detailStack.lastIndex)
+            entryIds.removeAt(entryIds.lastIndex)
+        }
     }
 
     fun openDetailMenu() {
@@ -279,7 +297,7 @@ internal class State(
 /** Composition factory: shell preview entry (empty profile until session routing lands). */
 @Composable
 internal fun rememberState(
-    initialTab: TabSection = TabSection.DISCOVER,
+    startDestination: StartDestination = StartDestination(),
 ): State = remember {
     State(
         initialProfile = ProfileDraft(
@@ -289,6 +307,8 @@ internal fun rememberState(
             bannerUrl = null,
             bio = "",
         ),
-        initialTab = initialTab,
+        initialTab = startDestination.tab,
+        initialAnimeSection = startDestination.animeSection,
+        initialMangaSection = startDestination.mangaSection,
     )
 }

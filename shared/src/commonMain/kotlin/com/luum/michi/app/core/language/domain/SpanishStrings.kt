@@ -214,6 +214,8 @@ object SpanishStrings : LanguageStrings {
     override val settingsStyleTitle = "Estilo de color"
     override val settingsSurfaceTitle = "Estilo de superficie"
     override val settingsImageQualityTitle = "Calidad de imágenes"
+    override val settingsStartTabTitle = "Pestaña al abrir"
+    override val settingsStartSectionTitle = "Sección al abrir"
     override val settingsImageQualityAuto = "Automática"
     override val settingsImageQualityHigh = "Alta"
     override val settingsImageQualityLow = "Baja"

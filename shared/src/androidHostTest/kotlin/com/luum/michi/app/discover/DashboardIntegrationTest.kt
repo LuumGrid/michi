@@ -7,6 +7,8 @@ import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
+import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
+import com.luum.michi.app.settings.FakeSettingsStore
 import com.luum.michi.app.mediaList.FakeGraphQL
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -112,12 +114,14 @@ private fun wiredWithCache(
     graphQL: FakeGraphQL,
     cache: DashboardFeedCache,
     hideAdult: Boolean = true,
+    initialType: DashboardMediaType = DashboardMediaType.ANIME,
 ): DashboardStateHolder =
     createDashboardStateHolder(
         repository = DashboardRepositoryImpl(graphQL),
         cache = cache,
         scope = CoroutineScope(Dispatchers.Unconfined),
         hideAdult = hideAdult,
+        initialType = initialType,
     ) { EnglishStrings }
 
 class DashboardIntegrationTest {
@@ -639,6 +643,69 @@ class DashboardIntegrationTest {
             cache.load(DashboardMediaType.MANGA, true)
                 ?.feed?.sections?.get(DashboardSectionKind.TRENDING_MANGA)?.map { it.id },
         )
+    }
+
+    @Test
+    fun initialTypeFromTheSettingDoesNotLoad() {
+        val graphQL = FakeGraphQL(emptyList()) // any call would crash
+        val holder = wiredWithCache(
+            graphQL = graphQL,
+            cache = InMemoryDashboardFeedCache(),
+            initialType = DashboardMediaType.MANGA,
+        )
+
+        assertEquals(DashboardMediaType.MANGA, holder.mediaType)
+        assertEquals(0, graphQL.calls, "creating the holder never fires a request")
+    }
+
+    @Test
+    fun aCacheWrittenBeforeStatsExistedStillDecodes() {
+        val store = FakeSettingsStore().apply {
+            putString(
+                "dashboard_ANIME_true",
+                """{"savedAtMillis":1000,"sections":[{"kind":"TRENDING_ANIME",""" +
+                    """"items":[{"title":"Old","meta":"TV · 12 ep","id":3}]}]}""",
+            )
+        }
+        val cache = SettingsStoreDashboardFeedCache(store)
+
+        val item = cache.load(DashboardMediaType.ANIME, hideAdult = true)
+            ?.feed?.sections?.get(DashboardSectionKind.TRENDING_ANIME)?.single()
+
+        assertEquals(3, item?.id)
+        assertNull(item?.averageScore, "an older cache has no stats")
+        assertNull(item?.popularity)
+        assertNull(item?.favourites)
+    }
+
+    @Test
+    fun statsRoundTripThroughTheDiskCache() {
+        val cache = SettingsStoreDashboardFeedCache(FakeSettingsStore())
+        cache.save(
+            mediaType = DashboardMediaType.ANIME,
+            hideAdult = true,
+            feed = DashboardFeed(
+                mapOf(
+                    DashboardSectionKind.BEST_ANIME to listOf(
+                        MediaItem(
+                            title = "A",
+                            meta = "TV",
+                            id = 1,
+                            averageScore = 85,
+                            popularity = 12_345,
+                            favourites = 900,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val item = cache.load(DashboardMediaType.ANIME, hideAdult = true)
+            ?.feed?.sections?.get(DashboardSectionKind.BEST_ANIME)?.single()
+
+        assertEquals(85, item?.averageScore)
+        assertEquals(12_345, item?.popularity)
+        assertEquals(900, item?.favourites)
     }
 
     @Test

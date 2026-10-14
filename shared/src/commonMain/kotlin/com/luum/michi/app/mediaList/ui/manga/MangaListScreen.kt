@@ -50,6 +50,7 @@ import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
+import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -102,6 +103,9 @@ internal fun MangaListScreen(
     // Toggling split can strand the selection on a gone section (e.g.
     // COMPLETED_MANGA with split off): fall back to ALL without churning state.
     val effectiveSelected = if (selected in sections) selected else MangaListSection.ALL
+    // Scroll rule: a section chip change returns to the top; the position is
+    // kept on refresh, on sheet open/close and when coming back from a detail.
+    val listState = rememberResetListState(effectiveSelected)
     val tabs = sections.map { section ->
         ChipTab(
             value = section,
@@ -169,6 +173,7 @@ internal fun MangaListScreen(
                     onRefresh = onRefresh,
                 ) {
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(
                             top = 16.dp,
                             bottom = 16.dp + bottomPadding,

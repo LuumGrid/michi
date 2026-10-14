@@ -14,25 +14,27 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.core.model.currentSeasonAndYear
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.next
+import com.luum.michi.app.discover.domain.model.DashboardCardStat
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
+import com.luum.michi.app.discover.domain.model.cardStats
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.CoverStat
+import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.LoadStateContainer
-import com.luum.michi.app.ui.components.MediaCoverCardCoverWidth
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
-
-/** Featured rails (current season / new releases) lead, 50% bigger covers. */
-private const val FeaturedCoverScale = 1.5f
 
 /**
  * DISCOVER dashboard: an Anime/Manga selector over the holder's rails. Only
@@ -77,6 +79,8 @@ private fun DashboardContent(
 ) {
     val current = currentSeasonAndYear()
     val next = current.next()
+    // Scroll rule: switching the Anime/Manga selector returns to the top.
+    val listState = rememberResetListState(holder.mediaType)
     val sections = DashboardSectionKind.entries
         .filter { it.mediaType == holder.mediaType }
         .mapNotNull { kind ->
@@ -123,6 +127,7 @@ private fun DashboardContent(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 LazyColumn(
+                    state = listState,
                     contentPadding = PaddingValues(
                         top = 8.dp,
                         bottom = 16.dp + bottomPadding,
@@ -137,12 +142,12 @@ private fun DashboardContent(
                         // a rail boxed in a card clips on the rounded corners.
                         MediaRail(
                             title = kind.title(strings, current, next),
-                            items = media.mapNotNull { it.toRailItem() },
+                            items = media.mapNotNull { it.toRailItem(kind) },
                             onSelect = onOpenMedia,
-                            cardWidth = if (kind.isFeatured) {
-                                MediaCoverCardCoverWidth * FeaturedCoverScale
+                            size = if (kind.isFeatured) {
+                                CoverSize.Featured
                             } else {
-                                MediaCoverCardCoverWidth
+                                CoverSize.Rail
                             },
                         )
                     }
@@ -184,12 +189,24 @@ private fun DashboardSectionKind.title(
 }
 
 /** Catalog items with a missing id cannot navigate, so they never reach a rail. */
-private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
+private fun MediaItem.toRailItem(kind: DashboardSectionKind): MediaRailItem? = id?.let {
     MediaRailItem(
         id = it,
         title = title,
         image = cover,
         subtitle = meta,
         placeholderHex = placeholderHex,
+        stats = badges(kind),
     )
 }
+
+/** The rail's cover badges for one item, in paint order; a null value paints nothing. */
+private fun MediaItem.badges(kind: DashboardSectionKind): List<CoverStat> =
+    kind.cardStats().mapNotNull { stat ->
+        when (stat) {
+            DashboardCardStat.SCORE ->
+                averageScore?.let { CoverStat(AppIcons.StarOutline, "$it%") }
+            DashboardCardStat.POPULARITY ->
+                popularity?.let { CoverStat(AppIcons.Groups, it.compactCount()) }
+        }
+    }

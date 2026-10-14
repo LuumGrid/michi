@@ -13,8 +13,11 @@ class StorageKeysTest {
             SettingsStoreKeys.ThemePalette,
             SettingsStoreKeys.Font,
             SettingsStoreKeys.Language,
-            SettingsStoreKeys.DefaultDiscoverTab,
+            SettingsStoreKeys.StartTab,
+            SettingsStoreKeys.StartAnimeSection,
+            SettingsStoreKeys.StartMangaSection,
+            SettingsStoreKeys.StartCatalogType,
         )
-        assertEquals(5, keys.size)
+        assertEquals(8, keys.size)
     }
 }

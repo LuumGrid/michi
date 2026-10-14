@@ -48,11 +48,10 @@ import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.TabFadeMs
 import com.luum.michi.app.ui.components.tabFadeSpec
+import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
@@ -90,6 +89,8 @@ internal fun CalendarScreen(
 ) {
     val items = holder.selectedItems
     val selected = holder.selectedDayBucket
+    // Scroll rule: changing the day returns the list to the top.
+    val listState = rememberResetListState(selected)
     val minBucket = holder.minDayBucket
     val maxBucket = holder.maxDayBucket
     val selectableDates = remember(minBucket, maxBucket) {
@@ -143,6 +144,7 @@ internal fun CalendarScreen(
                         onRefresh = onRefresh,
                     ) {
                         LazyColumn(
+                            state = listState,
                             contentPadding = PaddingValues(
                                 top = 16.dp,
                                 bottom = 16.dp + bottomPadding + BottomBarClearance,

@@ -21,9 +21,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
@@ -93,6 +95,19 @@ import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.state.State
+import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
+import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
+import com.luum.michi.app.root.state.resolveStartDestination
+import com.luum.michi.app.root.state.toDashboardMediaType
+import com.luum.michi.app.settings.domain.model.StartCatalogOption
+import com.luum.michi.app.settings.domain.model.StartTabOption
+import com.luum.michi.app.settings.domain.model.label
+import com.luum.michi.app.settings.ui.model.SettingsChoice
+import com.luum.michi.app.settings.ui.model.StartDestinationChoice
+import com.luum.michi.app.mediaList.domain.anime.model.label
+import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.settings.ui.state.SettingsState
@@ -133,7 +148,22 @@ import kotlin.math.roundToInt
 @Composable
 internal fun Root(
     settingsState: SettingsState,
-    state: State = rememberState(),
+    viewer: Viewer? = null,
+    // The "Pestaña al abrir" setting seeds the shell state once (startup only):
+    // a later settings change never moves the user. A guest can only land on
+    // DISCOVER (the other tabs need a session) and a section id that no longer
+    // exists (split-completed off) falls back to ALL.
+    state: State = rememberState(
+        startDestination = resolveStartDestination(
+            startTab = settingsState.startTab,
+            startCatalogType = settingsState.startCatalogType,
+            animeSectionId = settingsState.startAnimeSectionId,
+            mangaSectionId = settingsState.startMangaSectionId,
+            splitCompletedAnime = settingsState.splitCompletedAnime,
+            splitCompletedManga = settingsState.splitCompletedManga,
+            isGuest = viewer == null,
+        ),
+    ),
     strings: LanguageStrings = Strings.current,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
@@ -147,7 +177,6 @@ internal fun Root(
     onFontChange: (AppFont) -> Unit,
     surfaces: SurfaceStyle,
     onSurfacesChange: (SurfaceStyle) -> Unit,
-    viewer: Viewer? = null,
     onLogout: () -> Unit = {},
     animeListRepository: AnimeListRepository,
     mangaListRepository: MangaListRepository,
@@ -275,7 +304,62 @@ internal fun Root(
             cache = dashboardFeedCache,
             scope = listScope,
             hideAdult = !settingsState.displayAdultContent,
+            // "Pestaña al abrir" → DISCOVER sub-choice; startup only, no load.
+            initialType = settingsState.startCatalogType.toDashboardMediaType(),
         ) { currentDashboardStrings }
+    }
+
+    // "Pestaña al abrir": the settings row stays feature-agnostic, so Root
+    // resolves the localized sub-choice options (settings never imports a
+    // feature) and the section ids are validated against the live lists.
+    val startTab = settingsState.startTab
+    val startSectionChoices = when (startTab) {
+        StartTabOption.DISCOVER ->
+            StartCatalogOption.entries.map { SettingsChoice(it.name, it.label(strings)) }
+        StartTabOption.ANIME ->
+            (listOf(AnimeListSection.ALL) + animeStatusSections(settingsState.splitCompletedAnime))
+                .map { SettingsChoice(it.name, it.label(strings)) }
+        StartTabOption.MANGA ->
+            (listOf(MangaListSection.ALL) + mangaStatusSections(settingsState.splitCompletedManga))
+                .map { SettingsChoice(it.name, it.label(strings)) }
+        StartTabOption.PROFILE -> emptyList()
+    }
+    // A stored id that no longer exists (split toggled off, enum renamed) is
+    // shown as the value it resolves to (ALL/first), never as a blank row.
+    val startSectionValue = when (startTab) {
+        StartTabOption.DISCOVER -> settingsState.startCatalogType.name
+        StartTabOption.ANIME -> settingsState.startAnimeSectionId
+        StartTabOption.MANGA -> settingsState.startMangaSectionId
+        StartTabOption.PROFILE -> ""
+    }.takeIf { value -> startSectionChoices.any { it.value == value } }
+        ?: startSectionChoices.firstOrNull()?.value.orEmpty()
+    val startDestinationChoice = StartDestinationChoice(
+        tab = startTab,
+        sectionTitle = strings.settingsStartSectionTitle.takeIf { startTab != StartTabOption.PROFILE },
+        sectionChoices = startSectionChoices,
+        sectionValue = startSectionValue,
+    )
+    val onStartTabChange: (StartTabOption) -> Unit = { settingsState.startTab = it }
+    val onStartSectionChange: (String) -> Unit = { value ->
+        when (settingsState.startTab) {
+            StartTabOption.DISCOVER -> StartCatalogOption.entries.firstOrNull { it.name == value }
+                ?.let { settingsState.startCatalogType = it }
+            StartTabOption.ANIME -> settingsState.startAnimeSectionId = value
+            StartTabOption.MANGA -> settingsState.startMangaSectionId = value
+            StartTabOption.PROFILE -> Unit
+        }
+    }
+
+    // Per-surface saveable state (scroll positions): Root owns the holder so a
+    // tab, each detail entry and the overlays keep their own position. A popped
+    // detail entry drops its state (a new entry always starts at the top).
+    val surfaceStates = rememberSaveableStateHolder()
+    val detailEntryIds = state.detailEntryIds.toList()
+    var lastDetailEntryIds by remember { mutableStateOf(detailEntryIds) }
+    LaunchedEffect(detailEntryIds) {
+        val gone = lastDetailEntryIds.toSet() - detailEntryIds.toSet()
+        gone.forEach { surfaceStates.removeState("${state.selectedTab.name}:detail:$it") }
+        lastDetailEntryIds = detailEntryIds
     }
     // The cached rail meta is localized: a language change drops disk + memory
     // and bumps the holder's generation, which reloads the screen only when it
@@ -545,293 +629,306 @@ internal fun Root(
                 },
                 label = "tab-content",
             ) { activeTab ->
-                if (state.isSettingsOpen) {
-                    SettingsScreen(
-                        settingsState = settingsState,
-                        language = language,
-                        onLanguageChange = onLanguageChange,
-                        palette = palette,
-                        onPaletteChange = onPaletteChange,
-                        themeStyle = themeStyle,
-                        onThemeStyleChange = onThemeStyleChange,
-                        themeType = themeType,
-                        onThemeTypeChange = onThemeTypeChange,
-                        font = font,
-                        onFontChange = onFontChange,
-                        surfaces = surfaces,
-                        onSurfacesChange = onSurfacesChange,
-                        viewer = viewer,
-                        onLogin = { state.openSignIn() },
-                        onLogout = onLogout,
-                    )
-                } else if (state.isDetailOpen) {
-                    // Detail page over the current tab (tab bar hidden):
-                    // pushes onto detailStack, back pops one at a time.
-                    val destination = state.currentDetail
-                    when (destination) {
-                        is DetailDestination.Media -> MediaDetailScreen(
-                            holder = mediaDetailHolder,
-                            strings = strings,
-                            bottomPadding = padding.calculateBottomPadding(),
-                            onRetry = {
-                                if (mediaDetailHolder.detail == null) {
-                                    mediaDetailHolder.load(destination.id)
-                                } else {
-                                    mediaDetailHolder.refresh()
+                // One saved surface per view: switching surfaces (tab ↔ detail,
+                // detail ↔ detail, overlay) preserves each one's saveable state
+                // (scroll) without recreating the holders above. The slot's target
+                // tab is part of the key: during a tab transition both slots compose
+                // and equal keys would crash.
+                val surface = surfaceKey(activeTab, state)
+                surfaceStates.SaveableStateProvider(surface) {
+                    key(surface) {
+                        if (state.isSettingsOpen) {
+                            SettingsScreen(
+                                settingsState = settingsState,
+                                language = language,
+                                onLanguageChange = onLanguageChange,
+                                palette = palette,
+                                onPaletteChange = onPaletteChange,
+                                themeStyle = themeStyle,
+                                onThemeStyleChange = onThemeStyleChange,
+                                themeType = themeType,
+                                onThemeTypeChange = onThemeTypeChange,
+                                font = font,
+                                onFontChange = onFontChange,
+                                surfaces = surfaces,
+                                onSurfacesChange = onSurfacesChange,
+                                startDestination = startDestinationChoice,
+                                onStartTabChange = onStartTabChange,
+                                onStartSectionChange = onStartSectionChange,
+                                viewer = viewer,
+                                onLogin = { state.openSignIn() },
+                                onLogout = onLogout,
+                            )
+                        } else if (state.isDetailOpen) {
+                            // Detail page over the current tab (tab bar hidden):
+                            // pushes onto detailStack, back pops one at a time.
+                            val destination = state.currentDetail
+                            when (destination) {
+                                is DetailDestination.Media -> MediaDetailScreen(
+                                    holder = mediaDetailHolder,
+                                    strings = strings,
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onRetry = {
+                                        if (mediaDetailHolder.detail == null) {
+                                            mediaDetailHolder.load(destination.id)
+                                        } else {
+                                            mediaDetailHolder.refresh()
+                                        }
+                                    },
+                                    onOpenMedia = { state.openMedia(it) },
+                                    onOpenCharacter = { state.openCharacter(it) },
+                                    onOpenStaff = { state.openStaff(it) },
+                                    onOpenStudio = { state.openStudio(it) },
+                                    onOpenUrl = { urlOpener.open(it) },
+                                    onViewAll = { state.openDetailList(it, destination.id) },
+                                )
+                                is DetailDestination.Character -> CharacterDetailScreen(
+                                    holder = characterHolder,
+                                    strings = strings,
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onRetry = {
+                                        if (characterHolder.detail == null) {
+                                            characterHolder.load(destination.id)
+                                        } else {
+                                            characterHolder.refresh()
+                                        }
+                                    },
+                                    onOpenUrl = { urlOpener.open(it) },
+                                    onOpenMedia = { state.openMedia(it) },
+                                    onOpenStaff = { state.openStaff(it) },
+                                    onViewAll = { state.openDetailList(it, destination.id) },
+                                )
+                                is DetailDestination.Staff -> StaffDetailScreen(
+                                    holder = staffHolder,
+                                    strings = strings,
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onRetry = {
+                                        if (staffHolder.detail == null) {
+                                            staffHolder.load(destination.id)
+                                        } else {
+                                            staffHolder.refresh()
+                                        }
+                                    },
+                                    onOpenUrl = { urlOpener.open(it) },
+                                    onOpenMedia = { state.openMedia(it) },
+                                    onOpenCharacter = { state.openCharacter(it) },
+                                    onViewAll = { state.openDetailList(it, destination.id) },
+                                )
+                                is DetailDestination.Studio -> StudioDetailScreen(
+                                    holder = studioHolder,
+                                    strings = strings,
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onRetry = {
+                                        if (studioHolder.detail == null) {
+                                            studioHolder.load(destination.id)
+                                        } else {
+                                            studioHolder.refresh()
+                                        }
+                                    },
+                                    onOpenMedia = { state.openMedia(it) },
+                                    onOpenFilter = { state.openDetailFilter() },
+                                    onAddEntry = if (viewerId != null) {
+                                        { state.openEditor(it) }
+                                    } else {
+                                        null
+                                    },
+                                )
+                                is DetailDestination.DetailList -> {
+                                    val listBottom = padding.calculateBottomPadding()
+                                    val isManga = mediaDetailHolder.detail?.type == MediaDetailType.MANGA
+                                    when (destination.kind) {
+                                        DetailListKind.MEDIA_CHARACTERS -> DetailListScreen(
+                                            items = mediaDetailHolder.characters.map { it.toRailItem(strings) },
+                                            layout = DetailListLayout.GRID,
+                                            onSelect = { state.openCharacter(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = mediaDetailHolder.charactersHasNextPage,
+                                            isLoadingMore = mediaDetailHolder.isLoadingCharacters,
+                                            onLoadMore = { mediaDetailHolder.loadMoreCharacters() },
+                                        )
+                                        DetailListKind.MEDIA_STAFF -> DetailListScreen(
+                                            items = mediaDetailHolder.staff.map { it.toRailItem() },
+                                            layout = DetailListLayout.GRID,
+                                            onSelect = { state.openStaff(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = mediaDetailHolder.staffHasNextPage,
+                                            isLoadingMore = mediaDetailHolder.isLoadingStaff,
+                                            onLoadMore = { mediaDetailHolder.loadMoreStaff() },
+                                        )
+                                        DetailListKind.MEDIA_RELATED -> DetailListScreen(
+                                            items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings, isManga) },
+                                            layout = DetailListLayout.ROWS,
+                                            onSelect = { state.openMedia(it) },
+                                            bottomPadding = listBottom,
+                                        )
+                                        DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
+                                            items = mediaDetailHolder.recommendations.map { it.toRailItem(strings, isManga) },
+                                            layout = DetailListLayout.ROWS,
+                                            onSelect = { state.openMedia(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = mediaDetailHolder.recommendationsHasNextPage,
+                                            isLoadingMore = mediaDetailHolder.isLoadingRecommendations,
+                                            onLoadMore = { mediaDetailHolder.loadMoreRecommendations() },
+                                        )
+                                        DetailListKind.CHARACTER_MEDIA -> DetailListScreen(
+                                            items = characterHolder.mediaItems.map { it.toRailItem(strings) },
+                                            layout = DetailListLayout.ROWS,
+                                            onSelect = { state.openMedia(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = characterHolder.hasNextPage,
+                                            isLoadingMore = characterHolder.isLoadingMore,
+                                            onLoadMore = { characterHolder.loadMore() },
+                                        )
+                                        DetailListKind.STAFF_MEDIA -> DetailListScreen(
+                                            items = staffHolder.mediaItems.map { it.toRailItem() },
+                                            layout = DetailListLayout.ROWS,
+                                            onSelect = { state.openMedia(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = staffHolder.mediaHasNextPage,
+                                            isLoadingMore = staffHolder.isLoadingMoreMedia,
+                                            onLoadMore = { staffHolder.loadMoreMedia() },
+                                        )
+                                        DetailListKind.STAFF_CHARACTERS -> DetailListScreen(
+                                            items = staffHolder.characterItems.map { it.toRailItem() },
+                                            layout = DetailListLayout.GRID,
+                                            onSelect = { state.openCharacter(it) },
+                                            bottomPadding = listBottom,
+                                            hasMore = staffHolder.charactersHasNextPage,
+                                            isLoadingMore = staffHolder.isLoadingMoreCharacters,
+                                            onLoadMore = { staffHolder.loadMoreCharacters() },
+                                        )
+                                    }
                                 }
-                            },
-                            onOpenMedia = { state.openMedia(it) },
-                            onOpenCharacter = { state.openCharacter(it) },
-                            onOpenStaff = { state.openStaff(it) },
-                            onOpenStudio = { state.openStudio(it) },
-                            onOpenUrl = { urlOpener.open(it) },
-                            onViewAll = { state.openDetailList(it, destination.id) },
-                        )
-                        is DetailDestination.Character -> CharacterDetailScreen(
-                            holder = characterHolder,
-                            strings = strings,
-                            bottomPadding = padding.calculateBottomPadding(),
-                            onRetry = {
-                                if (characterHolder.detail == null) {
-                                    characterHolder.load(destination.id)
-                                } else {
-                                    characterHolder.refresh()
-                                }
-                            },
-                            onOpenUrl = { urlOpener.open(it) },
-                            onOpenMedia = { state.openMedia(it) },
-                            onOpenStaff = { state.openStaff(it) },
-                            onViewAll = { state.openDetailList(it, destination.id) },
-                        )
-                        is DetailDestination.Staff -> StaffDetailScreen(
-                            holder = staffHolder,
-                            strings = strings,
-                            bottomPadding = padding.calculateBottomPadding(),
-                            onRetry = {
-                                if (staffHolder.detail == null) {
-                                    staffHolder.load(destination.id)
-                                } else {
-                                    staffHolder.refresh()
-                                }
-                            },
-                            onOpenUrl = { urlOpener.open(it) },
-                            onOpenMedia = { state.openMedia(it) },
-                            onOpenCharacter = { state.openCharacter(it) },
-                            onViewAll = { state.openDetailList(it, destination.id) },
-                        )
-                        is DetailDestination.Studio -> StudioDetailScreen(
-                            holder = studioHolder,
-                            strings = strings,
-                            bottomPadding = padding.calculateBottomPadding(),
-                            onRetry = {
-                                if (studioHolder.detail == null) {
-                                    studioHolder.load(destination.id)
-                                } else {
-                                    studioHolder.refresh()
-                                }
-                            },
-                            onOpenMedia = { state.openMedia(it) },
-                            onOpenFilter = { state.openDetailFilter() },
-                            onAddEntry = if (viewerId != null) {
-                                { state.openEditor(it) }
-                            } else {
-                                null
-                            },
-                        )
-                        is DetailDestination.DetailList -> {
-                            val listBottom = padding.calculateBottomPadding()
-                            val isManga = mediaDetailHolder.detail?.type == MediaDetailType.MANGA
-                            when (destination.kind) {
-                                DetailListKind.MEDIA_CHARACTERS -> DetailListScreen(
-                                    items = mediaDetailHolder.characters.map { it.toRailItem(strings) },
-                                    layout = DetailListLayout.GRID,
-                                    onSelect = { state.openCharacter(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = mediaDetailHolder.charactersHasNextPage,
-                                    isLoadingMore = mediaDetailHolder.isLoadingCharacters,
-                                    onLoadMore = { mediaDetailHolder.loadMoreCharacters() },
-                                )
-                                DetailListKind.MEDIA_STAFF -> DetailListScreen(
-                                    items = mediaDetailHolder.staff.map { it.toRailItem() },
-                                    layout = DetailListLayout.GRID,
-                                    onSelect = { state.openStaff(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = mediaDetailHolder.staffHasNextPage,
-                                    isLoadingMore = mediaDetailHolder.isLoadingStaff,
-                                    onLoadMore = { mediaDetailHolder.loadMoreStaff() },
-                                )
-                                DetailListKind.MEDIA_RELATED -> DetailListScreen(
-                                    items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings, isManga) },
-                                    layout = DetailListLayout.ROWS,
-                                    onSelect = { state.openMedia(it) },
-                                    bottomPadding = listBottom,
-                                )
-                                DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
-                                    items = mediaDetailHolder.recommendations.map { it.toRailItem(strings, isManga) },
-                                    layout = DetailListLayout.ROWS,
-                                    onSelect = { state.openMedia(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = mediaDetailHolder.recommendationsHasNextPage,
-                                    isLoadingMore = mediaDetailHolder.isLoadingRecommendations,
-                                    onLoadMore = { mediaDetailHolder.loadMoreRecommendations() },
-                                )
-                                DetailListKind.CHARACTER_MEDIA -> DetailListScreen(
-                                    items = characterHolder.mediaItems.map { it.toRailItem(strings) },
-                                    layout = DetailListLayout.ROWS,
-                                    onSelect = { state.openMedia(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = characterHolder.hasNextPage,
-                                    isLoadingMore = characterHolder.isLoadingMore,
-                                    onLoadMore = { characterHolder.loadMore() },
-                                )
-                                DetailListKind.STAFF_MEDIA -> DetailListScreen(
-                                    items = staffHolder.mediaItems.map { it.toRailItem() },
-                                    layout = DetailListLayout.ROWS,
-                                    onSelect = { state.openMedia(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = staffHolder.mediaHasNextPage,
-                                    isLoadingMore = staffHolder.isLoadingMoreMedia,
-                                    onLoadMore = { staffHolder.loadMoreMedia() },
-                                )
-                                DetailListKind.STAFF_CHARACTERS -> DetailListScreen(
-                                    items = staffHolder.characterItems.map { it.toRailItem() },
-                                    layout = DetailListLayout.GRID,
-                                    onSelect = { state.openCharacter(it) },
-                                    bottomPadding = listBottom,
-                                    hasMore = staffHolder.charactersHasNextPage,
-                                    isLoadingMore = staffHolder.isLoadingMoreCharacters,
-                                    onLoadMore = { staffHolder.loadMoreCharacters() },
-                                )
+                                null -> {}
                             }
+                        } else if (state.isCalendarOpen) {
+                            // Airing schedule overlay (fullscreen, tab bar hidden):
+                            // public feed, so guests render the same surface.
+                            CalendarScreen(
+                                holder = calendarHolder,
+                                onRetry = { calendarHolder.reloadSelected() },
+                                bottomPadding = padding.calculateBottomPadding(),
+                                isRefreshing = calendarHolder.isLoading,
+                                onRefresh = { calendarHolder.reloadSelected() },
+                                isFilterOpen = state.isCalendarFilterOpen,
+                                onDismissFilter = { state.closeCalendarFilter() },
+                                onOpenDetail = { state.openMedia(it) },
+                                onOpenUrl = { urlOpener.open(it) },
+                            )
+                        } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
+                            // Lists own their query: with or without text the screen
+                            // renders (full section under the scrim when empty).
+                            AnimeListScreen(
+                                holder = animeHolder,
+                                selected = state.selectedAnimeSection,
+                                onSelectSection = { state.selectedAnimeSection = it },
+                                onRetry = {
+                                    animeHolder.load(
+                                        viewerId,
+                                        forceRefresh = true,
+                                        splitCompleted = settingsState.splitCompletedAnime,
+                                    )
+                                },
+                                bottomPadding = padding.calculateBottomPadding(),
+                                isRefreshing = animeHolder.isRefreshing,
+                                onRefresh = {
+                                    animeHolder.load(
+                                        viewerId,
+                                        forceRefresh = true,
+                                        splitCompleted = settingsState.splitCompletedAnime,
+                                    )
+                                },
+                                query = tabQuery,
+                                isFilterOpen = state.isSectionFilterOpen,
+                                onDismissFilter = { state.closeSectionFilter() },
+                                isSortOpen = state.isListSortOpen,
+                                onDismissSort = { state.closeListSort() },
+                                sortPersist = persistSort,
+                                splitCompleted = settingsState.splitCompletedAnime,
+                                hideAdult = !settingsState.displayAdultContent,
+                                isSmileyFormat = isSmileyFormat,
+                                formatSmiley = formatSmiley,
+                                onOpenDetail = { state.openMedia(it) },
+                                onEditEntry = { state.openEditor(it) },
+                            )
+                        } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
+                            MangaListScreen(
+                                holder = mangaHolder,
+                                selected = state.selectedMangaSection,
+                                onSelectSection = { state.selectedMangaSection = it },
+                                onRetry = {
+                                    mangaHolder.load(
+                                        viewerId,
+                                        forceRefresh = true,
+                                        splitCompleted = settingsState.splitCompletedManga,
+                                    )
+                                },
+                                bottomPadding = padding.calculateBottomPadding(),
+                                isRefreshing = mangaHolder.isRefreshing,
+                                onRefresh = {
+                                    mangaHolder.load(
+                                        viewerId,
+                                        forceRefresh = true,
+                                        splitCompleted = settingsState.splitCompletedManga,
+                                    )
+                                },
+                                query = tabQuery,
+                                isFilterOpen = state.isSectionFilterOpen,
+                                onDismissFilter = { state.closeSectionFilter() },
+                                isSortOpen = state.isListSortOpen,
+                                onDismissSort = { state.closeListSort() },
+                                sortPersist = persistSort,
+                                splitCompleted = settingsState.splitCompletedManga,
+                                hideAdult = !settingsState.displayAdultContent,
+                                isSmileyFormat = isSmileyFormat,
+                                formatSmiley = formatSmiley,
+                                onOpenDetail = { state.openMedia(it) },
+                                onEditEntry = { state.openEditor(it) },
+                            )
+                        } else if (search != null && activeQuery.isNotEmpty()) {
+                            // DISCOVER (and guests): server search lands in a later step.
+                            MessagePanel(
+                                title = strings.searchNoResultsLabel,
+                                message = null,
+                                icon = AppIcons.Search,
+                                actionLabel = null,
+                                onAction = {},
+                            )
+                        } else if (activeTab == TabSection.DISCOVER) {
+                            // Discover dashboard: public catalog, guests included.
+                            // The branch above still owns the active-query state
+                            // (Explore search lands later).
+                            DashboardScreen(
+                                holder = dashboardHolder,
+                                onOpenMedia = { state.openMedia(it) },
+                                hideAdult = !settingsState.displayAdultContent,
+                                bottomPadding = padding.calculateBottomPadding(),
+                            )
+                        } else if (
+                            (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||
+                                activeTab == TabSection.PROFILE) && viewerId == null
+                        ) {
+                            // Gated tabs without a session: sign-in prompt opening
+                            // the modal (the only login surface besides first launch).
+                            val tabItem = tabs(strings).first { it.section == activeTab }
+                            MessagePanel(
+                                title = activeTab.label(strings),
+                                message = strings.authGuestPrompt,
+                                icon = tabItem.icon,
+                                actionLabel = strings.settingsSignInTitle,
+                                onAction = { state.openSignIn() },
+                            )
+                        } else {
+                            val tabItem = tabs(strings).first { it.section == activeTab }
+                            MessagePanel(
+                                title = activeTab.label(strings),
+                                message = null,
+                                icon = tabItem.icon,
+                                actionLabel = null,
+                                onAction = {},
+                            )
                         }
-                        null -> {}
                     }
-                } else if (state.isCalendarOpen) {
-                    // Airing schedule overlay (fullscreen, tab bar hidden):
-                    // public feed, so guests render the same surface.
-                    CalendarScreen(
-                        holder = calendarHolder,
-                        onRetry = { calendarHolder.reloadSelected() },
-                        bottomPadding = padding.calculateBottomPadding(),
-                        isRefreshing = calendarHolder.isLoading,
-                        onRefresh = { calendarHolder.reloadSelected() },
-                        isFilterOpen = state.isCalendarFilterOpen,
-                        onDismissFilter = { state.closeCalendarFilter() },
-                        onOpenDetail = { state.openMedia(it) },
-                        onOpenUrl = { urlOpener.open(it) },
-                    )
-                } else if (activeTab == TabSection.ANIME && animeHolder != null && viewerId != null) {
-                    // Lists own their query: with or without text the screen
-                    // renders (full section under the scrim when empty).
-                    AnimeListScreen(
-                        holder = animeHolder,
-                        selected = state.selectedAnimeSection,
-                        onSelectSection = { state.selectedAnimeSection = it },
-                        onRetry = {
-                            animeHolder.load(
-                                viewerId,
-                                forceRefresh = true,
-                                splitCompleted = settingsState.splitCompletedAnime,
-                            )
-                        },
-                        bottomPadding = padding.calculateBottomPadding(),
-                        isRefreshing = animeHolder.isRefreshing,
-                        onRefresh = {
-                            animeHolder.load(
-                                viewerId,
-                                forceRefresh = true,
-                                splitCompleted = settingsState.splitCompletedAnime,
-                            )
-                        },
-                        query = tabQuery,
-                        isFilterOpen = state.isSectionFilterOpen,
-                        onDismissFilter = { state.closeSectionFilter() },
-                        isSortOpen = state.isListSortOpen,
-                        onDismissSort = { state.closeListSort() },
-                        sortPersist = persistSort,
-                        splitCompleted = settingsState.splitCompletedAnime,
-                        hideAdult = !settingsState.displayAdultContent,
-                        isSmileyFormat = isSmileyFormat,
-                        formatSmiley = formatSmiley,
-                        onOpenDetail = { state.openMedia(it) },
-                        onEditEntry = { state.openEditor(it) },
-                    )
-                } else if (activeTab == TabSection.MANGA && mangaHolder != null && viewerId != null) {
-                    MangaListScreen(
-                        holder = mangaHolder,
-                        selected = state.selectedMangaSection,
-                        onSelectSection = { state.selectedMangaSection = it },
-                        onRetry = {
-                            mangaHolder.load(
-                                viewerId,
-                                forceRefresh = true,
-                                splitCompleted = settingsState.splitCompletedManga,
-                            )
-                        },
-                        bottomPadding = padding.calculateBottomPadding(),
-                        isRefreshing = mangaHolder.isRefreshing,
-                        onRefresh = {
-                            mangaHolder.load(
-                                viewerId,
-                                forceRefresh = true,
-                                splitCompleted = settingsState.splitCompletedManga,
-                            )
-                        },
-                        query = tabQuery,
-                        isFilterOpen = state.isSectionFilterOpen,
-                        onDismissFilter = { state.closeSectionFilter() },
-                        isSortOpen = state.isListSortOpen,
-                        onDismissSort = { state.closeListSort() },
-                        sortPersist = persistSort,
-                        splitCompleted = settingsState.splitCompletedManga,
-                        hideAdult = !settingsState.displayAdultContent,
-                        isSmileyFormat = isSmileyFormat,
-                        formatSmiley = formatSmiley,
-                        onOpenDetail = { state.openMedia(it) },
-                        onEditEntry = { state.openEditor(it) },
-                    )
-                } else if (search != null && activeQuery.isNotEmpty()) {
-                    // DISCOVER (and guests): server search lands in a later step.
-                    MessagePanel(
-                        title = strings.searchNoResultsLabel,
-                        message = null,
-                        icon = AppIcons.Search,
-                        actionLabel = null,
-                        onAction = {},
-                    )
-                } else if (activeTab == TabSection.DISCOVER) {
-                    // Discover dashboard: public catalog, guests included.
-                    // The branch above still owns the active-query state
-                    // (Explore search lands later).
-                    DashboardScreen(
-                        holder = dashboardHolder,
-                        onOpenMedia = { state.openMedia(it) },
-                        hideAdult = !settingsState.displayAdultContent,
-                        bottomPadding = padding.calculateBottomPadding(),
-                    )
-                } else if (
-                    (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||
-                        activeTab == TabSection.PROFILE) && viewerId == null
-                ) {
-                    // Gated tabs without a session: sign-in prompt opening
-                    // the modal (the only login surface besides first launch).
-                    val tabItem = tabs(strings).first { it.section == activeTab }
-                    MessagePanel(
-                        title = activeTab.label(strings),
-                        message = strings.authGuestPrompt,
-                        icon = tabItem.icon,
-                        actionLabel = strings.settingsSignInTitle,
-                        onAction = { state.openSignIn() },
-                    )
-                } else {
-                    val tabItem = tabs(strings).first { it.section == activeTab }
-                    MessagePanel(
-                        title = activeTab.label(strings),
-                        message = null,
-                        icon = tabItem.icon,
-                        actionLabel = null,
-                        onAction = {},
-                    )
                 }
             }
             if (showScrim) {
@@ -1174,4 +1271,14 @@ private fun detailListTitle(destination: DetailDestination?, strings: LanguageSt
         DetailListKind.STAFF_MEDIA -> strings.mediaDetailRolesTitle
         DetailListKind.STAFF_CHARACTERS -> strings.mediaDetailCharactersTitle
     }
+}
+
+/** Which saved surface the content area shows: the slot's tab + the view. */
+private fun surfaceKey(tab: TabSection, state: State): String = when {
+    state.isSettingsOpen -> "${tab.name}:settings"
+    state.isDetailOpen -> "${tab.name}:detail:${state.currentDetailEntryId}"
+    state.isCalendarOpen -> "${tab.name}:calendar"
+    state.isExploreOpen -> "${tab.name}:explore"
+    state.isNotificationsOpen -> "${tab.name}:notifications"
+    else -> "${tab.name}:tab"
 }

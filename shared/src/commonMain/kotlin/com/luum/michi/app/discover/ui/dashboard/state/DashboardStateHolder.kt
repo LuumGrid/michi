@@ -27,9 +27,11 @@ internal class DashboardStateHolder(
     hideAdult: Boolean,
     // Read once per request, before it launches: one load never mixes languages.
     private val stringsProvider: () -> LanguageStrings,
+    // Selector value at creation ("Pestaña al abrir" → DISCOVER sub-choice).
+    initialType: DashboardMediaType = DashboardMediaType.ANIME,
 ) {
     // Selected selector value; loads the other type on switch (cached per type).
-    var mediaType: DashboardMediaType by mutableStateOf(DashboardMediaType.ANIME)
+    var mediaType: DashboardMediaType by mutableStateOf(initialType)
         private set
 
     // Snapshot maps so a completed load recomposes the screen.
@@ -234,7 +236,8 @@ internal fun createDashboardStateHolder(
     cache: DashboardFeedCache,
     scope: CoroutineScope,
     hideAdult: Boolean = true,
+    initialType: DashboardMediaType = DashboardMediaType.ANIME,
     stringsProvider: () -> LanguageStrings,
 ): DashboardStateHolder {
-    return DashboardStateHolder(repository, cache, scope, hideAdult, stringsProvider)
+    return DashboardStateHolder(repository, cache, scope, hideAdult, stringsProvider, initialType)
 }

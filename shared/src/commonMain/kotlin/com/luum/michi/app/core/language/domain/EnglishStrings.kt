@@ -212,6 +212,8 @@ object EnglishStrings : LanguageStrings {
     override val settingsStyleTitle = "Color style"
     override val settingsSurfaceTitle = "Surface style"
     override val settingsImageQualityTitle = "Image quality"
+    override val settingsStartTabTitle = "Start tab"
+    override val settingsStartSectionTitle = "Start section"
     override val settingsImageQualityAuto = "Auto"
     override val settingsImageQualityHigh = "High"
     override val settingsImageQualityLow = "Low"

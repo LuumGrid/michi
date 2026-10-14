@@ -194,6 +194,8 @@ interface LanguageStrings {
     val settingsStyleTitle: String
     val settingsSurfaceTitle: String
     val settingsImageQualityTitle: String
+    val settingsStartTabTitle: String
+    val settingsStartSectionTitle: String
     val settingsImageQualityAuto: String
     val settingsImageQualityHigh: String
     val settingsImageQualityLow: String

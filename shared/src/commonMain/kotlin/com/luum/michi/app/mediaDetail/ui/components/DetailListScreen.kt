@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +41,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.rememberCoverUrl
+import com.luum.michi.app.ui.components.CoverSize
+import androidx.compose.foundation.layout.width
+import com.luum.michi.app.ui.components.coverSize
 
 /** How a [DetailListScreen] lays its items out. */
 internal enum class DetailListLayout {
@@ -179,8 +181,10 @@ private fun GridList(
     }
     LazyVerticalGrid(
         state = gridState,
-        // Two columns: portraits stay large enough to read the role line.
-        columns = GridCells.Fixed(2),
+        // The grid adapts the number of columns; the poster is always the
+        // standard size (never the leftover cell width). Two columns on a
+        // phone, more on a tablet.
+        columns = GridCells.Adaptive(minSize = CoverSize.Featured.width),
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp + bottomPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -190,7 +194,9 @@ private fun GridList(
             items = items,
             key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
         ) { _, item ->
-            ListCard(item = item, onSelect = onSelect)
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                ListCard(item = item, onSelect = onSelect)
+            }
         }
         if (paged) {
             item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
@@ -202,15 +208,14 @@ private fun GridList(
 
 @Composable
 private fun ListCard(item: MediaRailItem, onSelect: (Int) -> Unit) {
-    Column(modifier = Modifier.clickable { onSelect(item.id) }) {
+    Column(modifier = Modifier.width(CoverSize.Featured.width).clickable { onSelect(item.id) }) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(3f / 4f)
+                .coverSize(CoverSize.Featured)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            val url = rememberCoverUrl(item.image, 170.dp)
+            val url = rememberCoverUrl(item.image, CoverSize.Featured)
             if (!url.isNullOrBlank()) {
                 SubcomposeAsyncImage(
                     model = url,

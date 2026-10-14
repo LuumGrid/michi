@@ -6,12 +6,15 @@ import androidx.compose.runtime.remember
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StartCatalogOption
+import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import kotlinx.coroutines.CoroutineScope
@@ -162,6 +165,42 @@ internal class SettingsState(
             store.putString(KeyImageQuality, value.name)
         }
 
+    // Local-only (never synced): where the shell opens and the dependent
+    // sub-choice for that tab. The section ids are the feature enums' names —
+    // settings never imports a feature; Root validates and resolves them (an
+    // unknown/renamed id falls back to ALL).
+    private val startTabState = mutableStateOf(StartTabOption.DISCOVER)
+    var startTab: StartTabOption
+        get() = startTabState.value
+        set(value) {
+            startTabState.value = value
+            store.putString(SettingsStoreKeys.StartTab, value.name)
+        }
+
+    private val startCatalogTypeState = mutableStateOf(StartCatalogOption.ANIME)
+    var startCatalogType: StartCatalogOption
+        get() = startCatalogTypeState.value
+        set(value) {
+            startCatalogTypeState.value = value
+            store.putString(SettingsStoreKeys.StartCatalogType, value.name)
+        }
+
+    private val startAnimeSectionState = mutableStateOf("ALL")
+    var startAnimeSectionId: String
+        get() = startAnimeSectionState.value
+        set(value) {
+            startAnimeSectionState.value = value
+            store.putString(SettingsStoreKeys.StartAnimeSection, value)
+        }
+
+    private val startMangaSectionState = mutableStateOf("ALL")
+    var startMangaSectionId: String
+        get() = startMangaSectionState.value
+        set(value) {
+            startMangaSectionState.value = value
+            store.putString(SettingsStoreKeys.StartMangaSection, value)
+        }
+
     private val notificationsState = mutableStateOf(NotificationPreferences())
     var notifications: NotificationPreferences
         get() = notificationsState.value
@@ -260,6 +299,18 @@ internal class SettingsState(
                 imageQualityState.value = it
             }
         }
+        store.getString(SettingsStoreKeys.StartTab)?.let { saved ->
+            StartTabOption.entries.firstOrNull { it.name == saved }?.let { startTabState.value = it }
+        }
+        store.getString(SettingsStoreKeys.StartCatalogType)?.let { saved ->
+            StartCatalogOption.entries.firstOrNull { it.name == saved }?.let {
+                startCatalogTypeState.value = it
+            }
+        }
+        // Section ids are validated against the live section list by Root; a
+        // stale/renamed id simply resolves to ALL there.
+        store.getString(SettingsStoreKeys.StartAnimeSection)?.let { startAnimeSectionState.value = it }
+        store.getString(SettingsStoreKeys.StartMangaSection)?.let { startMangaSectionState.value = it }
         notificationsState.value = NotificationPreferences(
             airing = store.getBoolean(KeyNotificationAiring, notificationsState.value.airing),
             activity = store.getBoolean(KeyNotificationActivity, notificationsState.value.activity),

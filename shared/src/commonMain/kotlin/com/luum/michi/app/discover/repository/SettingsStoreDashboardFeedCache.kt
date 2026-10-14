@@ -34,6 +34,10 @@ private data class CachedItemDto(
     val large: String? = null,
     val extraLarge: String? = null,
     val placeholderHex: String? = null,
+    // Added after the first cache format shipped: an older JSON decodes to null.
+    val averageScore: Int? = null,
+    val popularity: Int? = null,
+    val favourites: Int? = null,
 )
 
 /** [DashboardFeedCache] over the key/value [SettingsStore] (no new dependency). */
@@ -64,6 +68,9 @@ internal class SettingsStoreDashboardFeedCache(
                                         CoverSizes(medium = item.medium, large = item.large, extraLarge = item.extraLarge)
                                     },
                                     placeholderHex = item.placeholderHex,
+                                    averageScore = item.averageScore,
+                                    popularity = item.popularity,
+                                    favourites = item.favourites,
                                 )
                             }
                         }.toMap(),
@@ -86,6 +93,9 @@ internal class SettingsStoreDashboardFeedCache(
                             large = item.cover?.large,
                             extraLarge = item.cover?.extraLarge,
                             placeholderHex = item.placeholderHex,
+                            averageScore = item.averageScore,
+                            popularity = item.popularity,
+                            favourites = item.favourites,
                         )
                     },
                 )

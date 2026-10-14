@@ -19,7 +19,8 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.label
-import com.luum.michi.app.settings.domain.model.DiscoverTabOption
+import com.luum.michi.app.settings.domain.model.StartCatalogOption
+import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
@@ -105,8 +106,11 @@ class LabelsCoverageTest {
         assertAllLabeled("ListSort") { strings ->
             ListSort.entries.map { it.label(strings) }
         }
-        assertAllLabeled("DiscoverTabOption") { strings ->
-            DiscoverTabOption.entries.map { it.label(strings) }
+        assertAllLabeled("StartTabOption") { strings ->
+            StartTabOption.entries.map { it.label(strings) }
+        }
+        assertAllLabeled("StartCatalogOption") { strings ->
+            StartCatalogOption.entries.map { it.label(strings) }
         }
     }
 

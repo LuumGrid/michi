@@ -5,12 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.compactCount
+import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
@@ -40,6 +40,7 @@ import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.rememberCoverUrl
+import com.luum.michi.app.ui.components.coverSize
 
 /**
  * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover
@@ -73,11 +74,9 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = if (glass) glassBorder() else solidBorder(),
                 shadowElevation = 8.dp,
-                modifier = Modifier
-                    .width(COVER_WIDTH)
-                    .aspectRatio(3f / 4f),
+                modifier = Modifier.coverSize(CoverSize.Featured),
             ) {
-                val image = rememberCoverUrl(detail.cover, COVER_WIDTH)
+                val image = rememberCoverUrl(detail.cover, CoverSize.Featured)
                 if (!image.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = image,
@@ -130,8 +129,6 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
 }
 
 private val BANNER_HEIGHT = 230.dp
-private val COVER_WIDTH = 150.dp
-
 @Composable
 private fun BannerBackdrop(
     bannerUrl: String?,
@@ -190,12 +187,12 @@ internal fun MediaDetailHeroStats(detail: MediaDetail, strings: LanguageStrings)
             add(
                 HeroStat(
                     label = strings.popularityLabel,
-                    value = compactCount(it),
+                    value = it.compactCount(),
                     subtitle = popularRank?.let { rank -> rankSubtitle(rank, strings) },
                 ),
             )
         }
-        detail.favourites?.let { add(HeroStat(strings.favoritesLabel, compactCount(it), null)) }
+        detail.favourites?.let { add(HeroStat(strings.favoritesLabel, it.compactCount(), null)) }
     }
     // Airing band only while the drop is still ahead of the user.
     val next = detail.nextEpisode?.takeIf { (it.timeUntilAiringSeconds ?: 0L) > 0L }
@@ -284,19 +281,4 @@ private fun StatColumn(
     }
 }
 
-/**
- * Compact count for stat columns: `950`, `1.8K`, `12K`, `1.3M`. Truncates
- * (never rounds up across a unit) and drops a zero decimal.
- */
-private fun compactCount(value: Int): String = when {
-    value >= 1_000_000 -> compactUnit(value, 1_000_000, "M")
-    value >= 1_000 -> compactUnit(value, 1_000, "K")
-    else -> value.toString()
-}
-
-private fun compactUnit(value: Int, unit: Int, suffix: String): String {
-    val tenths = value.toLong() * 10 / unit
-    val whole = tenths / 10
-    val fraction = tenths % 10
-    return if (fraction == 0L || whole >= 10) "$whole$suffix" else "$whole.$fraction$suffix"
-}
+// compactCount (stat columns) now lives in core/model, shared with the rails.

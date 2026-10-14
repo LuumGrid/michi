@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,7 +39,11 @@ import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
+import com.luum.michi.app.ui.components.CoverStat
+import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.CoverStatBadge
 import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.rememberResetGridState
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.mediaDetail.ui.studio.components.studioFilterSummary
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
@@ -50,6 +51,8 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.ui.rememberCoverUrl
+import androidx.compose.foundation.layout.width
+import com.luum.michi.app.ui.components.coverSize
 
 /**
  * Studio detail page: name hero + a 2-column media grid. Sort and the
@@ -109,9 +112,16 @@ private fun StudioDetailGrid(
     // Sort/filters live in the holder (the filter sheet edits them from
     // Root) and are display-only: the loaded list is never re-queried.
     val filtered = holder.visibleItems
+    // Scroll rule: a sort/filter change from the sheet returns the grid to the top.
+    val gridState = rememberResetGridState(
+        listOf(holder.sort, holder.typeFilter, holder.formatFilter),
+    )
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        // The grid adapts the number of columns; the poster is always the
+        // standard size (never the leftover cell width).
+        columns = GridCells.Adaptive(minSize = CoverSize.Featured.width),
+        state = gridState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 16.dp,
@@ -144,12 +154,14 @@ private fun StudioDetailGrid(
             }
         } else {
             items(items = filtered, key = { it.mediaId }) { item ->
-                StudioMediaGridCard(
-                    item = item,
-                    strings = strings,
-                    onOpenMedia = onOpenMedia,
-                    onAddEntry = onAddEntry,
-                )
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    StudioMediaGridCard(
+                        item = item,
+                        strings = strings,
+                        onOpenMedia = onOpenMedia,
+                        onAddEntry = onAddEntry,
+                    )
+                }
             }
             if (holder.hasNextPage) {
                 item(key = "load-more", span = { GridItemSpan(maxLineSpan) }) {
@@ -245,7 +257,7 @@ private fun StudioMediaGridCard(
 ) {
     Surface(
         onClick = { onOpenMedia(item.mediaId) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.width(CoverSize.Featured.width),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -253,11 +265,10 @@ private fun StudioMediaGridCard(
         Column {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(3f / 4f)
+                    .coverSize(CoverSize.Featured)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                val url = rememberCoverUrl(item.cover, 160.dp)
+                val url = rememberCoverUrl(item.cover, CoverSize.Featured)
                 if (!url.isNullOrBlank()) {
                     SubcomposeAsyncImage(
                         model = url,
@@ -269,18 +280,16 @@ private fun StudioMediaGridCard(
                     )
                 }
                 if (item.averageScore != null) {
-                    CoverBadge(
-                        icon = AppIcons.StarOutline,
-                        text = item.averageScore.toString(),
+                    CoverStatBadge(
+                        stat = CoverStat(AppIcons.StarOutline, item.averageScore.toString()),
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(6.dp),
                     )
                 }
                 if (item.favourites != null) {
-                    CoverBadge(
-                        icon = AppIcons.Favorite,
-                        text = item.favourites.toString(),
+                    CoverStatBadge(
+                        stat = CoverStat(AppIcons.Favorite, item.favourites.toString()),
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(6.dp),
@@ -329,34 +338,3 @@ private fun StudioMediaGridCard(
     }
 }
 
-/** Translucent pill over a cover: icon + compact count. */
-@Composable
-private fun CoverBadge(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = Color.Black.copy(alpha = 0.55f),
-        modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(12.dp),
-            )
-            Spacer(modifier = Modifier.width(3.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
-            )
-        }
-    }
-}

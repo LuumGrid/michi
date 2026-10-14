@@ -70,13 +70,22 @@ internal fun ListSort.toUserSort(): Pair<UserListSort, UserListOrder> = when (th
     ListSort.ADDED -> UserListSort.LAST_ADDED to UserListOrder.DESCENDING
 }
 
-internal enum class DiscoverTabOption { DISCOVER, ANIME, MANGA, PROFILE }
+/** Where the shell opens. Local-only ("Pestaña al abrir"). */
+internal enum class StartTabOption { DISCOVER, ANIME, MANGA, PROFILE }
 
-internal fun DiscoverTabOption.label(strings: LanguageStrings): String = when (this) {
-    DiscoverTabOption.DISCOVER -> strings.discoverLabel
-    DiscoverTabOption.ANIME -> strings.animeLabel
-    DiscoverTabOption.MANGA -> strings.mangaLabel
-    DiscoverTabOption.PROFILE -> strings.profileLabel
+internal fun StartTabOption.label(strings: LanguageStrings): String = when (this) {
+    StartTabOption.DISCOVER -> strings.discoverLabel
+    StartTabOption.ANIME -> strings.animeLabel
+    StartTabOption.MANGA -> strings.mangaLabel
+    StartTabOption.PROFILE -> strings.profileLabel
+}
+
+/** Initial catalog type of the Dashboard (sub-choice when the start tab is DISCOVER). */
+internal enum class StartCatalogOption { ANIME, MANGA }
+
+internal fun StartCatalogOption.label(strings: LanguageStrings): String = when (this) {
+    StartCatalogOption.ANIME -> strings.animeLabel
+    StartCatalogOption.MANGA -> strings.mangaLabel
 }
 
 internal data class NotificationPreferences(

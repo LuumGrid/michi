@@ -260,6 +260,8 @@ private fun VoiceActorsSection(
             // No cast in the chosen language: say so instead of dropping the
             // whole section (which would hide the language picker).
             emptyLabel = strings.mediaDetailNoVoiceActorsLabel,
+            // The item set changes with the language: back to the start.
+            resetKey = language,
         )
     }
 }
