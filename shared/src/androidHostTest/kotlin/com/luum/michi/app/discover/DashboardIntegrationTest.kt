@@ -1,10 +1,14 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.mediaList.FakeGraphQL
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.JsonArray
@@ -36,25 +40,45 @@ private fun page(vararg media: JsonObject): JsonObject =
     buildJsonObject { put("media", JsonArray(media.toList())) }
 
 private fun dashboardJson(
+    seasonal: List<JsonObject> = emptyList(),
+    upcomingSeason: List<JsonObject> = emptyList(),
     trendingAnime: List<JsonObject> = emptyList(),
-    trendingManga: List<JsonObject> = emptyList(),
+    popularAnime: List<JsonObject> = emptyList(),
+    popularMovie: List<JsonObject> = emptyList(),
+    bestAnime: List<JsonObject> = emptyList(),
+    bestMovie: List<JsonObject> = emptyList(),
+    bestAnimeNow: List<JsonObject> = emptyList(),
+    bestMovieNow: List<JsonObject> = emptyList(),
     newReleasesManga: List<JsonObject> = emptyList(),
-    thisSeason: List<JsonObject> = emptyList(),
-    upcomingNextSeason: List<JsonObject> = emptyList(),
-    allTimePopularAnime: List<JsonObject> = emptyList(),
-    allTimePopularManga: List<JsonObject> = emptyList(),
-    topAnime: List<JsonObject> = emptyList(),
-    topManga: List<JsonObject> = emptyList(),
+    trendingManga: List<JsonObject> = emptyList(),
+    popularManga: List<JsonObject> = emptyList(),
+    popularLightNovel: List<JsonObject> = emptyList(),
+    popularManhwa: List<JsonObject> = emptyList(),
+    popularManhua: List<JsonObject> = emptyList(),
+    bestManga: List<JsonObject> = emptyList(),
+    bestLightNovel: List<JsonObject> = emptyList(),
+    bestManhwa: List<JsonObject> = emptyList(),
+    bestManhua: List<JsonObject> = emptyList(),
 ): JsonElement = buildJsonObject {
+    put("seasonal", page(*seasonal.toTypedArray()))
+    put("upcomingSeason", page(*upcomingSeason.toTypedArray()))
     put("trendingAnime", page(*trendingAnime.toTypedArray()))
-    put("trendingManga", page(*trendingManga.toTypedArray()))
+    put("popularAnime", page(*popularAnime.toTypedArray()))
+    put("popularMovie", page(*popularMovie.toTypedArray()))
+    put("bestAnime", page(*bestAnime.toTypedArray()))
+    put("bestMovie", page(*bestMovie.toTypedArray()))
+    put("bestAnimeNow", page(*bestAnimeNow.toTypedArray()))
+    put("bestMovieNow", page(*bestMovieNow.toTypedArray()))
     put("newReleasesManga", page(*newReleasesManga.toTypedArray()))
-    put("thisSeason", page(*thisSeason.toTypedArray()))
-    put("upcomingNextSeason", page(*upcomingNextSeason.toTypedArray()))
-    put("allTimePopularAnime", page(*allTimePopularAnime.toTypedArray()))
-    put("allTimePopularManga", page(*allTimePopularManga.toTypedArray()))
-    put("topAnime", page(*topAnime.toTypedArray()))
-    put("topManga", page(*topManga.toTypedArray()))
+    put("trendingManga", page(*trendingManga.toTypedArray()))
+    put("popularManga", page(*popularManga.toTypedArray()))
+    put("popularLightNovel", page(*popularLightNovel.toTypedArray()))
+    put("popularManhwa", page(*popularManhwa.toTypedArray()))
+    put("popularManhua", page(*popularManhua.toTypedArray()))
+    put("bestManga", page(*bestManga.toTypedArray()))
+    put("bestLightNovel", page(*bestLightNovel.toTypedArray()))
+    put("bestManhwa", page(*bestManhwa.toTypedArray()))
+    put("bestManhua", page(*bestManhua.toTypedArray()))
 }
 
 private fun wired(graphQL: FakeGraphQL): DashboardStateHolder =
@@ -67,19 +91,15 @@ private fun wired(graphQL: FakeGraphQL): DashboardStateHolder =
 class DashboardIntegrationTest {
 
     @Test
-    fun mapsEverySectionIntoItsHolderList() {
+    fun mapsAnimeSectionsIntoTheirKinds() {
         val graphQL = FakeGraphQL(
             listOf(
                 dashboardJson(
-                    trendingAnime = listOf(mediaJson(1, "Trending A")),
-                    trendingManga = listOf(mediaJson(2, "Trending M", format = "MANGA", episodes = null, chapters = 40)),
-                    newReleasesManga = listOf(mediaJson(9, "New M", format = "MANGA", episodes = null, chapters = 30)),
-                    thisSeason = listOf(mediaJson(3, "Season A")),
-                    upcomingNextSeason = listOf(mediaJson(4, "Next A")),
-                    allTimePopularAnime = listOf(mediaJson(5, "Popular A")),
-                    allTimePopularManga = listOf(mediaJson(6, "Popular M", format = "MANGA", episodes = null, chapters = 40)),
-                    topAnime = listOf(mediaJson(7, "Top A")),
-                    topManga = listOf(mediaJson(8, "Top M", format = "MANGA", episodes = null, chapters = 40)),
+                    seasonal = listOf(mediaJson(1, "Season A")),
+                    upcomingSeason = listOf(mediaJson(2, "Next A")),
+                    trendingAnime = listOf(mediaJson(3, "Rising A")),
+                    popularMovie = listOf(mediaJson(4, "Pop Movie", format = "MOVIE")),
+                    bestMovieNow = listOf(mediaJson(5, "Now Movie", format = "MOVIE")),
                 ),
             ),
         )
@@ -87,64 +107,90 @@ class DashboardIntegrationTest {
 
         holder.load()
 
-        assertEquals(listOf(1), holder.trendingAnime.map { it.id })
-        assertEquals(listOf(2), holder.trendingManga.map { it.id })
-        assertEquals(listOf(9), holder.newReleasesManga.map { it.id })
-        assertEquals(listOf(3), holder.thisSeason.map { it.id })
-        assertEquals(listOf(4), holder.upcomingNextSeason.map { it.id })
-        assertEquals(listOf(5), holder.allTimePopularAnime.map { it.id })
-        assertEquals(listOf(6), holder.allTimePopularManga.map { it.id })
-        assertEquals(listOf(7), holder.topAnime.map { it.id })
-        assertEquals(listOf(8), holder.topManga.map { it.id })
-        assertEquals("Trending A", holder.trendingAnime.single().title)
-        // meta subtitle: format · episode/chapter count
-        assertEquals("TV · 12 ep", holder.trendingAnime.single().meta)
-        assertTrue(holder.trendingManga.single().meta.endsWith("40 ch"))
+        assertEquals(listOf(1), holder.sections[DashboardSectionKind.SEASONAL]?.map { it.id })
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.UPCOMING_SEASON]?.map { it.id })
+        assertEquals(listOf(3), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+        assertEquals(listOf(4), holder.sections[DashboardSectionKind.POPULAR_MOVIE]?.map { it.id })
+        assertEquals(listOf(5), holder.sections[DashboardSectionKind.BEST_MOVIE_NOW]?.map { it.id })
+        // absent aliases never appear
+        assertTrue(holder.sections[DashboardSectionKind.POPULAR_ANIME] == null)
+        assertEquals("TV · 12 ep", holder.sections[DashboardSectionKind.SEASONAL]!!.single().meta)
+    }
+
+    @Test
+    fun mapsMangaSectionsIntoTheirKinds() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(
+                    newReleasesManga = listOf(mediaJson(1, "New M", format = "MANGA", episodes = null, chapters = 30)),
+                    popularManhua = listOf(mediaJson(2, "Manhua", format = "MANGA", episodes = null, chapters = 100)),
+                    bestLightNovel = listOf(mediaJson(3, "LN", format = "NOVEL", episodes = null, chapters = 5)),
+                ),
+            ),
+        )
+        val holder = wired(graphQL)
+        holder.selectType(DashboardMediaType.MANGA)
+
+        assertEquals(listOf(1), holder.sections[DashboardSectionKind.NEW_RELEASES_MANGA]?.map { it.id })
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.POPULAR_MANHUA]?.map { it.id })
+        assertEquals(listOf(3), holder.sections[DashboardSectionKind.BEST_LIGHT_NOVEL]?.map { it.id })
+    }
+
+    @Test
+    fun selectingTheOtherTypeLoadsItAndCaches() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 9))),
+            ),
+        )
+        val holder = wired(graphQL)
+
+        holder.load()
+        assertEquals(1, graphQL.calls)
+
+        holder.selectType(DashboardMediaType.MANGA)
+        assertEquals(2, graphQL.calls)
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+
+        // Back to anime: served from the per-type cache, no request.
+        holder.selectType(DashboardMediaType.ANIME)
+        assertEquals(2, graphQL.calls)
+        assertEquals(listOf(1), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
     }
 
     @Test
     fun hideAdultPinsIsAdultFalse() {
-        val graphQL = FakeGraphQL(
-            listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))),
-        )
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
         val holder = wired(graphQL)
 
-        // Default is hidden: a no-op sync, then the first load carries the gate.
         holder.setHideAdult(true)
         holder.load()
 
         assertEquals(1, graphQL.calls)
-        val variables = graphQL.requests.single().variables
-        assertEquals("false", variables?.get("isAdult")?.toString())
+        assertEquals("false", graphQL.requests.single().variables?.get("isAdult")?.toString())
     }
 
     @Test
     fun adultAllowedOmitsIsAdultVariable() {
-        val graphQL = FakeGraphQL(
-            listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))),
-        )
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
         val holder = wired(graphQL)
 
-        // A change forces the reload (no separate load() needed here).
         holder.setHideAdult(false)
 
         assertEquals(1, graphQL.calls)
-        val variables = graphQL.requests.single().variables
-        assertFalse(variables?.containsKey("isAdult") == true, "isAdult must be omitted (null = both)")
+        assertFalse(graphQL.requests.single().variables?.containsKey("isAdult") == true, "isAdult must be omitted (null = both)")
     }
 
     @Test
     fun secondLoadWithinTtlSkipsTheNetwork() {
-        val graphQL = FakeGraphQL(
-            listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))),
-        )
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
         val holder = wired(graphQL)
 
         holder.load()
         holder.load()
 
         assertEquals(1, graphQL.calls)
-        assertEquals(1, holder.trendingAnime.size)
     }
 
     @Test
@@ -161,30 +207,59 @@ class DashboardIntegrationTest {
         holder.load(forceRefresh = true)
 
         assertEquals(2, graphQL.calls)
-        assertEquals(listOf(2), holder.trendingAnime.map { it.id })
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
     }
 
     @Test
-    fun newReleasesCarriesTheRecentWindowVariable() {
+    fun newReleasesCarriesTheRecentWindowAndPopularityFloor() {
         val graphQL = FakeGraphQL(
             listOf(dashboardJson(newReleasesManga = listOf(mediaJson(9, "New M", format = "MANGA", episodes = null, chapters = 30)))),
         )
         val holder = wired(graphQL)
-
-        holder.load()
+        holder.selectType(DashboardMediaType.MANGA)
 
         val request = graphQL.requests.single()
         assertTrue(request.query.contains("newReleasesManga"))
         assertTrue(request.query.contains("startDate_greater"))
+        assertTrue(request.query.contains("popularity_greater"), "new releases needs a popularity floor")
         val start = request.variables?.get("recentMangaStart")?.toString()?.toIntOrNull()
         assertTrue(start != null && start in 19_000_000..30_000_000, "FuzzyDateInt window present: $start")
     }
 
     @Test
-    fun factoryDoesNotLoadOnCreation() {
+    fun queryPagesEveryAnimeRailAtRailPageSize() {
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
+        val holder = wired(graphQL)
+
+        holder.load()
+
+        assertEquals(9, Regex("perPage: $RailPageSize").findAll(graphQL.requests.single().query).count())
+    }
+
+    @Test
+    fun hideAdultChangeDuringLoadAppliesToTheFinalResponse() {
         val graphQL = FakeGraphQL(
-            listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))),
-        )
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "B"))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val holder = wired(graphQL)
+        val gate = graphQL.gate!!
+
+        holder.load() // in flight, blocked on the gate
+        holder.setHideAdult(false) // requested mid-flight: must not be lost
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertEquals(2, graphQL.calls, "the deferred reload ran after the stale one")
+        assertFalse(graphQL.requests.last().variables?.containsKey("isAdult") == true, "final load uses the new hideAdult")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
+    fun factoryDoesNotLoadOnCreation() {
+        val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
 
         wired(graphQL)
 

@@ -782,8 +782,6 @@ internal fun Root(
                     // (Explore search lands later).
                     DashboardScreen(
                         holder = dashboardHolder,
-                        mediaType = state.dashboardMediaType,
-                        onSelectMediaType = { state.dashboardMediaType = it },
                         onOpenMedia = { state.openMedia(it) },
                         hideAdult = !settingsState.displayAdultContent,
                         bottomPadding = padding.calculateBottomPadding(),

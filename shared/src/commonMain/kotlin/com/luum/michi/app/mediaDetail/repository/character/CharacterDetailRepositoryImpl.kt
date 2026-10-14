@@ -23,8 +23,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.network.domain.RailPageSize
 
-private const val CharacterMediaPerPage = 20
 
 private const val CharacterDetailQuery = """
 query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}voiceLanguage: StaffLanguage) {
@@ -271,7 +271,7 @@ internal class CharacterDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(1),
-                    "perPage" to JsonPrimitive(CharacterMediaPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                     "voiceLanguage" to JsonPrimitive(voiceLanguage),
                 ),
             ),
@@ -325,7 +325,7 @@ internal class CharacterDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(CharacterMediaPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                     "voiceLanguage" to JsonPrimitive(voiceLanguage),
                 ),
             ),

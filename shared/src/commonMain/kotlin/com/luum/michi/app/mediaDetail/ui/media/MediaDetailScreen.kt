@@ -26,6 +26,7 @@ import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailTags
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
+import com.luum.michi.app.core.network.domain.RailPageSize
 
 /**
  * Full media detail page. Section order: hero → quick stats (+ next-episode
@@ -136,7 +137,7 @@ private fun MediaDetailContent(
             item(key = "characters") {
                 MediaRail(
                     title = strings.mediaDetailCharactersTitle,
-                    items = holder.characters.take(RailPreviewCount).map { it.toRailItem(strings) },
+                    items = holder.characters.take(RailPageSize).map { it.toRailItem(strings) },
                     onSelect = onOpenCharacter,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_CHARACTERS) },
                     viewAllLabel = strings.viewAllAction,
@@ -150,7 +151,7 @@ private fun MediaDetailContent(
             item(key = "staff") {
                 MediaRail(
                     title = strings.mediaDetailTabStaff,
-                    items = holder.staff.take(RailPreviewCount).map { it.toRailItem() },
+                    items = holder.staff.take(RailPageSize).map { it.toRailItem() },
                     onSelect = onOpenStaff,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_STAFF) },
                     viewAllLabel = strings.viewAllAction,
@@ -187,7 +188,7 @@ private fun MediaDetailContent(
             item(key = "related") {
                 MediaRail(
                     title = strings.mediaDetailRelationsTitle,
-                    items = detail.relations.take(RailPreviewCount).map { it.toRailItem(strings, isManga) },
+                    items = detail.relations.take(RailPageSize).map { it.toRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RELATED) },
                     viewAllLabel = strings.viewAllAction,
@@ -198,7 +199,7 @@ private fun MediaDetailContent(
             item(key = "recommendations") {
                 MediaRail(
                     title = strings.mediaDetailTabRecommendations,
-                    items = holder.recommendations.take(RailPreviewCount).map { it.toRailItem(strings, isManga) },
+                    items = holder.recommendations.take(RailPageSize).map { it.toRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RECOMMENDATIONS) },
                     viewAllLabel = strings.viewAllAction,
@@ -208,5 +209,3 @@ private fun MediaDetailContent(
     }
 }
 
-/** Rail preview cap: the rail shows the first N, "View all" shows the rest. */
-private const val RailPreviewCount = 10

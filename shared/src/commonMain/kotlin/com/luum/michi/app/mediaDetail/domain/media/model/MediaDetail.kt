@@ -173,15 +173,11 @@ internal data class MediaDetailRelation(
     val mediaId: Int,
     val title: String,
     val cover: CoverSizes?,
-    val paletteHex: String?,
     val kind: MediaRelationKind,
     val format: String?,
     val season: MediaSeason? = null,
     val year: Int?,
     val workStatus: MediaWorkStatus? = null,
-    val averageScore: Int?,
-    val favourites: Int?,
-    val viewerStatus: String?,
 )
 
 internal data class MediaRecommendationEntry(

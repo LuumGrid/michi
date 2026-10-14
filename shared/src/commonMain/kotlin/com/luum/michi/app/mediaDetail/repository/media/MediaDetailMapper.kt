@@ -170,15 +170,11 @@ private fun MediaRelationEdgeDto.toRelation(): MediaDetailRelation? {
         mediaId = node.id,
         title = node.title.bestTitle(),
         cover = node.coverImage?.toCoverSizes(),
-        paletteHex = node.coverImage?.color,
         kind = parseRelationKind(relationType),
         format = node.format?.toTitleCase(),
         season = parseMediaSeason(node.season),
         year = node.seasonYear ?: node.startDate?.year,
         workStatus = parseMediaWorkStatus(node.status),
-        averageScore = node.averageScore?.takeIf { it > 0 },
-        favourites = node.favourites?.takeIf { it > 0 },
-        viewerStatus = node.mediaListEntry?.status,
     )
 }
 

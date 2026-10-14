@@ -149,24 +149,15 @@ internal data class MediaRelationEdgeDto(
 )
 
 @Serializable
-internal data class MediaRelationListEntryDto(
-    val status: String? = null,
-)
-
-@Serializable
 internal data class MediaRelationNodeDto(
     val id: Int,
-    val type: String? = null,
     val format: String? = null,
     val status: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
-    val averageScore: Int? = null,
-    val favourites: Int? = null,
     val season: String? = null,
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
-    val mediaListEntry: MediaRelationListEntryDto? = null,
 )
 
 @Serializable

@@ -24,10 +24,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.network.domain.RailPageSize
 
-private const val CharactersPerPage = 12
-private const val StaffPerPage = 12
-private const val RecommendationsPerPage = 20
 
 private const val MediaDetailQuery = """
 query MediaDetail(${'$'}id: Int!) {
@@ -70,21 +68,17 @@ query MediaDetail(${'$'}id: Int!) {
         relationType(version: 2)
         node {
           id
-          type
           format
           status
           title { romaji english native userPreferred }
-          coverImage { extraLarge large medium color }
-          averageScore
-          favourites
+          coverImage { extraLarge large medium }
           season
           seasonYear
-          startDate { year month day }
-          mediaListEntry { status }
+          startDate { year }
         }
       }
     }
-    characters(page: 1, perPage: $CharactersPerPage, sort: [ROLE, RELEVANCE]) {
+    characters(page: 1, perPage: $RailPageSize, sort: [ROLE, RELEVANCE]) {
       pageInfo { hasNextPage currentPage }
       edges {
         id
@@ -92,7 +86,7 @@ query MediaDetail(${'$'}id: Int!) {
         node { id name { full native userPreferred } image { large medium } }
       }
     }
-    staff(page: 1, perPage: $StaffPerPage, sort: [RELEVANCE]) {
+    staff(page: 1, perPage: $RailPageSize, sort: [RELEVANCE]) {
       pageInfo { hasNextPage currentPage }
       edges {
         id
@@ -108,7 +102,7 @@ private const val MediaCharactersPageQuery = """
 query MediaCharactersPage(${'$'}id: Int!, ${'$'}page: Int!) {
   Media(id: ${'$'}id) {
     id
-    characters(page: ${'$'}page, perPage: $CharactersPerPage, sort: [ROLE, RELEVANCE]) {
+    characters(page: ${'$'}page, perPage: $RailPageSize, sort: [ROLE, RELEVANCE]) {
       pageInfo { hasNextPage currentPage }
       edges {
         id
@@ -124,7 +118,7 @@ private const val MediaStaffPageQuery = """
 query MediaStaffPage(${'$'}id: Int!, ${'$'}page: Int!) {
   Media(id: ${'$'}id) {
     id
-    staff(page: ${'$'}page, perPage: $StaffPerPage, sort: [RELEVANCE]) {
+    staff(page: ${'$'}page, perPage: $RailPageSize, sort: [RELEVANCE]) {
       pageInfo { hasNextPage currentPage }
       edges {
         id
@@ -140,7 +134,7 @@ private const val MediaRecommendationsPageQuery = """
 query MediaRecommendationsPage(${'$'}mediaId: Int!, ${'$'}page: Int!) {
   Media(id: ${'$'}mediaId) {
     id
-    recommendations(page: ${'$'}page, perPage: $RecommendationsPerPage, sort: [RATING_DESC]) {
+    recommendations(page: ${'$'}page, perPage: $RailPageSize, sort: [RATING_DESC]) {
       pageInfo { hasNextPage currentPage }
       nodes {
         id

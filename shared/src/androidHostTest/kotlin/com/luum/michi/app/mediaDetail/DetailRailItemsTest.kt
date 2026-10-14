@@ -56,15 +56,11 @@ class DetailRailItemsTest {
         mediaId = 70,
         title = "Related",
         cover = null,
-        paletteHex = null,
         kind = MediaRelationKind.SEQUEL,
         format = "TV",
         season = MediaSeason.SUMMER,
         year = 2026,
         workStatus = MediaWorkStatus.RELEASING,
-        averageScore = null,
-        favourites = null,
-        viewerStatus = null,
     )
 
     private fun recommendation() = MediaRecommendationEntry(

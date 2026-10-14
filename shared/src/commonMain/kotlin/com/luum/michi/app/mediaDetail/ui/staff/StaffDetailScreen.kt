@@ -25,6 +25,7 @@ import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
+import com.luum.michi.app.core.network.domain.RailPageSize
 
 /**
  * Staff detail page: person hero + framed occupations chips + description +
@@ -183,7 +184,7 @@ private fun RolesSection(
 ) {
     MediaRail(
         title = strings.mediaDetailRolesTitle,
-        items = holder.mediaItems.take(RailPreviewCount).map { it.toRailItem() },
+        items = holder.mediaItems.take(RailPageSize).map { it.toRailItem() },
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
@@ -200,7 +201,7 @@ private fun CharactersSection(
 ) {
     MediaRail(
         title = strings.mediaDetailCharactersTitle,
-        items = holder.characterItems.take(RailPreviewCount).map { it.toRailItem() },
+        items = holder.characterItems.take(RailPageSize).map { it.toRailItem() },
         onSelect = onOpenCharacter,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
@@ -208,5 +209,3 @@ private fun CharactersSection(
     )
 }
 
-/** Rail preview cap: the rail shows the first N, "View all" shows the rest. */
-private const val RailPreviewCount = 10

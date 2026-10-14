@@ -2,55 +2,59 @@ package com.luum.michi.app.discover.repository
 
 import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
 import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.MediaPageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
-import com.luum.michi.app.core.network.repository.toCoverSizes
 
-internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): DashboardFeed = DashboardFeed(
-    trendingAnime = trendingAnime?.media
-        ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
-        .orEmpty(),
-    trendingManga = trendingManga?.media
-        ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
-        .orEmpty(),
-    newReleasesManga = newReleasesManga?.media
-        ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
-        .orEmpty(),
-    thisSeason = popularThisSeason?.media
-        ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
-        .orEmpty(),
-    upcomingNextSeason = upcomingNextSeason?.media
-        ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
-        .orEmpty(),
-    allTimePopularAnime = allTimePopularAnime?.media
-        ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
-        .orEmpty(),
-    allTimePopularManga = allTimePopularManga?.media
-        ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
-        .orEmpty(),
-    topAnime = topAnime?.media
-        ?.map { it.toMediaItem(metaFor = { m -> animeMeta(m, strings) }) }
-        .orEmpty(),
-    topManga = topManga?.media
-        ?.map { it.toMediaItem(metaFor = { m -> mangaMeta(m, strings) }) }
-        .orEmpty(),
-)
+/** Maps each present alias to its rail; absent aliases (other type) are skipped. */
+internal fun DashboardResponseDto.toDashboardFeed(strings: LanguageStrings): DashboardFeed {
+    val sections = mutableMapOf<DashboardSectionKind, List<MediaItem>>()
+    sections.putPage(DashboardSectionKind.SEASONAL, seasonal, strings)
+    sections.putPage(DashboardSectionKind.UPCOMING_SEASON, upcomingSeason, strings)
+    sections.putPage(DashboardSectionKind.TRENDING_ANIME, trendingAnime, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_ANIME, popularAnime, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_MOVIE, popularMovie, strings)
+    sections.putPage(DashboardSectionKind.BEST_ANIME, bestAnime, strings)
+    sections.putPage(DashboardSectionKind.BEST_MOVIE, bestMovie, strings)
+    sections.putPage(DashboardSectionKind.BEST_ANIME_NOW, bestAnimeNow, strings)
+    sections.putPage(DashboardSectionKind.BEST_MOVIE_NOW, bestMovieNow, strings)
+    sections.putPage(DashboardSectionKind.NEW_RELEASES_MANGA, newReleasesManga, strings)
+    sections.putPage(DashboardSectionKind.TRENDING_MANGA, trendingManga, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_MANGA, popularManga, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_LIGHT_NOVEL, popularLightNovel, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_MANHWA, popularManhwa, strings)
+    sections.putPage(DashboardSectionKind.POPULAR_MANHUA, popularManhua, strings)
+    sections.putPage(DashboardSectionKind.BEST_MANGA, bestManga, strings)
+    sections.putPage(DashboardSectionKind.BEST_LIGHT_NOVEL, bestLightNovel, strings)
+    sections.putPage(DashboardSectionKind.BEST_MANHWA, bestManhwa, strings)
+    sections.putPage(DashboardSectionKind.BEST_MANHUA, bestManhua, strings)
+    return DashboardFeed(sections)
+}
 
-private fun MediaDto.toMediaItem(metaFor: (MediaDto) -> String): MediaItem =
+private fun MutableMap<DashboardSectionKind, List<MediaItem>>.putPage(
+    kind: DashboardSectionKind,
+    page: MediaPageDto?,
+    strings: LanguageStrings,
+) {
+    val media = page?.media ?: return
+    if (media.isEmpty()) return
+    val isManga = kind.mediaType == DashboardMediaType.MANGA
+    put(kind, media.map { it.toMediaItem(strings, isManga) })
+}
+
+private fun MediaDto.toMediaItem(strings: LanguageStrings, isManga: Boolean): MediaItem =
     MediaItem(
         title = title.bestTitle(),
-        meta = metaFor(this),
-        paletteHex = coverImage?.color,
+        meta = if (isManga) mangaMeta(this, strings) else animeMeta(this, strings),
         id = id,
         cover = coverImage?.toCoverSizes(),
-        averageScore = averageScore,
-        favourites = favourites,
-        isUserFavorited = isFavourite == true,
-        isUserRanked = mediaListEntry != null && (mediaListEntry.score ?: 0.0) > 0.0,
     )
 
 private fun animeMeta(media: MediaDto, strings: LanguageStrings): String {
@@ -64,4 +68,3 @@ private fun mangaMeta(media: MediaDto, strings: LanguageStrings): String {
     val chapters = media.chapters?.takeIf { it > 0 }?.let { " · ${strings.exploreChapterCountLabel(it)}" }.orEmpty()
     return format + chapters
 }
-

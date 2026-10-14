@@ -25,8 +25,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.network.domain.RailPageSize
 
-private const val StaffPerPage = 20
 
 private const val StaffDetailQuery = """
 query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}perPage: Int!) {
@@ -324,7 +324,7 @@ internal class StaffDetailRepositoryImpl(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(1),
                     "charPage" to JsonPrimitive(1),
-                    "perPage" to JsonPrimitive(StaffPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                 ),
             ),
             operationName = "StaffDetail",
@@ -385,7 +385,7 @@ internal class StaffDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(StaffPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                 ),
             ),
             operationName = "StaffMediaPage",
@@ -417,7 +417,7 @@ internal class StaffDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(StaffPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                 ),
             ),
             operationName = "StaffCharacterPage",

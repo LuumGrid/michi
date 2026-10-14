@@ -70,8 +70,9 @@ import kotlinx.coroutines.launch
 fun App(
     dependencies: MichiDependencies,
 ) {
-    // One-time Coil setup: crossfade + heap-capped memory cache.
+    // Coil setup + reactive network metering for the AUTO image-quality mode.
     installImageLoader()
+    val unmeteredConnection by dependencies.connectivity.isUnmetered.collectAsState()
     // Local prefs: hydrated from the store once, persisted on every change.
     // Unknown/corrupt values fall back to defaults, never crash.
     val store = dependencies.settingsStore
@@ -144,8 +145,7 @@ fun App(
 
     CompositionLocalProvider(
         LocalStrings provides strings,
-        LocalImageQuality provides settingsState.imageQuality
-            .resolved(dependencies.connectivity.isUnmetered()),
+        LocalImageQuality provides settingsState.imageQuality.resolved(unmeteredConnection),
     ) {
         Theme(
             palette = palette,

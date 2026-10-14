@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -14,6 +17,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -23,7 +27,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.model.MediaSeasonYear
+import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.model.next
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.ChipRail
@@ -36,27 +45,17 @@ import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
-/** One dashboard rail: localized title + its media (+ its cover size). */
-private data class DashboardSection(
-    val title: String,
-    val items: List<MediaItem>,
-    val cardWidth: Dp = MediaCoverCardCoverWidth,
-)
-
-/** Featured rails (This Season / New releases) stand out: 50% over the
- *  list-cover size (height follows via the 3:4 aspect). */
+/** Featured rails (current season / new releases) lead, 50% bigger covers. */
 private const val FeaturedCoverScale = 1.5f
 
 /**
- * DISCOVER dashboard: an Anime/Manga selector over the holder's rails.
- * Public catalog data, so guests render the same surface. Loads are explicit
- * (TTL dedups revisits); an 18+ setting change forces a reload.
+ * DISCOVER dashboard: an Anime/Manga selector over the holder's rails. Only
+ * the selected type is fetched (one query per type), so the payload stays the
+ * same as before even with ~10 rails each. Public, so guests see it.
  */
 @Composable
 internal fun DashboardScreen(
     holder: DashboardStateHolder,
-    mediaType: DashboardMediaType,
-    onSelectMediaType: (DashboardMediaType) -> Unit,
     onOpenMedia: (Int) -> Unit,
     hideAdult: Boolean,
     strings: LanguageStrings = Strings.current,
@@ -71,8 +70,6 @@ internal fun DashboardScreen(
     }
     DashboardContent(
         holder = holder,
-        mediaType = mediaType,
-        onSelectMediaType = onSelectMediaType,
         onOpenMedia = onOpenMedia,
         strings = strings,
         modifier = modifier,
@@ -85,8 +82,6 @@ internal fun DashboardScreen(
 @Composable
 private fun DashboardContent(
     holder: DashboardStateHolder,
-    mediaType: DashboardMediaType,
-    onSelectMediaType: (DashboardMediaType) -> Unit,
     onOpenMedia: (Int) -> Unit,
     strings: LanguageStrings,
     bottomPadding: Dp,
@@ -94,15 +89,23 @@ private fun DashboardContent(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sections = dashboardSections(holder, mediaType, strings)
+    val current = currentSeasonAndYear()
+    val next = current.next()
+    val sections = DashboardSectionKind.entries
+        .filter { it.mediaType == holder.mediaType }
+        .mapNotNull { kind ->
+            holder.sections[kind]
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { kind to it }
+        }
     Column(modifier = modifier.fillMaxSize()) {
         ChipRail(
             tabs = listOf(
                 ChipTab(DashboardMediaType.ANIME, strings.animeLabel),
                 ChipTab(DashboardMediaType.MANGA, strings.mangaLabel),
             ),
-            selected = mediaType,
-            onSelect = onSelectMediaType,
+            selected = holder.mediaType,
+            onSelect = holder::selectType,
         )
         when {
             holder.isLoading && sections.isEmpty() -> {
@@ -151,17 +154,30 @@ private fun DashboardContent(
                         ),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
+                        if (holder.error != null) {
+                            item(key = "refresh_error") {
+                                DashboardRefreshError(
+                                    message = strings.networkErrorMessage(holder.error!!),
+                                    retryLabel = strings.retryAction,
+                                    onRetry = onRetry,
+                                )
+                            }
+                        }
                         items(
                             items = sections,
-                            key = { it.title },
-                        ) { section ->
+                            key = { it.first },
+                        ) { (kind, media) ->
                             // Rails stay edge-to-edge (card vs edge-to-edge rule):
                             // a rail boxed in a card clips on the rounded corners.
                             MediaRail(
-                                title = section.title,
-                                items = section.items.mapNotNull { it.toRailItem() },
+                                title = kind.title(strings, current, next),
+                                items = media.mapNotNull { it.toRailItem() },
                                 onSelect = onOpenMedia,
-                                cardWidth = section.cardWidth,
+                                cardWidth = if (kind.isFeatured) {
+                                    MediaCoverCardCoverWidth * FeaturedCoverScale
+                                } else {
+                                    MediaCoverCardCoverWidth
+                                },
                             )
                         }
                     }
@@ -171,36 +187,36 @@ private fun DashboardContent(
     }
 }
 
-/** Visible rails for [mediaType], dropping any that came back empty. */
-private fun dashboardSections(
-    holder: DashboardStateHolder,
-    mediaType: DashboardMediaType,
+/** The leading, featured rail of each selector. */
+private val DashboardSectionKind.isFeatured: Boolean
+    get() = this == DashboardSectionKind.SEASONAL || this == DashboardSectionKind.NEW_RELEASES_MANGA
+
+/** Rail title; the season rails read "Fall 2026" / "Winter 2027" (localized). */
+private fun DashboardSectionKind.title(
     strings: LanguageStrings,
-): List<DashboardSection> = when (mediaType) {
-    DashboardMediaType.ANIME -> listOf(
-        // This Season leads and stands out (featured cover size).
-        DashboardSection(
-            title = strings.exploreThisSeasonTitle,
-            items = holder.thisSeason,
-            cardWidth = MediaCoverCardCoverWidth * FeaturedCoverScale,
-        ),
-        DashboardSection(strings.discoverTrendingAnimeTitle, holder.trendingAnime),
-        DashboardSection(strings.exploreUpcomingNextSeasonTitle, holder.upcomingNextSeason),
-        DashboardSection(strings.exploreAllTimePopularAnimeTitle, holder.allTimePopularAnime),
-        DashboardSection(strings.exploreTopAnimeTitle, holder.topAnime),
-    )
-    DashboardMediaType.MANGA -> listOf(
-        // New releases leads and stands out (featured cover size).
-        DashboardSection(
-            title = strings.discoverNewReleasesMangaTitle,
-            items = holder.newReleasesManga,
-            cardWidth = MediaCoverCardCoverWidth * FeaturedCoverScale,
-        ),
-        DashboardSection(strings.discoverTrendingMangaTitle, holder.trendingManga),
-        DashboardSection(strings.exploreAllTimePopularMangaTitle, holder.allTimePopularManga),
-        DashboardSection(strings.exploreTopMangaTitle, holder.topManga),
-    )
-}.filter { it.items.isNotEmpty() }
+    current: MediaSeasonYear,
+    next: MediaSeasonYear,
+): String = when (this) {
+    DashboardSectionKind.SEASONAL -> "${current.season.label(strings)} ${current.year}"
+    DashboardSectionKind.UPCOMING_SEASON -> "${next.season.label(strings)} ${next.year}"
+    DashboardSectionKind.TRENDING_ANIME -> strings.discoverTrendingAnimeTitle
+    DashboardSectionKind.POPULAR_ANIME -> strings.discoverAllTimePopularAnimeTitle
+    DashboardSectionKind.POPULAR_MOVIE -> strings.discoverAllTimePopularMovieTitle
+    DashboardSectionKind.BEST_ANIME -> strings.discoverBestRatedAnimeTitle
+    DashboardSectionKind.BEST_MOVIE -> strings.discoverBestRatedMovieTitle
+    DashboardSectionKind.BEST_ANIME_NOW -> strings.discoverBestRatedAnimeNowTitle
+    DashboardSectionKind.BEST_MOVIE_NOW -> strings.discoverBestRatedMovieNowTitle
+    DashboardSectionKind.NEW_RELEASES_MANGA -> strings.discoverNewReleasesMangaTitle
+    DashboardSectionKind.TRENDING_MANGA -> strings.discoverTrendingMangaTitle
+    DashboardSectionKind.POPULAR_MANGA -> strings.discoverAllTimePopularMangaTitle
+    DashboardSectionKind.POPULAR_LIGHT_NOVEL -> strings.discoverAllTimePopularLightNovelTitle
+    DashboardSectionKind.POPULAR_MANHWA -> strings.discoverAllTimePopularManhwaTitle
+    DashboardSectionKind.POPULAR_MANHUA -> strings.discoverAllTimePopularManhuaTitle
+    DashboardSectionKind.BEST_MANGA -> strings.discoverBestRatedMangaTitle
+    DashboardSectionKind.BEST_LIGHT_NOVEL -> strings.discoverBestRatedLightNovelTitle
+    DashboardSectionKind.BEST_MANHWA -> strings.discoverBestRatedManhwaTitle
+    DashboardSectionKind.BEST_MANHUA -> strings.discoverBestRatedManhuaTitle
+}
 
 /** Catalog items with a missing id cannot navigate, so they never reach a rail. */
 private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
@@ -210,4 +226,32 @@ private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
         image = cover,
         subtitle = meta,
     )
+}
+
+/**
+ * Non-blocking refresh error: the rails keep their stale content and a compact
+ * line with retry sits above them (a failed refresh must not blank the page).
+ */
+@Composable
+private fun DashboardRefreshError(
+    message: String,
+    retryLabel: String,
+    onRetry: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onRetry) {
+            Text(text = retryLabel)
+        }
+    }
 }

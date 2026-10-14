@@ -14,6 +14,20 @@ interface LanguageStrings {
     val discoverTrendingAnimeTitle: String
     val discoverTrendingMangaTitle: String
     val discoverNewReleasesMangaTitle: String
+    val discoverAllTimePopularAnimeTitle: String
+    val discoverAllTimePopularMovieTitle: String
+    val discoverBestRatedAnimeTitle: String
+    val discoverBestRatedMovieTitle: String
+    val discoverBestRatedAnimeNowTitle: String
+    val discoverBestRatedMovieNowTitle: String
+    val discoverAllTimePopularMangaTitle: String
+    val discoverAllTimePopularLightNovelTitle: String
+    val discoverAllTimePopularManhwaTitle: String
+    val discoverAllTimePopularManhuaTitle: String
+    val discoverBestRatedMangaTitle: String
+    val discoverBestRatedLightNovelTitle: String
+    val discoverBestRatedManhwaTitle: String
+    val discoverBestRatedManhuaTitle: String
     val discoverLoadingLabel: String
     val discoverErrorLabel: String
     val discoverEmptyLabel: String
@@ -26,12 +40,6 @@ interface LanguageStrings {
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
-    val exploreThisSeasonTitle: String
-    val exploreUpcomingNextSeasonTitle: String
-    val exploreAllTimePopularAnimeTitle: String
-    val exploreAllTimePopularMangaTitle: String
-    val exploreTopAnimeTitle: String
-    val exploreTopMangaTitle: String
     fun exploreEpisodeCountLabel(count: Int): String
     fun exploreChapterCountLabel(count: Int): String
     val charactersLabel: String

@@ -4,14 +4,17 @@ import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.core.model.MediaSeasonYear
 import com.luum.michi.app.core.model.currentSeasonAndYear
 import com.luum.michi.app.core.model.next
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.time.Clock
@@ -20,76 +23,132 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 
-private const val DashboardQuery = """
-query Dashboard(
+/**
+ * Popularity floor for the "best rated" shelves: pure SCORE_DESC surfaces
+ * obscure 90-score titles with a handful of votes, so a floor keeps them
+ * recognizable (same idea as the New releases shelf).
+ */
+private const val BestRatedMinPopularity = 5000
+
+/** Popularity floor for the (narrower, 12-month) New releases shelf. */
+private const val NewReleasesMinPopularity = 1000
+
+private const val MediaFields = """
+      id format episodes chapters
+      title { romaji english native userPreferred }
+      coverImage { extraLarge large medium }
+"""
+
+private val AnimeDashboardQuery = """
+query AnimeDashboard(
   ${'$'}currentSeason: MediaSeason!,
   ${'$'}currentYear: Int!,
   ${'$'}nextSeason: MediaSeason!,
   ${'$'}nextYear: Int!,
+  ${'$'}recentStart: FuzzyDateInt,
+  ${'$'}isAdult: Boolean
+) {
+  seasonal: Page(perPage: $RailPageSize) {
+    media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  upcomingSeason: Page(perPage: $RailPageSize) {
+    media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  trendingAnime: Page(perPage: $RailPageSize) {
+    media(type: ANIME, sort: TRENDING_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  popularAnime: Page(perPage: $RailPageSize) {
+    media(type: ANIME, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  popularMovie: Page(perPage: $RailPageSize) {
+    media(type: ANIME, format: MOVIE, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestAnime: Page(perPage: $RailPageSize) {
+    media(type: ANIME, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestMovie: Page(perPage: $RailPageSize) {
+    media(type: ANIME, format: MOVIE, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestAnimeNow: Page(perPage: $RailPageSize) {
+    media(type: ANIME, status: RELEASING, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestMovieNow: Page(perPage: $RailPageSize) {
+    media(type: ANIME, format: MOVIE, startDate_greater: ${'$'}recentStart, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+}
+"""
+
+private val MangaDashboardQuery = """
+query MangaDashboard(
   ${'$'}recentMangaStart: FuzzyDateInt,
   ${'$'}isAdult: Boolean
 ) {
-  trendingAnime: Page(perPage: 20) {
-    media(sort: TRENDING_DESC, type: ANIME, isAdult: ${'$'}isAdult) {
-      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
+  newReleasesManga: Page(perPage: $RailPageSize) {
+    media(type: MANGA, startDate_greater: ${'$'}recentMangaStart, popularity_greater: $NewReleasesMinPopularity, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
     }
   }
-  trendingManga: Page(perPage: 20) {
-    media(sort: TRENDING_DESC, type: MANGA, isAdult: ${'$'}isAdult) {
-      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
+  trendingManga: Page(perPage: $RailPageSize) {
+    media(type: MANGA, sort: TRENDING_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
     }
   }
-  newReleasesManga: Page(perPage: 20) {
-    media(type: MANGA, startDate_greater: ${'$'}recentMangaStart, sort: [SCORE_DESC], isAdult: ${'$'}isAdult) {
-      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
-    }
-  }
-  thisSeason: Page(perPage: 20) {
-    media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
-      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
-    }
-  }
-  upcomingNextSeason: Page(perPage: 20) {
-    media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
-      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
-    }
-  }
-  allTimePopularAnime: Page(perPage: 20) {
-    media(type: ANIME, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
-      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
-    }
-  }
-  allTimePopularManga: Page(perPage: 20) {
+  popularManga: Page(perPage: $RailPageSize) {
     media(type: MANGA, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
-      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
+$MediaFields
     }
   }
-  topAnime: Page(perPage: 20) {
-    media(type: ANIME, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
-      id format episodes averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
+  popularLightNovel: Page(perPage: $RailPageSize) {
+    media(type: MANGA, format: NOVEL, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
     }
   }
-  topManga: Page(perPage: 20) {
-    media(type: MANGA, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
-      id format chapters averageScore favourites isFavourite mediaListEntry { id score }
-      title { romaji english native userPreferred }
-      coverImage { extraLarge large medium color }
+  popularManhwa: Page(perPage: $RailPageSize) {
+    media(type: MANGA, countryOfOrigin: KR, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  popularManhua: Page(perPage: $RailPageSize) {
+    media(type: MANGA, countryOfOrigin_in: [CN, TW], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestManga: Page(perPage: $RailPageSize) {
+    media(type: MANGA, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestLightNovel: Page(perPage: $RailPageSize) {
+    media(type: MANGA, format: NOVEL, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestManhwa: Page(perPage: $RailPageSize) {
+    media(type: MANGA, countryOfOrigin: KR, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
+    }
+  }
+  bestManhua: Page(perPage: $RailPageSize) {
+    media(type: MANGA, countryOfOrigin_in: [CN, TW], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+$MediaFields
     }
   }
 }
@@ -101,19 +160,31 @@ internal class DashboardRepositoryImpl(
 ) : DashboardRepository {
 
     override suspend fun loadFeed(
+        mediaType: DashboardMediaType,
         hideAdult: Boolean,
         strings: LanguageStrings,
     ): NetworkResult<DashboardFeed> {
-        val current = seasonProvider()
-        val next = current.next()
-
-        val variables = mutableMapOf<String, kotlinx.serialization.json.JsonElement>(
-            "currentSeason" to JsonPrimitive(current.season.name),
-            "currentYear" to JsonPrimitive(current.year),
-            "nextSeason" to JsonPrimitive(next.season.name),
-            "nextYear" to JsonPrimitive(next.year),
-            "recentMangaStart" to JsonPrimitive(recentMangaStartFuzzy()),
-        )
+        val variables = mutableMapOf<String, JsonElement>()
+        val query: String
+        val operation: String
+        when (mediaType) {
+            DashboardMediaType.ANIME -> {
+                val current = seasonProvider()
+                val next = current.next()
+                query = AnimeDashboardQuery
+                operation = "AnimeDashboard"
+                variables["currentSeason"] = JsonPrimitive(current.season.name)
+                variables["currentYear"] = JsonPrimitive(current.year)
+                variables["nextSeason"] = JsonPrimitive(next.season.name)
+                variables["nextYear"] = JsonPrimitive(next.year)
+                variables["recentStart"] = JsonPrimitive(recentStartFuzzy())
+            }
+            DashboardMediaType.MANGA -> {
+                query = MangaDashboardQuery
+                operation = "MangaDashboard"
+                variables["recentMangaStart"] = JsonPrimitive(recentStartFuzzy())
+            }
+        }
         // Omit (null) when adult is allowed: the server then returns both.
         // Never send true — that would filter to adult ONLY.
         if (hideAdult) {
@@ -121,9 +192,9 @@ internal class DashboardRepositoryImpl(
         }
 
         val request = AniListGraphQLRequest(
-            query = DashboardQuery,
+            query = query,
             variables = JsonObject(variables),
-            operationName = "Dashboard",
+            operationName = operation,
         )
 
         return graphQLClient.execute(request) { dataJson ->
@@ -132,8 +203,8 @@ internal class DashboardRepositoryImpl(
     }
 }
 
-/** FuzzyDateInt (YYYYMMDD) one year back: the "New Releases" manga window. */
-private fun recentMangaStartFuzzy(now: Instant = Clock.System.now()): Int {
+/** FuzzyDateInt (YYYYMMDD) one year back: the "recent" shelf window. */
+private fun recentStartFuzzy(now: Instant = Clock.System.now()): Int {
     val date = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
     val year = date.year - 1
     return year * 10000 + date.month.number * 100 + date.day

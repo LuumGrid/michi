@@ -1,61 +1,63 @@
 package com.luum.michi.app.discover.ui.dashboard.state
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
+import com.luum.michi.app.discover.domain.model.MediaItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
-
-private val EmptyFeed = DashboardFeed(
-    trendingAnime = emptyList(),
-    trendingManga = emptyList(),
-    newReleasesManga = emptyList(),
-    thisSeason = emptyList(),
-    upcomingNextSeason = emptyList(),
-    allTimePopularAnime = emptyList(),
-    allTimePopularManga = emptyList(),
-    topAnime = emptyList(),
-    topManga = emptyList(),
-)
 
 internal class DashboardStateHolder(
     private val repository: DashboardRepository,
     private val scope: CoroutineScope,
     private val strings: LanguageStrings,
 ) {
-    // Compose-backed: the dashboard reads these directly and must recompose
-    // on every load/refresh.
-    private var feedState: DashboardFeed by mutableStateOf(EmptyFeed)
+    // Selected selector value; loads the other type on switch (cached per type).
+    var mediaType: DashboardMediaType by mutableStateOf(DashboardMediaType.ANIME)
+        private set
+
+    // Snapshot map so a completed load recomposes the screen.
+    private val feeds = mutableStateMapOf<DashboardMediaType, DashboardFeed>()
+    private val lastLoaded = mutableMapOf<DashboardMediaType, TimeSource.Monotonic.ValueTimeMark>()
+    private val timeMark = TimeSource.Monotonic
+
     private var loadingState: Boolean by mutableStateOf(false)
     private var refreshingState: Boolean by mutableStateOf(false)
     private var errorState: NetworkError? by mutableStateOf(null)
-    private val timeMark = TimeSource.Monotonic
-    private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
 
     // 18+ gate, owned here so a change can force a reload. Hidden by default
     // (matches the settings default); `false` lets the server return both.
     private var hideAdultState: Boolean = true
 
-    val trendingAnime: List<MediaItem> get() = feedState.trendingAnime
-    val trendingManga: List<MediaItem> get() = feedState.trendingManga
-    val newReleasesManga: List<MediaItem> get() = feedState.newReleasesManga
-    val thisSeason: List<MediaItem> get() = feedState.thisSeason
-    val upcomingNextSeason: List<MediaItem> get() = feedState.upcomingNextSeason
-    val allTimePopularAnime: List<MediaItem> get() = feedState.allTimePopularAnime
-    val allTimePopularManga: List<MediaItem> get() = feedState.allTimePopularManga
-    val topAnime: List<MediaItem> get() = feedState.topAnime
-    val topManga: List<MediaItem> get() = feedState.topManga
+    // A force-refresh that arrives while another load is in flight would be
+    // dropped; remember it so the in-flight (possibly stale) response is
+    // followed by a reload with the value in effect at that point.
+    private var pendingReload = false
+
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
     val error: NetworkError? get() = errorState
+
+    /** Rails for the current [mediaType]; empty until its first load. */
+    val sections: Map<DashboardSectionKind, List<MediaItem>>
+        get() = feeds[mediaType]?.sections ?: emptyMap()
+
+    /** Selector: switching to an unloaded type fetches it (TTL caches revisits). */
+    fun selectType(type: DashboardMediaType) {
+        if (mediaType == type) return
+        mediaType = type
+        load()
+    }
 
     /** Mirror the 18+ setting; a change forces a reload so the feed matches. */
     fun setHideAdult(hideAdult: Boolean) {
@@ -64,13 +66,19 @@ internal class DashboardStateHolder(
         load(forceRefresh = true)
     }
 
-    /** Load dashboard sections, skipping the network call if data was fetched within the TTL. */
+    /** Load the current type's rails, skipping the network within the TTL. */
     fun load(forceRefresh: Boolean = false) {
-        val mark = lastLoaded
-        if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && feedState != EmptyFeed) return
-        // Drop overlapping loads so a slower (stale) response cannot overwrite a newer one.
-        if (loadingState || refreshingState) return
-        val isRefresh = forceRefresh && feedState != EmptyFeed
+        val type = mediaType
+        val hasData = feeds[type]?.sections?.isNotEmpty() == true
+        val mark = lastLoaded[type]
+        if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && hasData) return
+        // Drop overlapping loads so a slower (stale) response cannot overwrite
+        // a newer one; a forced one is deferred instead of lost.
+        if (loadingState || refreshingState) {
+            if (forceRefresh) pendingReload = true
+            return
+        }
+        val isRefresh = forceRefresh && hasData
         if (isRefresh) {
             refreshingState = true
         } else {
@@ -79,16 +87,22 @@ internal class DashboardStateHolder(
         errorState = null
         scope.launch {
             try {
-                when (val result = repository.loadFeed(hideAdultState, strings)) {
+                when (val result = repository.loadFeed(type, hideAdultState, strings)) {
                     is NetworkResult.Success -> {
-                        feedState = result.value
-                        lastLoaded = timeMark.markNow()
+                        feeds[type] = result.value
+                        lastLoaded[type] = timeMark.markNow()
                     }
                     is NetworkResult.Failure -> errorState = result.error
                 }
             } finally {
                 loadingState = false
                 refreshingState = false
+                // A refresh was requested mid-flight: run it now so the final
+                // state reflects the newest selection/hideAdult, not the stale one.
+                if (pendingReload) {
+                    pendingReload = false
+                    load(forceRefresh = true)
+                }
             }
         }
     }

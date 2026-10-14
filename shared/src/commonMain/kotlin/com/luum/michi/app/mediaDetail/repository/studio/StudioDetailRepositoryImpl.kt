@@ -21,8 +21,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.network.domain.RailPageSize
 
-private const val StudioMediaPerPage = 20
 
 private const val StudioDetailQuery = """
 query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
@@ -189,7 +189,7 @@ internal class StudioDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(1),
-                    "perPage" to JsonPrimitive(StudioMediaPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                     "sort" to JsonArray(
                         listOf(JsonPrimitive(sort.apiValue))
                     ),
@@ -237,7 +237,7 @@ internal class StudioDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(StudioMediaPerPage),
+                    "perPage" to JsonPrimitive(RailPageSize),
                     "sort" to JsonArray(
                         listOf(JsonPrimitive(sort.apiValue))
                     ),

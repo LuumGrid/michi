@@ -17,6 +17,8 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import org.junit.Assume.assumeTrue
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
+import com.luum.michi.app.discover.domain.model.DashboardMediaType
 
 /**
  * Live checks against the real AniList API (anonymous, no token).
@@ -58,10 +60,16 @@ class LiveAnonymousTest {
     @Test
     fun dashboardLoads() {
         assumeLive()
-        val result = runBlocking { DashboardRepositoryImpl(liveClient()).loadFeed(hideAdult = false, EnglishStrings) }
+        val result = runBlocking {
+            DashboardRepositoryImpl(liveClient()).loadFeed(
+                mediaType = DashboardMediaType.ANIME,
+                hideAdult = false,
+                strings = EnglishStrings,
+            )
+        }
         assumeNotForbidden("dashboardLoads", result)
         assertTrue(result is NetworkResult.Success)
-        assertTrue(result.value.trendingAnime.isNotEmpty())
+        assertTrue(result.value.sections[DashboardSectionKind.TRENDING_ANIME]?.isNotEmpty() == true)
     }
 
     @Test

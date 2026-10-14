@@ -40,6 +40,7 @@ import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
+import com.luum.michi.app.core.network.domain.RailPageSize
 
 /**
  * Character detail page: person hero + framed roles chips + description +
@@ -255,7 +256,7 @@ private fun AppearancesSection(
 ) {
     MediaRail(
         title = strings.mediaDetailAppearancesTitle,
-        items = holder.mediaItems.take(RailPreviewCount).map { it.toRailItem(strings) },
+        items = holder.mediaItems.take(RailPageSize).map { it.toRailItem(strings) },
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
@@ -263,8 +264,6 @@ private fun AppearancesSection(
     )
 }
 
-/** Rail preview cap: the rail shows the first N, "View all" shows the rest. */
-private const val RailPreviewCount = 10
 
 /** One row per voice actor id (an actor can voice several of the media). */
 private fun List<CharacterMediaItem>.distinctVoiceActors(): List<CharacterMediaItem> =
