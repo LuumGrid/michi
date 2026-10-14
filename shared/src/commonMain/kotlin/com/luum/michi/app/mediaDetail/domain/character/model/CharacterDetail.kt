@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.character.model
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.model.PersonLink
 
 
 
@@ -10,6 +11,7 @@ internal data class CharacterDetail(
     val alternativeNames: List<String>,
     val image: CoverSizes?,
     val descriptionPlain: String,
+    val links: List<PersonLink>,
     val gender: String?,
     val age: String?,
     val bloodType: String?,

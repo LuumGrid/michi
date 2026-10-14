@@ -18,7 +18,7 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.ui.components.SectionHeader
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
@@ -26,6 +26,9 @@ import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkItem
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 
 /**
  * Staff detail page: person hero + framed occupations chips + description +
@@ -39,17 +42,20 @@ internal fun StaffDetailScreen(
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
+    onOpenUrl: (String) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onOpenCharacter: (Int) -> Unit,
     onViewAll: (DetailListKind) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    MediaDetailStateContainer(
+    LoadStateContainer(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        error = holder.error,
-        strings = strings,
+        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
+        loadingLabel = strings.mediaDetailLoadingLabel,
+        errorTitle = strings.mediaDetailErrorLabel,
+        retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
     ) {
@@ -59,6 +65,7 @@ internal fun StaffDetailScreen(
                 holder = holder,
                 strings = strings,
                 bottomPadding = bottomPadding,
+                onOpenUrl = onOpenUrl,
                 onOpenMedia = onOpenMedia,
                 onOpenCharacter = onOpenCharacter,
                 onViewAll = onViewAll,
@@ -73,6 +80,7 @@ private fun StaffDetailContent(
     holder: StaffDetailStateHolder,
     strings: LanguageStrings,
     bottomPadding: Dp,
+    onOpenUrl: (String) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onOpenCharacter: (Int) -> Unit,
     onViewAll: (DetailListKind) -> Unit,
@@ -110,9 +118,18 @@ private fun StaffDetailContent(
         if (detail.descriptionPlain.isNotBlank()) {
             item(key = "description") {
                 MediaDetailExpandableText(
-                    title = strings.mediaDetailDescriptionTitle,
+                    title = strings.mediaDetailBiographyTitle,
                     text = detail.descriptionPlain,
                     strings = strings,
+                )
+            }
+        }
+        if (detail.links.isNotEmpty()) {
+            item(key = "links") {
+                MediaDetailLinkSection(
+                    links = detail.links.map { MediaDetailLinkItem(label = it.label, url = it.url) },
+                    title = strings.mediaDetailExternalLinksTitle,
+                    onOpenUrl = onOpenUrl,
                 )
             }
         }
@@ -160,7 +177,6 @@ private fun StaffInformationPanel(detail: StaffDetail, strings: LanguageStrings)
         detail.death?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailDeathLabel to it) }
         yearsActive?.let { add(strings.mediaDetailYearsActiveLabel to it) }
         detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailHometownLabel to it) }
-        detail.occupations?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailOccupationsLabel to it) }
         detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBloodTypeLabel to it) }
         detail.alternativeNames
             .filter { it.isNotBlank() }

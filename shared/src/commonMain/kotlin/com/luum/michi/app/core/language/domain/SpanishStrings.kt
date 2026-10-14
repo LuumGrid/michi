@@ -68,6 +68,8 @@ object SpanishStrings : LanguageStrings {
     override val daySaturday = "Sábado"
     override val daySunday = "Domingo"
     override val mediaDetailDescriptionTitle = "Sinopsis"
+    override val mediaDetailBiographyTitle = "Biografía"
+    override val mediaDetailCharacterDescriptionTitle = "Descripción"
     override val mediaDetailGenresTitle = "Géneros"
     override val mediaDetailRelationsTitle = "Relacionados"
     override val mediaDetailReadMoreAction = "Leer más"

@@ -69,6 +69,8 @@ interface LanguageStrings {
     val daySaturday: String
     val daySunday: String
     val mediaDetailDescriptionTitle: String
+    val mediaDetailBiographyTitle: String
+    val mediaDetailCharacterDescriptionTitle: String
     val mediaDetailGenresTitle: String
     val mediaDetailRelationsTitle: String
     val mediaDetailReadMoreAction: String

@@ -43,6 +43,7 @@ private fun characterDetail(
     alternativeNames = emptyList(),
     image = null,
     descriptionPlain = "",
+    links = emptyList(),
     gender = null,
     age = null,
     bloodType = null,

@@ -12,7 +12,7 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.util.stripHtml
+import com.luum.michi.app.core.util.toHtmlContent
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
@@ -343,6 +343,7 @@ internal class StaffDetailRepositoryImpl(
                     )
                 } else {
                     val yearsActive = staff.yearsActive
+                    val bio = staff.description?.toHtmlContent()
                     NetworkResult.Success(
                         StaffDetail(
                             id = staff.id,
@@ -351,7 +352,8 @@ internal class StaffDetailRepositoryImpl(
                             alternativeNames = staff.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             image = staff.image?.let { CoverSizes(medium = it.medium, large = it.large) },
-                            descriptionPlain = staff.description?.stripHtml().orEmpty(),
+                            descriptionPlain = bio?.text.orEmpty(),
+                            links = bio?.links.orEmpty(),
                             gender = staff.gender?.takeIf { it.isNotBlank() },
                             age = staff.age?.takeIf { it.isNotBlank() },
                             birthday = staff.dateOfBirth?.formatDate(strings),

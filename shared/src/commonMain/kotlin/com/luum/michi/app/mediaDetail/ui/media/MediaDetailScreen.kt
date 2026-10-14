@@ -14,7 +14,7 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailExternalLinks
@@ -27,6 +27,7 @@ import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.language.domain.networkErrorMessage
 
 /**
  * Full media detail page. Section order: hero → quick stats (+ next-episode
@@ -53,11 +54,13 @@ internal fun MediaDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    MediaDetailStateContainer(
+    LoadStateContainer(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        error = holder.error,
-        strings = strings,
+        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
+        loadingLabel = strings.mediaDetailLoadingLabel,
+        errorTitle = strings.mediaDetailErrorLabel,
+        retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
     ) {

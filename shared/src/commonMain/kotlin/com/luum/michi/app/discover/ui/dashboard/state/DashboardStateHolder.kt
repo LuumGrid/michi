@@ -26,27 +26,31 @@ internal class DashboardStateHolder(
     var mediaType: DashboardMediaType by mutableStateOf(DashboardMediaType.ANIME)
         private set
 
-    // Snapshot map so a completed load recomposes the screen.
+    // Snapshot maps so a completed load recomposes the screen.
     private val feeds = mutableStateMapOf<DashboardMediaType, DashboardFeed>()
+    private val errors = mutableStateMapOf<DashboardMediaType, NetworkError>()
     private val lastLoaded = mutableMapOf<DashboardMediaType, TimeSource.Monotonic.ValueTimeMark>()
     private val timeMark = TimeSource.Monotonic
 
     private var loadingState: Boolean by mutableStateOf(false)
     private var refreshingState: Boolean by mutableStateOf(false)
-    private var errorState: NetworkError? by mutableStateOf(null)
 
     // 18+ gate, owned here so a change can force a reload. Hidden by default
     // (matches the settings default); `false` lets the server return both.
     private var hideAdultState: Boolean = true
 
-    // A force-refresh that arrives while another load is in flight would be
-    // dropped; remember it so the in-flight (possibly stale) response is
-    // followed by a reload with the value in effect at that point.
+    // A load request that arrives while another is in flight would be dropped;
+    // remember it (and whether it was forced) so the in-flight response is
+    // followed by a reload with the selection/value in effect at that point.
+    private var inFlightType: DashboardMediaType? = null
     private var pendingReload = false
+    private var pendingForce = false
 
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
-    val error: NetworkError? get() = errorState
+
+    /** Error of the selected type only: an Anime failure never shows on Manga. */
+    val error: NetworkError? get() = errors[mediaType]
 
     /** Rails for the current [mediaType]; empty until its first load. */
     val sections: Map<DashboardSectionKind, List<MediaItem>>
@@ -59,10 +63,13 @@ internal class DashboardStateHolder(
         load()
     }
 
-    /** Mirror the 18+ setting; a change forces a reload so the feed matches. */
+    /** Mirror the 18+ setting; every rail is gated, so drop both caches first. */
     fun setHideAdult(hideAdult: Boolean) {
         if (hideAdultState == hideAdult) return
         hideAdultState = hideAdult
+        feeds.clear()
+        lastLoaded.clear()
+        errors.clear()
         load(forceRefresh = true)
     }
 
@@ -73,9 +80,13 @@ internal class DashboardStateHolder(
         val mark = lastLoaded[type]
         if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && hasData) return
         // Drop overlapping loads so a slower (stale) response cannot overwrite
-        // a newer one; a forced one is deferred instead of lost.
+        // a newer one. Defer instead of losing: a forced reload, or a load for
+        // a type other than the one in flight (the selector changed mid-load).
         if (loadingState || refreshingState) {
-            if (forceRefresh) pendingReload = true
+            if (forceRefresh || inFlightType != type) {
+                pendingReload = true
+                pendingForce = pendingForce || forceRefresh
+            }
             return
         }
         val isRefresh = forceRefresh && hasData
@@ -84,7 +95,8 @@ internal class DashboardStateHolder(
         } else {
             loadingState = true
         }
-        errorState = null
+        inFlightType = type
+        errors.remove(type)
         scope.launch {
             try {
                 when (val result = repository.loadFeed(type, hideAdultState, strings)) {
@@ -92,16 +104,18 @@ internal class DashboardStateHolder(
                         feeds[type] = result.value
                         lastLoaded[type] = timeMark.markNow()
                     }
-                    is NetworkResult.Failure -> errorState = result.error
+                    is NetworkResult.Failure -> errors[type] = result.error
                 }
             } finally {
                 loadingState = false
                 refreshingState = false
-                // A refresh was requested mid-flight: run it now so the final
-                // state reflects the newest selection/hideAdult, not the stale one.
+                inFlightType = null
+                // Run the deferred request (if any) with the value in effect now.
                 if (pendingReload) {
+                    val force = pendingForce
                     pendingReload = false
-                    load(forceRefresh = true)
+                    pendingForce = false
+                    load(forceRefresh = force)
                 }
             }
         }

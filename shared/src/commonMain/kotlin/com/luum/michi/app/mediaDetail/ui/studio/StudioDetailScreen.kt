@@ -43,13 +43,14 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.ui.components.SectionHeader
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.mediaDetail.ui.studio.components.studioFilterSummary
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.forQuality
 import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.core.language.domain.networkErrorMessage
 
 /**
  * Studio detail page: name hero + a 2-column media grid. Sort and the
@@ -71,11 +72,13 @@ internal fun StudioDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    MediaDetailStateContainer(
+    LoadStateContainer(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        error = holder.error,
-        strings = strings,
+        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
+        loadingLabel = strings.mediaDetailLoadingLabel,
+        errorTitle = strings.mediaDetailErrorLabel,
+        retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
     ) {

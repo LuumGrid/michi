@@ -64,7 +64,7 @@ $MediaFields
     }
   }
   popularAnime: Page(perPage: $RailPageSize) {
-    media(type: ANIME, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+    media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
@@ -74,7 +74,7 @@ $MediaFields
     }
   }
   bestAnime: Page(perPage: $RailPageSize) {
-    media(type: ANIME, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+    media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
@@ -84,7 +84,7 @@ $MediaFields
     }
   }
   bestAnimeNow: Page(perPage: $RailPageSize) {
-    media(type: ANIME, status: RELEASING, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+    media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], status: RELEASING, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
@@ -112,7 +112,7 @@ $MediaFields
     }
   }
   popularManga: Page(perPage: $RailPageSize) {
-    media(type: MANGA, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin: JP, format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
@@ -122,17 +122,17 @@ $MediaFields
     }
   }
   popularManhwa: Page(perPage: $RailPageSize) {
-    media(type: MANGA, countryOfOrigin: KR, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin: KR, format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
   popularManhua: Page(perPage: $RailPageSize) {
-    media(type: MANGA, countryOfOrigin_in: [CN, TW], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin_in: [CN, TW], format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
   bestManga: Page(perPage: $RailPageSize) {
-    media(type: MANGA, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin: JP, format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
@@ -142,12 +142,12 @@ $MediaFields
     }
   }
   bestManhwa: Page(perPage: $RailPageSize) {
-    media(type: MANGA, countryOfOrigin: KR, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin: KR, format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
   bestManhua: Page(perPage: $RailPageSize) {
-    media(type: MANGA, countryOfOrigin_in: [CN, TW], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
+    media(type: MANGA, countryOfOrigin_in: [CN, TW], format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }

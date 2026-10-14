@@ -577,6 +577,7 @@ internal fun Root(
                                     characterHolder.refresh()
                                 }
                             },
+                            onOpenUrl = { urlOpener.open(it) },
                             onOpenMedia = { state.openMedia(it) },
                             onOpenStaff = { state.openStaff(it) },
                             onViewAll = { state.openDetailList(it, destination.id) },
@@ -592,6 +593,7 @@ internal fun Root(
                                     staffHolder.refresh()
                                 }
                             },
+                            onOpenUrl = { urlOpener.open(it) },
                             onOpenMedia = { state.openMedia(it) },
                             onOpenCharacter = { state.openCharacter(it) },
                             onViewAll = { state.openDetailList(it, destination.id) },

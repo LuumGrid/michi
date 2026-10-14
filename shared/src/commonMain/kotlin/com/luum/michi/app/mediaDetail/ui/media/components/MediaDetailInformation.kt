@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,12 +38,12 @@ import com.luum.michi.app.mediaDetail.domain.media.model.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.media.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkItem
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.brandColor
 
 /**
  * Framed information panel: a two-column grid of the short identity fields
@@ -194,7 +193,7 @@ internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
     }
 }
 
-/** Framed link list: site icon (or brand dot) + site name, tap opens the URL. */
+/** Framed link list: maps media links onto the shared link section. */
 @Composable
 internal fun MediaDetailExternalLinks(
     links: List<MediaExternalLink>,
@@ -202,71 +201,20 @@ internal fun MediaDetailExternalLinks(
     strings: LanguageStrings,
     onOpenUrl: (String) -> Unit,
 ) {
-    if (links.isEmpty()) return
-    MediaDetailPanel {
-        SectionHeader(title)
-        Spacer(modifier = Modifier.height(4.dp))
-        links.forEach { link ->
-            LinkRow(link = link, strings = strings, onOpenUrl = onOpenUrl)
-        }
-    }
-}
-
-@Composable
-private fun LinkRow(
-    link: MediaExternalLink,
-    strings: LanguageStrings,
-    onOpenUrl: (String) -> Unit,
-) {
-    val accent = link.color?.let { brandColor(it) }?.takeIf { it != Color.Transparent }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onOpenUrl(link.url) }
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (link.isOfficialSite()) {
-            Icon(
-                imageVector = AppIcons.Web,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp),
+    MediaDetailLinkSection(
+        links = links.map { link ->
+            MediaDetailLinkItem(
+                label = link.siteLabel(strings),
+                url = link.url,
+                iconUrl = link.iconUrl,
+                colorHex = link.color,
+                isOfficialSite = link.isOfficialSite(),
+                language = link.language,
             )
-        } else if (!link.iconUrl.isNullOrBlank()) {
-            SubcomposeAsyncImage(
-                model = link.iconUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                loading = {},
-                error = {},
-                modifier = Modifier.size(24.dp),
-            )
-        } else if (accent != null) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(accent),
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = link.siteLabel(strings),
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        link.language?.takeIf { it.isNotBlank() }?.let { language ->
-            Text(
-                text = "($language)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-    }
+        },
+        title = title,
+        onOpenUrl = onOpenUrl,
+    )
 }
 
 /** Trailer card; taps open the external video URL when there is one. */

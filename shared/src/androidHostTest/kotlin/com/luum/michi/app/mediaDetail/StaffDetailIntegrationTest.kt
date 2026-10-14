@@ -48,6 +48,7 @@ private fun staffDetail(
     alternativeNames = emptyList(),
     image = null,
     descriptionPlain = "",
+    links = emptyList(),
     gender = null,
     age = null,
     birthday = null,

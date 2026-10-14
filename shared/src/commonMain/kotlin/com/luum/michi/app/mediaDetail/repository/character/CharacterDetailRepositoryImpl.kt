@@ -15,7 +15,7 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.util.stripHtml
+import com.luum.michi.app.core.util.toHtmlContent
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -290,6 +290,7 @@ internal class CharacterDetailRepositoryImpl(
                         NetworkError.GraphQL(listOf("Character not found for id=$id")),
                     )
                 } else {
+                    val bio = character.description?.toHtmlContent()
                     NetworkResult.Success(
                         CharacterDetail(
                             id = character.id,
@@ -298,7 +299,8 @@ internal class CharacterDetailRepositoryImpl(
                             alternativeNames = character.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             image = character.image?.let { CoverSizes(medium = it.medium, large = it.large) },
-                            descriptionPlain = character.description?.stripHtml().orEmpty(),
+                            descriptionPlain = bio?.text.orEmpty(),
+                            links = bio?.links.orEmpty(),
                             gender = character.gender?.takeIf { it.isNotBlank() },
                             age = character.age?.takeIf { it.isNotBlank() },
                             bloodType = character.bloodType?.takeIf { it.isNotBlank() },

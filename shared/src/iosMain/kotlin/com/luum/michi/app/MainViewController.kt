@@ -6,6 +6,7 @@ import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
 import com.luum.michi.app.core.navigation.repository.IosUrlOpener
 import com.luum.michi.app.core.navigation.repository.IosShareLauncher
 import com.luum.michi.app.core.storage.repository.NSUserDefaultsSettingsStore
+import com.luum.michi.app.core.network.repository.IosConnectivity
 import platform.UIKit.UIViewController
 
 /**
@@ -40,6 +41,7 @@ private object IosMichiDependencies {
             urlOpener = IosUrlOpener(),
             shareLauncher = IosShareLauncher(),
             settingsStore = NSUserDefaultsSettingsStore(),
+            connectivity = IosConnectivity(),
         ).also {
             current = it
             it.bootstrap()

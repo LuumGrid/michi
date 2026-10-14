@@ -29,7 +29,7 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.ui.components.SectionHeader
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailStateContainer
+import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
 import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageOptions
@@ -41,6 +41,9 @@ import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkItem
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 
 /**
  * Character detail page: person hero + framed roles chips + description +
@@ -54,17 +57,20 @@ internal fun CharacterDetailScreen(
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
+    onOpenUrl: (String) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onOpenStaff: (Int) -> Unit,
     onViewAll: (DetailListKind) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    MediaDetailStateContainer(
+    LoadStateContainer(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        error = holder.error,
-        strings = strings,
+        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
+        loadingLabel = strings.mediaDetailLoadingLabel,
+        errorTitle = strings.mediaDetailErrorLabel,
+        retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
     ) {
@@ -74,6 +80,7 @@ internal fun CharacterDetailScreen(
                 holder = holder,
                 strings = strings,
                 bottomPadding = bottomPadding,
+                onOpenUrl = onOpenUrl,
                 onOpenMedia = onOpenMedia,
                 onOpenStaff = onOpenStaff,
                 onViewAll = onViewAll,
@@ -88,6 +95,7 @@ private fun CharacterDetailContent(
     holder: CharacterDetailStateHolder,
     strings: LanguageStrings,
     bottomPadding: Dp,
+    onOpenUrl: (String) -> Unit,
     onOpenMedia: (Int) -> Unit,
     onOpenStaff: (Int) -> Unit,
     onViewAll: (DetailListKind) -> Unit,
@@ -126,9 +134,18 @@ private fun CharacterDetailContent(
         if (detail.descriptionPlain.isNotBlank()) {
             item(key = "description") {
                 MediaDetailExpandableText(
-                    title = strings.mediaDetailDescriptionTitle,
+                    title = strings.mediaDetailCharacterDescriptionTitle,
                     text = detail.descriptionPlain,
                     strings = strings,
+                )
+            }
+        }
+        if (detail.links.isNotEmpty()) {
+            item(key = "links") {
+                MediaDetailLinkSection(
+                    links = detail.links.map { MediaDetailLinkItem(label = it.label, url = it.url) },
+                    title = strings.mediaDetailExternalLinksTitle,
+                    onOpenUrl = onOpenUrl,
                 )
             }
         }

@@ -258,6 +258,87 @@ class DashboardIntegrationTest {
     }
 
     @Test
+    fun selectTypeDuringLoadLoadsTheNewType() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 9))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val holder = wired(graphQL)
+        val gate = graphQL.gate!!
+
+        holder.load() // anime in flight
+        holder.selectType(DashboardMediaType.MANGA) // mid-flight: must not be lost
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertEquals(2, graphQL.calls, "the deferred load for the new type ran")
+        assertEquals(DashboardMediaType.MANGA, holder.mediaType)
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+    }
+
+    @Test
+    fun setHideAdultDropsBothTypes() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 9))),
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 9))),
+            ),
+        )
+        val holder = wired(graphQL)
+
+        holder.load()
+        holder.selectType(DashboardMediaType.MANGA)
+        holder.selectType(DashboardMediaType.ANIME) // cached
+        assertEquals(2, graphQL.calls)
+
+        holder.setHideAdult(false) // both caches dropped, current reloaded
+        assertEquals(3, graphQL.calls)
+
+        holder.selectType(DashboardMediaType.MANGA) // no longer cached
+        assertEquals(4, graphQL.calls)
+    }
+
+    @Test
+    fun errorIsPerType() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 9))),
+            ),
+            failureAt = 0,
+        )
+        val holder = wired(graphQL)
+
+        holder.load()
+        assertTrue(holder.error != null, "anime failed")
+
+        holder.selectType(DashboardMediaType.MANGA)
+        assertEquals(null, holder.error, "an anime failure never shows on manga")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+    }
+
+    @Test
+    fun animeMainRailsExcludeMoviesAndMangaRailsStayJapanese() {
+        val animeGraphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
+        wired(animeGraphQL).load()
+        val animeQuery = animeGraphQL.requests.single().query
+        assertTrue(animeQuery.contains("format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL]"))
+        assertFalse(animeQuery.contains("countryOfOrigin"))
+
+        val mangaGraphQL = FakeGraphQL(
+            listOf(dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 1)))),
+        )
+        wired(mangaGraphQL).selectType(DashboardMediaType.MANGA)
+        val mangaQuery = mangaGraphQL.requests.single().query
+        assertTrue(mangaQuery.contains("countryOfOrigin: JP"))
+        assertTrue(mangaQuery.contains("format_in: [MANGA, ONE_SHOT]"))
+    }
+
+    @Test
     fun factoryDoesNotLoadOnCreation() {
         val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
 

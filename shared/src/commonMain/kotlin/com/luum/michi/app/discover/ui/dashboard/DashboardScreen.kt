@@ -1,28 +1,14 @@
 package com.luum.michi.app.discover.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -37,11 +23,11 @@ import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaCoverCardCoverWidth
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.MessagePanel
-import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -74,7 +60,6 @@ internal fun DashboardScreen(
         strings = strings,
         modifier = modifier,
         bottomPadding = bottomPadding,
-        onRefresh = { holder.load(forceRefresh = true) },
         onRetry = { holder.load(forceRefresh = true) },
     )
 }
@@ -85,7 +70,6 @@ private fun DashboardContent(
     onOpenMedia: (Int) -> Unit,
     strings: LanguageStrings,
     bottomPadding: Dp,
-    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -98,6 +82,7 @@ private fun DashboardContent(
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { kind to it }
         }
+    val errorMessage = holder.error?.let { strings.networkErrorMessage(it) }
     Column(modifier = modifier.fillMaxSize()) {
         ChipRail(
             tabs = listOf(
@@ -107,79 +92,52 @@ private fun DashboardContent(
             selected = holder.mediaType,
             onSelect = holder::selectType,
         )
-        when {
-            holder.isLoading && sections.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
+        if (sections.isEmpty() && !holder.isLoading && errorMessage == null) {
+            // Loaded, but every rail came back empty.
+            MessagePanel(
+                title = strings.discoverEmptyLabel,
+                message = null,
+                icon = AppIcons.Search,
+                actionLabel = null,
+                onAction = {},
+            )
+        } else {
+            LoadStateContainer(
+                hasContent = sections.isNotEmpty(),
+                isLoading = holder.isLoading || holder.isRefreshing,
+                errorMessage = errorMessage,
+                loadingLabel = strings.discoverLoadingLabel,
+                errorTitle = strings.discoverErrorLabel,
+                retryLabel = strings.retryAction,
+                onRetry = onRetry,
+                // With content already on screen, a failed refresh is a compact
+                // line above the rails, not a full-page error.
+                refreshError = if (sections.isNotEmpty()) errorMessage else null,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = 16.dp + bottomPadding,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = strings.discoverLoadingLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
+                    items(
+                        items = sections,
+                        key = { it.first },
+                    ) { (kind, media) ->
+                        // Rails stay edge-to-edge (card vs edge-to-edge rule):
+                        // a rail boxed in a card clips on the rounded corners.
+                        MediaRail(
+                            title = kind.title(strings, current, next),
+                            items = media.mapNotNull { it.toRailItem() },
+                            onSelect = onOpenMedia,
+                            cardWidth = if (kind.isFeatured) {
+                                MediaCoverCardCoverWidth * FeaturedCoverScale
+                            } else {
+                                MediaCoverCardCoverWidth
+                            },
                         )
-                    }
-                }
-            }
-            holder.error != null && sections.isEmpty() -> {
-                MessagePanel(
-                    title = strings.discoverErrorLabel,
-                    message = holder.error?.let { strings.networkErrorMessage(it) },
-                    icon = Icons.Filled.Warning,
-                    actionLabel = strings.retryAction,
-                    onAction = onRetry,
-                )
-            }
-            sections.isEmpty() -> {
-                MessagePanel(
-                    title = strings.discoverEmptyLabel,
-                    message = null,
-                    icon = AppIcons.Search,
-                    actionLabel = null,
-                    onAction = {},
-                )
-            }
-            else -> {
-                PullRefresh(
-                    isRefreshing = holder.isRefreshing,
-                    onRefresh = onRefresh,
-                ) {
-                    LazyColumn(
-                        contentPadding = PaddingValues(
-                            top = 8.dp,
-                            bottom = 16.dp + bottomPadding,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                    ) {
-                        if (holder.error != null) {
-                            item(key = "refresh_error") {
-                                DashboardRefreshError(
-                                    message = strings.networkErrorMessage(holder.error!!),
-                                    retryLabel = strings.retryAction,
-                                    onRetry = onRetry,
-                                )
-                            }
-                        }
-                        items(
-                            items = sections,
-                            key = { it.first },
-                        ) { (kind, media) ->
-                            // Rails stay edge-to-edge (card vs edge-to-edge rule):
-                            // a rail boxed in a card clips on the rounded corners.
-                            MediaRail(
-                                title = kind.title(strings, current, next),
-                                items = media.mapNotNull { it.toRailItem() },
-                                onSelect = onOpenMedia,
-                                cardWidth = if (kind.isFeatured) {
-                                    MediaCoverCardCoverWidth * FeaturedCoverScale
-                                } else {
-                                    MediaCoverCardCoverWidth
-                                },
-                            )
-                        }
                     }
                 }
             }
@@ -226,32 +184,4 @@ private fun MediaItem.toRailItem(): MediaRailItem? = id?.let {
         image = cover,
         subtitle = meta,
     )
-}
-
-/**
- * Non-blocking refresh error: the rails keep their stale content and a compact
- * line with retry sits above them (a failed refresh must not blank the page).
- */
-@Composable
-private fun DashboardRefreshError(
-    message: String,
-    retryLabel: String,
-    onRetry: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = onRetry) {
-            Text(text = retryLabel)
-        }
-    }
 }
