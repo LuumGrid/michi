@@ -268,6 +268,9 @@ internal class CharacterDetailRepositoryImpl(
         voiceLanguage: String,
         strings: LanguageStrings,
     ): NetworkResult<CharacterDetail> {
+        // Warm the site catalog in its own scope: it overlaps this query and is
+        // only awaited if the biography actually carries links.
+        externalLinkCatalog.prefetch()
         val request = AniListGraphQLRequest(
             query = CharacterDetailQuery,
             variables = JsonObject(

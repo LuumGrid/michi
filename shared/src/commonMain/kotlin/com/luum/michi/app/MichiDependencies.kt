@@ -97,7 +97,7 @@ class MichiDependencies internal constructor(
         ProfileRepositoryImpl(graphQLClient)
 
     internal val externalLinkCatalogRepository: ExternalLinkCatalogRepository =
-        ExternalLinkCatalogRepositoryImpl(graphQLClient, settingsStore)
+        ExternalLinkCatalogRepositoryImpl(graphQLClient, settingsStore, scope)
 
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)

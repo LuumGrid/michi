@@ -320,6 +320,9 @@ internal class StaffDetailRepositoryImpl(
 ) : StaffDetailRepository {
 
     override suspend fun loadDetail(id: Int, strings: LanguageStrings): NetworkResult<StaffDetail> {
+        // Warm the site catalog in its own scope: it overlaps this query and is
+        // only awaited if the biography actually carries links.
+        externalLinkCatalog.prefetch()
         val request = AniListGraphQLRequest(
             query = StaffDetailQuery,
             variables = JsonObject(

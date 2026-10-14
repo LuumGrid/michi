@@ -24,7 +24,9 @@ internal class DashboardStateHolder(
     private val repository: DashboardRepository,
     private val cache: DashboardFeedCache,
     private val scope: CoroutineScope,
-    private val strings: LanguageStrings,
+    hideAdult: Boolean,
+    // Read once per request, before it launches: one load never mixes languages.
+    private val stringsProvider: () -> LanguageStrings,
 ) {
     // Selected selector value; loads the other type on switch (cached per type).
     var mediaType: DashboardMediaType by mutableStateOf(DashboardMediaType.ANIME)
@@ -33,18 +35,28 @@ internal class DashboardStateHolder(
     // Snapshot maps so a completed load recomposes the screen.
     private val feeds = mutableStateMapOf<DashboardMediaType, DashboardFeed>()
     private val errors = mutableStateMapOf<DashboardMediaType, NetworkError>()
+    // Loading lives per type: an Anime request finishing must not clear (or set)
+    // Manga's indicator, which is what kept a pull-to-refresh spinning forever
+    // after switching to a type served from the cache.
+    private val loading = mutableStateMapOf<DashboardMediaType, Boolean>()
+    private val refreshing = mutableStateMapOf<DashboardMediaType, Boolean>()
     private val lastLoaded = mutableMapOf<DashboardMediaType, TimeSource.Monotonic.ValueTimeMark>()
 
     // One request per type at a time: a select during a preload joins it.
     private val inFlight = mutableMapOf<DashboardMediaType, Job>()
+    // Gate each in-flight request was launched with, so a gate change mid-flight
+    // can schedule a reload of the new key (the stale response is discarded).
+    private val inFlightGate = mutableMapOf<DashboardMediaType, Boolean>()
     private val timeMark = TimeSource.Monotonic
 
-    private var loadingState: Boolean by mutableStateOf(false)
-    private var refreshingState: Boolean by mutableStateOf(false)
+    // 18+ gate, applied from creation so the screen's first sync is a no-op and
+    // a cold start with an allowed gate and a fresh cache never hits the network.
+    private var hideAdultState: Boolean = hideAdult
 
-    // 18+ gate, owned here so a change can force a reload. Hidden by default
-    // (matches the settings default); `false` lets the server return both.
-    private var hideAdultState: Boolean = true
+    // Bumped by invalidate(): a response from an older generation is dropped
+    // (never rewrites memory or disk with the previous language's `meta`).
+    // Observable so the screen can key its load effect on it.
+    private var generationState by mutableStateOf(0)
 
     // A load request that arrives while another is in flight would be dropped;
     // remember it (and whether it was forced) so the in-flight response is
@@ -52,8 +64,11 @@ internal class DashboardStateHolder(
     private var pendingReload = false
     private var pendingForce = false
 
-    val isLoading: Boolean get() = loadingState
-    val isRefreshing: Boolean get() = refreshingState
+    /** Cache generation; a change means "reload when the screen is visible". */
+    val generation: Int get() = generationState
+
+    val isLoading: Boolean get() = loading[mediaType] == true
+    val isRefreshing: Boolean get() = refreshing[mediaType] == true
 
     /** Error of the selected type only: an Anime failure never shows on Manga. */
     val error: NetworkError? get() = errors[mediaType]
@@ -69,23 +84,33 @@ internal class DashboardStateHolder(
         load()
     }
 
-    /** Mirror the 18+ setting; every rail is gated, so drop the in-memory caches. */
+    /**
+     * Mirror the 18+ setting. The disk cache is keyed by the gate, so a fresh
+     * cache under the new value is valid: drop the in-memory rails (they belong
+     * to the old gate) and reload **without forcing**, hydrating the new key.
+     * The first sync (equal to the value applied at creation) is a no-op.
+     */
     fun setHideAdult(hideAdult: Boolean) {
         if (hideAdultState == hideAdult) return
         hideAdultState = hideAdult
         feeds.clear()
         lastLoaded.clear()
         errors.clear()
-        load(forceRefresh = true)
+        load()
     }
 
-    /** The app language changed: the cached `meta` is localized, so drop it all. */
-    fun clearCacheAndReload() {
+    /**
+     * The app language changed: the cached `meta` is localized, so drop disk +
+     * memory and bump the generation. Launches nothing — the screen reloads
+     * when it is (re)composed, so a change made on another tab or under
+     * Settings never fires a background request.
+     */
+    fun invalidate() {
+        generationState += 1
         cache.clear()
         feeds.clear()
         lastLoaded.clear()
         errors.clear()
-        load(forceRefresh = true)
     }
 
     /** Load the current type's rails, skipping the network within the TTL. */
@@ -98,19 +123,24 @@ internal class DashboardStateHolder(
         val mark = lastLoaded[type]
         if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && hasData) return
         // Join an in-flight request for this type (e.g. a preload) instead of
-        // firing a second one for the same type+gate.
+        // firing a second one for the same type+gate. When the in-flight request
+        // carries a different gate (or a force was asked for), the response will
+        // not satisfy this call, so schedule a reload for after it lands.
         if (inFlight[type]?.isActive == true) {
-            if (forceRefresh) {
+            if (forceRefresh || inFlightGate[type] != hideAdultState) {
                 pendingReload = true
-                pendingForce = true
-            } else if (hasData) {
-                refreshingState = true
-            } else {
-                loadingState = true
+                pendingForce = pendingForce || forceRefresh
             }
+            if (hasData) refreshing[type] = true else loading[type] = true
             return
         }
-        launchLoad(type = type, gate = hideAdultState, forceRefresh = forceRefresh, visible = true)
+        launchLoad(
+            type = type,
+            gate = hideAdultState,
+            forceRefresh = forceRefresh,
+            visible = true,
+            strings = stringsProvider(),
+        )
     }
 
     /** Warm the other type once: hydrate first, skip the network when fresh. */
@@ -124,7 +154,13 @@ internal class DashboardStateHolder(
         ) {
             return
         }
-        launchLoad(type = other, gate = hideAdultState, forceRefresh = false, visible = false)
+        launchLoad(
+            type = other,
+            gate = hideAdultState,
+            forceRefresh = false,
+            visible = false,
+            strings = stringsProvider(),
+        )
     }
 
     private fun launchLoad(
@@ -132,33 +168,43 @@ internal class DashboardStateHolder(
         gate: Boolean,
         forceRefresh: Boolean,
         visible: Boolean,
+        strings: LanguageStrings,
     ) {
+        val launchGeneration = generation
         val hasData = feeds[type]?.sections?.isNotEmpty() == true
         val isRefresh = forceRefresh && hasData
         if (visible) {
-            if (isRefresh) refreshingState = true else loadingState = true
+            if (isRefresh) refreshing[type] = true else loading[type] = true
         }
         errors.remove(type)
+        inFlightGate[type] = gate
         inFlight[type] = scope.launch {
             try {
                 when (val result = repository.loadFeed(type, gate, strings)) {
                     is NetworkResult.Success -> {
-                        // Discard a response whose gate is no longer in effect.
-                        if (gate == hideAdultState) {
-                            feeds[type] = result.value
-                            lastLoaded[type] = timeMark.markNow()
+                        // Drop a response from an older generation (language
+                        // changed mid-flight): it must not rewrite either cache.
+                        if (launchGeneration == generation) {
+                            // Discard a response whose gate is no longer in effect.
+                            if (gate == hideAdultState) {
+                                feeds[type] = result.value
+                                lastLoaded[type] = timeMark.markNow()
+                            }
+                            cache.save(type, gate, result.value)
                         }
-                        cache.save(type, gate, result.value)
                     }
                     is NetworkResult.Failure ->
-                        if (visible && gate == hideAdultState) errors[type] = result.error
+                        if (visible && launchGeneration == generation && gate == hideAdultState) {
+                            errors[type] = result.error
+                        }
                 }
             } finally {
                 inFlight.remove(type)
-                if (type == mediaType) {
-                    loadingState = false
-                    refreshingState = false
-                }
+                inFlightGate.remove(type)
+                // Only this type's indicators: another type's request (or a
+                // cached switch) is untouched.
+                loading[type] = false
+                refreshing[type] = false
                 if (pendingReload) {
                     val force = pendingForce
                     pendingReload = false
@@ -181,12 +227,14 @@ internal class DashboardStateHolder(
 }
 
 /** Pure-logic factory. Loading is explicit (the screen triggers it), so
- *  creating a holder never fires a request. */
+ *  creating a holder never fires a request. [stringsProvider] is read once per
+ *  request so the holder survives a language change (and keeps the selection). */
 internal fun createDashboardStateHolder(
     repository: DashboardRepository,
     cache: DashboardFeedCache,
     scope: CoroutineScope,
-    strings: LanguageStrings,
+    hideAdult: Boolean = true,
+    stringsProvider: () -> LanguageStrings,
 ): DashboardStateHolder {
-    return DashboardStateHolder(repository, cache, scope, strings)
+    return DashboardStateHolder(repository, cache, scope, hideAdult, stringsProvider)
 }

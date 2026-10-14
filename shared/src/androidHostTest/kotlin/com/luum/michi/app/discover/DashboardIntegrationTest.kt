@@ -19,6 +19,7 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import com.luum.michi.app.discover.domain.CachedDashboardFeed
 import com.luum.michi.app.discover.domain.DashboardFeed
@@ -104,16 +105,20 @@ private class InMemoryDashboardFeedCache : DashboardFeedCache {
     }
 }
 
-private fun wired(graphQL: FakeGraphQL): DashboardStateHolder =
-    wiredWithCache(graphQL, InMemoryDashboardFeedCache())
+private fun wired(graphQL: FakeGraphQL, hideAdult: Boolean = true): DashboardStateHolder =
+    wiredWithCache(graphQL, InMemoryDashboardFeedCache(), hideAdult)
 
-private fun wiredWithCache(graphQL: FakeGraphQL, cache: DashboardFeedCache): DashboardStateHolder =
+private fun wiredWithCache(
+    graphQL: FakeGraphQL,
+    cache: DashboardFeedCache,
+    hideAdult: Boolean = true,
+): DashboardStateHolder =
     createDashboardStateHolder(
         repository = DashboardRepositoryImpl(graphQL),
         cache = cache,
         scope = CoroutineScope(Dispatchers.Unconfined),
-        strings = EnglishStrings,
-    )
+        hideAdult = hideAdult,
+    ) { EnglishStrings }
 
 class DashboardIntegrationTest {
 
@@ -499,7 +504,7 @@ class DashboardIntegrationTest {
     }
 
     @Test
-    fun clearCacheAndReloadDropsTheCache() {
+    fun invalidateThenReloadRewritesTheCache() {
         val cache = InMemoryDashboardFeedCache()
         val graphQL = FakeGraphQL(
             listOf(
@@ -510,7 +515,8 @@ class DashboardIntegrationTest {
         val holder = wiredWithCache(graphQL, cache)
 
         holder.load() // call 1, writes the cache
-        holder.clearCacheAndReload() // language change: drop + reload
+        holder.invalidate() // language change: drop disk + memory, launch nothing
+        holder.load() // the screen composes again
 
         assertEquals(2, graphQL.calls)
         // The reload rewrote the cache with the fresh (re-localized) feed.
@@ -518,6 +524,120 @@ class DashboardIntegrationTest {
             listOf(2),
             cache.load(DashboardMediaType.ANIME, true)
                 ?.feed?.sections?.get(DashboardSectionKind.TRENDING_ANIME)?.map { it.id },
+        )
+    }
+
+    @Test
+    fun loadingIsTrackedPerType() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "M", format = "MANGA", episodes = null, chapters = 1))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val cache = InMemoryDashboardFeedCache().apply {
+            save(
+                mediaType = DashboardMediaType.MANGA,
+                hideAdult = true,
+                feed = DashboardFeed(
+                    mapOf(DashboardSectionKind.TRENDING_MANGA to listOf(MediaItem(title = "Cached", meta = "Manga", id = 7))),
+                ),
+            )
+        }
+        val holder = wiredWithCache(graphQL, cache)
+        val gate = graphQL.gate!!
+
+        holder.load() // anime in flight
+        assertTrue(holder.isLoading, "the selected type is loading")
+
+        holder.selectType(DashboardMediaType.MANGA) // fresh cache: no request, no spinner
+        assertFalse(holder.isLoading, "the manga rail came from the cache")
+        assertFalse(holder.isRefreshing)
+
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertFalse(holder.isLoading, "the anime request finished without touching manga's indicator")
+        assertFalse(holder.isRefreshing)
+        assertEquals(listOf(7), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+    }
+
+    @Test
+    fun gateChangeWithFreshNewKeyCacheSkipsTheNetwork() {
+        val cache = InMemoryDashboardFeedCache().apply {
+            save(
+                mediaType = DashboardMediaType.ANIME,
+                hideAdult = false,
+                feed = DashboardFeed(
+                    mapOf(DashboardSectionKind.TRENDING_ANIME to listOf(MediaItem(title = "Cached", meta = "Anime", id = 9))),
+                ),
+            )
+        }
+        val graphQL = FakeGraphQL(emptyList()) // any call would crash
+        val holder = wiredWithCache(graphQL, cache, hideAdult = true)
+
+        holder.setHideAdult(false) // the new gate's cache is fresh: hydrate, no network
+
+        assertEquals(0, graphQL.calls, "a fresh cache under the new gate skips the network")
+        assertEquals(listOf(9), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
+    fun invalidateDoesNotLoadUntilComposed() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "B"))),
+            ),
+        )
+        val cache = InMemoryDashboardFeedCache()
+        val holder = wiredWithCache(graphQL, cache)
+
+        holder.load()
+        assertEquals(1, graphQL.calls)
+        val before = holder.generation
+
+        holder.invalidate() // language change while another tab is visible
+
+        assertEquals(1, graphQL.calls, "invalidate() launches nothing")
+        assertTrue(holder.generation != before, "the generation is observable so the screen can re-key")
+        assertTrue(holder.sections.isEmpty(), "the stale-language rails are dropped")
+
+        holder.load() // the screen is composed again
+
+        assertEquals(2, graphQL.calls)
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
+    fun staleGenerationDoesNotWriteDisk() {
+        val cache = InMemoryDashboardFeedCache()
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingManga = listOf(mediaJson(1, "Stale"))),
+                dashboardJson(trendingManga = listOf(mediaJson(2, "Fresh"))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val holder = wiredWithCache(graphQL, cache)
+        val gate = graphQL.gate!!
+
+        holder.selectType(DashboardMediaType.MANGA) // call 0, blocked
+        holder.invalidate() // language change mid-flight
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertNull(cache.load(DashboardMediaType.MANGA, true), "the previous generation never wrote the disk cache")
+        assertTrue(holder.sections.isEmpty(), "nor reached the in-memory rails")
+
+        holder.load() // the screen is composed again
+
+        assertEquals(2, graphQL.calls)
+        assertEquals(DashboardMediaType.MANGA, holder.mediaType, "the selection survived the language change")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_MANGA]?.map { it.id })
+        assertEquals(
+            listOf(2),
+            cache.load(DashboardMediaType.MANGA, true)
+                ?.feed?.sections?.get(DashboardSectionKind.TRENDING_MANGA)?.map { it.id },
         )
     }
 

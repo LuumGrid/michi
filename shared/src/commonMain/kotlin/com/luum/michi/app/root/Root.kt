@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
@@ -264,17 +265,26 @@ internal fun Root(
 
     // Discover dashboard holder: session-independent (public catalog) and
     // shared by guests. Loads are explicit from the screen; the TTL dedups
-    // revisits and the 18+ gate lives in the holder.
-    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, listScope, strings) {
-        createDashboardStateHolder(dashboardRepository, dashboardFeedCache, listScope, strings)
+    // revisits and the 18+ gate lives in the holder. The holder is keyed
+    // without `strings` so a language change keeps the Anime/Manga selection;
+    // the provider is read at launch so one request never mixes languages.
+    val currentDashboardStrings by rememberUpdatedState(strings)
+    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, listScope) {
+        createDashboardStateHolder(
+            repository = dashboardRepository,
+            cache = dashboardFeedCache,
+            scope = listScope,
+            hideAdult = !settingsState.displayAdultContent,
+        ) { currentDashboardStrings }
     }
-    // The cached rail meta is localized: a language change drops the disk cache
-    // (the recreated holder reloads through the screen effect).
+    // The cached rail meta is localized: a language change drops disk + memory
+    // and bumps the holder's generation, which reloads the screen only when it
+    // is visible (the screen's effect keys on the generation).
     var lastDashboardLanguage by remember { mutableStateOf(language) }
     LaunchedEffect(language) {
         if (language != lastDashboardLanguage) {
             lastDashboardLanguage = language
-            dashboardFeedCache.clear()
+            dashboardHolder.invalidate()
         }
     }
 

@@ -50,7 +50,9 @@ internal fun DashboardScreen(
     // TabBar. Never a per-feature constant.
     bottomPadding: Dp = 0.dp,
 ) {
-    LaunchedEffect(holder, hideAdult) {
+    // `generation` is a key so a language change (invalidate()) reloads when the
+    // dashboard is visible; on another tab this effect only runs on (re)entry.
+    LaunchedEffect(holder, hideAdult, holder.generation) {
         holder.setHideAdult(hideAdult)
         holder.load()
     }

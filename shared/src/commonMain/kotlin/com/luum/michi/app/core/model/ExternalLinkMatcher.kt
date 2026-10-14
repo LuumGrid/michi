@@ -5,28 +5,36 @@ package com.luum.michi.app.core.model
  * biography link can borrow the catalog's site name, icon and colour. Pure.
  *
  * Hosts are normalized (case, `www.`/`mobile.`/`m.` prefixes) and the known
- * aliases (twitter↔x, youtu.be↔youtube.com) collapse to one another.
+ * aliases (twitter↔x, youtu.be↔youtube.com) collapse to one another. A host
+ * also matches a catalog host it is a subdomain of (`usuario.fanbox.cc` →
+ * `fanbox.cc`), on a dot boundary only (`notfanbox.cc` does not match). When
+ * several catalog sites match, the most specific (longest) host wins.
  */
 internal fun matchCatalogSite(catalog: List<ExternalLink>, url: String): ExternalLink? {
-    val host = normalizedHost(url) ?: return null
-    return catalog.firstOrNull { candidate ->
-        val candidateHost = normalizedHost(candidate.url) ?: return@firstOrNull false
-        candidateHost == host || aliases(candidateHost) == aliases(host)
-    }
+    val host = canonicalHost(url) ?: return null
+    return catalog
+        .mapNotNull { candidate ->
+            val candidateHost = canonicalHost(candidate.url) ?: return@mapNotNull null
+            if (host == candidateHost || host.endsWith(".$candidateHost")) {
+                candidate to candidateHost.length
+            } else {
+                null
+            }
+        }
+        .maxByOrNull { it.second }
+        ?.first
 }
 
-/** Registrable-ish host: lowercased, without common subdomain prefixes. */
-private fun normalizedHost(url: String): String? {
+/** Lowercased host without common subdomain prefixes or known-alias spellings. */
+private fun canonicalHost(url: String): String? {
     val scheme = url.substringBefore("://", missingDelimiterValue = "")
     if (!scheme.equals("http", ignoreCase = true) && !scheme.equals("https", ignoreCase = true)) return null
     val host = url.substringAfter("://", "").substringBefore('/').substringBefore('?').lowercase()
     if (host.isEmpty()) return null
-    return host.removePrefix("www.").removePrefix("mobile.").removePrefix("m.")
-}
-
-/** Collapses known aliases to a canonical host. */
-private fun aliases(host: String): String = when (host) {
-    "x.com", "twitter.com" -> "twitter.com"
-    "youtu.be" -> "youtube.com"
-    else -> host
+    val trimmed = host.removePrefix("www.").removePrefix("mobile.").removePrefix("m.")
+    return when (trimmed) {
+        "x.com", "twitter.com" -> "twitter.com"
+        "youtu.be" -> "youtube.com"
+        else -> trimmed
+    }
 }

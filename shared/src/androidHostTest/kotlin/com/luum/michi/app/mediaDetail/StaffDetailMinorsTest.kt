@@ -150,5 +150,7 @@ class StaffDetailMinorsTest {
 }
 
 private object NoopExternalLinkCatalog : ExternalLinkCatalogRepository {
+    override fun prefetch() = Unit
+
     override suspend fun sites(): List<ExternalLink> = emptyList()
 }
