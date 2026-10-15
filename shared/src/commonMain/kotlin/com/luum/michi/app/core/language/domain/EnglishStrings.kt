@@ -371,7 +371,6 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailOpenInAniListAction = "Open in AniList"
     override val mediaDetailShareAction = "Share"
     override val mediaDetailAverageScoreLabel = "Average score"
-    override val mediaDetailAllTimeLabel = "All time"
     override val moreAction = "More"
 
     // Shared detail labels (character/staff/studio)
@@ -389,8 +388,6 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailNoMediaLabel = "No media"
     override val mediaDetailAnimeStudioLabel = "Anime studio"
     override val mediaDetailAlternativeNamesLabel = "Other names"
-    override val mediaDetailYesLabel = "Yes"
-    override val mediaDetailNoLabel = "No"
 
     // Entry editor redesign
     override val discardChangesConfirmTitle = "Discard changes?"

@@ -30,6 +30,10 @@ import com.luum.michi.app.ui.theme.SurfaceStyleProvider
  * [ChipTab.count] renders the label alone (display-only chips), a null
  * [selected] leaves every pill unhighlighted. This composable owns only
  * the pill language (selected = primary container, rest = outlined).
+ *
+ * [interactive] false renders **flat, inert** chips (`surface` + `outlineVariant`
+ * border, no glass, no click/ripple): they are labels (genres, tags, roles,
+ * occupations, studios), not buttons. The interactive recipe is unchanged.
  */
 data class ChipTab<T>(
     val value: T,
@@ -53,6 +57,8 @@ internal fun <T> ChipRail(
     // edge lands where the list pills land. Defaults keep every other
     // caller byte-identical.
     compact: Boolean = false,
+    // Display-only chips: flat surface + outline, no ripple.
+    interactive: Boolean = true,
 ) {
     LazyRow(
         modifier = modifier,
@@ -63,62 +69,72 @@ internal fun <T> ChipRail(
             items = tabs,
             key = { "${it.label}·${it.value}" },
         ) { tab ->
-            val isSelected = tab.value == selected
-            val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
-            Surface(
-                onClick = { onSelect(tab.value) },
-                shape = GlassShape,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else if (glass) {
-                    glassContainerColor()
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
-                border = if (isSelected) {
-                    null
-                } else if (glass) {
-                    glassBorder()
-                } else {
-                    BorderStroke(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                },
-            ) {
-                Row(
-                    modifier = Modifier.padding(
-                        horizontal = 16.dp,
-                        vertical = if (compact) 6.dp else 10.dp,
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
+            val isSelected = interactive && tab.value == selected
+            val glass = interactive && SurfaceStyleProvider.current == SurfaceStyle.GLASS
+            val color = when {
+                isSelected -> MaterialTheme.colorScheme.primaryContainer
+                glass -> glassContainerColor()
+                else -> MaterialTheme.colorScheme.surface
+            }
+            val border = when {
+                isSelected -> null
+                glass -> glassBorder()
+                else -> BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            if (interactive) {
+                Surface(
+                    onClick = { onSelect(tab.value) },
+                    shape = GlassShape,
+                    color = color,
+                    border = border,
                 ) {
-                    if (!tab.iconUrl.isNullOrBlank()) {
-                        SubcomposeAsyncImage(
-                            model = tab.iconUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            loading = {},
-                            error = {},
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
-                        style = if (compact) {
-                            MaterialTheme.typography.bodyMedium
-                        } else {
-                            MaterialTheme.typography.labelLarge
-                        },
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
+                    ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
+                }
+            } else {
+                Surface(
+                    shape = GlassShape,
+                    color = color,
+                    border = border,
+                ) {
+                    ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun <T> ChipPillContent(tab: ChipTab<T>, compact: Boolean, isSelected: Boolean) {
+    Row(
+        modifier = Modifier.padding(
+            horizontal = 16.dp,
+            vertical = if (compact) 6.dp else 10.dp,
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (!tab.iconUrl.isNullOrBlank()) {
+            SubcomposeAsyncImage(
+                model = tab.iconUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                loading = {},
+                error = {},
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+        }
+        Text(
+            text = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
+            style = if (compact) {
+                MaterialTheme.typography.bodyMedium
+            } else {
+                MaterialTheme.typography.labelLarge
+            },
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }

@@ -47,7 +47,6 @@ internal data class MediaDetail(
     val titleRomaji: String?,
     val titleNative: String?,
     val synonyms: List<String>,
-    val rankings: List<MediaRank>,
     val tags: List<MediaTag>,
     val externalLinks: List<ExternalLink>,
     val trailer: MediaTrailer?,
@@ -61,15 +60,12 @@ internal data class MediaNextEpisode(
     val timeUntilAiringSeconds: Long?,
 )
 
-internal data class MediaRank(
-    val rank: Int,
-    val type: String?,
-    val context: String?,
-    val format: String?,
-    val season: String?,
-    val year: Int?,
-    val allTime: Boolean,
-)
+/**
+ * The next episode only while its drop is still ahead of the user: a stale
+ * `timeUntilAiring` (already aired) is not worth showing.
+ */
+internal fun MediaDetail.upcomingNextEpisode(): MediaNextEpisode? =
+    nextEpisode?.takeIf { (it.timeUntilAiringSeconds ?: 0L) > 0L }
 
 internal data class MediaTag(
     val name: String,

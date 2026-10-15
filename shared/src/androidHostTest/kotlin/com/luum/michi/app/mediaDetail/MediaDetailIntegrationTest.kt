@@ -68,7 +68,6 @@ private fun sampleDetail(
     titleRomaji = null,
     titleNative = null,
     synonyms = emptyList(),
-    rankings = emptyList(),
     tags = emptyList(),
     externalLinks = emptyList(),
     trailer = null,

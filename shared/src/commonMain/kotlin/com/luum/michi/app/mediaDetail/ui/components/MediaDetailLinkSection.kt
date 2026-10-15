@@ -38,6 +38,37 @@ internal data class MediaDetailLinkItem(
 )
 
 /**
+ * One titled group of rows inside a [MediaDetailLinkPanel] (media: streaming,
+ * then everything else).
+ */
+internal data class MediaDetailLinkGroup(
+    val title: String,
+    val links: List<MediaDetailLinkItem>,
+)
+
+/**
+ * One framed panel holding several titled link groups (media: streaming +
+ * external). Groups without links are skipped, and nothing is painted when no
+ * group has links, so an empty section never leaves a gap.
+ */
+@Composable
+internal fun MediaDetailLinkPanel(
+    groups: List<MediaDetailLinkGroup>,
+    onOpenUrl: (String) -> Unit,
+) {
+    val visible = groups.filter { it.links.isNotEmpty() }
+    if (visible.isEmpty()) return
+    MediaDetailPanel {
+        visible.forEachIndexed { index, group ->
+            if (index != 0) Spacer(modifier = Modifier.height(12.dp))
+            SectionHeader(group.title)
+            Spacer(modifier = Modifier.height(4.dp))
+            group.links.forEach { item -> MediaDetailLinkRow(item = item, onOpenUrl = onOpenUrl) }
+        }
+    }
+}
+
+/**
  * Framed link list shared by the media detail (streaming / external) and the
  * person pages (biography links): site icon (or brand dot) + label, tap opens
  * the URL. Takes primitives so no scope owns the others' models.
@@ -48,12 +79,7 @@ internal fun MediaDetailLinkSection(
     title: String,
     onOpenUrl: (String) -> Unit,
 ) {
-    if (links.isEmpty()) return
-    MediaDetailPanel {
-        SectionHeader(title)
-        Spacer(modifier = Modifier.height(4.dp))
-        links.forEach { item -> MediaDetailLinkRow(item = item, onOpenUrl = onOpenUrl) }
-    }
+    MediaDetailLinkPanel(groups = listOf(MediaDetailLinkGroup(title, links)), onOpenUrl = onOpenUrl)
 }
 
 @Composable
@@ -91,6 +117,15 @@ private fun MediaDetailLinkRow(
                     .size(10.dp)
                     .clip(CircleShape)
                     .background(accent),
+            )
+        } else {
+            // No icon, no accent, not the official site: still show a glyph so
+            // the left slot is never an empty hole.
+            Icon(
+                imageVector = AppIcons.Web,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
             )
         }
         Spacer(modifier = Modifier.width(12.dp))

@@ -30,13 +30,10 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.core.model.ExternalLink
 
 
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
-import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
@@ -93,6 +90,7 @@ internal fun MediaDetailInformationPanel(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(6.dp))
+            // Interactive on purpose: a studio chip opens the studio page.
             ChipRail(
                 tabs = detail.studios.map { ChipTab(value = it.id, label = it.name) },
                 selected = null,
@@ -103,52 +101,41 @@ internal fun MediaDetailInformationPanel(
     }
 }
 
-/** Genres as display-only pills inside a framed panel. */
+/** Genres as flat, display-only pills, edge-to-edge under their header. */
 @Composable
 internal fun MediaDetailGenres(detail: MediaDetail, strings: LanguageStrings) {
     if (detail.genres.isEmpty()) return
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailGenresTitle)
-        Spacer(modifier = Modifier.height(12.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = strings.mediaDetailGenresTitle,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
         ChipRail(
             tabs = detail.genres.map { ChipTab(value = it, label = it) },
             selected = null,
             onSelect = {},
-            contentPadding = PaddingValues(0.dp),
+            interactive = false,
         )
     }
 }
 
-/** Non-spoiler tag pills: `"name rank%"`, display-only, inside a framed panel. */
+/** Non-spoiler tag pills: `"name rank%"`, flat and display-only. */
 @Composable
 internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
     val tags = detail.tags.filter { !it.isMediaSpoiler }
     if (tags.isEmpty()) return
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailTagsTitle)
-        Spacer(modifier = Modifier.height(12.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = strings.mediaDetailTagsTitle,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
         ChipRail(
             tabs = tags.map { ChipTab(value = it.name, label = "${it.name} ${it.rank}%") },
             selected = null,
             onSelect = {},
-            contentPadding = PaddingValues(0.dp),
+            interactive = false,
         )
     }
-}
-
-/** Framed link list: maps media links onto the shared link section. */
-@Composable
-internal fun MediaDetailExternalLinks(
-    links: List<ExternalLink>,
-    title: String,
-    strings: LanguageStrings,
-    onOpenUrl: (String) -> Unit,
-) {
-    MediaDetailLinkSection(
-        links = links.map { it.toLinkItem(strings) },
-        title = title,
-        onOpenUrl = onOpenUrl,
-    )
 }
 
 /** Trailer card; taps open the external video URL when there is one. */

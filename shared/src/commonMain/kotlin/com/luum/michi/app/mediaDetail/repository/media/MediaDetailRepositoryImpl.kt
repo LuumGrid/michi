@@ -57,7 +57,6 @@ query MediaDetail(${'$'}id: Int!) {
     countryOfOrigin
     isAdult
     isFavourite
-    rankings { rank type context format season year allTime }
     tags { name rank isMediaSpoiler }
     externalLinks { id site url type icon color language }
     trailer { id site thumbnail }

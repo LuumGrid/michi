@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,30 +33,28 @@ import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
-import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
-import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
+import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.ui.components.glassBorder
 import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.ui.theme.brandColor
+import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.rememberCoverUrl
 import com.luum.michi.app.ui.components.coverSize
 
 /**
- * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover
- * is centered over the banner on both axes; the title/studio/meta live just
- * under the banner. Falls back to the entry's palette color (or
- * `surfaceVariant`) when there is no banner image.
+ * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover is
+ * centered over the banner on both axes; the title/meta live just under the
+ * banner (the studios are chips in the information panel, not a hero line).
+ * Falls back to the entry's palette color (or `surfaceVariant`) when there is no
+ * banner image.
  */
 @Composable
 internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
     val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     val meta = listOfNotNull(detail.format, detail.season, detail.workStatusLabel(strings)).joinToString(" · ")
-    val studio = detail.studios.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,19 +106,8 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (studio != null) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = studio,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
             if (meta.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = meta,
                     style = MaterialTheme.typography.bodyMedium,
@@ -161,106 +152,106 @@ private fun BannerBackdrop(
     }
 }
 
-private data class HeroStat(val label: String, val value: String, val subtitle: String?)
+private data class HeroStat(
+    val icon: ImageVector,
+    val label: String,
+    val value: String,
+)
 
 /**
- * Three equal stat columns (average score, popularity, favourites) with the
- * relevant ranking as their subtitle — highest rated under the score, most
- * popular under popularity. A releasing show leads with the next-episode
- * band. Columns and band are simply omitted when their data is unknown.
+ * Three equal stat columns (average score, popularity, favourites) as a
+ * frameless full-width row — the same icons the cover badges use. Painted only
+ * when at least one column has data (the next-episode band is its own item,
+ * [MediaDetailNextEpisodeBand]).
  */
 @Composable
 internal fun MediaDetailHeroStats(detail: MediaDetail, strings: LanguageStrings) {
-    val ratedRank = detail.rankings.bestRatedRank()
-    val popularRank = detail.rankings.bestPopularRank()
     val columns = buildList {
         detail.averageScore?.let {
-            add(
-                HeroStat(
-                    label = strings.mediaDetailAverageScoreLabel,
-                    value = "$it%",
-                    subtitle = ratedRank?.let { rank -> rankSubtitle(rank, strings) },
-                ),
-            )
+            add(HeroStat(AppIcons.StarOutline, strings.mediaDetailAverageScoreLabel, "$it%"))
         }
         detail.popularity?.let {
-            add(
-                HeroStat(
-                    label = strings.popularityLabel,
-                    value = it.compactCount(),
-                    subtitle = popularRank?.let { rank -> rankSubtitle(rank, strings) },
-                ),
-            )
+            add(HeroStat(AppIcons.Groups, strings.popularityLabel, it.compactCount()))
         }
-        detail.favourites?.let { add(HeroStat(strings.favoritesLabel, it.compactCount(), null)) }
+        detail.favourites?.let {
+            add(HeroStat(AppIcons.Favorite, strings.favoritesLabel, it.compactCount()))
+        }
     }
-    // Airing band only while the drop is still ahead of the user.
-    val next = detail.nextEpisode?.takeIf { (it.timeUntilAiringSeconds ?: 0L) > 0L }
-    if (columns.isEmpty() && next == null) return
-    MediaDetailPanel {
-        if (next != null) {
-            val seconds = next.timeUntilAiringSeconds ?: 0L
-            val countdown = strings.airingCountdownLabel(
-                days = (seconds / 86_400).toInt(),
-                hours = ((seconds % 86_400) / 3_600).toInt(),
-                minutes = ((seconds % 3_600) / 60).toInt(),
+    if (columns.isEmpty()) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        columns.forEach { stat ->
+            StatColumn(
+                icon = stat.icon,
+                label = stat.label,
+                value = stat.value,
+                modifier = Modifier.weight(1f),
             )
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = strings.mediaDetailNextEpisodeReleaseLabel(
-                        episode = next.episode,
-                        releaseDateTime = next.airingAtEpochSeconds.toLocalMediaReleaseDateTime(),
-                        countdown = countdown,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                )
-            }
-            if (columns.isNotEmpty()) Spacer(modifier = Modifier.height(16.dp))
-        }
-        if (columns.isNotEmpty()) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                columns.forEach { stat ->
-                    StatColumn(
-                        label = stat.label,
-                        value = stat.value,
-                        subtitle = stat.subtitle,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
         }
     }
 }
 
-/** `#41 · All time` / `#5 · 2026`. */
-private fun rankSubtitle(rank: MediaRank, strings: LanguageStrings): String {
-    val scope = if (rank.allTime) strings.mediaDetailAllTimeLabel else rank.year?.toString()
-    return listOfNotNull("#${rank.rank}", scope).joinToString(" · ")
+/**
+ * Full-width band with the whole next-episode line (episode + release date/time
+ * + countdown). Flat and inert like the informational chips — `surface` +
+ * `outlineVariant`, 12dp radius, no ripple — so it does not read as a button;
+ * the text wraps and the rectangle grows with it. Painted only while the drop is
+ * still ahead of the user.
+ */
+@Composable
+internal fun MediaDetailNextEpisodeBand(detail: MediaDetail, strings: LanguageStrings) {
+    val next = detail.upcomingNextEpisode() ?: return
+    val seconds = next.timeUntilAiringSeconds ?: 0L
+    val countdown = strings.airingCountdownLabel(
+        days = (seconds / 86_400).toInt(),
+        hours = ((seconds % 86_400) / 3_600).toInt(),
+        minutes = ((seconds % 3_600) / 60).toInt(),
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = strings.mediaDetailNextEpisodeReleaseLabel(
+                    episode = next.episode,
+                    releaseDateTime = next.airingAtEpochSeconds.toLocalMediaReleaseDateTime(),
+                    countdown = countdown,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+    }
 }
 
 @Composable
 private fun StatColumn(
+    icon: ImageVector,
     label: String,
     value: String,
-    subtitle: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -268,16 +259,14 @@ private fun StatColumn(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
         )
-        if (subtitle != null) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
-        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
 

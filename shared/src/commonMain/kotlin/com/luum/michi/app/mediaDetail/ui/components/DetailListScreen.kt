@@ -191,6 +191,9 @@ private fun GridList(
                     subtitle = item.subtitle,
                     placeholderHex = item.placeholderHex,
                     stats = item.stats,
+                    // A grid cell lets the subtitle hug the title (no rail to
+                    // keep even).
+                    reserveTitleLines = false,
                 )
             }
             if (paged) {

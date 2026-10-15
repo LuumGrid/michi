@@ -59,22 +59,10 @@ internal data class MediaDetailDto(
     val relations: MediaRelationConnectionDto? = null,
     val characters: MediaCharacterConnectionDto? = null,
     val staff: MediaStaffConnectionDto? = null,
-    val rankings: List<MediaRankingDto> = emptyList(),
     val tags: List<MediaTagDto> = emptyList(),
     val externalLinks: List<MediaExternalLinkDto> = emptyList(),
     val trailer: MediaTrailerDto? = null,
     val synonyms: List<String> = emptyList(),
-)
-
-@Serializable
-internal data class MediaRankingDto(
-    val rank: Int = 0,
-    val type: String? = null,
-    val context: String? = null,
-    val format: String? = null,
-    val season: String? = null,
-    val year: Int? = null,
-    val allTime: Boolean = false,
 )
 
 @Serializable

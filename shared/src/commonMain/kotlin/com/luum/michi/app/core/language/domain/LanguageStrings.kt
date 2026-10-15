@@ -351,7 +351,6 @@ interface LanguageStrings {
     val mediaDetailOpenInAniListAction: String
     val mediaDetailShareAction: String
     val mediaDetailAverageScoreLabel: String
-    val mediaDetailAllTimeLabel: String
     val moreAction: String
 
     // Shared detail labels (character/staff/studio)
@@ -370,8 +369,6 @@ interface LanguageStrings {
     val mediaDetailAnimeStudioLabel: String
     /** Character/staff alternate names (media keeps [mediaDetailSynonymsLabel]). */
     val mediaDetailAlternativeNamesLabel: String
-    val mediaDetailYesLabel: String
-    val mediaDetailNoLabel: String
 
     // Entry editor redesign
     val discardChangesConfirmTitle: String

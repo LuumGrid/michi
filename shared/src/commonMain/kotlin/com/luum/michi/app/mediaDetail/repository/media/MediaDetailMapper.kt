@@ -23,7 +23,6 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaNextEpisode
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRank
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTag
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
@@ -79,17 +78,6 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = Me
     titleRomaji = title?.romaji,
     titleNative = title?.native,
     synonyms = synonyms,
-    rankings = rankings.map {
-        MediaRank(
-            rank = it.rank,
-            type = it.type,
-            context = it.context,
-            format = it.format,
-            season = it.season,
-            year = it.year,
-            allTime = it.allTime,
-        )
-    },
     tags = tags.mapNotNull { dto ->
         dto.name?.takeIf { it.isNotBlank() }?.let { name ->
             MediaTag(name = name, rank = dto.rank, isMediaSpoiler = dto.isMediaSpoiler)

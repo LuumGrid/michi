@@ -1,16 +1,13 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -81,22 +78,12 @@ internal fun MediaRail(
                     modifier = Modifier.weight(1f),
                 )
                 if (onViewAll != null && viewAllLabel != null) {
-                    Row(
-                        modifier = Modifier.clickable(onClick = onViewAll),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = viewAllLabel,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Icon(
-                            imageVector = AppIcons.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
+                    // Same pill as the voice-language selector, label + chevron.
+                    TrailingPill(
+                        label = viewAllLabel,
+                        onClick = onViewAll,
+                        trailingIcon = AppIcons.ChevronRight,
+                    )
                 }
             }
         }

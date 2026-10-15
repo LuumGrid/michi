@@ -25,13 +25,23 @@ private val BlankLinesRegex = Regex("\n{3,}")
  * Splits HTML into clean text + external links (before stripping tags, so the
  * `href` survives). Anchors and bare URLs (with or without a "Label:") are
  * collected; the link text is removed from the body unless it is real prose
- * (e.g. "worked at <a>Studio Ghibli</a>"), which is kept as plain text. Leftover
- * rótulos and separators are cleaned. Non-http(s) and internal anilist.co hrefs
+ * (e.g. "worked at <a>Studio Ghibli</a>"), which is kept as plain text. A line
+ * that only repeats the text of the links that were pulled out (e.g. "Profile
+ * (Arts Vision) Wiki (jp) Wiki (en)", "Website") is dropped too, so a biography
+ * does not end with a row of bare link labels. Leftover rótulos and separators
+ * are cleaned. Non-http(s) and internal anilist.co hrefs
  * are ignored; links are deduped by a normalized URL (scheme/www/ trailing slash).
  */
 internal fun String.toHtmlContent(): HtmlContent {
     val links = mutableListOf<ExternalLink>()
     val seen = mutableSetOf<String>()
+    // Texts of the anchors we are about to extract: a line made only of them is
+    // the link list left behind, not prose.
+    val linkTexts = AnchorRegex.findAll(this)
+        .filter { isExternalHttpUrl(it.groupValues[1].trim()) }
+        .map { cleanLine(it.groupValues[2]).lowercase() }
+        .filter { it.isNotEmpty() }
+        .toSet()
     val kept = replace(BreakRegex, "\n").split('\n').mapNotNull { line ->
         // 1) Anchors first: collect them and substitute their text (keep prose,
         //    drop link-y text). Their `href` must not be seen as a bare URL.
@@ -64,10 +74,21 @@ internal fun String.toHtmlContent(): HtmlContent {
             }
         }
         val cleaned = cleanLine(out)
-        if (cleaned.isBlank()) null else cleaned
+        if (cleaned.isBlank() || cleaned.isOnlyLinkText(linkTexts)) null else cleaned
     }
     val text = kept.joinToString("\n").stripHtml().replace(BlankLinesRegex, "\n\n").trim()
     return HtmlContent(text = text, links = links)
+}
+
+/**
+ * True when, after removing every extracted link text, nothing readable is left:
+ * the line only repeated the labels of links that were already pulled out.
+ */
+private fun String.isOnlyLinkText(linkTexts: Set<String>): Boolean {
+    if (linkTexts.isEmpty()) return false
+    var rest = lowercase()
+    linkTexts.sortedByDescending { it.length }.forEach { rest = rest.replace(it, " ") }
+    return rest.none { it.isLetterOrDigit() }
 }
 
 /** Text that only repeats the link (URL, `@handle`, or the site name itself). */

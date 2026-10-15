@@ -82,6 +82,31 @@ class HtmlLinksTest {
     }
 
     @Test
+    fun anchorLabelsThatAreNotHostNamesAreDroppedFromTheBody() {
+        val content = ("Bio.<br><a href=\"https://example.com/profile\">Profile (Arts Vision)</a> "
+            + "<a href=\"https://ja.example.org/wiki\">Wiki (jp)</a> "
+            + "<a href=\"https://en.example.org/wiki\">Wiki (en)</a>").toHtmlContent()
+
+        assertEquals("Bio.", content.text)
+        assertEquals(3, content.links.size)
+    }
+
+    @Test
+    fun aLineThatIsOnlyALinkLabelIsDropped() {
+        val content = "<a href=\"https://example.com\">Website</a>".toHtmlContent()
+
+        assertEquals("", content.text)
+        assertEquals("https://example.com", content.links.single().url)
+    }
+
+    @Test
+    fun aLabelInsideProseKeepsTheLine() {
+        val content = "Visit the <a href=\"https://example.com\">Website</a> for more.".toHtmlContent()
+
+        assertEquals("Visit the Website for more.", content.text)
+    }
+
+    @Test
     fun labelIsDerivedFromTheHostWhenTheAnchorTextIsTheUrl() {
         val content = "<a href=\"https://www.instagram.com/x/\">https://www.instagram.com/x/</a>".toHtmlContent()
 

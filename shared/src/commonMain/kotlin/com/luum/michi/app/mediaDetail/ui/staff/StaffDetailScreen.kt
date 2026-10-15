@@ -103,17 +103,15 @@ private fun StaffDetailContent(
         }
         val chips = staffChips(detail)
         if (chips.isNotEmpty()) {
+            // The occupations are the whole section: one full-bleed chip row
+            // under the hero, no panel and no title.
             item(key = "occupations") {
-                MediaDetailPanel {
-                    SectionHeader(strings.mediaDetailOccupationsLabel)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ChipRail(
-                        tabs = chips.map { ChipTab(value = it, label = it) },
-                        selected = null,
-                        onSelect = {},
-                        contentPadding = PaddingValues(0.dp),
-                    )
-                }
+                ChipRail(
+                    tabs = chips.map { ChipTab(value = it, label = it) },
+                    selected = null,
+                    onSelect = {},
+                    interactive = false,
+                )
             }
         }
         if (detail.descriptionPlain.isNotBlank()) {
@@ -134,24 +132,56 @@ private fun StaffDetailContent(
                 )
             }
         }
-        item(key = "information") {
-            StaffInformationPanel(detail = detail, strings = strings)
+        // The cells are built here so an empty panel is not emitted at all: an
+        // item with nothing to paint still leaves its spacing behind (the gap
+        // after the links on a staff member with no biography).
+        val yearsActive = detail.yearsActiveStart?.let { start ->
+            "$start–${detail.yearsActiveEnd ?: strings.yearsActivePresent}"
         }
-        item(key = "roles") {
-            RolesSection(
-                holder = holder,
-                strings = strings,
-                onOpenMedia = onOpenMedia,
-                onViewAll = { onViewAll(DetailListKind.STAFF_MEDIA) },
-            )
+        val informationEntries = buildList {
+            detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
+            detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
+            detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
+            detail.death?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailDeathLabel, it)) }
+            yearsActive?.let { add(MediaDetailInfoEntry(strings.mediaDetailYearsActiveLabel, it)) }
+            detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailHometownLabel, it)) }
+            detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
         }
-        item(key = "characters") {
-            CharactersSection(
-                holder = holder,
-                strings = strings,
-                onOpenCharacter = onOpenCharacter,
-                onViewAll = { onViewAll(DetailListKind.STAFF_CHARACTERS) },
-            )
+        val informationWideEntries = detail.alternativeNames
+            .filter { it.isNotBlank() }
+            .takeIf { it.isNotEmpty() }
+            ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
+            .orEmpty()
+        if (informationEntries.isNotEmpty() || informationWideEntries.isNotEmpty()) {
+            item(key = "information") {
+                StaffInformationPanel(
+                    entries = informationEntries,
+                    wideEntries = informationWideEntries,
+                    strings = strings,
+                )
+            }
+        }
+        // Empty rails are not painted at all (a header with "No media" reads as
+        // a broken section).
+        if (holder.mediaItems.isNotEmpty()) {
+            item(key = "roles") {
+                RolesSection(
+                    holder = holder,
+                    strings = strings,
+                    onOpenMedia = onOpenMedia,
+                    onViewAll = { onViewAll(DetailListKind.STAFF_MEDIA) },
+                )
+            }
+        }
+        if (holder.characterItems.isNotEmpty()) {
+            item(key = "characters") {
+                CharactersSection(
+                    holder = holder,
+                    strings = strings,
+                    onOpenCharacter = onOpenCharacter,
+                    onViewAll = { onViewAll(DetailListKind.STAFF_CHARACTERS) },
+                )
+            }
         }
     }
 }
@@ -167,25 +197,11 @@ private fun staffChips(detail: StaffDetail): List<String> =
     }
 
 @Composable
-private fun StaffInformationPanel(detail: StaffDetail, strings: LanguageStrings) {
-    val yearsActive = detail.yearsActiveStart?.let { start ->
-        "$start–${detail.yearsActiveEnd ?: strings.yearsActivePresent}"
-    }
-    val entries = buildList {
-        detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
-        detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
-        detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
-        detail.death?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailDeathLabel, it)) }
-        yearsActive?.let { add(MediaDetailInfoEntry(strings.mediaDetailYearsActiveLabel, it)) }
-        detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailHometownLabel, it)) }
-        detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
-    }
-    val wideEntries = detail.alternativeNames
-        .filter { it.isNotBlank() }
-        .takeIf { it.isNotEmpty() }
-        ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
-        .orEmpty()
-    if (entries.isEmpty() && wideEntries.isEmpty()) return
+private fun StaffInformationPanel(
+    entries: List<MediaDetailInfoEntry>,
+    wideEntries: List<MediaDetailInfoEntry>,
+    strings: LanguageStrings,
+) {
     MediaDetailPanel {
         SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
@@ -206,7 +222,6 @@ private fun RolesSection(
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
-        emptyLabel = strings.mediaDetailNoMediaLabel.takeIf { !holder.isLoading },
     )
 }
 
@@ -223,7 +238,6 @@ private fun CharactersSection(
         onSelect = onOpenCharacter,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
-        emptyLabel = strings.mediaDetailNoCharactersLabel.takeIf { !holder.isLoading },
     )
 }
 

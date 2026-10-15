@@ -8,8 +8,6 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
-import com.luum.michi.app.mediaDetail.domain.media.model.bestPopularRank
-import com.luum.michi.app.mediaDetail.domain.media.model.bestRatedRank
 import com.luum.michi.app.core.model.isOfficialSite
 import com.luum.michi.app.core.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
@@ -24,7 +22,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -39,35 +36,6 @@ private fun mediaDetailPageJson() = buildJsonObject {
             put("native", "ネイティブタイトル")
         })
         put("synonyms", JsonArray(listOf(JsonPrimitive("Alias One"), JsonPrimitive("Alias Two"))))
-        put("rankings", JsonArray(listOf(
-            buildJsonObject {
-                put("rank", 1)
-                put("type", "RATED")
-                put("context", "highest rated anime")
-                put("format", "TV")
-                put("season", "WINTER")
-                put("year", 2020)
-                put("allTime", false)
-            },
-            buildJsonObject {
-                put("rank", 5)
-                put("type", "RATED")
-                put("context", "highest rated anime")
-                put("format", "TV")
-                put("season", "WINTER")
-                put("year", 2019)
-                put("allTime", true)
-            },
-            buildJsonObject {
-                put("rank", 3)
-                put("type", "POPULAR")
-                put("context", "most popular all time")
-                put("format", "TV")
-                put("season", "SPRING")
-                put("year", 2018)
-                put("allTime", true)
-            },
-        )))
         put("tags", JsonArray(listOf(
             buildJsonObject {
                 put("name", "Action")
@@ -178,43 +146,6 @@ class MediaDetailMapperTest {
         assertEquals("Romaji Title", detail.titleRomaji)
         assertEquals("ネイティブタイトル", detail.titleNative)
         assertEquals(listOf("Alias One", "Alias Two"), detail.synonyms)
-    }
-
-    @Test
-    fun mapsRankingsAndPicksAllTimeLowestRank() = runBlocking {
-        val detail = loadDetail()
-
-        assertEquals(3, detail.rankings.size)
-        val first = detail.rankings.first()
-        assertEquals(1, first.rank)
-        assertEquals("RATED", first.type)
-        assertEquals("highest rated anime", first.context)
-        assertEquals("TV", first.format)
-        assertEquals("WINTER", first.season)
-        assertEquals(2020, first.year)
-        assertEquals(false, first.allTime)
-
-        // All-time entries are rank 5 (RATED) and rank 3 (POPULAR); each
-        // helper filters its own type, so rated picks 5 and popular picks 3.
-        assertEquals(5, detail.rankings.bestRatedRank()?.rank)
-        assertEquals(3, detail.rankings.bestPopularRank()?.rank)
-    }
-
-    @Test
-    fun bestRankFallsBackToLowestWhenNoAllTime() {
-        val rankings = listOf(
-            com.luum.michi.app.mediaDetail.domain.media.model.MediaRank(
-                rank = 7, type = "RATED", context = null, format = null,
-                season = null, year = null, allTime = false,
-            ),
-            com.luum.michi.app.mediaDetail.domain.media.model.MediaRank(
-                rank = 2, type = "RATED", context = null, format = null,
-                season = null, year = null, allTime = false,
-            ),
-        )
-
-        assertEquals(2, rankings.bestRatedRank()?.rank)
-        assertNull(emptyList<com.luum.michi.app.mediaDetail.domain.media.model.MediaRank>().bestRatedRank())
     }
 
     @Test

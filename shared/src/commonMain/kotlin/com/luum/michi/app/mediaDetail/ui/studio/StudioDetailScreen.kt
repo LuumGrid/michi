@@ -2,9 +2,7 @@ package com.luum.michi.app.mediaDetail.ui.studio
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -21,9 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.components.GridCoverSizeProvider
@@ -125,15 +120,13 @@ private fun StudioDetailGrid(
                 // Same type layout as the person heroes; a studio has no image.
                 MediaDetailPersonHero(
                     name = detail.name,
-                    nativeName = null,
+                    // The anime-studio flag reads as the line under the name.
+                    nativeName = strings.mediaDetailAnimeStudioLabel.takeIf { detail.isAnimeStudio },
                     image = null,
                     favourites = detail.favourites,
                     strings = strings,
                     showPortrait = false,
                 )
-            }
-            item(key = "information", span = { GridItemSpan(maxLineSpan) }) {
-                StudioInformationPanel(detail = detail, strings = strings)
             }
             item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
                 SectionHeader(
@@ -163,6 +156,8 @@ private fun StudioDetailGrid(
                             scoreBadge(item.averageScore),
                             favouritesBadge(item.favourites),
                         ),
+                        // A grid cell lets the subtitle hug the title.
+                        reserveTitleLines = false,
                     )
                 }
                 if (holder.hasNextPage) {
@@ -172,20 +167,5 @@ private fun StudioDetailGrid(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun StudioInformationPanel(detail: StudioDetail, strings: LanguageStrings) {
-    val entries = listOf(
-        MediaDetailInfoEntry(
-            label = strings.mediaDetailAnimeStudioLabel,
-            value = if (detail.isAnimeStudio) strings.mediaDetailYesLabel else strings.mediaDetailNoLabel,
-        ),
-    )
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailInformationTitle)
-        Spacer(modifier = Modifier.height(8.dp))
-        MediaDetailInfoGrid(entries = entries)
     }
 }

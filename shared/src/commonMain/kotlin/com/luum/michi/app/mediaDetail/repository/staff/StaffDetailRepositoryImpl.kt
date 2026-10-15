@@ -23,8 +23,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.personCoverSizes
 import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
 import com.luum.michi.app.core.network.domain.resolveWithCatalog
@@ -290,7 +290,7 @@ private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
         StaffCharacterItem(
             characterId = char.id,
             name = char.name?.userPreferred ?: char.name?.native ?: "",
-            image = char.image?.let { CoverSizes(medium = it.medium, large = it.large) },
+            image = char.image?.let { personCoverSizes(it.large, it.medium) },
             mediaTitle = mediaTitle,
         )
     }
@@ -357,7 +357,7 @@ internal class StaffDetailRepositoryImpl(
                             nativeName = staff.name?.native?.takeIf { it.isNotBlank() },
                             alternativeNames = staff.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
-                            image = staff.image?.let { CoverSizes(medium = it.medium, large = it.large) },
+                            image = staff.image?.let { personCoverSizes(it.large, it.medium) },
                             descriptionPlain = bio?.text.orEmpty(),
                             links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                             gender = staff.gender?.takeIf { it.isNotBlank() },

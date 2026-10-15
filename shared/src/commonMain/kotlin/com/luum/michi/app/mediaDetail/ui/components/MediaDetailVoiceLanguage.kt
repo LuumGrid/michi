@@ -1,29 +1,13 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.ui.components.GlassShape
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
-import com.luum.michi.app.ui.components.glassBorder
-import com.luum.michi.app.ui.components.glassContainerColor
-import com.luum.michi.app.ui.components.solidBorder
+import com.luum.michi.app.ui.components.TrailingPill
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /** One voice-language choice: the AniList enum value + its localized label. */
 internal data class VoiceLanguageOption(val value: String, val label: String)
@@ -43,9 +27,8 @@ internal fun voiceLanguageOptions(strings: LanguageStrings): List<VoiceLanguageO
 )
 
 /**
- * Compact trailing control of the characters header: globe + current voice
- * language + chevron. Inline surface, so it takes the glass *recipe*
- * (translucent color + border, no shadow) like the detail pills.
+ * Compact trailing control of the characters header: the shared [TrailingPill]
+ * with a globe and a chevron.
  */
 @Composable
 internal fun MediaDetailVoiceLanguagePill(
@@ -53,43 +36,13 @@ internal fun MediaDetailVoiceLanguagePill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
-    Surface(
+    TrailingPill(
+        label = label,
         onClick = onClick,
-        shape = GlassShape,
-        color = if (glass) {
-            glassContainerColor()
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
-        border = if (glass) glassBorder() else solidBorder(),
         modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = AppIcons.Language,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Icon(
-                imageVector = AppIcons.ExpandMore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-    }
+        leadingIcon = AppIcons.Language,
+        trailingIcon = AppIcons.ExpandMore,
+    )
 }
 
 /** Single-select voice-language sheet (`OptionGroup` + `OptionRow`, like the settings pickers). */

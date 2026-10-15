@@ -13,15 +13,19 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkGroup
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkPanel
+import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
-import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailExternalLinks
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailGenres
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailHero
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailHeroStats
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailInformationPanel
+import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailNextEpisodeBand
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailTags
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
@@ -30,14 +34,14 @@ import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 
 /**
- * Full media detail page. Section order: hero → quick stats (+ next-episode
- * band) → synopsis → videos → information → characters → staff → streaming
- * → external links → genres → tags → related → recommendations.
+ * Full media detail page. Section order: hero → next-episode band → quick stats
+ * → synopsis → information → genres → characters → staff → trailer → links
+ * (streaming + external) → related → recommendations → tags.
  * Reached from any card via `State.openMedia`; back pops the detail stack.
- * Data blocks (information, links, genres, tags, stats) are framed cards;
- * media rails, the trailer and the synopsis stay edge-to-edge. The editor
- * pencil in the toolbar opens the entry editor for signed-in viewers; the +1
- * lives on the list cards, not here.
+ * Framed cards mark the data blocks (information, links); the media rails, the
+ * trailer, the synopsis and the genre/tag chip rows stay edge-to-edge. The
+ * editor pencil in the toolbar opens the entry editor for signed-in viewers;
+ * the +1 lives on the list cards, not here.
  */
 @Composable
 internal fun MediaDetailScreen(
@@ -98,20 +102,26 @@ private fun MediaDetailContent(
     val isManga = detail.type == MediaDetailType.MANGA
     // Recommendations are a second, lazy query: fire once per media opened.
     LaunchedEffect(detail.id) { holder.loadRecommendations() }
-    // Streaming (Crunchyroll…) and everything else (social/official) split
-    // into two framed sections; AniList marks the difference by `type`.
+    // Streaming (Crunchyroll…) and everything else (social/official) share one
+    // framed panel with two subtitles; AniList marks the difference by `type`.
     val streamingLinks = detail.externalLinks.filter { it.type.equals("STREAMING", ignoreCase = true) }
     val otherLinks = detail.externalLinks.filterNot { it.type.equals("STREAMING", ignoreCase = true) }
+    val linkGroups = listOf(
+        MediaDetailLinkGroup(strings.mediaDetailStreamingLinksTitle, streamingLinks.map { it.toLinkItem(strings) }),
+        MediaDetailLinkGroup(strings.mediaDetailExternalLinksTitle, otherLinks.map { it.toLinkItem(strings) }),
+    )
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item(key = "hero") { MediaDetailHero(detail = detail, strings = strings) }
-        if (
-            detail.averageScore != null || detail.popularity != null ||
-            detail.favourites != null || detail.nextEpisode != null
-        ) {
+        if (detail.upcomingNextEpisode() != null) {
+            item(key = "next-episode") {
+                MediaDetailNextEpisodeBand(detail = detail, strings = strings)
+            }
+        }
+        if (detail.averageScore != null || detail.popularity != null || detail.favourites != null) {
             item(key = "stats") { MediaDetailHeroStats(detail = detail, strings = strings) }
         }
         if (detail.descriptionPlain.isNotBlank()) {
@@ -123,11 +133,6 @@ private fun MediaDetailContent(
                 )
             }
         }
-        if (detail.trailer != null) {
-            item(key = "videos") {
-                MediaDetailVideos(detail = detail, strings = strings, onOpenUrl = onOpenUrl)
-            }
-        }
         item(key = "information") {
             MediaDetailInformationPanel(
                 detail = detail,
@@ -135,6 +140,9 @@ private fun MediaDetailContent(
                 isManga = isManga,
                 onOpenStudio = onOpenStudio,
             )
+        }
+        if (detail.genres.isNotEmpty()) {
+            item(key = "genres") { MediaDetailGenres(detail = detail, strings = strings) }
         }
         if (detail.characters.items.isNotEmpty()) {
             item(key = "characters") {
@@ -161,31 +169,13 @@ private fun MediaDetailContent(
                 )
             }
         }
-        if (streamingLinks.isNotEmpty()) {
-            item(key = "streaming") {
-                MediaDetailExternalLinks(
-                    links = streamingLinks,
-                    title = strings.mediaDetailStreamingLinksTitle,
-                    strings = strings,
-                    onOpenUrl = onOpenUrl,
-                )
+        if (detail.trailer != null) {
+            item(key = "videos") {
+                MediaDetailVideos(detail = detail, strings = strings, onOpenUrl = onOpenUrl)
             }
         }
-        if (otherLinks.isNotEmpty()) {
-            item(key = "links") {
-                MediaDetailExternalLinks(
-                    links = otherLinks,
-                    title = strings.mediaDetailExternalLinksTitle,
-                    strings = strings,
-                    onOpenUrl = onOpenUrl,
-                )
-            }
-        }
-        if (detail.genres.isNotEmpty()) {
-            item(key = "genres") { MediaDetailGenres(detail = detail, strings = strings) }
-        }
-        if (detail.tags.any { !it.isMediaSpoiler }) {
-            item(key = "tags") { MediaDetailTags(detail = detail, strings = strings) }
+        if (linkGroups.any { it.links.isNotEmpty() }) {
+            item(key = "links") { MediaDetailLinkPanel(groups = linkGroups, onOpenUrl = onOpenUrl) }
         }
         if (detail.relations.isNotEmpty()) {
             item(key = "related") {
@@ -209,6 +199,8 @@ private fun MediaDetailContent(
                 )
             }
         }
+        if (detail.tags.any { !it.isMediaSpoiler }) {
+            item(key = "tags") { MediaDetailTags(detail = detail, strings = strings) }
+        }
     }
 }
-

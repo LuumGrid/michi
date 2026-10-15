@@ -31,7 +31,9 @@ import com.luum.michi.app.ui.theme.brandColor
  * same everywhere (one radius; the type scale steps with the token: a [CoverSize.Rail]
  * card reads `bodySmall`/`labelSmall`, a [CoverSize.Featured] one `bodyMedium`/
  * `bodySmall`). Takes only primitives, so no feature model crosses into `ui`. A
- * null [onClick] renders a display-only card.
+ * null [onClick] renders a display-only card. [reserveTitleLines] keeps two title
+ * lines even for a one-line title (rails stay even); grids pass false so the
+ * subtitle hugs the title.
  */
 @Composable
 internal fun PosterCard(
@@ -43,6 +45,7 @@ internal fun PosterCard(
     subtitle: String? = null,
     placeholderHex: String? = null,
     stats: List<CoverStat> = emptyList(),
+    reserveTitleLines: Boolean = true,
 ) {
     // A larger token gets one step up in the type scale, so a featured card
     // reads as a bigger card instead of a rail card with more air.
@@ -97,10 +100,9 @@ internal fun PosterCard(
             Text(
                 text = title,
                 style = if (isLarge) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
-                // Reserve both lines: the card height is content-driven, so a
-                // one-line title would leave the row/grid uneven and shift the
-                // subtitle below it.
-                minLines = 2,
+                // Rails reserve both lines (the row stays even); a grid lets the
+                // subtitle hug the title.
+                minLines = if (reserveTitleLines) 2 else 1,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

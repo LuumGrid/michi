@@ -21,8 +21,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.luum.michi.app.core.network.repository.personCoverSizes
 import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
 import com.luum.michi.app.core.network.domain.resolveWithCatalog
@@ -241,7 +241,7 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
         averageScore = node.averageScore?.takeIf { it > 0 },
         viewerStatus = node.mediaListEntry?.status,
         voiceActorName = va?.name?.userPreferred,
-        voiceActorImage = va?.image?.let { CoverSizes(medium = it.medium, large = it.large) },
+        voiceActorImage = va?.image?.let { personCoverSizes(it.large, it.medium) },
         voiceActorLanguage = va?.languageV2,
         voiceActorId = va?.id,
     )
@@ -304,7 +304,7 @@ internal class CharacterDetailRepositoryImpl(
                             nativeName = character.name?.native?.takeIf { it.isNotBlank() },
                             alternativeNames = character.name?.alternative
                                 ?.filter { it.isNotBlank() }.orEmpty(),
-                            image = character.image?.let { CoverSizes(medium = it.medium, large = it.large) },
+                            image = character.image?.let { personCoverSizes(it.large, it.medium) },
                             descriptionPlain = bio?.text.orEmpty(),
                             links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                             gender = character.gender?.takeIf { it.isNotBlank() },

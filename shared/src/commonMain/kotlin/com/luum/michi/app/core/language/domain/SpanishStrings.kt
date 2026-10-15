@@ -373,7 +373,6 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailOpenInAniListAction = "Abrir en AniList"
     override val mediaDetailShareAction = "Compartir"
     override val mediaDetailAverageScoreLabel = "Puntaje promedio"
-    override val mediaDetailAllTimeLabel = "Todos los tiempos"
     override val moreAction = "Más"
 
     // Shared detail labels (character/staff/studio)
@@ -391,8 +390,6 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailNoMediaLabel = "Sin series"
     override val mediaDetailAnimeStudioLabel = "Estudio de anime"
     override val mediaDetailAlternativeNamesLabel = "Otros nombres"
-    override val mediaDetailYesLabel = "Sí"
-    override val mediaDetailNoLabel = "No"
 
     // Entry editor redesign
     override val discardChangesConfirmTitle = "¿Descartar cambios?"

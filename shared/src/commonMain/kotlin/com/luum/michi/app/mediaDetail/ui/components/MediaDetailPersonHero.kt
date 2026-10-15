@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +21,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.ui.components.glassBorder
-import com.luum.michi.app.ui.components.solidBorder
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.rememberCoverUrl
@@ -46,7 +43,6 @@ internal fun MediaDetailPersonHero(
     modifier: Modifier = Modifier,
     showPortrait: Boolean = true,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -57,7 +53,7 @@ internal fun MediaDetailPersonHero(
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                border = if (glass) glassBorder() else solidBorder(),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.coverSize(CoverSize.Featured),
             ) {
                 val url = rememberCoverUrl(image, CoverSize.Featured)
