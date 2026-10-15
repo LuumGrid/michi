@@ -13,7 +13,6 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -21,7 +20,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.network.domain.GridPageSize
 
 
 private const val StudioDetailQuery = """
@@ -36,7 +35,6 @@ query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}
       pageInfo { hasNextPage currentPage }
       nodes {
         id
-        type
         format
         title { userPreferred romaji english native }
         coverImage { extraLarge large medium color }
@@ -59,7 +57,6 @@ query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
       pageInfo { hasNextPage currentPage }
       nodes {
         id
-        type
         format
         title { userPreferred romaji english native }
         coverImage { extraLarge large medium color }
@@ -125,7 +122,6 @@ private data class StudioPageInfoDto(
 @Serializable
 private data class StudioMediaNodeDto(
     val id: Int,
-    val type: String? = null,
     val format: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
@@ -162,7 +158,6 @@ private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
     year = startDate?.year,
     averageScore = averageScore?.takeIf { it > 0 },
     viewerStatus = mediaListEntry?.status,
-    type = type,
     favourites = favourites?.takeIf { it > 0 },
     genres = genres.filter { it.isNotBlank() },
 )
@@ -182,16 +177,16 @@ internal class StudioDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : StudioDetailRepository {
 
-    override suspend fun loadDetail(id: Int, sort: StudioMediaSort): NetworkResult<StudioDetail> {
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
         val request = AniListGraphQLRequest(
             query = StudioDetailQuery,
             variables = JsonObject(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(1),
-                    "perPage" to JsonPrimitive(RailPageSize),
+                    "perPage" to JsonPrimitive(GridPageSize),
                     "sort" to JsonArray(
-                        listOf(JsonPrimitive(sort.apiValue))
+                        listOf(JsonPrimitive(sort))
                     ),
                 ),
             ),
@@ -229,7 +224,7 @@ internal class StudioDetailRepositoryImpl(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: StudioMediaSort,
+        sort: String,
     ): NetworkResult<StudioMediaPage> {
         val request = AniListGraphQLRequest(
             query = StudioMediaPageQuery,
@@ -237,9 +232,9 @@ internal class StudioDetailRepositoryImpl(
                 mapOf(
                     "id" to JsonPrimitive(id),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(RailPageSize),
+                    "perPage" to JsonPrimitive(GridPageSize),
                     "sort" to JsonArray(
-                        listOf(JsonPrimitive(sort.apiValue))
+                        listOf(JsonPrimitive(sort))
                     ),
                 ),
             ),

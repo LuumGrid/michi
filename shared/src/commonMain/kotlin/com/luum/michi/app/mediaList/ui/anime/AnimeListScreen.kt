@@ -44,7 +44,7 @@ import com.luum.michi.app.mediaList.ui.common.ANY_SEASON_ID
 import com.luum.michi.app.mediaList.ui.common.MediaListFilterSheet
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.mediaList.ui.common.MediaListSortSheet
+import com.luum.michi.app.ui.components.SortSheet
 import com.luum.michi.app.mediaList.ui.common.toggled
 import com.luum.michi.app.mediaList.ui.common.yearFilterTabs
 import com.luum.michi.app.ui.components.MediaCoverCard
@@ -294,7 +294,7 @@ internal fun AnimeListScreen(
         )
     }
     if (isSortOpen) {
-        MediaListSortSheet(
+        SortSheet(
             options = UserListSort.entries,
             selected = holder.currentSortOption,
             onSelect = { option ->

@@ -14,6 +14,7 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.model.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreResult
@@ -90,7 +91,7 @@ internal class ExploreStateHolder(
         currentSortOption = option
         currentSortOrder = order
         isSortPersisted = persist
-        sort = option.toMediaSort(order, category)
+        sort = option.toMediaSort(order, isAnime = category != ExploreCategory.MANGA)
         loadingState = true
         searchJob?.cancel()
         searchJob = scope.launch {
@@ -123,7 +124,7 @@ internal class ExploreStateHolder(
         currentSortOption = sortOption
         currentSortOrder = sortOrder
         isSortPersisted = false
-        sort = sortOption.toMediaSort(sortOrder, category)
+        sort = sortOption.toMediaSort(sortOrder, isAnime = category != ExploreCategory.MANGA)
         load()
     }
 
@@ -238,34 +239,6 @@ internal class ExploreStateHolder(
             query = query.takeIf { it.isNotBlank() },
             page = page,
         )
-    }
-}
-
-/** Deriva el MediaSort del API desde la selección del sheet compartido
- *  con anime/manga. Las claves sin equivalente usan la más cercana. */
-internal fun UserListSort.toMediaSort(order: UserListOrder, category: ExploreCategory): String {
-    val descending = order == UserListOrder.DESCENDING
-    fun both(asc: String, desc: String) = if (descending) desc else asc
-    return when (this) {
-        UserListSort.FOLLOW_LIST -> both("POPULARITY", "POPULARITY_DESC")
-        UserListSort.TITLE -> both("TITLE_ROMAJI", "TITLE_ROMAJI_DESC")
-        UserListSort.SCORE -> both("SCORE", "SCORE_DESC")
-        UserListSort.PROGRESS -> if (category == ExploreCategory.MANGA) {
-            both("CHAPTERS", "CHAPTERS_DESC")
-        } else {
-            both("EPISODES", "EPISODES_DESC")
-        }
-        UserListSort.LAST_UPDATED -> both("UPDATED_AT", "UPDATED_AT_DESC")
-        UserListSort.LAST_ADDED -> both("ID", "ID_DESC")
-        UserListSort.START_DATE -> both("START_DATE", "START_DATE_DESC")
-        UserListSort.COMPLETED_DATE -> both("END_DATE", "END_DATE_DESC")
-        UserListSort.RELEASE_DATE -> both("START_DATE", "START_DATE_DESC")
-        UserListSort.AVERAGE_SCORE -> both("SCORE", "SCORE_DESC")
-        UserListSort.POPULARITY -> both("POPULARITY", "POPULARITY_DESC")
-        UserListSort.FAVORITES -> both("FAVOURITES", "FAVOURITES_DESC")
-        UserListSort.TRENDING -> both("TRENDING", "TRENDING_DESC")
-        UserListSort.PRIORITY -> both("POPULARITY", "POPULARITY_DESC")
-        UserListSort.NEXT_AIRING -> both("START_DATE", "START_DATE_DESC")
     }
 }
 

@@ -1,0 +1,118 @@
+package com.luum.michi.app.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.ui.rememberCoverUrl
+import com.luum.michi.app.ui.theme.brandColor
+
+/**
+ * The one poster card of the app: a portrait cover (token-sized) + up to two
+ * cover badges + two reserved title lines + an optional subtitle. Rails, the
+ * "View all" grids and the studio grid all draw this card, so a poster looks the
+ * same everywhere (one radius; the type scale steps with the token: a [CoverSize.Rail]
+ * card reads `bodySmall`/`labelSmall`, a [CoverSize.Featured] one `bodyMedium`/
+ * `bodySmall`). Takes only primitives, so no feature model crosses into `ui`. A
+ * null [onClick] renders a display-only card.
+ */
+@Composable
+internal fun PosterCard(
+    cover: CoverSizes?,
+    title: String,
+    size: CoverSize,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    subtitle: String? = null,
+    placeholderHex: String? = null,
+    stats: List<CoverStat> = emptyList(),
+) {
+    // A larger token gets one step up in the type scale, so a featured card
+    // reads as a bigger card instead of a rail card with more air.
+    val isLarge = size == CoverSize.Featured
+    // Capped font scale: the badges and the title must not collide on a dense
+    // card (same rule as MediaCoverCard).
+    CardCappedDensity {
+        Column(
+            modifier = modifier
+                .width(size.width)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        ) {
+            Box(
+                modifier = Modifier
+                    .coverSize(size)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        placeholderHex?.let { brandColor(it) }
+                            ?: MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+            ) {
+                val url = rememberCoverUrl(cover, size)
+                if (!url.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        loading = {},
+                        error = {},
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                // First badge top-start, second top-end (max two by design).
+                stats.getOrNull(0)?.let {
+                    CoverStatBadge(
+                        stat = it,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp),
+                    )
+                }
+                stats.getOrNull(1)?.let {
+                    CoverStatBadge(
+                        stat = it,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = title,
+                style = if (isLarge) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
+                // Reserve both lines: the card height is content-driven, so a
+                // one-line title would leave the row/grid uneven and shift the
+                // subtitle below it.
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = if (isLarge) MaterialTheme.typography.bodySmall else MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}

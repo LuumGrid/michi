@@ -54,8 +54,8 @@ internal class State(
     var isSectionFilterOpen by mutableStateOf(false)
     var isCalendarFilterOpen by mutableStateOf(false)
     var isDetailMenuOpen by mutableStateOf(false)
-    /** Filter sheet of the open detail page (studio today). Closes with the page. */
-    var isDetailFilterOpen by mutableStateOf(false)
+    /** Sort sheet of the open detail page (studio today). Closes with the page. */
+    var isDetailSortOpen by mutableStateOf(false)
     var isListSortOpen by mutableStateOf(false)
     var isExploreFilterOpen by mutableStateOf(false)
     var isShareProfileOpen by mutableStateOf(false)
@@ -110,7 +110,7 @@ internal class State(
     fun nextBackStep(): BackStep = when {
         isSearchActive -> BackStep.CloseSearch
         isExploreFilterOpen || isSectionFilterOpen || isListSortOpen || isCalendarFilterOpen ||
-            isDetailMenuOpen || isDetailFilterOpen -> BackStep.CloseSheet
+            isDetailMenuOpen || isDetailSortOpen -> BackStep.CloseSheet
         // Surfaces drawn ABOVE the detail page (modal sheets + settings).
         isEditorOpen || isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
         // The detail page sits over the tab content and over the overlays
@@ -135,7 +135,7 @@ internal class State(
             isListSortOpen = false
             isCalendarFilterOpen = false
             isDetailMenuOpen = false
-            isDetailFilterOpen = false
+            isDetailSortOpen = false
             true
         }
         BackStep.CloseOverlay -> {
@@ -157,7 +157,7 @@ internal class State(
 
     private fun push(dest: DetailDestination) {
         isDetailMenuOpen = false
-        isDetailFilterOpen = false
+        isDetailSortOpen = false
         if (detailStack.lastOrNull() != dest) {
             detailStack.add(dest)
             entryIds.add(nextEntryId++)
@@ -172,7 +172,7 @@ internal class State(
         push(DetailDestination.DetailList(kind, parentId))
     fun closeDetail() {
         isDetailMenuOpen = false
-        isDetailFilterOpen = false
+        isDetailSortOpen = false
         if (detailStack.isNotEmpty()) {
             detailStack.removeAt(detailStack.lastIndex)
             entryIds.removeAt(entryIds.lastIndex)
@@ -187,12 +187,12 @@ internal class State(
         isDetailMenuOpen = false
     }
 
-    fun openDetailFilter() {
-        isDetailFilterOpen = true
+    fun openDetailSort() {
+        isDetailSortOpen = true
     }
 
-    fun closeDetailFilter() {
-        isDetailFilterOpen = false
+    fun closeDetailSort() {
+        isDetailSortOpen = false
     }
 
     fun openEditor(id: Int) {

@@ -10,27 +10,13 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
 import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
-import com.luum.michi.app.mediaDetail.domain.studio.model.sortedFor as studioSortedFor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 // ────────────── fixtures ──────────────
-
-private fun studioMedia(id: Int, score: Int? = null, year: Int? = null) = StudioMediaItem(
-    mediaId = id,
-    title = "Media $id",
-    cover = null,
-    paletteHex = null,
-    format = null,
-    year = year,
-    averageScore = score,
-    viewerStatus = null,
-)
 
 private fun characterDetail(id: Int, name: String) = CharacterDetail(
     id = id,
@@ -82,22 +68,6 @@ private fun studioDetail(id: Int, name: String) = StudioDetail(
 )
 
 class DetailHelpersTest {
-
-    // ── client-side ordering ──
-
-    @Test
-    fun studioSortedForScoreYearAndFallback() {
-        val items = listOf(
-            studioMedia(1, score = 70, year = 2001),
-            studioMedia(2, score = 95, year = 1999),
-            studioMedia(3, score = null, year = 2020),
-        )
-
-        assertEquals(listOf(2, 1, 3), items.studioSortedFor(StudioMediaSort.SCORE).map { it.mediaId })
-        assertEquals(listOf(3, 1, 2), items.studioSortedFor(StudioMediaSort.NEWEST).map { it.mediaId })
-        assertEquals(listOf(2, 1, 3), items.studioSortedFor(StudioMediaSort.OLDEST).map { it.mediaId })
-        assertEquals(listOf(1, 2, 3), items.studioSortedFor(StudioMediaSort.POPULARITY).map { it.mediaId })
-    }
 
     // ── canonical URLs + share body per scope ──
 

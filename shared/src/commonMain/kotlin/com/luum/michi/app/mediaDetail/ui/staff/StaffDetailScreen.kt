@@ -14,7 +14,8 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.ui.components.SectionHeader
@@ -170,24 +171,25 @@ private fun StaffInformationPanel(detail: StaffDetail, strings: LanguageStrings)
     val yearsActive = detail.yearsActiveStart?.let { start ->
         "$start–${detail.yearsActiveEnd ?: strings.yearsActivePresent}"
     }
-    val rows = buildList {
-        detail.gender?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailGenderLabel to it) }
-        detail.age?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailAgeLabel to it) }
-        detail.birthday?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBirthdayLabel to it) }
-        detail.death?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailDeathLabel to it) }
-        yearsActive?.let { add(strings.mediaDetailYearsActiveLabel to it) }
-        detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailHometownLabel to it) }
-        detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBloodTypeLabel to it) }
-        detail.alternativeNames
-            .filter { it.isNotBlank() }
-            .takeIf { it.isNotEmpty() }
-            ?.let { add(strings.mediaDetailSynonymsLabel to it.joinToString(", ")) }
+    val entries = buildList {
+        detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
+        detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
+        detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
+        detail.death?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailDeathLabel, it)) }
+        yearsActive?.let { add(MediaDetailInfoEntry(strings.mediaDetailYearsActiveLabel, it)) }
+        detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailHometownLabel, it)) }
+        detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
     }
-    if (rows.isEmpty()) return
+    val wideEntries = detail.alternativeNames
+        .filter { it.isNotBlank() }
+        .takeIf { it.isNotEmpty() }
+        ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
+        .orEmpty()
+    if (entries.isEmpty() && wideEntries.isEmpty()) return
     MediaDetailPanel {
         SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
-        rows.forEach { (label, value) -> MediaDetailInfoRow(label = label, value = value) }
+        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
     }
 }
 

@@ -1,38 +1,25 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.ui.rememberCoverUrl
-import com.luum.michi.app.ui.theme.brandColor
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -133,86 +120,16 @@ internal fun MediaRail(
                     // a bare id would make duplicate lazy keys and crash.
                     key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
                 ) { _, item ->
-                    RailCard(item = item, onSelect = onSelect, size = size)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RailCard(
-    item: MediaRailItem,
-    onSelect: ((Int) -> Unit)?,
-    size: CoverSize,
-) {
-    val clickable = if (onSelect != null) {
-        Modifier.clickable { onSelect(item.id) }
-    } else {
-        Modifier
-    }
-    // Capped font scale: the badges and the title must not collide on a dense
-    // card (same rule as MediaCoverCard).
-    CardCappedDensity {
-        Column(
-            modifier = Modifier
-                .width(size.width)
-                .then(clickable),
-        ) {
-            Box(
-                modifier = Modifier
-                    .coverSize(size)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(item.placeholderHex?.let { brandColor(it) } ?: MaterialTheme.colorScheme.surfaceVariant),
-            ) {
-                val url = rememberCoverUrl(item.image, size)
-                if (!url.isNullOrBlank()) {
-                    SubcomposeAsyncImage(
-                        model = url,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        loading = {},
-                        error = {},
-                        modifier = Modifier.fillMaxSize(),
+                    PosterCard(
+                        cover = item.image,
+                        title = item.title,
+                        size = size,
+                        onClick = onSelect?.let { select -> { select(item.id) } },
+                        subtitle = item.subtitle,
+                        placeholderHex = item.placeholderHex,
+                        stats = item.stats,
                     )
                 }
-                // First badge top-start, second top-end (max two by design).
-                item.stats.getOrNull(0)?.let {
-                    CoverStatBadge(
-                        stat = it,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(4.dp),
-                    )
-                }
-                item.stats.getOrNull(1)?.let {
-                    CoverStatBadge(
-                        stat = it,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp),
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.bodySmall,
-                // Reserve both lines: the card height is content-driven, so a
-                // one-line title would leave the rail uneven and shift the
-                // subtitle below it.
-                minLines = 2,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (item.subtitle != null) {
-                Text(
-                    text = item.subtitle,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
         }
     }

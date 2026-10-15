@@ -25,14 +25,16 @@ import com.luum.michi.app.ui.components.solidBorder
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.rememberCoverUrl
 import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.coverSize
 
 /**
- * Shared person hero (character/staff): centered portrait + name + native
- * name + favourites. Neutral on purpose so both scopes reuse the same shape
- * without importing each other.
+ * Shared person hero (character/staff/studio): centered portrait + name +
+ * native name + favourites. Neutral on purpose so every scope reuses the same
+ * shape without importing each other. A studio has no portrait: it passes
+ * [showPortrait] false and keeps the same type layout without the image box.
  */
 @Composable
 internal fun MediaDetailPersonHero(
@@ -42,6 +44,7 @@ internal fun MediaDetailPersonHero(
     favourites: Int?,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
+    showPortrait: Boolean = true,
 ) {
     val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Column(
@@ -50,25 +53,27 @@ internal fun MediaDetailPersonHero(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            border = if (glass) glassBorder() else solidBorder(),
-            modifier = Modifier.coverSize(CoverSize.Featured),
-        ) {
-            val url = rememberCoverUrl(image, CoverSize.Featured)
-            if (!url.isNullOrBlank()) {
-                SubcomposeAsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    loading = {},
-                    error = {},
-                    modifier = Modifier.fillMaxSize(),
-                )
+        if (showPortrait) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = if (glass) glassBorder() else solidBorder(),
+                modifier = Modifier.coverSize(CoverSize.Featured),
+            ) {
+                val url = rememberCoverUrl(image, CoverSize.Featured)
+                if (!url.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        loading = {},
+                        error = {},
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
-        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = name,
             style = MaterialTheme.typography.headlineSmall,
@@ -91,7 +96,7 @@ internal fun MediaDetailPersonHero(
         favourites?.let {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "$it ${strings.favoritesLabel}",
+                text = "${it.compactCount()} ${strings.favoritesLabel}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

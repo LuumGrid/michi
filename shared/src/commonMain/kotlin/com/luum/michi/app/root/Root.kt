@@ -73,7 +73,7 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
-import com.luum.michi.app.mediaDetail.ui.studio.components.StudioFilterSheet
+import com.luum.michi.app.mediaDetail.ui.studio.state.StudioSortOptions
 import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
@@ -119,6 +119,7 @@ import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.components.SearchScrim
+import com.luum.michi.app.ui.components.SortSheet
 import com.luum.michi.app.ui.components.TabBar
 import com.luum.michi.app.ui.components.TabItem
 import com.luum.michi.app.ui.components.TopEdgeFade
@@ -562,12 +563,16 @@ internal fun Root(
                         ACTION_SEARCH -> state.openSearch(tab)
                         ACTION_SETTINGS -> state.openSettings()
                         // List tools only exist on ANIME/MANGA (see
-                        // toolbarActions), so these always target a list tab.
-                        // A detail page owns the filter action while it is open
-                        // (studio): it must not reach the tab's section filter below it.
-                        ACTION_FILTER ->
-                            if (state.isDetailOpen) state.openDetailFilter() else state.openSectionFilter()
-                        ACTION_SORT -> state.openListSort()
+                        // toolbarActions), so ACTION_FILTER always targets a
+                        // list tab. ACTION_SORT also belongs to the studio
+                        // detail page while it is open.
+                        ACTION_FILTER -> state.openSectionFilter()
+                        ACTION_SORT ->
+                            if (state.currentDetail is DetailDestination.Studio) {
+                                state.openDetailSort()
+                            } else {
+                                state.openListSort()
+                            }
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
@@ -731,12 +736,6 @@ internal fun Root(
                                         }
                                     },
                                     onOpenMedia = { state.openMedia(it) },
-                                    onOpenFilter = { state.openDetailFilter() },
-                                    onAddEntry = if (viewerId != null) {
-                                        { state.openEditor(it) }
-                                    } else {
-                                        null
-                                    },
                                 )
                                 is DetailDestination.DetailList -> {
                                     val listBottom = padding.calculateBottomPadding()
@@ -987,10 +986,16 @@ internal fun Root(
                     onDismiss = { state.closeEditor() },
                 )
             }
-            if (state.isDetailOpen && state.isDetailFilterOpen && state.currentDetail is DetailDestination.Studio) {
-                StudioFilterSheet(
-                    holder = studioHolder,
-                    onDismiss = { state.closeDetailFilter() },
+            if (state.isDetailOpen && state.isDetailSortOpen && state.currentDetail is DetailDestination.Studio) {
+                // Shared sort sheet over the studio holder: picking a row
+                // re-queries the grid from page 1 (server order).
+                SortSheet(
+                    options = StudioSortOptions,
+                    selected = studioHolder.sortOption,
+                    onSelect = { studioHolder.changeSort(it, studioHolder.sortOrder) },
+                    order = studioHolder.sortOrder,
+                    onSelectOrder = { studioHolder.changeSort(studioHolder.sortOption, it) },
+                    onDismiss = { state.closeDetailSort() },
                 )
             }
             val detailMenu = detailOverflow
@@ -1145,15 +1150,15 @@ private fun toolbarActions(
             icon = AppIcons.More,
             contentDescription = strings.moreAction,
         )
-        // Media adds the editor pencil, studio adds its media filter; the
-        // other scopes have no list entry. All four open the overflow
-        // (AniList link + share).
+        // Media adds the editor pencil, studio its media sort; the other
+        // scopes have no list entry. All four open the overflow (AniList
+        // link + share).
         if (isStudioDetail) {
             return listOf(
                 ToolbarAction(
-                    id = ACTION_FILTER,
-                    icon = AppIcons.Filter,
-                    contentDescription = strings.filterAction,
+                    id = ACTION_SORT,
+                    icon = AppIcons.Sort,
+                    contentDescription = strings.sortAction,
                 ),
                 favourite,
                 more,

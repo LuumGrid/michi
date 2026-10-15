@@ -6,29 +6,13 @@ import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.util.DetailCache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-
-private class LruCache<K, V>(private val maxSize: Int) {
-    private val map = LinkedHashMap<K, V>()
-
-    fun get(key: K): V? = map[key]
-
-    fun put(key: K, value: V) {
-        map.remove(key)
-        map[key] = value
-        if (map.size > maxSize) {
-            val oldestKey = map.keys.first()
-            map.remove(oldestKey)
-        }
-    }
-
-    fun remove(key: K) { map.remove(key) }
-}
 
 private data class CharacterDetailSnapshot(
     val detail: CharacterDetail,
@@ -56,7 +40,7 @@ internal class CharacterDetailStateHolder(
     private var currentCharacterId: Int? = null
     private var currentJob: Job? = null
 
-    private val detailCache = LruCache<Int, CharacterDetailSnapshot>(maxSize = 5)
+    private val detailCache = DetailCache<Int, CharacterDetailSnapshot>(maxSize = 5)
 
     var mediaItems: List<CharacterMediaItem> by mutableStateOf(emptyList())
         private set
@@ -200,27 +184,21 @@ internal class CharacterDetailStateHolder(
         if (isTogglingFavourite) return
         val id = currentCharacterId ?: return
         val previous = isFavourite
-        isFavourite = !previous
+        val target = !previous
+        isFavourite = target
         isTogglingFavourite = true
         scope.launch {
             when (val result = repository.toggleFavourite(id)) {
                 is NetworkResult.Success -> {
-                    detail?.let { d ->
-                        val updated = d.copy(isFavourite = isFavourite)
-                        detail = updated
-                        detailCache.put(
-                            id,
-                            CharacterDetailSnapshot(
-                                detail = updated,
-                                mediaItems = mediaItems,
-                                hasNextPage = hasNextPage,
-                                currentPage = currentPage,
-                                    voiceLanguage = voiceLanguage,
-                            ),
-                        )
+                    // The cached snapshot of THIS character gets the new value;
+                    // the visible state follows only while this holder still
+                    // shows it (the user may have opened another one meanwhile).
+                    detailCache.update(id) { snapshot ->
+                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
                     }
+                    if (currentCharacterId == id) detail = detail?.copy(isFavourite = target)
                 }
-                is NetworkResult.Failure -> {
+                is NetworkResult.Failure -> if (currentCharacterId == id) {
                     isFavourite = previous
                     error = result.error
                 }

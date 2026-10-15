@@ -1,12 +1,14 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.UserListOrder
+import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
@@ -18,7 +20,6 @@ import kotlin.test.assertTrue
 private fun studioMediaItem(
     id: Int,
     format: String? = "TV",
-    type: String? = "ANIME",
 ) = StudioMediaItem(
     mediaId = id,
     title = "Media $id",
@@ -28,7 +29,6 @@ private fun studioMediaItem(
     year = 2020,
     averageScore = null,
     viewerStatus = null,
-    type = type,
     favourites = 42,
     genres = listOf("Action", "Comedy"),
 )
@@ -47,8 +47,8 @@ private fun studioDetail(
 )
 
 /**
- * Repository double: canned media pages per page number plus call counters to
- * prove cache hits and sort reloads.
+ * Repository double: canned media pages per page number plus call counters and
+ * the last sort key, to prove cache hits and that a sort change re-queries.
  */
 private class RecordingStudioRepository(
     private val mediaPages: Map<Int, StudioMediaPage> = emptyMap(),
@@ -57,11 +57,11 @@ private class RecordingStudioRepository(
         private set
     var mediaCalls = 0
         private set
-    var lastSort: StudioMediaSort? = null
+    var lastSort: String? = null
         private set
     private var favourite = false
 
-    override suspend fun loadDetail(id: Int, sort: StudioMediaSort): NetworkResult<StudioDetail> {
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
         detailCalls++
         lastSort = sort
         return NetworkResult.Success(
@@ -76,9 +76,10 @@ private class RecordingStudioRepository(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-        sort: StudioMediaSort,
+        sort: String,
     ): NetworkResult<StudioMediaPage> {
         mediaCalls++
+        lastSort = sort
         return NetworkResult.Success(mediaPages[page] ?: StudioMediaPage(emptyList(), false, page))
     }
 
@@ -97,7 +98,7 @@ private fun holderWired(repository: StudioDetailRepository) = StudioDetailStateH
 class StudioDetailIntegrationTest {
 
     @Test
-    fun loadHydratesDetailAndMedia() {
+    fun loadHydratesDetailAndMediaByReleaseDate() {
         val repository = RecordingStudioRepository(
             mediaPages = mapOf(1 to StudioMediaPage(listOf(studioMediaItem(7)), false, 1)),
         )
@@ -108,12 +109,15 @@ class StudioDetailIntegrationTest {
         assertEquals("Studio 3", holder.detail?.name)
         assertEquals(listOf(7), holder.mediaItems.map { it.mediaId })
         val item = holder.mediaItems.single()
-        assertEquals("ANIME", item.type)
         assertEquals(42, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
         assertFalse(holder.isLoading)
         assertNull(holder.error)
         assertEquals(1, repository.detailCalls)
+        // Default selection: a studio opens ordered by release date, descending.
+        assertEquals(UserListSort.RELEASE_DATE, holder.sortOption)
+        assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
+        assertEquals("START_DATE_DESC", repository.lastSort)
     }
 
     @Test
@@ -150,17 +154,73 @@ class StudioDetailIntegrationTest {
     }
 
     @Test
-    fun changeSortAppliesLocallyWithoutReload() {
+    fun changeSortRequeriesFromPageOneWithTheServerSort() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(
+                1 to StudioMediaPage(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to StudioMediaPage(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        holder.loadMore()
+        assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
+
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        assertEquals(2, repository.detailCalls, "the change re-queries page 1")
+        assertEquals("SCORE_DESC", repository.lastSort)
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the loaded page 2 is dropped")
+        assertEquals(1, holder.currentPage)
+        assertTrue(holder.hasNextPage)
+        assertEquals(UserListSort.AVERAGE_SCORE, holder.sortOption)
+        assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
+    }
+
+    @Test
+    fun changeSortOrderDerivesTheAscendingApiKey() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(1 to StudioMediaPage(listOf(studioMediaItem(1)), false, 1)),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+
+        holder.changeSort(UserListSort.TITLE, UserListOrder.ASCENDING)
+
+        assertEquals("TITLE_ROMAJI", repository.lastSort)
+        assertEquals(2, repository.detailCalls)
+    }
+
+    @Test
+    fun repickingTheSameSelectionDoesNotRequery() {
         val repository = RecordingStudioRepository()
         val holder = holderWired(repository)
-
         holder.load(1)
-        holder.changeSort(StudioMediaSort.SCORE)
 
-        assertEquals(StudioMediaSort.SCORE, holder.sort)
-        // Display sort is client-side: the server is always queried by popularity.
-        assertEquals(StudioMediaSort.POPULARITY, repository.lastSort)
+        holder.changeSort(UserListSort.RELEASE_DATE, UserListOrder.DESCENDING)
+
         assertEquals(1, repository.detailCalls)
+    }
+
+    @Test
+    fun aPageInFlightIsDroppedWhenTheSortChanges() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+                "SCORE_DESC" to mapOf(1 to listOf(2)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+
+        holder.loadMore() // page 2 of the default sort, held at the gate
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        repository.gate.complete(Unit) // the stale page lands after the sort change
+
+        assertEquals(listOf(2), holder.mediaItems.map { it.mediaId }, "only the new sort's page")
+        assertEquals(1, holder.currentPage)
     }
 
     @Test
@@ -177,73 +237,66 @@ class StudioDetailIntegrationTest {
         holder.toggleFavourite()
         assertFalse(holder.isFavourite)
     }
+}
 
-    private fun mixedStudio() = RecordingStudioRepository(
-        mediaPages = mapOf(
-            1 to StudioMediaPage(
-                listOf(
-                    studioMediaItem(1, format = "TV", type = "ANIME"),
-                    studioMediaItem(2, format = "MOVIE", type = "ANIME"),
-                    studioMediaItem(3, format = "MANGA", type = "MANGA"),
-                ),
-                hasNextPage = false,
-                currentPage = 1,
-            ),
-        ),
-    )
+/**
+ * Sort-aware double whose media page is held until [gate] completes, so a page
+ * in flight can be interrupted by a sort change.
+ */
+private class GatedPageStudioRepository(
+    private val pageItems: Map<String, Map<Int, List<Int>>>,
+) : StudioDetailRepository {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
+        val items = pageItems[sort]?.get(1).orEmpty().map { studioMediaItem(it) }
+        return NetworkResult.Success(
+            studioDetail(id = id, media = StudioMediaPage(items, hasNextPage = true, currentPage = 1)),
+        )
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        sort: String,
+    ): NetworkResult<StudioMediaPage> {
+        gate.await()
+        val items = pageItems[sort]?.get(page).orEmpty().map { studioMediaItem(it) }
+        return NetworkResult.Success(StudioMediaPage(items, hasNextPage = false, currentPage = page))
+    }
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
+}
+
+private class GatedStudioRepository : StudioDetailRepository by RecordingStudioRepository() {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        gate.await()
+        return NetworkResult.Success(Unit)
+    }
+}
+
+/** See `MediaDetailFavouriteCacheTest`: the late response must not mix entries. */
+class StudioDetailFavouriteCacheTest {
 
     @Test
-    fun typeAndFormatFiltersNarrowTheVisibleItemsWithoutReload() {
-        val repository = mixedStudio()
+    fun togglingOnAnotherStudioKeepsEachCacheEntrySeparate() {
+        val repository = GatedStudioRepository()
         val holder = holderWired(repository)
 
         holder.load(1)
-        assertEquals(3, holder.visibleItems.size)
+        assertFalse(holder.isFavourite)
+        holder.toggleFavourite()
+        assertTrue(holder.isFavourite, "optimistic")
 
-        holder.changeTypeFilter("ANIME")
-        assertEquals(listOf(1, 2), holder.visibleItems.map { it.mediaId })
-        assertEquals(listOf("MOVIE", "TV"), holder.availableFormats)
-
-        holder.changeFormatFilter("MOVIE")
-        assertEquals(listOf(2), holder.visibleItems.map { it.mediaId })
-        assertEquals(1, repository.detailCalls, "filters are display-only")
-    }
-
-    @Test
-    fun changingTypeDropsAFormatTheNewTypeDoesNotOffer() {
-        val holder = holderWired(mixedStudio())
-
-        holder.load(1)
-        holder.changeFormatFilter("MOVIE")
-        holder.changeTypeFilter("MANGA")
-
-        assertNull(holder.formatFilter)
-        assertEquals(listOf(3), holder.visibleItems.map { it.mediaId })
-    }
-
-    @Test
-    fun resetFiltersRestoresDefaultSortAndClearsFilters() {
-        val holder = holderWired(mixedStudio())
-
-        holder.load(1)
-        holder.changeTypeFilter("ANIME")
-        holder.changeFormatFilter("TV")
-        holder.changeSort(StudioMediaSort.SCORE)
-        holder.resetFilters()
-
-        assertNull(holder.typeFilter)
-        assertNull(holder.formatFilter)
-        assertEquals(StudioMediaSort.NEWEST, holder.sort)
-    }
-
-    @Test
-    fun anotherStudioDoesNotInheritFilters() {
-        val holder = holderWired(mixedStudio())
-
-        holder.load(1)
-        holder.changeTypeFilter("MANGA")
         holder.load(2)
+        assertFalse(holder.isFavourite, "the visible studio is the second one")
 
-        assertNull(holder.typeFilter)
+        repository.gate.complete(Unit)
+
+        assertFalse(holder.isFavourite, "the late response does not touch the visible one")
+        holder.load(1)
+        assertTrue(holder.isFavourite, "the first studio's snapshot kept the toggle")
     }
 }

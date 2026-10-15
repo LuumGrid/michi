@@ -1,15 +1,8 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -18,9 +11,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,23 +18,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.ui.components.GridCoverSizeProvider
+import com.luum.michi.app.ui.components.LoadMoreFooter
+import com.luum.michi.app.ui.components.LoadMoreKey
 import com.luum.michi.app.ui.components.MediaCoverCard
+import com.luum.michi.app.ui.components.MediaRailItem
+import com.luum.michi.app.ui.components.PosterCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import com.luum.michi.app.ui.components.MediaRailItem
-import com.luum.michi.app.ui.rememberCoverUrl
-import com.luum.michi.app.ui.components.CoverSize
-import com.luum.michi.app.ui.components.GridCoverSizeProvider
-import androidx.compose.foundation.layout.width
-import com.luum.michi.app.ui.components.coverSize
 
 /** How a [DetailListScreen] lays its items out. */
 internal enum class DetailListLayout {
@@ -110,7 +95,7 @@ private fun RowsList(
     if (paged) {
         LaunchedEffect(listState, items.size) {
             snapshotFlow {
-                listState.layoutInfo.visibleItemsInfo.any { it.key == LOAD_MORE_KEY }
+                listState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
             }
                 .distinctUntilChanged()
                 .filter { it }
@@ -153,7 +138,7 @@ private fun RowsList(
             )
         }
         if (paged) {
-            item(key = LOAD_MORE_KEY) { LoadMoreFooter(isLoading = isLoadingMore) }
+            item(key = LoadMoreKey) { LoadMoreFooter(isLoading = isLoadingMore) }
         }
     }
 }
@@ -173,7 +158,7 @@ private fun GridList(
     if (paged) {
         LaunchedEffect(gridState, items.size) {
             snapshotFlow {
-                gridState.layoutInfo.visibleItemsInfo.any { it.key == LOAD_MORE_KEY }
+                gridState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
             }
                 .distinctUntilChanged()
                 .filter { it }
@@ -198,69 +183,21 @@ private fun GridList(
                 items = items,
                 key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
             ) { _, item ->
-                ListCard(item = item, size = coverSize, onSelect = onSelect)
+                PosterCard(
+                    cover = item.image,
+                    title = item.title,
+                    size = coverSize,
+                    onClick = { onSelect(item.id) },
+                    subtitle = item.subtitle,
+                    placeholderHex = item.placeholderHex,
+                    stats = item.stats,
+                )
             }
             if (paged) {
-                item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                item(key = LoadMoreKey, span = { GridItemSpan(maxLineSpan) }) {
                     LoadMoreFooter(isLoading = isLoadingMore)
                 }
             }
         }
     }
 }
-
-@Composable
-private fun ListCard(item: MediaRailItem, size: CoverSize, onSelect: (Int) -> Unit) {
-    Column(modifier = Modifier.width(size.width).clickable { onSelect(item.id) }) {
-        Box(
-            modifier = Modifier
-                .coverSize(size)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-        ) {
-            val url = rememberCoverUrl(item.image, size)
-            if (!url.isNullOrBlank()) {
-                SubcomposeAsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    loading = {},
-                    error = {},
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (item.subtitle != null) {
-            Text(
-                text = item.subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
-private fun LoadMoreFooter(isLoading: Boolean) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
-        }
-    }
-}
-
-private const val LOAD_MORE_KEY = "detail-list-load-more"

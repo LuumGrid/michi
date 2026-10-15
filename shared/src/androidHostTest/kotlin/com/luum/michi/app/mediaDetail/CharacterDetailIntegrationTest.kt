@@ -8,6 +8,7 @@ import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
@@ -197,5 +198,39 @@ class CharacterDetailIntegrationTest {
         holder.selectVoiceLanguage("JAPANESE")
 
         assertEquals(1, repository.detailCalls)
+    }
+}
+
+private class GatedCharacterRepository :
+    CharacterDetailRepository by RecordingCharacterRepository() {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        gate.await()
+        return NetworkResult.Success(Unit)
+    }
+}
+
+/** See `MediaDetailFavouriteCacheTest`: the late response must not mix entries. */
+class CharacterDetailFavouriteCacheTest {
+
+    @Test
+    fun togglingOnAnotherCharacterKeepsEachCacheEntrySeparate() {
+        val repository = GatedCharacterRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertFalse(holder.isFavourite)
+        holder.toggleFavourite()
+        assertTrue(holder.isFavourite, "optimistic")
+
+        holder.load(2)
+        assertFalse(holder.isFavourite, "the visible character is the second one")
+
+        repository.gate.complete(Unit)
+
+        assertFalse(holder.isFavourite, "the late response does not touch the visible one")
+        holder.load(1)
+        assertTrue(holder.isFavourite, "the first character's snapshot kept the toggle")
     }
 }

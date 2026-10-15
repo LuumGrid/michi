@@ -2,7 +2,6 @@ package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaSort
 import com.luum.michi.app.mediaDetail.repository.studio.StudioDetailRepositoryImpl
 import com.luum.michi.app.mediaList.FakeGraphQL
 import kotlinx.coroutines.runBlocking
@@ -51,9 +50,9 @@ private fun studioDetailJson() = buildJsonObject {
 class StudioDetailMapperTest {
 
     @Test
-    fun mapsTypeFavouritesAndGenres() = runBlocking {
+    fun mapsFavouritesAndGenres() = runBlocking {
         val repository = StudioDetailRepositoryImpl(FakeGraphQL(listOf(studioDetailJson())))
-        val result = repository.loadDetail(9, StudioMediaSort.POPULARITY)
+        val result = repository.loadDetail(9, "POPULARITY_DESC")
         assertIs<NetworkResult.Success<StudioDetail>>(result)
         val detail = result.value
 
@@ -61,7 +60,6 @@ class StudioDetailMapperTest {
         val item = detail.media.items.single()
         assertEquals(7, item.mediaId)
         assertEquals("My Hero Academia", item.title)
-        assertEquals("ANIME", item.type)
         assertEquals("TV", item.format)
         assertEquals(2016, item.year)
         assertEquals(81, item.averageScore)
@@ -73,7 +71,7 @@ class StudioDetailMapperTest {
     @Test
     fun studioQueriesRequestFavouritesAndGenres() = runBlocking {
         val graphQL = FakeGraphQL(listOf(studioDetailJson()))
-        StudioDetailRepositoryImpl(graphQL).loadDetail(9, StudioMediaSort.POPULARITY)
+        StudioDetailRepositoryImpl(graphQL).loadDetail(9, "POPULARITY_DESC")
 
         val query = graphQL.requests.single().query
         assertTrue(query.contains("genres"), query)

@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaDetail.ui.staff.state
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
@@ -13,23 +14,6 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-
-private class LruCache<K, V>(private val maxSize: Int) {
-    private val map = LinkedHashMap<K, V>()
-
-    fun get(key: K): V? = map[key]
-
-    fun put(key: K, value: V) {
-        map.remove(key)
-        map[key] = value
-        if (map.size > maxSize) {
-            val oldestKey = map.keys.first()
-            map.remove(oldestKey)
-        }
-    }
-
-    fun remove(key: K) { map.remove(key) }
-}
 
 /**
  * Cache snapshot holds BOTH paginated lists independently so that a page
@@ -66,7 +50,7 @@ internal class StaffDetailStateHolder(
     private var currentStaffId: Int? = null
     private var currentJob: Job? = null
 
-    private val detailCache = LruCache<Int, StaffDetailSnapshot>(maxSize = 5)
+    private val detailCache = DetailCache<Int, StaffDetailSnapshot>(maxSize = 5)
 
     // ── media list ──
     var mediaItems: List<StaffMediaItem> by mutableStateOf(emptyList())
@@ -216,18 +200,21 @@ internal class StaffDetailStateHolder(
         if (isTogglingFavourite) return
         val id = currentStaffId ?: return
         val previous = isFavourite
-        isFavourite = !previous
+        val target = !previous
+        isFavourite = target
         isTogglingFavourite = true
         scope.launch {
             when (val result = repository.toggleFavourite(id)) {
                 is NetworkResult.Success -> {
-                    detail?.let { d ->
-                        val updated = d.copy(isFavourite = isFavourite)
-                        detail = updated
-                        detailCache.put(id, buildSnapshot(updated))
+                    // The cached snapshot of THIS staff member gets the new
+                    // value; the visible state follows only while this holder
+                    // still shows it (the user may have opened another one).
+                    detailCache.update(id) { snapshot ->
+                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
                     }
+                    if (currentStaffId == id) detail = detail?.copy(isFavourite = target)
                 }
-                is NetworkResult.Failure -> {
+                is NetworkResult.Failure -> if (currentStaffId == id) {
                     isFavourite = previous
                     error = result.error
                 }

@@ -10,6 +10,7 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
@@ -187,5 +188,38 @@ class StaffDetailIntegrationTest {
 
         holder.toggleFavourite()
         assertFalse(holder.isFavourite)
+    }
+}
+
+private class GatedStaffRepository : StaffDetailRepository by RecordingStaffRepository() {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        gate.await()
+        return NetworkResult.Success(Unit)
+    }
+}
+
+/** See `MediaDetailFavouriteCacheTest`: the late response must not mix entries. */
+class StaffDetailFavouriteCacheTest {
+
+    @Test
+    fun togglingOnAnotherStaffKeepsEachCacheEntrySeparate() {
+        val repository = GatedStaffRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertFalse(holder.isFavourite)
+        holder.toggleFavourite()
+        assertTrue(holder.isFavourite, "optimistic")
+
+        holder.load(2)
+        assertFalse(holder.isFavourite, "the visible staff member is the second one")
+
+        repository.gate.complete(Unit)
+
+        assertFalse(holder.isFavourite, "the late response does not touch the visible one")
+        holder.load(1)
+        assertTrue(holder.isFavourite, "the first staff member's snapshot kept the toggle")
     }
 }

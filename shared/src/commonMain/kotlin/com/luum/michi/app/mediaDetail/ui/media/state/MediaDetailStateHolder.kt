@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaDetail.ui.media.state
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
@@ -16,31 +17,6 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-
-/**
- * Tiny LRU cache that evicts the least-recently-used entry when [maxSize] is exceeded.
- * Insertion-order eviction is used as a simple approximation of LRU (sufficient for 5 entries).
- * Uses a plain [LinkedHashMap] in insertion order (no access-order flag for KMP compat).
- */
-private class LruCache<K, V>(private val maxSize: Int) {
-    // Access order is not available in Kotlin/Native LinkedHashMap; use insertion-order
-    // and treat "put" as a touch (remove + re-insert) to approximate LRU.
-    private val map = LinkedHashMap<K, V>()
-
-    fun get(key: K): V? = map[key]
-
-    fun put(key: K, value: V) {
-        // Re-insert to move to "most recently used" position (insertion order approximation)
-        map.remove(key)
-        map[key] = value
-        if (map.size > maxSize) {
-            val oldestKey = map.keys.first()
-            map.remove(oldestKey)
-        }
-    }
-
-    fun remove(key: K) { map.remove(key) }
-}
 
 /** Snapshot of MediaDetail content that can be restored without a network call. */
 private data class MediaDetailSnapshot(
@@ -73,8 +49,8 @@ internal class MediaDetailStateHolder(
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
 
-    /** LRU cache of up to 5 recently-visited detail pages. */
-    private val detailCache = LruCache<Int, MediaDetailSnapshot>(maxSize = 5)
+    /** Cache of up to 5 recently-visited detail pages. */
+    private val detailCache = DetailCache<Int, MediaDetailSnapshot>(maxSize = 5)
 
     var characters: List<MediaCharacterEntry> by mutableStateOf(emptyList())
         private set
@@ -249,14 +225,22 @@ internal class MediaDetailStateHolder(
     fun toggleFavourite() {
         val current = detail ?: return
         if (isTogglingFavourite) return
+        val id = current.id
+        val target = !current.isFavourite
         isTogglingFavourite = true
         scope.launch {
-            when (val result = entryRepository.toggleFavourite(current.id, current.type == MediaDetailType.MANGA)) {
+            when (val result = entryRepository.toggleFavourite(id, current.type == MediaDetailType.MANGA)) {
                 is NetworkResult.Success -> {
-                    val latest = detail
-                    if (latest != null) detail = latest.copy(isFavourite = !latest.isFavourite)
+                    // The cached snapshot of THIS media gets the new value; the
+                    // visible state follows only while this holder still shows it
+                    // (the user may have opened another media meanwhile, and the
+                    // response must never overwrite that one).
+                    detailCache.update(id) { snapshot ->
+                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
+                    }
+                    if (currentMediaId == id) detail = detail?.copy(isFavourite = target)
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) error = result.error
             }
             isTogglingFavourite = false
         }

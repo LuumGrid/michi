@@ -2,11 +2,9 @@ package com.luum.michi.app.mediaDetail.ui.media.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -40,6 +37,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
@@ -58,62 +57,34 @@ internal fun MediaDetailInformationPanel(
     isManga: Boolean,
     onOpenStudio: (Int) -> Unit,
 ) {
-    val shortRows = buildList {
-        detail.format?.let { add(InfoEntry(strings.mediaDetailFormatLabel, it)) }
-        detail.workStatusLabel(strings)?.let { add(InfoEntry(strings.mediaDetailStatusLabel, it)) }
+    val entries = buildList {
+        detail.format?.let { add(MediaDetailInfoEntry(strings.mediaDetailFormatLabel, it)) }
+        detail.workStatusLabel(strings)?.let { add(MediaDetailInfoEntry(strings.mediaDetailStatusLabel, it)) }
         if (isManga) {
-            detail.chapters?.let { add(InfoEntry(strings.chaptersLabel, it.toString())) }
-            detail.volumes?.let { add(InfoEntry(strings.volumesLabel, it.toString())) }
+            detail.chapters?.let { add(MediaDetailInfoEntry(strings.chaptersLabel, it.toString())) }
+            detail.volumes?.let { add(MediaDetailInfoEntry(strings.volumesLabel, it.toString())) }
         } else {
-            detail.episodes?.let { add(InfoEntry(strings.mediaDetailEpisodesLabel, it.toString())) }
+            detail.episodes?.let { add(MediaDetailInfoEntry(strings.mediaDetailEpisodesLabel, it.toString())) }
         }
-        detail.duration?.let { add(InfoEntry(strings.mediaDetailDurationLabel, "$it min")) }
-        detail.season?.let { add(InfoEntry(strings.mediaDetailSeasonLabel, it)) }
-        detail.startedLabel?.let { add(InfoEntry(strings.mediaDetailStartDateLabel, it)) }
-        detail.endedLabel?.let { add(InfoEntry(strings.mediaDetailEndedLabel, it)) }
-        detail.source?.let { add(InfoEntry(strings.mediaDetailSourceLabel, humanizeSource(it))) }
+        detail.duration?.let { add(MediaDetailInfoEntry(strings.mediaDetailDurationLabel, "$it min")) }
+        detail.season?.let { add(MediaDetailInfoEntry(strings.mediaDetailSeasonLabel, it)) }
+        detail.startedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailStartDateLabel, it)) }
+        detail.endedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailEndedLabel, it)) }
+        detail.source?.let { add(MediaDetailInfoEntry(strings.mediaDetailSourceLabel, humanizeSource(it))) }
     }
-    val wideRows = buildList {
-        detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(InfoEntry(strings.mediaDetailRomajiLabel, it)) }
-        detail.titleNative?.takeIf { it.isNotBlank() }?.let { add(InfoEntry(strings.mediaDetailNativeLabel, it)) }
+    val wideEntries = buildList {
+        detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailRomajiLabel, it)) }
+        detail.titleNative?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailNativeLabel, it)) }
         detail.synonyms
             .filter { it.isNotBlank() }
             .takeIf { it.isNotEmpty() }
-            ?.let { add(InfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
+            ?.let { add(MediaDetailInfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
     }
-    if (shortRows.isEmpty() && wideRows.isEmpty() && detail.studios.isEmpty()) return
+    if (entries.isEmpty() && wideEntries.isEmpty() && detail.studios.isEmpty()) return
     MediaDetailPanel {
         SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(12.dp))
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            shortRows.chunked(2).forEach { pair ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    pair.forEach { entry ->
-                        InfoCell(
-                            label = entry.label,
-                            value = entry.value,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    // Odd tail: keep the lone cell half width, not stretched.
-                    if (pair.size == 1) Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-            wideRows.forEach { entry ->
-                InfoCell(
-                    label = entry.label,
-                    value = entry.value,
-                    valueMaxLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
         if (detail.studios.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -129,34 +100,6 @@ internal fun MediaDetailInformationPanel(
                 contentPadding = PaddingValues(0.dp),
             )
         }
-    }
-}
-
-private data class InfoEntry(val label: String, val value: String)
-
-/** Label above value: reads cleanly in a two-column grid and full width alike. */
-@Composable
-private fun InfoCell(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    valueMaxLines: Int = 2,
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = valueMaxLines,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 

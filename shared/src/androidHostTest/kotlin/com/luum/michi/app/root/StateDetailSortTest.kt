@@ -18,33 +18,33 @@ private fun newState() = State(
     ),
 )
 
-class StateDetailFilterTest {
+class StateDetailSortTest {
 
     @Test
-    fun detailFilterClosesBeforeThePageItSitsOn() {
+    fun detailSortClosesBeforeThePageItSitsOn() {
         val state = newState()
         state.openStudio(5)
-        state.openDetailFilter()
+        state.openDetailSort()
 
         assertEquals(BackStep.CloseSheet, state.nextBackStep())
         assertTrue(state.applyBackStep())
 
-        assertFalse(state.isDetailFilterOpen)
+        assertFalse(state.isDetailSortOpen)
         assertTrue(state.isDetailOpen, "the first back only closes the sheet")
         assertEquals(BackStep.CloseDetail, state.nextBackStep())
     }
 
     @Test
-    fun leavingOrReplacingTheDetailDropsTheFilterFlag() {
+    fun leavingOrReplacingTheDetailDropsTheSortFlag() {
         val state = newState()
         state.openStudio(5)
-        state.openDetailFilter()
+        state.openDetailSort()
         state.openMedia(9)
-        assertFalse(state.isDetailFilterOpen)
+        assertFalse(state.isDetailSortOpen)
 
         state.openStudio(6)
-        state.openDetailFilter()
+        state.openDetailSort()
         state.closeDetail()
-        assertFalse(state.isDetailFilterOpen)
+        assertFalse(state.isDetailSortOpen)
     }
 }

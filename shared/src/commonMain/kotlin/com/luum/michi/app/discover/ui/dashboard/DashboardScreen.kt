@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.MediaSeasonYear
-import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.core.model.currentSeasonAndYear
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.next
@@ -31,6 +30,8 @@ import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.MediaRailItem
+import com.luum.michi.app.ui.components.popularityBadge
+import com.luum.michi.app.ui.components.scoreBadge
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
@@ -204,9 +205,7 @@ private fun MediaItem.toRailItem(kind: DashboardSectionKind): MediaRailItem? = i
 private fun MediaItem.badges(kind: DashboardSectionKind): List<CoverStat> =
     kind.cardStats().mapNotNull { stat ->
         when (stat) {
-            DashboardCardStat.SCORE ->
-                averageScore?.let { CoverStat(AppIcons.StarOutline, "$it%") }
-            DashboardCardStat.POPULARITY ->
-                popularity?.let { CoverStat(AppIcons.Groups, it.compactCount()) }
+            DashboardCardStat.SCORE -> scoreBadge(averageScore)
+            DashboardCardStat.POPULARITY -> popularityBadge(popularity)
         }
     }

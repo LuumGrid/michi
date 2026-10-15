@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaList.ui.common
+package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -9,20 +9,17 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.label
-import com.luum.michi.app.ui.components.ModalSheet
-import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * Shared list sort sheet: all [UserListSort] criteria single-select plus
- * the [UserListOrder] direction group. Primitives in, callbacks out — the
- * screen maps holder state so this file never touches a holder. Applies
- * immediately on every tap, like the Settings pickers; in-memory only
- * (persistence is a follow-up via UpdateUser).
+ * Shared sort sheet: all [UserListSort] criteria single-select plus the
+ * [UserListOrder] direction group. Primitives in, callbacks out — the screen
+ * maps holder state so this file never touches a holder. Applies immediately on
+ * every tap, like the Settings pickers. Used by the anime/manga lists and by the
+ * studio media grid (which re-queries on a change instead of sorting locally).
  */
 @Composable
-internal fun MediaListSortSheet(
+internal fun SortSheet(
     options: List<UserListSort>,
     selected: UserListSort,
     onSelect: (UserListSort) -> Unit,

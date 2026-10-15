@@ -44,7 +44,6 @@ interface LanguageStrings {
     fun exploreChapterCountLabel(count: Int): String
     val charactersLabel: String
     val studiosLabel: String
-    val exploreFilterTypeLabel: String
     val seasonLabel: String
     val exploreFilterGenreLabel: String
     val formatLabel: String
@@ -94,7 +93,6 @@ interface LanguageStrings {
     val mediaDetailNoCharactersLabel: String
     val mediaDetailCharactersTitle: String
     val mediaDetailVoiceLanguageLabel: String
-    val mediaDetailLoadMoreAction: String
     val voiceLanguageJapanese: String
     val voiceLanguageEnglish: String
     val voiceLanguageKorean: String
@@ -328,11 +326,6 @@ interface LanguageStrings {
     val notifMessageLabel: String
     val notifMediaChangeLabel: String
 
-    // Studio detail
-    val sortByNewest: String
-    val sortByOldest: String
-    val sortByScore: String
-
     // Staff detail
     val yearsActivePresent: String
 
@@ -362,8 +355,6 @@ interface LanguageStrings {
     val moreAction: String
 
     // Shared detail labels (character/staff/studio)
-    val sortByPopularity: String
-    val sortByFavourites: String
     val mediaDetailGenderLabel: String
     val mediaDetailAgeLabel: String
     val mediaDetailBloodTypeLabel: String
@@ -377,6 +368,10 @@ interface LanguageStrings {
     val mediaDetailMediaTitle: String
     val mediaDetailNoMediaLabel: String
     val mediaDetailAnimeStudioLabel: String
+    /** Character/staff alternate names (media keeps [mediaDetailSynonymsLabel]). */
+    val mediaDetailAlternativeNamesLabel: String
+    val mediaDetailYesLabel: String
+    val mediaDetailNoLabel: String
 
     // Entry editor redesign
     val discardChangesConfirmTitle: String

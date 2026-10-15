@@ -25,7 +25,8 @@ import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoRow
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.ui.components.SectionHeader
@@ -198,21 +199,22 @@ private fun characterChips(detail: CharacterDetail, strings: LanguageStrings): L
 
 @Composable
 private fun CharacterInformationPanel(detail: CharacterDetail, strings: LanguageStrings) {
-    val rows = buildList {
-        detail.gender?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailGenderLabel to it) }
-        detail.age?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailAgeLabel to it) }
-        detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBloodTypeLabel to it) }
-        detail.birthday?.takeIf { it.isNotBlank() }?.let { add(strings.mediaDetailBirthdayLabel to it) }
-        detail.alternativeNames
-            .filter { it.isNotBlank() }
-            .takeIf { it.isNotEmpty() }
-            ?.let { add(strings.mediaDetailSynonymsLabel to it.joinToString(", ")) }
+    val entries = buildList {
+        detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
+        detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
+        detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
+        detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
     }
-    if (rows.isEmpty()) return
+    val wideEntries = detail.alternativeNames
+        .filter { it.isNotBlank() }
+        .takeIf { it.isNotEmpty() }
+        ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
+        .orEmpty()
+    if (entries.isEmpty() && wideEntries.isEmpty()) return
     MediaDetailPanel {
         SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(8.dp))
-        rows.forEach { (label, value) -> MediaDetailInfoRow(label = label, value = value) }
+        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
     }
 }
 

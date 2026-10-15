@@ -44,7 +44,6 @@ object EnglishStrings : LanguageStrings {
     override fun exploreChapterCountLabel(count: Int) = "$count ch"
     override val charactersLabel = "Characters"
     override val studiosLabel = "Studios"
-    override val exploreFilterTypeLabel = "Type"
     override val seasonLabel = "Season"
     override val exploreFilterGenreLabel = "Genre"
     override val formatLabel = "Format"
@@ -93,7 +92,6 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailNoCharactersLabel = "No characters listed"
     override val mediaDetailCharactersTitle = "Characters"
     override val mediaDetailVoiceLanguageLabel = "Voice language"
-    override val mediaDetailLoadMoreAction = "Load more"
     override val voiceLanguageJapanese = "Japanese"
     override val voiceLanguageEnglish = "English"
     override val voiceLanguageKorean = "Korean"
@@ -348,11 +346,6 @@ object EnglishStrings : LanguageStrings {
     override val notifMessageLabel = "New message"
     override val notifMediaChangeLabel = "A title on your list changed"
 
-    // Studio detail
-    override val sortByNewest = "Newest"
-    override val sortByOldest = "Oldest"
-    override val sortByScore = "Score"
-
     // Staff detail
     override val yearsActivePresent = "present"
 
@@ -382,8 +375,6 @@ object EnglishStrings : LanguageStrings {
     override val moreAction = "More"
 
     // Shared detail labels (character/staff/studio)
-    override val sortByPopularity = "Popularity"
-    override val sortByFavourites = "Favourites"
     override val mediaDetailGenderLabel = "Gender"
     override val mediaDetailAgeLabel = "Age"
     override val mediaDetailBloodTypeLabel = "Blood type"
@@ -397,6 +388,9 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailMediaTitle = "Media"
     override val mediaDetailNoMediaLabel = "No media"
     override val mediaDetailAnimeStudioLabel = "Anime studio"
+    override val mediaDetailAlternativeNamesLabel = "Other names"
+    override val mediaDetailYesLabel = "Yes"
+    override val mediaDetailNoLabel = "No"
 
     // Entry editor redesign
     override val discardChangesConfirmTitle = "Discard changes?"

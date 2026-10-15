@@ -20,6 +20,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
@@ -213,9 +214,21 @@ private fun viewerEntry(progress: Int, status: MediaListStatus? = MediaListStatu
     completedAtMillis = null,
 )
 
-private fun holderWired(repository: MediaDetailRepository) = MediaDetailStateHolder(
+private class GatedEntryRepository : MediaListEntryRepository by NoopEntryRepository {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> {
+        gate.await()
+        return NetworkResult.Success(Unit)
+    }
+}
+
+private fun holderWired(
+    repository: MediaDetailRepository,
+    entryRepository: MediaListEntryRepository = NoopEntryRepository,
+) = MediaDetailStateHolder(
     repository = repository,
-    entryRepository = NoopEntryRepository,
+    entryRepository = entryRepository,
     scope = CoroutineScope(Dispatchers.Unconfined),
     strings = EnglishStrings,
 )
@@ -358,5 +371,30 @@ class MediaDetailIntegrationTest {
         holder.load(1)
 
         assertEquals(3, repository.detailCalls)
+    }
+}
+
+/**
+ * The toggle response may land after the user opened another media: the cached
+ * snapshot of the id that was toggled must keep its own value, and the visible
+ * page must not change.
+ */
+class MediaDetailFavouriteCacheTest {
+
+    @Test
+    fun togglingOnAnotherMediaKeepsEachCacheEntrySeparate() {
+        val entryRepository = GatedEntryRepository()
+        val holder = holderWired(RecordingDetailRepository(), entryRepository)
+
+        holder.load(1)
+        assertFalse(holder.detail?.isFavourite == true)
+        holder.toggleFavourite()
+        holder.load(2)
+
+        entryRepository.gate.complete(Unit)
+
+        assertFalse(holder.detail?.isFavourite == true, "the visible media is untouched")
+        holder.load(1)
+        assertTrue(holder.detail?.isFavourite == true, "the first media's snapshot kept the toggle")
     }
 }
