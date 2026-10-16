@@ -1,10 +1,8 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.network.repository.dto.MediaCharacterConnectionDto
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.core.network.repository.dto.MediaDetailResponseDto
-import com.luum.michi.app.core.network.repository.dto.MediaPageInfoDto
-import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
+import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
@@ -173,7 +171,7 @@ private data class MediaRecommendationsPageWrapperDto(
 
 @Serializable
 private data class MediaRecommendationsConnectionDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val nodes: List<MediaRecommendationNodeDto> = emptyList(),
 )
 
@@ -182,11 +180,6 @@ private data class MediaRecommendationNodeDto(
     val id: Int,
     val rating: Int = 0,
     val mediaRecommendation: MediaRecommendationMediaDto? = null,
-)
-
-@Serializable
-private data class MediaRecommendationListEntryDto(
-    val status: String? = null,
 )
 
 @Serializable
@@ -203,7 +196,7 @@ private data class MediaRecommendationMediaDto(
     val volumes: Int? = null,
     val averageScore: Int? = null,
     val favourites: Int? = null,
-    val mediaListEntry: MediaRecommendationListEntryDto? = null,
+    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable

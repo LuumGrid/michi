@@ -1,5 +1,14 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.mediaDetail.repository.media
 
+import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.network.repository.dto.MediaNextAiringEpisodeDto
+import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.network.repository.dto.PersonImageDto
+import com.luum.michi.app.core.network.repository.dto.PersonNameDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -98,14 +107,8 @@ internal data class MediaTrailerDto(
 )
 
 @Serializable
-internal data class MediaPageInfoDto(
-    val hasNextPage: Boolean = false,
-    val currentPage: Int = 1,
-)
-
-@Serializable
 internal data class MediaCharacterConnectionDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val edges: List<MediaCharacterEdgeDto> = emptyList(),
 )
 
@@ -125,7 +128,7 @@ internal data class MediaCharacterNodeDto(
 
 @Serializable
 internal data class MediaStaffConnectionDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val edges: List<MediaStaffEdgeDto> = emptyList(),
 )
 
@@ -165,21 +168,3 @@ internal data class MediaRelationNodeDto(
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
 )
-
-@Serializable
-internal data class MediaViewerListEntryDto(
-    val id: Int,
-    val status: String? = null,
-    val progress: Int? = null,
-    val progressVolumes: Int? = null,
-    val score: Double? = null,
-    val advancedScores: Map<String, Float>? = null,
-    val notes: String? = null,
-    val repeat: Int? = null,
-    val priority: Int? = null,
-    @SerialName("private") val isPrivate: Boolean? = null,
-    val hiddenFromStatusLists: Boolean? = null,
-    val startedAt: FuzzyDateDto? = null,
-    val completedAt: FuzzyDateDto? = null,
-)
-

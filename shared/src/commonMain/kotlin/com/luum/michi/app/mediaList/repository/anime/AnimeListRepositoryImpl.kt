@@ -2,7 +2,7 @@ package com.luum.michi.app.mediaList.repository.anime
 
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
-import com.luum.michi.app.core.network.repository.dto.MediaListCollectionResponseDto
+import com.luum.michi.app.mediaList.repository.MediaListCollectionResponseDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson

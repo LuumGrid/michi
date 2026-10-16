@@ -1,8 +1,6 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
 import com.luum.michi.app.core.network.repository.dto.MediaDto
-import com.luum.michi.app.core.network.repository.dto.MediaPageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.label

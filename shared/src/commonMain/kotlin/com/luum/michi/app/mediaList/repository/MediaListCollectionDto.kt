@@ -1,5 +1,7 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.mediaList.repository
 
+import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -42,13 +44,6 @@ internal data class MediaListEntryDto(
     val isPrivate: Boolean = false,
     val hiddenFromStatusLists: Boolean = false,
     val media: MediaDto,
-)
-
-@Serializable
-internal data class FuzzyDateDto(
-    val year: Int? = null,
-    val month: Int? = null,
-    val day: Int? = null,
 )
 
 internal fun FuzzyDateDto?.toComparableInt(): Int {

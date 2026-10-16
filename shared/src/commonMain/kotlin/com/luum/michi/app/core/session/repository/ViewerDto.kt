@@ -1,5 +1,6 @@
 package com.luum.michi.app.core.session.repository
 
+import com.luum.michi.app.core.network.repository.dto.PersonImageDto
 import com.luum.michi.app.core.session.domain.Viewer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -33,7 +34,7 @@ internal data class ViewerResponseDto(
 internal data class ViewerDto(
     val id: Int,
     val name: String,
-    val avatar: AvatarDto? = null,
+    val avatar: PersonImageDto? = null,
     val bannerImage: String? = null,
     val about: String? = null,
     val createdAt: Long? = null,
@@ -41,12 +42,6 @@ internal data class ViewerDto(
     val moderatorRoles: List<String>? = null,
     val options: ViewerOptionsDto? = null,
     val mediaListOptions: ViewerMediaListOptionsDto? = null,
-)
-
-@Serializable
-internal data class AvatarDto(
-    val large: String? = null,
-    val medium: String? = null,
 )
 
 @Serializable

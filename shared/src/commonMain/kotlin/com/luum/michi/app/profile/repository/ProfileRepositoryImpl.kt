@@ -13,8 +13,6 @@ import com.luum.michi.app.core.network.repository.dto.CharacterDto
 import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.StaffDto
 import com.luum.michi.app.core.network.repository.dto.StudioDto
-import com.luum.michi.app.core.network.repository.dto.UserProfileResponseDto
-import com.luum.michi.app.core.network.repository.dto.UserFavouritesResponseDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson

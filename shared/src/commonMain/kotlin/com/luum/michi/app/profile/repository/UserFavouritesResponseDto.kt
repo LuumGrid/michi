@@ -1,5 +1,10 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.profile.repository
 
+import com.luum.michi.app.core.network.repository.dto.CharacterDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.network.repository.dto.StaffDto
+import com.luum.michi.app.core.network.repository.dto.StudioDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

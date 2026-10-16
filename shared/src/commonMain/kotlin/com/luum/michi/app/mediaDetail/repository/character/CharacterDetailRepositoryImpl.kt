@@ -9,6 +9,10 @@ import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.network.repository.dto.PersonImageDto
+import com.luum.michi.app.core.network.repository.dto.PersonNameDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -109,7 +113,7 @@ mutation ToggleCharacterFavourite(${'$'}id: Int!) {
 
 @Serializable
 private data class CharacterDetailResponseDto(
-    @SerialName("Character") val character: CharacterDto? = null,
+    @SerialName("Character") val character: CharacterDetailDto? = null,
 )
 
 @Serializable
@@ -118,10 +122,10 @@ private data class CharacterMediaPageResponseDto(
 )
 
 @Serializable
-private data class CharacterDto(
+private data class CharacterDetailDto(
     val id: Int,
-    val name: CharacterNameDto? = null,
-    val image: CharacterImageDto? = null,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
     val description: String? = null,
     val gender: String? = null,
     val age: String? = null,
@@ -139,28 +143,9 @@ private data class CharacterPageOnlyDto(
 )
 
 @Serializable
-private data class CharacterNameDto(
-    val userPreferred: String? = null,
-    val native: String? = null,
-    val alternative: List<String> = emptyList(),
-)
-
-@Serializable
-private data class CharacterImageDto(
-    val large: String? = null,
-    val medium: String? = null,
-)
-
-@Serializable
 private data class CharacterMediaConnectionDto(
-    val pageInfo: CharacterPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val edges: List<CharacterMediaEdgeDto> = emptyList(),
-)
-
-@Serializable
-private data class CharacterPageInfoDto(
-    val hasNextPage: Boolean = false,
-    val currentPage: Int = 1,
 )
 
 @Serializable
@@ -173,14 +158,9 @@ private data class CharacterMediaEdgeDto(
 @Serializable
 private data class VoiceActorDto(
     val id: Int,
-    val name: VoiceActorNameDto? = null,
-    val image: CharacterImageDto? = null,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
     val languageV2: String? = null,
-)
-
-@Serializable
-private data class VoiceActorNameDto(
-    val userPreferred: String? = null,
 )
 
 @Serializable
@@ -191,18 +171,8 @@ private data class CharacterMediaNodeDto(
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
-    val startDate: CharacterFuzzyYearDto? = null,
-    val mediaListEntry: CharacterMediaListEntryDto? = null,
-)
-
-@Serializable
-private data class CharacterFuzzyYearDto(
-    val year: Int? = null,
-)
-
-@Serializable
-private data class CharacterMediaListEntryDto(
-    val status: String? = null,
+    val startDate: FuzzyDateDto? = null,
+    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable

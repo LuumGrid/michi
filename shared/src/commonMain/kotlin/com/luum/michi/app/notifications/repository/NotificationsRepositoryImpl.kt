@@ -1,6 +1,5 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.network.repository.dto.NotificationsResponseDto
 import com.luum.michi.app.notifications.domain.NotificationsPage
 import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient

@@ -12,6 +12,8 @@ internal data class PersonNameDto(
     val first: String? = null,
     val last: String? = null,
     val userPreferred: String? = null,
+    val native: String? = null,
+    val alternative: List<String> = emptyList(),
 ) {
     val bestName: String
         get() = userPreferred ?: full ?: listOfNotNull(first, last).joinToString(" ").ifBlank { null } ?: ""

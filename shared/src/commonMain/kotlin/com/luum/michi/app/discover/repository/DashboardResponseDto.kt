@@ -1,5 +1,6 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.discover.repository
 
+import com.luum.michi.app.core.network.repository.dto.MediaDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -33,18 +34,4 @@ internal data class DashboardResponseDto(
 @Serializable
 internal data class MediaPageDto(
     val media: List<MediaDto> = emptyList(),
-)
-
-@Serializable
-internal data class AiringSchedulePageDto(
-    val pageInfo: MediaPageInfoDto? = null,
-    val airingSchedules: List<AiringScheduleDto> = emptyList(),
-)
-
-@Serializable
-internal data class AiringScheduleDto(
-    val id: Int,
-    val airingAt: Long,
-    val episode: Int,
-    val media: MediaDto? = null,
 )

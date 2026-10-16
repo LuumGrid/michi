@@ -5,6 +5,9 @@ import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -83,7 +86,7 @@ mutation ToggleStudioFavourite(${'$'}id: Int!) {
 
 @Serializable
 private data class StudioDetailResponseDto(
-    @SerialName("Studio") val studio: StudioDto? = null,
+    @SerialName("Studio") val studio: StudioDetailDto? = null,
 )
 
 @Serializable
@@ -92,7 +95,7 @@ private data class StudioMediaPageResponseDto(
 )
 
 @Serializable
-private data class StudioDto(
+private data class StudioDetailDto(
     val id: Int,
     val name: String,
     val isAnimationStudio: Boolean = false,
@@ -109,14 +112,8 @@ private data class StudioPageOnlyDto(
 
 @Serializable
 private data class StudioMediaConnectionDto(
-    val pageInfo: StudioPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val nodes: List<StudioMediaNodeDto> = emptyList(),
-)
-
-@Serializable
-private data class StudioPageInfoDto(
-    val hasNextPage: Boolean = false,
-    val currentPage: Int = 1,
 )
 
 @Serializable
@@ -128,18 +125,8 @@ private data class StudioMediaNodeDto(
     val averageScore: Int? = null,
     val favourites: Int? = null,
     val genres: List<String> = emptyList(),
-    val startDate: StudioFuzzyYearDto? = null,
-    val mediaListEntry: StudioMediaListEntryDto? = null,
-)
-
-@Serializable
-private data class StudioFuzzyYearDto(
-    val year: Int? = null,
-)
-
-@Serializable
-private data class StudioMediaListEntryDto(
-    val status: String? = null,
+    val startDate: FuzzyDateDto? = null,
+    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable

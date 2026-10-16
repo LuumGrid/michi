@@ -1,7 +1,7 @@
 package com.luum.michi.app.discover.repository
 
 import com.luum.michi.app.core.network.repository.dto.CharacterDto
-import com.luum.michi.app.core.network.repository.dto.MediaPageInfoDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.MediaSearchResponseDto
 import com.luum.michi.app.core.network.repository.dto.StaffDto
 import com.luum.michi.app.core.network.repository.dto.StudioDto
@@ -408,7 +408,7 @@ internal data class CharacterSearchResponseDto(
 
 @Serializable
 internal data class CharacterExplorePageDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val characters: List<CharacterDto> = emptyList(),
 )
 
@@ -419,7 +419,7 @@ internal data class StaffSearchResponseDto(
 
 @Serializable
 internal data class StaffExplorePageDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val staff: List<StaffDto> = emptyList(),
 )
 
@@ -430,6 +430,6 @@ internal data class StudioSearchResponseDto(
 
 @Serializable
 internal data class StudioExplorePageDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val studios: List<StudioDto> = emptyList(),
 )

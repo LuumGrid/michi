@@ -7,9 +7,9 @@ import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
-import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
+import com.luum.michi.app.mediaList.repository.MediaListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.network.repository.dto.toComparableInt
+import com.luum.michi.app.mediaList.repository.toComparableInt
 import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
 import com.luum.michi.app.core.network.repository.toCoverSizes
 

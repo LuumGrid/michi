@@ -1,6 +1,5 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.network.repository.dto.DashboardResponseDto
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository

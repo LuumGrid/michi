@@ -13,7 +13,7 @@ internal data class MediaSearchResponseDto(
 
 @Serializable
 internal data class MediaSearchPageDto(
-    val pageInfo: MediaPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val media: List<MediaSearchItemDto> = emptyList(),
 )
 

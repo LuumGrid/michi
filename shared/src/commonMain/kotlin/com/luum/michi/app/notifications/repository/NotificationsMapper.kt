@@ -1,7 +1,6 @@
 package com.luum.michi.app.notifications.repository
 
 import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
-import com.luum.michi.app.core.network.repository.dto.NotificationNodeDto
 import com.luum.michi.app.core.model.NotificationBucket
 import com.luum.michi.app.core.model.apiTypes
 import com.luum.michi.app.core.model.notificationBucketFor

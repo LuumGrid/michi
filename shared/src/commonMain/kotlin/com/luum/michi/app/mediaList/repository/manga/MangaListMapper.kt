@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaList.repository.manga
 
-import com.luum.michi.app.core.network.repository.dto.MediaListEntryDto
+import com.luum.michi.app.mediaList.repository.MediaListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.network.repository.dto.toComparableInt
+import com.luum.michi.app.mediaList.repository.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.completedMangaSection

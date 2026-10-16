@@ -2,7 +2,6 @@ package com.luum.michi.app.profile.repository
 
 import com.luum.michi.app.profile.domain.model.ProfileMediaTypeStats
 import com.luum.michi.app.profile.domain.model.ProfileStatDistributionEntry
-import com.luum.michi.app.core.network.repository.dto.UserStatisticsDto
 
 /**
  * Maps a single anime/manga [UserStatisticsDto] block into the domain

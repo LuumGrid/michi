@@ -6,6 +6,10 @@ import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.network.repository.dto.PersonImageDto
+import com.luum.michi.app.core.network.repository.dto.PersonNameDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -123,7 +127,7 @@ mutation ToggleStaffFavourite(${'$'}id: Int!) {
 
 @Serializable
 private data class StaffDetailResponseDto(
-    @SerialName("Staff") val staff: StaffDto? = null,
+    @SerialName("Staff") val staff: StaffDetailDto? = null,
 )
 
 @Serializable
@@ -137,10 +141,10 @@ private data class StaffCharacterPageResponseDto(
 )
 
 @Serializable
-private data class StaffDto(
+private data class StaffDetailDto(
     val id: Int,
-    val name: StaffNameDto? = null,
-    val image: StaffImageDto? = null,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
     val description: String? = null,
     val primaryOccupations: List<String> = emptyList(),
     val gender: String? = null,
@@ -169,34 +173,15 @@ private data class StaffCharacterOnlyDto(
 )
 
 @Serializable
-private data class StaffNameDto(
-    val userPreferred: String? = null,
-    val native: String? = null,
-    val alternative: List<String> = emptyList(),
-)
-
-@Serializable
-private data class StaffImageDto(
-    val large: String? = null,
-    val medium: String? = null,
-)
-
-@Serializable
 private data class StaffMediaConnectionDto(
-    val pageInfo: StaffPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val edges: List<StaffMediaEdgeDto> = emptyList(),
 )
 
 @Serializable
 private data class StaffCharacterMediaConnectionDto(
-    val pageInfo: StaffPageInfoDto? = null,
+    val pageInfo: PageInfoDto? = null,
     val edges: List<StaffCharacterMediaEdgeDto> = emptyList(),
-)
-
-@Serializable
-private data class StaffPageInfoDto(
-    val hasNextPage: Boolean = false,
-    val currentPage: Int = 1,
 )
 
 @Serializable
@@ -218,8 +203,8 @@ private data class StaffMediaNodeDto(
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
-    val startDate: StaffFuzzyYearDto? = null,
-    val mediaListEntry: StaffMediaListEntryDto? = null,
+    val startDate: FuzzyDateDto? = null,
+    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable
@@ -231,24 +216,8 @@ private data class StaffCharacterMediaNodeDto(
 @Serializable
 private data class StaffCharacterNodeDto(
     val id: Int,
-    val name: StaffCharacterNameDto? = null,
-    val image: StaffImageDto? = null,
-)
-
-@Serializable
-private data class StaffCharacterNameDto(
-    val userPreferred: String? = null,
-    val native: String? = null,
-)
-
-@Serializable
-private data class StaffFuzzyYearDto(
-    val year: Int? = null,
-)
-
-@Serializable
-private data class StaffMediaListEntryDto(
-    val status: String? = null,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
 )
 
 @Serializable

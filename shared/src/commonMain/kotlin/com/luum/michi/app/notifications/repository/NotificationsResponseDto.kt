@@ -1,5 +1,9 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.notifications.repository
 
+import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.network.repository.dto.PersonImageDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -16,13 +20,8 @@ internal data class NotificationsViewerDto(
 
 @Serializable
 internal data class NotificationsPageDto(
-    val pageInfo: NotificationsPageInfoDto = NotificationsPageInfoDto(),
+    val pageInfo: PageInfoDto = PageInfoDto(),
     val notifications: List<NotificationNodeDto?> = emptyList(),
-)
-
-@Serializable
-internal data class NotificationsPageInfoDto(
-    val hasNextPage: Boolean = false,
 )
 
 @Serializable
@@ -49,11 +48,5 @@ internal data class NotificationMediaDto(
 internal data class NotificationUserDto(
     val id: Int? = null,
     val name: String? = null,
-    val avatar: NotificationAvatarDto? = null,
-)
-
-@Serializable
-internal data class NotificationAvatarDto(
-    val large: String? = null,
-    val medium: String? = null,
+    val avatar: PersonImageDto? = null,
 )

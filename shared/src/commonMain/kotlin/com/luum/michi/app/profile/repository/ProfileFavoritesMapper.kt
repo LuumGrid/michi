@@ -5,7 +5,6 @@ import com.luum.michi.app.profile.domain.model.ProfileFavoritePerson
 import com.luum.michi.app.profile.domain.model.ProfileFavoriteStudio
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.core.network.repository.dto.CharacterDto
-import com.luum.michi.app.core.network.repository.dto.FavouritesDto
 import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.StaffDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle

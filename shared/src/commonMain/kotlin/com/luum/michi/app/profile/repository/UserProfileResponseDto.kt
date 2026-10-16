@@ -1,4 +1,4 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.profile.repository
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

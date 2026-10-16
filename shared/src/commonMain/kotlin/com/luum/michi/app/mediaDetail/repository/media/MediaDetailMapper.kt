@@ -1,13 +1,6 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
 import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
-import com.luum.michi.app.core.network.repository.dto.MediaCharacterConnectionDto
-import com.luum.michi.app.core.network.repository.dto.MediaCharacterEdgeDto
-import com.luum.michi.app.core.network.repository.dto.MediaDetailDto
-import com.luum.michi.app.core.network.repository.dto.MediaRelationEdgeDto
-import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
-import com.luum.michi.app.core.network.repository.dto.MediaStaffEdgeDto
-import com.luum.michi.app.core.network.repository.dto.MediaStudioConnectionDto
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase

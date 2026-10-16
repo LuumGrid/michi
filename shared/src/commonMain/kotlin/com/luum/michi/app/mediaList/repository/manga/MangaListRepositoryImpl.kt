@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaList.repository.manga
 
-import com.luum.michi.app.core.network.repository.dto.MediaListCollectionResponseDto
+import com.luum.michi.app.mediaList.repository.MediaListCollectionResponseDto
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
