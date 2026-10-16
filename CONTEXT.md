@@ -364,7 +364,7 @@ A rail inside a card gets boxed in (first/last cards clip on the rounded corners
 - Before designing a feature surface, consult AL-Chan and Otraku to confirm the shape exists in AniList.
 - Preserve user changes in the working tree. Do not revert unrelated edits.
 - Prefer existing project patterns over introducing new frameworks.
-- Test policy: unit tests live in `core/` (stable, pure logic — mappers, parsers, keys, labels). Features are covered by integration tests at the repository seam (canned JSON → fake `AniListGraphQLClient` → real repository + holder), following `CalendarIntegrationTest`; no fine-grained holder unit tests (they rot on every rewrite).
+- Test policy: unit tests live in `core/` (stable, pure logic — mappers, parsers, keys, labels). Features are covered by integration tests at the repository seam (canned JSON → fake `AniListGraphQLClient` → real repository + holder), following `CalendarIntegrationTest`. A holder's race conditions (a cancelled load, a stale page, the loading spinner) are covered the same way — through the holder's public API, driven by a fake `AniListGraphQLClient` with a `CompletableDeferred` gate and a `DeferredDispatcher`; fine-grained tests of a holder's internal details still do not qualify (they rot on every rewrite).
 - Build from `/home/psyxho_skull/StudioProjects/luum/michi`:
   - `./gradlew :shared:compileAndroidMain --offline` — shared code changes.
   - `./gradlew :androidApp:compileDebugKotlin --offline` — when root/feature signatures change.

@@ -38,12 +38,7 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
 
     val target: NotificationTarget = when {
         media?.id != null -> NotificationTarget.Media(media.id)
-        category == NotificationCategory.ACTIVITY ||
-            category == NotificationCategory.REPLIES ||
-            category == NotificationCategory.FORUM ||
-            category == NotificationCategory.MESSAGE ||
-            category == NotificationCategory.FOLLOWING -> NotificationTarget.Web("https://anilist.co/notifications")
-        else -> NotificationTarget.None
+        else -> webTarget(category)
     }
 
     return AppNotification(
@@ -56,6 +51,34 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
         mediaTitle = media?.title.bestTitleOrNull() ?: deletedMediaTitle,
         userName = user?.name,
     )
+}
+
+/** Fallback destination: any notification without a usable id still opens the feed. */
+private const val AniListNotificationsUrl = "https://anilist.co/notifications"
+
+/**
+ * The web destination of a non-media notification, decided by the data it
+ * carries (all URLs are built here, the single place):
+ *  - an activity, reply, reply-like, mention, reply-subscribed or message has
+ *    `activityId` → that activity;
+ *  - a forum reply/like/subscribed has `thread { id }` (+ `commentId`) or a
+ *    thread like has `threadId` → the thread, with `/comment/{id}` when known;
+ *  - a follow has no id, only the actor → the user profile.
+ * Anything else (e.g. a deleted media with no id) falls back to the feed.
+ */
+private fun NotificationNodeDto.webTarget(category: NotificationCategory): NotificationTarget {
+    activityId?.let { return NotificationTarget.Web("https://anilist.co/activity/$it") }
+    val forumThreadId = thread?.id ?: threadId
+    if (forumThreadId != null) {
+        val forumCommentId = commentId
+        val commentPath = if (forumCommentId != null && forumCommentId > 0) "/comment/$forumCommentId" else ""
+        return NotificationTarget.Web("https://anilist.co/forum/thread/$forumThreadId$commentPath")
+    }
+    val name = user?.name
+    if (category == NotificationCategory.FOLLOWING && !name.isNullOrBlank()) {
+        return NotificationTarget.Web("https://anilist.co/user/$name")
+    }
+    return NotificationTarget.Web(AniListNotificationsUrl)
 }
 
 internal fun NotificationFilter.toAniListTypes(): List<String>? = when (this) {

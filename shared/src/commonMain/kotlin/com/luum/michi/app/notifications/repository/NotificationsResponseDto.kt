@@ -32,9 +32,19 @@ internal data class NotificationNodeDto(
     val episode: Int? = null,
     val reason: String? = null,
     val activityId: Int? = null,
+    /** Forum: the replied/liked comment id (comment-based notifications). */
+    val commentId: Int? = null,
+    /** Forum: the liked thread id (`ThreadLikeNotification`). */
+    val threadId: Int? = null,
+    val thread: NotificationThreadDto? = null,
     val deletedMediaTitle: String? = null,
     val media: NotificationMediaDto? = null,
     val user: NotificationUserDto? = null,
+)
+
+@Serializable
+internal data class NotificationThreadDto(
+    val id: Int? = null,
 )
 
 @Serializable

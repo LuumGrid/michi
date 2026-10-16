@@ -24,14 +24,18 @@ query Notifications(${'$'}page: Int, ${'$'}reset: Boolean, ${'$'}withCount: Bool
       ... on ActivityLikeNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on ActivityReplyNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on ActivityReplyLikeNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityReplySubscribedNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on ActivityMentionNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on ActivityMessageNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on RelatedMediaAdditionNotification { id type media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
       ... on MediaDataChangeNotification { id type reason media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
       ... on MediaMergeNotification { id type reason media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
       ... on MediaDeletionNotification { id type reason deletedMediaTitle createdAt }
-      ... on ThreadCommentReplyNotification { id type user { id name avatar { large medium } } createdAt }
-      ... on ThreadCommentMentionNotification { id type user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentReplyNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentMentionNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentSubscribedNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentLikeNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
+      ... on ThreadLikeNotification { id type threadId thread { id } user { id name avatar { large medium } } createdAt }
     }
   }
 }
@@ -50,7 +54,10 @@ internal class NotificationsRepositoryImpl(
         val variables = buildJsonObject {
             put("page", page)
             put("reset", resetCount)
-            put("withCount", resetCount)
+            // The unread count is asked on page 1 always, not only when resetting:
+            // otherwise it is never known. A reset still forces it to 0 (see the
+            // holder), because AniList may resolve Viewer before the reset.
+            put("withCount", page == 1)
             // Omit `types` entirely when unfiltered (ALL). Passing an explicit
             // null to AniList's `type_in` makes the notifications resolver fail;
             // an unprovided nullable variable is treated as an absent argument.
