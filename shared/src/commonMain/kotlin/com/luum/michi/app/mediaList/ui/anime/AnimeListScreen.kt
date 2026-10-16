@@ -197,7 +197,7 @@ internal fun AnimeListScreen(
                             if (year != null) "${season.label(strings)} $year" else season.label(strings)
                         } ?: entry.seasonYear?.toString()
                         val meta = listOfNotNull(
-                            entry.format.label(),
+                            entry.format.label(strings.formatUnknownLabel),
                             seasonYear,
                             entry.mediaStatus?.label(strings, isManga = false),
                         ).joinToString(" · ")
@@ -276,7 +276,7 @@ internal fun AnimeListScreen(
                     year = holder.filterYear,
                 )
             },
-            formatOptions = mediaListFormatOptions(isAnimeTab = true),
+            formatOptions = mediaListFormatOptions(isAnimeTab = true, strings = strings),
             selectedFormatIds = holder.filterFormats,
             onToggleFormat = { formatId ->
                 holder.updateListFilters(

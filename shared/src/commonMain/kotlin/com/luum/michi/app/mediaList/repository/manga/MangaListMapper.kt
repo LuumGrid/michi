@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList.repository.manga
 
 import com.luum.michi.app.mediaList.repository.MediaListEntryDto
+import com.luum.michi.app.core.network.repository.dto.allTitles
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.mediaList.repository.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
@@ -21,11 +22,7 @@ internal fun MediaListEntryDto.toMangaListEntry(
     return MangaListEntry(
         id = media.id,
         title = media.title.bestTitle(),
-        titles = listOfNotNull(
-            media.title?.romaji?.takeIf { it.isNotBlank() },
-            media.title?.english?.takeIf { it.isNotBlank() },
-            media.title?.native?.takeIf { it.isNotBlank() },
-        ).distinct(),
+        titles = media.title.allTitles(),
         format = format,
         mediaStatus = parseMediaWorkStatus(media.status),
         status = mapMangaStatus(status, format, splitCompleted),

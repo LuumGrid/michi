@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaList
 
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
@@ -105,7 +106,7 @@ private fun mangaCollection() = singleGroupCollection(
 )
 
 private fun animeWired(graphQL: FakeGraphQL): Pair<AnimeListStateHolder, MediaListEntryRepositoryImpl> {
-    val entryRepository = MediaListEntryRepositoryImpl(graphQL)
+    val entryRepository = MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL))
     val holder = AnimeListStateHolder(
         AnimeListRepositoryImpl(graphQL),
         entryRepository,
@@ -115,7 +116,7 @@ private fun animeWired(graphQL: FakeGraphQL): Pair<AnimeListStateHolder, MediaLi
 }
 
 private fun mangaWired(graphQL: FakeGraphQL): Pair<MangaListStateHolder, MediaListEntryRepositoryImpl> {
-    val entryRepository = MediaListEntryRepositoryImpl(graphQL)
+    val entryRepository = MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL))
     val holder = MangaListStateHolder(
         MangaListRepositoryImpl(graphQL),
         entryRepository,
@@ -402,7 +403,7 @@ class MediaListIntegrationTest {
         val graphQL = FakeGraphQL(listOf(animeCollection()))
         val holder = AnimeListStateHolder(
             AnimeListRepositoryImpl(graphQL),
-            MediaListEntryRepositoryImpl(graphQL),
+            MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL)),
             CoroutineScope(Dispatchers.Unconfined),
             persistence,
         )

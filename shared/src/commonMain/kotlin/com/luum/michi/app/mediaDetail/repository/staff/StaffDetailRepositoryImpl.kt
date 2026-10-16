@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.repository.staff
 
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
@@ -10,10 +12,12 @@ import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.PersonImageDto
 import com.luum.michi.app.core.network.repository.dto.PersonNameDto
+import com.luum.michi.app.core.network.repository.dto.format
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
-import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.toHtmlContent
@@ -24,7 +28,6 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.personCoverSizes
@@ -111,14 +114,6 @@ query StaffCharacterPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) 
         characters { id name { userPreferred native } image { large medium } }
       }
     }
-  }
-}
-"""
-
-private const val ToggleStaffFavouriteMutation = """
-mutation ToggleStaffFavourite(${'$'}id: Int!) {
-  ToggleFavourite(staffId: ${'$'}id) {
-    staff { nodes { id } }
   }
 }
 """
@@ -220,24 +215,7 @@ private data class StaffCharacterNodeDto(
     val image: PersonImageDto? = null,
 )
 
-@Serializable
-private data class ToggleStaffFavouriteResponseDto(
-    @SerialName("ToggleFavourite") val payload: JsonElement? = null,
-)
-
 // ────────────── mapper helpers ──────────────
-
-private fun FuzzyDateDto.formatDate(strings: LanguageStrings): String? {
-    if (month == null && day == null && year == null) return null
-    return when {
-        month != null && day != null && year != null -> "${strings.monthShortName(month)} $day, $year"
-        month != null && day != null -> "${strings.monthShortName(month)} $day"
-        month != null && year != null -> "${strings.monthShortName(month)} $year"
-        year != null -> "$year"
-        month != null -> strings.monthShortName(month)
-        else -> null
-    }
-}
 
 private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
     val node = node ?: return null
@@ -259,7 +237,7 @@ private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
     return characters.map { char ->
         StaffCharacterItem(
             characterId = char.id,
-            name = char.name?.userPreferred ?: char.name?.native ?: "",
+            name = char.name?.bestName ?: "",
             image = char.image?.let { personCoverSizes(it.large, it.medium) },
             mediaTitle = mediaTitle,
             mediaId = mediaId,
@@ -288,6 +266,7 @@ private fun StaffCharacterMediaConnectionDto?.toCharacterPage(fallbackPage: Int)
 internal class StaffDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
     private val externalLinkCatalog: ExternalLinkCatalogRepository,
+    private val favouriteRepository: FavouriteRepository,
 ) : StaffDetailRepository {
 
     override suspend fun loadDetail(id: Int, strings: LanguageStrings): NetworkResult<StaffDetail> {
@@ -311,48 +290,39 @@ internal class StaffDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(StaffDetailResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val staff = result.value.staff
-                if (staff == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Staff not found for id=$id")),
-                    )
-                } else {
-                    val yearsActive = staff.yearsActive
-                    val bio = staff.description?.toHtmlContent()
-                    NetworkResult.Success(
-                        StaffDetail(
-                            id = staff.id,
-                            name = staff.name?.userPreferred ?: "",
-                            nativeName = staff.name?.native?.takeIf { it.isNotBlank() },
-                            alternativeNames = staff.name?.alternative
-                                ?.filter { it.isNotBlank() }.orEmpty(),
-                            image = staff.image?.let { personCoverSizes(it.large, it.medium) },
-                            descriptionPlain = bio?.text.orEmpty(),
-                            stats = bio?.stats.orEmpty(),
-                            links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
-                            gender = staff.gender?.takeIf { it.isNotBlank() },
-                            age = staff.age?.takeIf { it.isNotBlank() },
-                            birthday = staff.dateOfBirth?.formatDate(strings),
-                            death = staff.dateOfDeath?.formatDate(strings),
-                            yearsActiveStart = yearsActive.getOrNull(0)?.takeIf { it > 0 },
-                            yearsActiveEnd = yearsActive.getOrNull(1)?.takeIf { it > 0 },
-                            homeTown = staff.homeTown?.takeIf { it.isNotBlank() },
-                            occupations = staff.primaryOccupations
-                                .filter { it.isNotBlank() }
-                                .joinToString(", ").takeIf { it.isNotBlank() },
-                            bloodType = staff.bloodType?.takeIf { it.isNotBlank() },
-                            favourites = staff.favourites?.takeIf { it > 0 },
-                            isFavourite = staff.isFavourite,
-                            media = staff.staffMedia.toMediaPage(fallbackPage = 1),
-                            characters = staff.characterMedia.toCharacterPage(fallbackPage = 1),
-                        ),
-                    )
-                }
+        return result
+            .map { it.staff }
+            .requireNode("Staff", id)
+            .map { staff ->
+                val yearsActive = staff.yearsActive
+                val bio = staff.description?.toHtmlContent()
+                StaffDetail(
+                    id = staff.id,
+                    name = staff.name?.bestName ?: "",
+                    nativeName = staff.name?.native?.takeIf { it.isNotBlank() },
+                    alternativeNames = staff.name?.alternative
+                        ?.filter { it.isNotBlank() }.orEmpty(),
+                    image = staff.image?.let { personCoverSizes(it.large, it.medium) },
+                    descriptionPlain = bio?.text.orEmpty(),
+                    stats = bio?.stats.orEmpty(),
+                    links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
+                    gender = staff.gender?.takeIf { it.isNotBlank() },
+                    age = staff.age?.takeIf { it.isNotBlank() },
+                    birthday = staff.dateOfBirth?.format(strings),
+                    death = staff.dateOfDeath?.format(strings),
+                    yearsActiveStart = yearsActive.getOrNull(0)?.takeIf { it > 0 },
+                    yearsActiveEnd = yearsActive.getOrNull(1)?.takeIf { it > 0 },
+                    homeTown = staff.homeTown?.takeIf { it.isNotBlank() },
+                    occupations = staff.primaryOccupations
+                        .filter { it.isNotBlank() }
+                        .joinToString(", ").takeIf { it.isNotBlank() },
+                    bloodType = staff.bloodType?.takeIf { it.isNotBlank() },
+                    favourites = staff.favourites?.takeIf { it > 0 },
+                    isFavourite = staff.isFavourite,
+                    media = staff.staffMedia.toMediaPage(fallbackPage = 1),
+                    characters = staff.characterMedia.toCharacterPage(fallbackPage = 1),
+                )
             }
-            is NetworkResult.Failure -> result
-        }
     }
 
     override suspend fun loadMediaPage(
@@ -375,19 +345,10 @@ internal class StaffDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(StaffMediaPageResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val staff = result.value.staff
-                if (staff == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Staff not found for id=$id")),
-                    )
-                } else {
-                    NetworkResult.Success(staff.staffMedia.toMediaPage(fallbackPage = page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+        return result
+            .map { it.staff }
+            .requireNode("Staff", id)
+            .map { it.staffMedia.toMediaPage(fallbackPage = page) }
     }
 
     override suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<StaffCharacterPage> {
@@ -407,37 +368,12 @@ internal class StaffDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(StaffCharacterPageResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val staff = result.value.staff
-                if (staff == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Staff not found for id=$id")),
-                    )
-                } else {
-                    NetworkResult.Success(staff.characterMedia.toCharacterPage(fallbackPage = page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+        return result
+            .map { it.staff }
+            .requireNode("Staff", id)
+            .map { it.characterMedia.toCharacterPage(fallbackPage = page) }
     }
 
-    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
-        val request = AniListGraphQLRequest(
-            query = ToggleStaffFavouriteMutation,
-            variables = JsonObject(
-                mapOf("id" to JsonPrimitive(id)),
-            ),
-            operationName = "ToggleStaffFavourite",
-        )
-
-        val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(ToggleStaffFavouriteResponseDto.serializer(), dataJson)
-        }
-
-        return when (result) {
-            is NetworkResult.Success -> NetworkResult.Success(Unit)
-            is NetworkResult.Failure -> result
-        }
-    }
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> =
+        favouriteRepository.toggleFavourite(FavouriteTarget.Staff(id))
 }

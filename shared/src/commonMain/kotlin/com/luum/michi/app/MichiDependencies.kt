@@ -1,5 +1,7 @@
 package com.luum.michi.app
 
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
@@ -130,23 +132,26 @@ class MichiDependencies internal constructor(
     internal val mediaDetailRepository: MediaDetailRepository =
         MediaDetailRepositoryImpl(graphQLClient)
 
+    internal val favouriteRepository: FavouriteRepository =
+        FavouriteRepositoryImpl(graphQLClient)
+
     internal val mediaListEntryRepository: MediaListEntryRepository =
-        MediaListEntryRepositoryImpl(graphQLClient)
+        MediaListEntryRepositoryImpl(graphQLClient, favouriteRepository)
 
     internal val notificationsRepository: NotificationsRepository =
         NotificationsRepositoryImpl(graphQLClient)
 
     internal val studioDetailRepository: StudioDetailRepository =
-        StudioDetailRepositoryImpl(graphQLClient)
+        StudioDetailRepositoryImpl(graphQLClient, favouriteRepository)
 
     internal val genreDetailRepository: GenreDetailRepository =
         GenreDetailRepositoryImpl(graphQLClient)
 
     internal val characterDetailRepository: CharacterDetailRepository =
-        CharacterDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository)
+        CharacterDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository, favouriteRepository)
 
     internal val staffDetailRepository: StaffDetailRepository =
-        StaffDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository)
+        StaffDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository, favouriteRepository)
 
     internal val settingsRepository: SettingsRepository =
         SettingsRepositoryImpl(graphQLClient)

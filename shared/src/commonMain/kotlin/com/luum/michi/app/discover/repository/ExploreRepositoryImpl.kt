@@ -284,6 +284,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -305,7 +306,7 @@ internal class ExploreRepositoryImpl(
             AniListJson.decodeFromJsonElement(CharacterSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             ExplorePage(
-                results = response.page?.characters.orEmpty().map { it.toExploreResult() },
+                results = response.page?.characters.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -315,6 +316,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -336,7 +338,7 @@ internal class ExploreRepositoryImpl(
             AniListJson.decodeFromJsonElement(StaffSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             ExplorePage(
-                results = response.page?.staff.orEmpty().map { it.toExploreResult() },
+                results = response.page?.staff.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
@@ -346,6 +348,7 @@ internal class ExploreRepositoryImpl(
         query: String?,
         page: Int,
         perPage: Int,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
@@ -367,35 +370,35 @@ internal class ExploreRepositoryImpl(
             AniListJson.decodeFromJsonElement(StudioSearchResponseDto.serializer(), dataJson)
         }.map { response ->
             ExplorePage(
-                results = response.page?.studios.orEmpty().map { it.toExploreResult() },
+                results = response.page?.studios.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
             )
         }
     }
 }
 
-private fun CharacterDto.toExploreResult(): ExploreResult = ExploreResult(
+private fun CharacterDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
-    meta = "Character",
+    meta = strings.characterLabel,
     cover = image?.toCoverSizes(),
     paletteHex = null,
     averageScore = null
 )
 
-private fun StaffDto.toExploreResult(): ExploreResult = ExploreResult(
+private fun StaffDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(
     id = id,
     title = name?.bestName ?: "",
-    meta = "Staff",
+    meta = strings.staffLabel,
     cover = image?.toCoverSizes(),
     paletteHex = null,
     averageScore = null
 )
 
-private fun StudioDto.toExploreResult(): ExploreResult = ExploreResult(
+private fun StudioDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(
     id = id,
     title = name,
-    meta = "Studio",
+    meta = strings.studioLabel,
     cover = latestCoverImage?.toCoverSizes(),
     paletteHex = latestCoverImage?.color,
     averageScore = null

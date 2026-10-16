@@ -43,7 +43,7 @@ internal fun mediaListSeasonOptions(strings: LanguageStrings): List<FilterOption
  * Opciones de formato por tab (jerga AniList sin traducir, igual que en Explore):
  * anime excluye MANGA/NOVEL/ONE_SHOT, manga solo lleva esos tres.
  */
-internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<FilterOption> =
+internal fun mediaListFormatOptions(isAnimeTab: Boolean, strings: LanguageStrings): List<FilterOption> =
     MediaFormat.entries
         .filter {
             if (isAnimeTab) {
@@ -53,7 +53,7 @@ internal fun mediaListFormatOptions(isAnimeTab: Boolean): List<FilterOption> =
                 it == MediaFormat.MANGA || it == MediaFormat.NOVEL || it == MediaFormat.ONE_SHOT
             }
         }
-        .map { FilterOption(it.name, it.label()) }
+        .map { FilterOption(it.name, it.label(strings.formatUnknownLabel)) }
 
 /**
  * Client-side predicate shared by both lists (the whole collection is already

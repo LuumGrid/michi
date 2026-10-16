@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -48,16 +49,18 @@ private fun fakeClient(data: JsonElement) = object : AniListGraphQLClient {    o
 }
 
 private fun loadDetail(data: JsonElement): StaffDetail {
+    val client = fakeClient(data)
     val result = runBlocking {
-        StaffDetailRepositoryImpl(fakeClient(data), NoopExternalLinkCatalog)
+        StaffDetailRepositoryImpl(client, NoopExternalLinkCatalog, FavouriteRepositoryImpl(client))
             .loadDetail(1, EnglishStrings)
     }
     assertTrue(result is NetworkResult.Success, "expected Success but was $result")
     return result.value
 }
 
-private fun nameOf(userPreferred: String?, native: String?): JsonObject = buildJsonObject {
+private fun nameOf(userPreferred: String?, native: String?, full: String? = null): JsonObject = buildJsonObject {
     if (userPreferred != null) put("userPreferred", userPreferred)
+    if (full != null) put("full", full)
     if (native != null) put("native", native)
 }
 
@@ -88,15 +91,16 @@ private fun staffMediaData(mediaId: Int, roles: List<String>): JsonElement =
 class StaffDetailMinorsTest {
 
     @Test
-    fun characterNameFallsBackToNative() {
+    fun characterNameUsesBestName() {
         val detail = loadDetail(
             staffData(
                 yearsActive = listOf(2010),
-                charName = nameOf(userPreferred = null, native = "名前"),
+                charName = nameOf(userPreferred = null, full = "Full Name", native = "名前"),
                 mediaTitle = titleOf(userPreferred = "Title", native = null),
             ),
         )
-        assertEquals("名前", detail.characters.items.single().name)
+        // bestName prefers userPreferred, then full; it never falls back to native.
+        assertEquals("Full Name", detail.characters.items.single().name)
     }
 
     @Test

@@ -24,10 +24,10 @@ internal fun exploreGenres(): List<String> {
     )
 }
 
-internal fun exploreFormats(): List<ExploreFormatOption> =
+internal fun exploreFormats(strings: LanguageStrings): List<ExploreFormatOption> =
     MediaFormat.entries
         .filter { it != MediaFormat.UNKNOWN }
-        .map { ExploreFormatOption(it.name, it.label()) }
+        .map { ExploreFormatOption(it.name, it.label(strings.formatUnknownLabel)) }
 
 /**
  * Años seleccionables: del año siguiente al actual (cubre la "próxima temporada"

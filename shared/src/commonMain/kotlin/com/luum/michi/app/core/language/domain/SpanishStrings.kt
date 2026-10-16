@@ -44,9 +44,13 @@ object SpanishStrings : LanguageStrings {
     override fun exploreChapterCountLabel(count: Int) = "$count cap"
     override val charactersLabel = "Personajes"
     override val studiosLabel = "Estudios"
+    override val characterLabel = "Personaje"
+    override val staffLabel = "Personal"
+    override val studioLabel = "Estudio"
     override val seasonLabel = "Temporada"
     override val exploreFilterGenreLabel = "Género"
     override val formatLabel = "Formato"
+    override val formatUnknownLabel = "Desconocido"
     override val exploreFilterYearLabel = "Año"
     override val exploreAnySeasonLabel = "Cualquier temporada"
     override val exploreAnyYearLabel = "Cualquier año"
@@ -105,6 +109,7 @@ object SpanishStrings : LanguageStrings {
     override val voiceLanguageHungarian = "Húngaro"
     override val mediaDetailEpisodesLabel = "Episodios"
     override val mediaDetailDurationLabel = "Duración"
+    override fun mediaDetailDurationValueLabel(minutes: Int): String = "$minutes min"
     override val popularityLabel = "Popularidad"
     override val favoritesLabel = "Favoritos"
     override val mediaDetailSourceLabel = "Fuente"
@@ -176,6 +181,7 @@ object SpanishStrings : LanguageStrings {
         return dateTime.formatReadableDateTime(::monthName)
     }
     override fun monthShortName(month: Int): String = monthName(month)
+    override val dateDayFirst = true
     override val profileFollowersLabel = "Seguidores"
     override val profileFollowingLabel = "Seguidos"
     override val profileFavoriteAnimeTitle = "Anime favorito"
@@ -303,6 +309,7 @@ object SpanishStrings : LanguageStrings {
     override val errorRateLimitedLabel = "Demasiadas solicitudes. Espera un momento."
     override val errorServerLabel = "Algo salió mal. Inténtalo de nuevo."
     override val errorUnknownLabel = "Algo salió mal. Inténtalo de nuevo."
+    override val notFoundLabel = "Esto ya no existe en AniList"
 
     // Filter Sheet & Filter/Order Labels
     override val filterOrderDirectionTitle = "Dirección del Orden"

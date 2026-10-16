@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
@@ -123,7 +124,7 @@ private fun editorWired(
     initialProgressOverride: Int? = null,
     todayMillis: () -> Long = { TODAY },
 ): MediaEntryEditorState = MediaEntryEditorState(
-    entryRepository = MediaListEntryRepositoryImpl(graphQL),
+    entryRepository = MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL)),
     detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
     scope = CoroutineScope(Dispatchers.Unconfined),
     stringsProvider = { EnglishStrings },

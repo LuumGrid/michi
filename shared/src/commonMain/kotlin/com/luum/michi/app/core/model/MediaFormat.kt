@@ -25,8 +25,8 @@ internal fun parseMediaFormat(raw: String?): MediaFormat = when (raw?.uppercase(
  *  de AniList, igual en todos los idiomas, no es copy traducible. Los acrónimos
  *  (TV, OVA, ONA) se mantienen en mayúsculas como los muestra AniList.
  *  [unknownFallback] deja que cada caller decida qué mostrar si el formato
- *  viene nulo/desconocido (ej. "Anime" vs "Manga"). */
-internal fun MediaFormat.label(unknownFallback: String = "Unknown"): String = when (this) {
+ *  viene nulo/desconocido (ej. "Anime" vs "Manga", o el label localizado). */
+internal fun MediaFormat.label(unknownFallback: String): String = when (this) {
     MediaFormat.UNKNOWN -> unknownFallback
     else -> name.toTitleCase()
 }

@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.repository.studio
 
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
@@ -11,7 +13,8 @@ import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
-import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
@@ -19,7 +22,6 @@ import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.toCoverSizes
@@ -74,14 +76,6 @@ query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
 }
 """
 
-private const val ToggleStudioFavouriteMutation = """
-mutation ToggleStudioFavourite(${'$'}id: Int!) {
-  ToggleFavourite(studioId: ${'$'}id) {
-    studios { nodes { id } }
-  }
-}
-"""
-
 // ────────────── private DTOs ──────────────
 
 @Serializable
@@ -129,11 +123,6 @@ private data class StudioMediaNodeDto(
     val mediaListEntry: MediaListStatusDto? = null,
 )
 
-@Serializable
-private data class ToggleStudioFavouriteResponseDto(
-    @SerialName("ToggleFavourite") val payload: JsonElement? = null,
-)
-
 // ────────────── mapper helpers ──────────────
 
 private fun StudioMediaNodeDto.toItem(): MediaGridItem = MediaGridItem(
@@ -162,6 +151,7 @@ private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): MediaGridP
 
 internal class StudioDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
+    private val favouriteRepository: FavouriteRepository,
 ) : StudioDetailRepository {
 
     override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
@@ -184,28 +174,19 @@ internal class StudioDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(StudioDetailResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val studio = result.value.studio
-                if (studio == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Studio not found for id=$id")),
-                    )
-                } else {
-                    NetworkResult.Success(
-                        StudioDetail(
-                            id = studio.id,
-                            name = studio.name,
-                            isAnimeStudio = studio.isAnimationStudio,
-                            favourites = studio.favourites?.takeIf { it > 0 },
-                            isFavourite = studio.isFavourite,
-                            media = studio.media.toMediaPage(fallbackPage = 1),
-                        ),
-                    )
-                }
+        return result
+            .map { it.studio }
+            .requireNode("Studio", id)
+            .map { studio ->
+                StudioDetail(
+                    id = studio.id,
+                    name = studio.name,
+                    isAnimeStudio = studio.isAnimationStudio,
+                    favourites = studio.favourites?.takeIf { it > 0 },
+                    isFavourite = studio.isFavourite,
+                    media = studio.media.toMediaPage(fallbackPage = 1),
+                )
             }
-            is NetworkResult.Failure -> result
-        }
     }
 
     override suspend fun loadMediaPage(
@@ -232,37 +213,12 @@ internal class StudioDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(StudioMediaPageResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val studio = result.value.studio
-                if (studio == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Studio not found for id=$id")),
-                    )
-                } else {
-                    NetworkResult.Success(studio.media.toMediaPage(fallbackPage = page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+        return result
+            .map { it.studio }
+            .requireNode("Studio", id)
+            .map { it.media.toMediaPage(fallbackPage = page) }
     }
 
-    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
-        val request = AniListGraphQLRequest(
-            query = ToggleStudioFavouriteMutation,
-            variables = JsonObject(
-                mapOf("id" to JsonPrimitive(id)),
-            ),
-            operationName = "ToggleStudioFavourite",
-        )
-
-        val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(ToggleStudioFavouriteResponseDto.serializer(), dataJson)
-        }
-
-        return when (result) {
-            is NetworkResult.Success -> NetworkResult.Success(Unit)
-            is NetworkResult.Failure -> result
-        }
-    }
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> =
+        favouriteRepository.toggleFavourite(FavouriteTarget.Studio(id))
 }

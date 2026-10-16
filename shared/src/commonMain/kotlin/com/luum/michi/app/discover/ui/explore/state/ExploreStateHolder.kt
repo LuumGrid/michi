@@ -230,14 +230,17 @@ internal class ExploreStateHolder(
         ExploreCategory.CHARACTERS -> repository.searchCharacters(
             query = query.takeIf { it.isNotBlank() },
             page = page,
+            strings = strings,
         )
         ExploreCategory.STAFF -> repository.searchStaff(
             query = query.takeIf { it.isNotBlank() },
             page = page,
+            strings = strings,
         )
         ExploreCategory.STUDIOS -> repository.searchStudios(
             query = query.takeIf { it.isNotBlank() },
             page = page,
+            strings = strings,
         )
     }
 }

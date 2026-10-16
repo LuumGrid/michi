@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.luum.michi.app.core.navigation.domain.UrlOpener
-import com.luum.michi.app.core.navigation.domain.isWebUrl
+import com.luum.michi.app.core.util.isWebUrl
 
 /**
  * Plain browser opener: streaming platform links have no return flow, so

@@ -44,9 +44,13 @@ object EnglishStrings : LanguageStrings {
     override fun exploreChapterCountLabel(count: Int) = "$count ch"
     override val charactersLabel = "Characters"
     override val studiosLabel = "Studios"
+    override val characterLabel = "Character"
+    override val staffLabel = "Staff"
+    override val studioLabel = "Studio"
     override val seasonLabel = "Season"
     override val exploreFilterGenreLabel = "Genre"
     override val formatLabel = "Format"
+    override val formatUnknownLabel = "Unknown"
     override val exploreFilterYearLabel = "Year"
     override val exploreAnySeasonLabel = "Any season"
     override val exploreAnyYearLabel = "Any year"
@@ -105,6 +109,7 @@ object EnglishStrings : LanguageStrings {
     override val voiceLanguageHungarian = "Hungarian"
     override val mediaDetailEpisodesLabel = "Episodes"
     override val mediaDetailDurationLabel = "Duration"
+    override fun mediaDetailDurationValueLabel(minutes: Int): String = "$minutes min"
     override val popularityLabel = "Popularity"
     override val favoritesLabel = "Favorites"
     override val mediaDetailSourceLabel = "Source"
@@ -174,6 +179,7 @@ object EnglishStrings : LanguageStrings {
         return dateTime.formatReadableDateTime(::monthName)
     }
     override fun monthShortName(month: Int): String = monthName(month)
+    override val dateDayFirst = false
     override val profileFollowersLabel = "Followers"
     override val profileFollowingLabel = "Following"
     override val profileFavoriteAnimeTitle = "Favorite anime"
@@ -301,6 +307,7 @@ object EnglishStrings : LanguageStrings {
     override val errorRateLimitedLabel = "Too many requests. Please wait a moment."
     override val errorServerLabel = "Something went wrong. Please try again."
     override val errorUnknownLabel = "Something went wrong. Please try again."
+    override val notFoundLabel = "This no longer exists on AniList"
 
     // Filter Sheet & Filter/Order Labels
     override val filterOrderDirectionTitle = "Order Direction"

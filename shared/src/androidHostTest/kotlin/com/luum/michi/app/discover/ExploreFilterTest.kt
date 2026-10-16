@@ -80,9 +80,26 @@ private class FakeExploreRepository : ExploreRepository {
         return empty()
     }
 
-    override suspend fun searchCharacters(query: String?, page: Int, perPage: Int) = empty()
-    override suspend fun searchStaff(query: String?, page: Int, perPage: Int) = empty()
-    override suspend fun searchStudios(query: String?, page: Int, perPage: Int) = empty()
+    override suspend fun searchCharacters(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+    ) = empty()
+
+    override suspend fun searchStaff(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+    ) = empty()
+
+    override suspend fun searchStudios(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+    ) = empty()
 }
 
 private fun varsOf(request: AniListGraphQLRequest): Map<String, String> =

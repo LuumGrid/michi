@@ -66,7 +66,7 @@ internal fun MediaDetailInformationPanel(
         } else {
             detail.episodes?.let { add(MediaDetailInfoEntry(strings.mediaDetailEpisodesLabel, it.toString())) }
         }
-        detail.duration?.let { add(MediaDetailInfoEntry(strings.mediaDetailDurationLabel, "$it min")) }
+        detail.duration?.let { add(MediaDetailInfoEntry(strings.mediaDetailDurationLabel, strings.mediaDetailDurationValueLabel(it))) }
         detail.season?.let { add(MediaDetailInfoEntry(strings.mediaDetailSeasonLabel, it)) }
         detail.startedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailStartDateLabel, it)) }
         detail.endedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailEndedLabel, it)) }

@@ -217,27 +217,25 @@ private fun String.trimUrlTrailingPunctuation(): String {
 }
 
 private fun isExternalHttpUrl(url: String): Boolean {
-    val scheme = url.substringBefore("://", missingDelimiterValue = "")
-    if (!scheme.equals("http", ignoreCase = true) && !scheme.equals("https", ignoreCase = true)) return false
-    val host = url.substringAfter("://", "").substringBefore('/').lowercase()
-    return host.isNotEmpty() && !host.endsWith("anilist.co")
+    val host = urlHost(url) ?: return false
+    return !isAniListHost(host)
 }
 
 /** Scheme-agnostic key so http/https and www/non-www duplicates collapse. */
 private fun normalizedUrl(url: String): String {
     val rest = url.substringAfter("://", "")
-    val host = rest.substringBefore('/').lowercase().removePrefix("www.")
+    val host = urlHost(url).orEmpty()
     val path = rest.substringAfter('/', "").trimEnd('/')
     return "$host/$path"
 }
 
 /** A label derived from the host (the catalog may override it with the site name). */
 private fun hostLabel(url: String): String {
-    val host = url.substringAfter("://", "").substringBefore('/').removePrefix("www.").lowercase()
+    val host = urlHost(url).orEmpty()
     return when {
-        host == "twitter.com" || host == "x.com" || host.endsWith(".twitter.com") -> "Twitter"
+        canonicalHost(url) == "twitter.com" || host.endsWith(".twitter.com") -> "Twitter"
+        canonicalHost(url) == "youtube.com" || host.endsWith(".youtube.com") -> "YouTube"
         host.endsWith("instagram.com") -> "Instagram"
-        host.endsWith("youtube.com") || host == "youtu.be" -> "YouTube"
         host.endsWith("facebook.com") -> "Facebook"
         host.endsWith("pixiv.net") -> "Pixiv"
         host.endsWith("tiktok.com") -> "TikTok"

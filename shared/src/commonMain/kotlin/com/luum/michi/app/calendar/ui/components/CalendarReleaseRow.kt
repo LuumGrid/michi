@@ -46,7 +46,7 @@ internal fun CalendarReleaseRow(
         if (year != null) "${season.label(strings)} $year" else season.label(strings)
     } ?: item.seasonYear?.toString()
     val meta = listOfNotNull(
-        item.format?.label(),
+        item.format?.label(strings.formatUnknownLabel),
         seasonYear,
         item.mediaStatus?.label(strings, isManga = false),
     ).joinToString(" · ")

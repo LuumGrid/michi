@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.repository.character
 
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
@@ -13,16 +15,17 @@ import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.PersonImageDto
 import com.luum.michi.app.core.network.repository.dto.PersonNameDto
+import com.luum.michi.app.core.network.repository.dto.format
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
-import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.toHtmlContent
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.personCoverSizes
@@ -101,14 +104,6 @@ query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, 
 }
 """
 
-private const val ToggleCharacterFavouriteMutation = """
-mutation ToggleCharacterFavourite(${'$'}id: Int!) {
-  ToggleFavourite(characterId: ${'$'}id) {
-    characters { nodes { id } }
-  }
-}
-"""
-
 // ────────────── private DTOs ──────────────
 
 @Serializable
@@ -175,26 +170,12 @@ private data class CharacterMediaNodeDto(
     val mediaListEntry: MediaListStatusDto? = null,
 )
 
-@Serializable
-private data class ToggleCharacterFavouriteResponseDto(
-    @SerialName("ToggleFavourite") val payload: JsonElement? = null,
-)
-
 // ────────────── mapper helpers ──────────────
 
 /** Keep only the canonical roles; the UI localizes the raw value via strings. */
 private fun normalizeCharacterRole(raw: String?): String? = when (raw) {
     "MAIN", "SUPPORTING", "BACKGROUND" -> raw
     else -> null
-}
-
-private fun FuzzyDateDto.formatBirthday(strings: LanguageStrings): String? {
-    if (month == null && day == null) return null
-    return when {
-        month != null && day != null -> "${strings.monthShortName(month)} $day"
-        month != null -> strings.monthShortName(month)
-        else -> null
-    }
 }
 
 private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
@@ -231,6 +212,7 @@ private fun CharacterMediaConnectionDto?.toMediaPage(fallbackPage: Int): Charact
 internal class CharacterDetailRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
     private val externalLinkCatalog: ExternalLinkCatalogRepository,
+    private val favouriteRepository: FavouriteRepository,
 ) : CharacterDetailRepository {
 
     override suspend fun loadDetail(
@@ -258,39 +240,30 @@ internal class CharacterDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(CharacterDetailResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val character = result.value.character
-                if (character == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Character not found for id=$id")),
-                    )
-                } else {
-                    val bio = character.description?.toHtmlContent()
-                    NetworkResult.Success(
-                        CharacterDetail(
-                            id = character.id,
-                            name = character.name?.userPreferred ?: "",
-                            nativeName = character.name?.native?.takeIf { it.isNotBlank() },
-                            alternativeNames = character.name?.alternative
-                                ?.filter { it.isNotBlank() }.orEmpty(),
-                            image = character.image?.let { personCoverSizes(it.large, it.medium) },
-                            descriptionPlain = bio?.text.orEmpty(),
-                            stats = bio?.stats.orEmpty(),
-                            links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
-                            gender = character.gender?.takeIf { it.isNotBlank() },
-                            age = character.age?.takeIf { it.isNotBlank() },
-                            bloodType = character.bloodType?.takeIf { it.isNotBlank() },
-                            birthday = character.dateOfBirth?.formatBirthday(strings),
-                            favourites = character.favourites?.takeIf { it > 0 },
-                            isFavourite = character.isFavourite,
-                            media = character.media.toMediaPage(fallbackPage = 1),
-                        ),
-                    )
-                }
+        return result
+            .map { it.character }
+            .requireNode("Character", id)
+            .map { character ->
+                val bio = character.description?.toHtmlContent()
+                CharacterDetail(
+                    id = character.id,
+                    name = character.name?.bestName ?: "",
+                    nativeName = character.name?.native?.takeIf { it.isNotBlank() },
+                    alternativeNames = character.name?.alternative
+                        ?.filter { it.isNotBlank() }.orEmpty(),
+                    image = character.image?.let { personCoverSizes(it.large, it.medium) },
+                    descriptionPlain = bio?.text.orEmpty(),
+                    stats = bio?.stats.orEmpty(),
+                    links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
+                    gender = character.gender?.takeIf { it.isNotBlank() },
+                    age = character.age?.takeIf { it.isNotBlank() },
+                    bloodType = character.bloodType?.takeIf { it.isNotBlank() },
+                    birthday = character.dateOfBirth?.format(strings, includeYear = false),
+                    favourites = character.favourites?.takeIf { it > 0 },
+                    isFavourite = character.isFavourite,
+                    media = character.media.toMediaPage(fallbackPage = 1),
+                )
             }
-            is NetworkResult.Failure -> result
-        }
     }
 
     override suspend fun loadMediaPage(
@@ -315,37 +288,12 @@ internal class CharacterDetailRepositoryImpl(
             AniListJson.decodeFromJsonElement(CharacterMediaPageResponseDto.serializer(), dataJson)
         }
 
-        return when (result) {
-            is NetworkResult.Success -> {
-                val character = result.value.character
-                if (character == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Character not found for id=$id")),
-                    )
-                } else {
-                    NetworkResult.Success(character.media.toMediaPage(fallbackPage = page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+        return result
+            .map { it.character }
+            .requireNode("Character", id)
+            .map { it.media.toMediaPage(fallbackPage = page) }
     }
 
-    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
-        val request = AniListGraphQLRequest(
-            query = ToggleCharacterFavouriteMutation,
-            variables = JsonObject(
-                mapOf("id" to JsonPrimitive(id)),
-            ),
-            operationName = "ToggleCharacterFavourite",
-        )
-
-        val result = graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(ToggleCharacterFavouriteResponseDto.serializer(), dataJson)
-        }
-
-        return when (result) {
-            is NetworkResult.Success -> NetworkResult.Success(Unit)
-            is NetworkResult.Failure -> result
-        }
-    }
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> =
+        favouriteRepository.toggleFavourite(FavouriteTarget.Character(id))
 }

@@ -193,7 +193,7 @@ internal fun MangaListScreen(
                             key = { it.id },
                     ) { entry ->
                         val meta = listOfNotNull(
-                            entry.format.label(),
+                            entry.format.label(strings.formatUnknownLabel),
                             entry.seasonYear?.toString(),
                             entry.mediaStatus?.label(strings, isManga = true),
                         ).joinToString(" · ")
@@ -273,7 +273,7 @@ internal fun MangaListScreen(
                     year = holder.filterYear,
                 )
             },
-            formatOptions = mediaListFormatOptions(isAnimeTab = false),
+            formatOptions = mediaListFormatOptions(isAnimeTab = false, strings = strings),
             selectedFormatIds = holder.filterFormats,
             onToggleFormat = { formatId ->
                 holder.updateListFilters(

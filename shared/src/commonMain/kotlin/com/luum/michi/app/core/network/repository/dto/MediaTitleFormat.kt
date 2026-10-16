@@ -7,12 +7,31 @@ package com.luum.michi.app.core.network.repository.dto
  * cannot drift apart again: a change here applies to lists, detail, calendar,
  * dashboard, favorites and search at once. (Enum-label casing lives in
  * `core/model` next to [MediaFormat], usable from any layer.)
- *
- * The notifications mapper keeps its own nullable variant on purpose: there a
- * null title means "fall back to the deleted-media title", which this
- * empty-string default would mask.
  */
 internal fun MediaTitleDto?.bestTitle(): String {
     if (this == null) return ""
     return userPreferred ?: english ?: romaji ?: native ?: ""
+}
+
+/**
+ * Nullable twin of [bestTitle]: a null title stays null so a caller can fall
+ * back to something else (the notifications mapper falls back to the
+ * deleted-media title, which [bestTitle]'s empty-string default would mask).
+ */
+internal fun MediaTitleDto?.bestTitleOrNull(): String? {
+    if (this == null) return null
+    return userPreferred ?: english ?: romaji ?: native
+}
+
+/**
+ * Every non-blank title variant, deduped, in a stable order (romaji, english,
+ * native). The anime/manga lists show the alternate titles under the main one.
+ */
+internal fun MediaTitleDto?.allTitles(): List<String> {
+    if (this == null) return emptyList()
+    return listOfNotNull(
+        romaji?.takeIf { it.isNotBlank() },
+        english?.takeIf { it.isNotBlank() },
+        native?.takeIf { it.isNotBlank() },
+    ).distinct()
 }

@@ -36,17 +36,20 @@ internal interface ExploreRepository {
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage>
 
     suspend fun searchStaff(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage>
 
     suspend fun searchStudios(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage>
 }

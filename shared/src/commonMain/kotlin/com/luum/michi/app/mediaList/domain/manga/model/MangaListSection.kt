@@ -58,11 +58,11 @@ internal fun MangaListSection.label(strings: LanguageStrings): String = when (th
     MangaListSection.CURRENT -> strings.sectionCurrent
     MangaListSection.COMPLETED -> strings.completedLabel
     MangaListSection.COMPLETED_MANGA ->
-        "${strings.completedLabel} ${MediaFormat.MANGA.label()}"
+        "${strings.completedLabel} ${MediaFormat.MANGA.label(strings.formatUnknownLabel)}"
     MangaListSection.COMPLETED_NOVEL ->
-        "${strings.completedLabel} ${MediaFormat.NOVEL.label()}"
+        "${strings.completedLabel} ${MediaFormat.NOVEL.label(strings.formatUnknownLabel)}"
     MangaListSection.COMPLETED_ONE_SHOT ->
-        "${strings.completedLabel} ${MediaFormat.ONE_SHOT.label()}"
+        "${strings.completedLabel} ${MediaFormat.ONE_SHOT.label(strings.formatUnknownLabel)}"
     MangaListSection.PAUSED -> strings.sectionPaused
     MangaListSection.DROPPED -> strings.sectionDropped
     MangaListSection.PLANNING -> strings.sectionPlanning

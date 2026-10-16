@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.network.repository.dto.bestTitleOrNull
 import com.luum.michi.app.core.model.NotificationBucket
 import com.luum.michi.app.core.model.apiTypes
 import com.luum.michi.app.core.model.notificationBucketFor
@@ -10,11 +10,6 @@ import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
-
-private fun MediaTitleDto?.bestTitle(): String? {
-    if (this == null) return null
-    return userPreferred ?: english ?: romaji ?: native
-}
 
 /** Reply types, shown under their own category and filter. Single definition:
  *  both categoryFor() and toAniListTypes() derive from here so they cannot drift. */
@@ -58,7 +53,7 @@ internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
         createdAtEpochSeconds = createdAt ?: 0L,
         target = target,
         episode = episode,
-        mediaTitle = media?.title.bestTitle() ?: deletedMediaTitle,
+        mediaTitle = media?.title.bestTitleOrNull() ?: deletedMediaTitle,
         userName = user?.name,
     )
 }

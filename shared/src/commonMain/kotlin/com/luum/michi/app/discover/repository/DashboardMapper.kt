@@ -60,13 +60,13 @@ private fun MediaDto.toMediaItem(strings: LanguageStrings, isManga: Boolean): Me
     )
 
 private fun animeMeta(media: MediaDto, strings: LanguageStrings): String {
-    val format = parseMediaFormat(media.format).label(unknownFallback = "Anime")
+    val format = parseMediaFormat(media.format).label(unknownFallback = strings.animeLabel)
     val episodes = media.episodes?.takeIf { it > 0 }?.let { " · ${strings.exploreEpisodeCountLabel(it)}" }.orEmpty()
     return format + episodes
 }
 
 private fun mangaMeta(media: MediaDto, strings: LanguageStrings): String {
-    val format = parseMediaFormat(media.format).label(unknownFallback = "Manga")
+    val format = parseMediaFormat(media.format).label(unknownFallback = strings.mangaLabel)
     val chapters = media.chapters?.takeIf { it > 0 }?.let { " · ${strings.exploreChapterCountLabel(it)}" }.orEmpty()
     return format + chapters
 }

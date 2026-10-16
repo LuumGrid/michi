@@ -17,7 +17,7 @@ import com.luum.michi.app.core.model.seasonForMonth
 import com.luum.michi.app.core.model.startEpochSeconds
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.model.utcMillisToLocalMidnightBucket
-import com.luum.michi.app.core.navigation.domain.isWebUrl
+import com.luum.michi.app.core.util.isWebUrl
 import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,13 +35,14 @@ class ModelVocabularyTest {
 
     @Test
     fun formatLabelKeepsAcronymsUppercase() {
-        assertEquals("TV Short", MediaFormat.TV_SHORT.label())
-        assertEquals("TV", MediaFormat.TV.label())
-        assertEquals("OVA", MediaFormat.OVA.label())
-        assertEquals("ONA", MediaFormat.ONA.label())
-        assertEquals("Movie", MediaFormat.MOVIE.label())
-        assertEquals("One Shot", MediaFormat.ONE_SHOT.label())
-        assertEquals("Unknown", MediaFormat.UNKNOWN.label())
+        val unknown = EnglishStrings.formatUnknownLabel
+        assertEquals("TV Short", MediaFormat.TV_SHORT.label(unknown))
+        assertEquals("TV", MediaFormat.TV.label(unknown))
+        assertEquals("OVA", MediaFormat.OVA.label(unknown))
+        assertEquals("ONA", MediaFormat.ONA.label(unknown))
+        assertEquals("Movie", MediaFormat.MOVIE.label(unknown))
+        assertEquals("One Shot", MediaFormat.ONE_SHOT.label(unknown))
+        assertEquals("Unknown", MediaFormat.UNKNOWN.label(unknown))
         assertEquals("Manga", MediaFormat.UNKNOWN.label(unknownFallback = "Manga"))
     }
 

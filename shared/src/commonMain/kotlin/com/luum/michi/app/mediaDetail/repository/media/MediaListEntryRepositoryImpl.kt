@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
@@ -99,20 +101,6 @@ mutation SaveMediaListProgress(
 }
 """
 
-private const val ToggleFavouriteMutation = """
-mutation ToggleFavourite(${'$'}animeId: Int, ${'$'}mangaId: Int) {
-  ToggleFavourite(animeId: ${'$'}animeId, mangaId: ${'$'}mangaId) {
-    anime { nodes { id } }
-    manga { nodes { id } }
-  }
-}
-"""
-
-@Serializable
-private data class ToggleFavouriteResponse(
-    @SerialName("ToggleFavourite") val payload: JsonElement? = null,
-)
-
 @Serializable
 private data class SaveProgressResponse(
     @SerialName("SaveMediaListEntry") val entry: JsonElement? = null,
@@ -131,6 +119,7 @@ private data class DeleteMediaListEntryResponse(
 
 internal class MediaListEntryRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
+    private val favouriteRepository: FavouriteRepository,
 ) : MediaListEntryRepository {
 
     override suspend fun saveEntry(
@@ -231,20 +220,10 @@ internal class MediaListEntryRepositoryImpl(
         }.map { }
     }
 
-    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> {
-        val variables = buildMap<String, JsonElement> {
-            if (isManga) put("mangaId", JsonPrimitive(mediaId))
-            else put("animeId", JsonPrimitive(mediaId))
-        }
-        val request = AniListGraphQLRequest(
-            query = ToggleFavouriteMutation,
-            variables = JsonObject(variables),
-            operationName = "ToggleFavourite",
+    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> =
+        favouriteRepository.toggleFavourite(
+            if (isManga) FavouriteTarget.Manga(mediaId) else FavouriteTarget.Anime(mediaId),
         )
-        return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(ToggleFavouriteResponse.serializer(), dataJson)
-        }.map { }
-    }
 
     override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> {
         val variables = buildMap<String, JsonElement> {

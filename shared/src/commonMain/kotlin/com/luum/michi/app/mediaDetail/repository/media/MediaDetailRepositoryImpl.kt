@@ -10,7 +10,8 @@ import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
-import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
@@ -237,22 +238,12 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaDetail",
         )
 
-        val result = graphQLClient.execute(request) { dataJson ->
+        return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaDetailResponseDto.serializer(), dataJson)
         }
-        return when (result) {
-            is NetworkResult.Success -> {
-                val media = result.value.media
-                if (media == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Media not found for id=$mediaId")),
-                    )
-                } else {
-                    NetworkResult.Success(media.toDomain(strings))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+            .map { it.media }
+            .requireNode("Media", mediaId)
+            .map { it.toDomain(strings) }
     }
 
     override suspend fun loadCharactersPage(
@@ -270,22 +261,12 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaCharactersPage",
         )
 
-        val result = graphQLClient.execute(request) { dataJson ->
+        return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaCharactersPageResponseDto.serializer(), dataJson)
         }
-        return when (result) {
-            is NetworkResult.Success -> {
-                val media = result.value.Media
-                if (media == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Media not found for id=$mediaId")),
-                    )
-                } else {
-                    NetworkResult.Success(media.characters.toCharactersPage(page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+            .map { it.Media }
+            .requireNode("Media", mediaId)
+            .map { it.characters.toCharactersPage(page) }
     }
 
     override suspend fun loadStaffPage(
@@ -303,22 +284,12 @@ internal class MediaDetailRepositoryImpl(
             operationName = "MediaStaffPage",
         )
 
-        val result = graphQLClient.execute(request) { dataJson ->
+        return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaStaffPageResponseDto.serializer(), dataJson)
         }
-        return when (result) {
-            is NetworkResult.Success -> {
-                val media = result.value.Media
-                if (media == null) {
-                    NetworkResult.Failure(
-                        NetworkError.GraphQL(listOf("Media not found for id=$mediaId")),
-                    )
-                } else {
-                    NetworkResult.Success(media.staff.toStaffPage(page))
-                }
-            }
-            is NetworkResult.Failure -> result
-        }
+            .map { it.Media }
+            .requireNode("Media", mediaId)
+            .map { it.staff.toStaffPage(page) }
     }
 
     override suspend fun loadRecommendations(

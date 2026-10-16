@@ -8,6 +8,7 @@ import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.mediaList.repository.MediaListEntryDto
+import com.luum.michi.app.core.network.repository.dto.allTitles
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.mediaList.repository.toComparableInt
 import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
@@ -21,11 +22,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(
     return AnimeListEntry(
         id = media.id,
         title = media.title.bestTitle(),
-        titles = listOfNotNull(
-            media.title?.romaji?.takeIf { it.isNotBlank() },
-            media.title?.english?.takeIf { it.isNotBlank() },
-            media.title?.native?.takeIf { it.isNotBlank() },
-        ).distinct(),
+        titles = media.title.allTitles(),
         format = parseMediaFormat(media.format),
         mediaStatus = parseMediaWorkStatus(media.status),
         status = section,

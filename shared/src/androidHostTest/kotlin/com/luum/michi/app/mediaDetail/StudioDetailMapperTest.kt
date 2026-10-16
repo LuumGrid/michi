@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.repository.studio.StudioDetailRepositoryImpl
@@ -51,7 +52,8 @@ class StudioDetailMapperTest {
 
     @Test
     fun mapsFavouritesAndGenres() = runBlocking {
-        val repository = StudioDetailRepositoryImpl(FakeGraphQL(listOf(studioDetailJson())))
+        val graphQL = FakeGraphQL(listOf(studioDetailJson()))
+        val repository = StudioDetailRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL))
         val result = repository.loadDetail(9, "POPULARITY_DESC")
         assertIs<NetworkResult.Success<StudioDetail>>(result)
         val detail = result.value
@@ -71,7 +73,7 @@ class StudioDetailMapperTest {
     @Test
     fun studioQueriesRequestFavouritesAndGenres() = runBlocking {
         val graphQL = FakeGraphQL(listOf(studioDetailJson()))
-        StudioDetailRepositoryImpl(graphQL).loadDetail(9, "POPULARITY_DESC")
+        StudioDetailRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL)).loadDetail(9, "POPULARITY_DESC")
 
         val query = graphQL.requests.single().query
         assertTrue(query.contains("genres"), query)

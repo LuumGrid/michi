@@ -8,5 +8,6 @@ internal fun LanguageStrings.networkErrorMessage(error: NetworkError): String = 
     is NetworkError.RateLimited  -> errorRateLimitedLabel
     is NetworkError.Http         -> errorServerLabel
     is NetworkError.GraphQL      -> errorServerLabel
+    is NetworkError.NotFound     -> notFoundLabel
     is NetworkError.Unknown      -> errorUnknownLabel
 }

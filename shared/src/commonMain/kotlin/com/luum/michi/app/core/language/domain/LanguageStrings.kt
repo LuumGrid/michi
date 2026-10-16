@@ -44,9 +44,15 @@ interface LanguageStrings {
     fun exploreChapterCountLabel(count: Int): String
     val charactersLabel: String
     val studiosLabel: String
+    /** Singular labels for a single search result (Explore's Character/Staff/Studio). */
+    val characterLabel: String
+    val staffLabel: String
+    val studioLabel: String
     val seasonLabel: String
     val exploreFilterGenreLabel: String
     val formatLabel: String
+    /** Shown when AniList returns a null/unknown media format. */
+    val formatUnknownLabel: String
     val exploreFilterYearLabel: String
     val exploreAnySeasonLabel: String
     val exploreAnyYearLabel: String
@@ -107,6 +113,8 @@ interface LanguageStrings {
     val voiceLanguageHungarian: String
     val mediaDetailEpisodesLabel: String
     val mediaDetailDurationLabel: String
+    /** Duration value with its unit ("24 min"). */
+    fun mediaDetailDurationValueLabel(minutes: Int): String
     val popularityLabel: String
     val favoritesLabel: String
     val mediaDetailSourceLabel: String
@@ -158,6 +166,8 @@ interface LanguageStrings {
     fun notificationDateLabel(dateTime: MediaReleaseDateTime): String
     /** Short month name used by preformatted date labels (media airing dates, birthdays). */
     fun monthShortName(month: Int): String
+    /** True when a date reads day-first ("5 oct 2026") instead of month-first ("Oct 5, 2026"). */
+    val dateDayFirst: Boolean
     val profileFollowersLabel: String
     val profileFollowingLabel: String
     val profileFavoriteAnimeTitle: String
@@ -281,6 +291,8 @@ interface LanguageStrings {
     val errorRateLimitedLabel: String
     val errorServerLabel: String
     val errorUnknownLabel: String
+    /** Generic text for [NetworkError.NotFound]; never names the entity or id. */
+    val notFoundLabel: String
 
     // Filter Sheet & Filter/Order Labels
     val filterOrderDirectionTitle: String

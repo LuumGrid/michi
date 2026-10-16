@@ -147,11 +147,12 @@ core/
                                 map at feature boundaries)
   storage/domain/               settings/filter keys and stores
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
-  navigation/domain/            routes, back-handler contracts, url-opening + sharing (`UrlOpener`/`isWebUrl`, `ShareLauncher`), AniList deep-link parsing (`parseAniListMediaId`); platform openers/launchers in `repository/`
+  navigation/domain/            routes, back-handler contracts, url-opening + sharing (`UrlOpener`, `ShareLauncher`), AniList deep-link parsing (`parseAniListMediaId`); platform openers/launchers in `repository/`
+  favourite/domain|repository/  one favourite toggle for every entity type (media/person/studio)
   medialist/domain/             list-status contracts shared by list features
   model/                        neutral domain vocabulary (MediaFormat, MediaSeason, dates,
                                 sort, FilterOption, compact count) — cross-concept, belongs to no feature
-  util/                         pure helpers (HTML stripping, …)
+  util/                         pure helpers (HTML stripping, URL parsing/host normalization, …)
 ```
 
 `ui/` is the shared Compose UI. Everything visual and reusable lives here, nothing else:
@@ -187,10 +188,11 @@ com.luum.michi.app
                                 `SharedPreferencesSettingsStore` on Android,
                                 `NSUserDefaultsSettingsStore` on iOS, wired via `MichiDependencies`)
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
-    navigation/domain/        routes, back-handler contracts, url-opening + sharing (`UrlOpener`/`isWebUrl`, `ShareLauncher`), deep-link parsing (`parseAniListMediaId`)
+    navigation/domain/        routes, back-handler contracts, url-opening + sharing (`UrlOpener`, `ShareLauncher`), deep-link parsing (`parseAniListMediaId`)
+    favourite/domain|repository/ one favourite toggle for every entity type
     medialist/domain/         list-status contracts
     model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort)
-    util/                     pure helpers
+    util/                     pure helpers (HTML stripping, URL parsing/host normalization)
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()

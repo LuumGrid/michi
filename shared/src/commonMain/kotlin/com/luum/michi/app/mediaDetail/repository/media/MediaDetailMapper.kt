@@ -3,9 +3,10 @@ package com.luum.michi.app.mediaDetail.repository.media
 import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.network.repository.dto.format
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.model.CalendarDateParts
-import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.calendarPartsToMillis
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
@@ -235,30 +236,11 @@ private fun parseType(raw: String?): MediaDetailType = when (raw) {
 
 private fun formatSeason(season: String?, year: Int?, strings: LanguageStrings): String? {
     if (season == null && year == null) return null
-    val seasonLabel = parseMediaSeason(season)?.let { seasonLabel(it, strings) }
+    val seasonLabel = parseMediaSeason(season)?.label(strings)
     return when {
         seasonLabel != null && year != null -> "$seasonLabel $year"
         seasonLabel != null -> seasonLabel
         else -> year?.toString()
-    }
-}
-
-private fun seasonLabel(season: MediaSeason, strings: LanguageStrings): String = when (season) {
-    MediaSeason.WINTER -> strings.seasonWinterLabel
-    MediaSeason.SPRING -> strings.seasonSpringLabel
-    MediaSeason.SUMMER -> strings.seasonSummerLabel
-    MediaSeason.FALL -> strings.seasonFallLabel
-}
-
-private fun FuzzyDateDto.format(strings: LanguageStrings): String? {
-    if (year == null && month == null && day == null) return null
-    return when {
-        year != null && month != null && day != null -> "${strings.monthShortName(month)} $day, $year"
-        year != null && month != null -> "${strings.monthShortName(month)} $year"
-        year != null -> year.toString()
-        month != null && day != null -> "${strings.monthShortName(month)} $day"
-        month != null -> strings.monthShortName(month)
-        else -> null
     }
 }
 

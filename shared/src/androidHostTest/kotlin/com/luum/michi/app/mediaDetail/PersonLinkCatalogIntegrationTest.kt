@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -93,7 +94,7 @@ class PersonLinkCatalogIntegrationTest {
     fun detailWithoutLinksDoesNotWaitForTheCatalog() = runBlocking {
         val client = CatalogProbeClient(staffJson("Voice actor."), catalogJson("Fanbox" to "https://fanbox.cc"))
         val catalogRepo = catalog(client)
-        val repo = StaffDetailRepositoryImpl(client, catalogRepo)
+        val repo = StaffDetailRepositoryImpl(client, catalogRepo, FavouriteRepositoryImpl(client))
 
         val detailJob = async(Dispatchers.Unconfined) { repo.loadDetail(1, EnglishStrings) }
 
@@ -113,7 +114,7 @@ class PersonLinkCatalogIntegrationTest {
             detailJson = staffJson("Voice actor.<br><a href=\"https://usuario.fanbox.cc\">@usuario</a>"),
             catalogResponseJson = catalogJson("Fanbox" to "https://fanbox.cc"),
         )
-        val repo = StaffDetailRepositoryImpl(client, catalog(client))
+        val repo = StaffDetailRepositoryImpl(client, catalog(client), FavouriteRepositoryImpl(client))
 
         val detailJob = async(Dispatchers.Unconfined) { repo.loadDetail(1, EnglishStrings) }
         client.releaseCatalog()
@@ -132,7 +133,7 @@ class PersonLinkCatalogIntegrationTest {
     @Test
     fun catalogIsFetchedOnceAcrossDetails() = runBlocking {
         val client = CatalogProbeClient(staffJson("Voice actor."), catalogJson("Fanbox" to "https://fanbox.cc"))
-        val repo = StaffDetailRepositoryImpl(client, catalog(client))
+        val repo = StaffDetailRepositoryImpl(client, catalog(client), FavouriteRepositoryImpl(client))
 
         val first = async(Dispatchers.Unconfined) { repo.loadDetail(1, EnglishStrings) }
         client.releaseCatalog()
@@ -150,7 +151,7 @@ class PersonLinkCatalogIntegrationTest {
             detailJson = characterJson("Seiyuu.<br><a href=\"https://x.com/voice\">@voice</a>"),
             catalogResponseJson = catalogJson("Twitter" to "https://twitter.com"),
         )
-        val repo = CharacterDetailRepositoryImpl(client, catalog(client))
+        val repo = CharacterDetailRepositoryImpl(client, catalog(client), FavouriteRepositoryImpl(client))
 
         val detailJob = async(Dispatchers.Unconfined) { repo.loadDetail(1, "JAPANESE", EnglishStrings) }
         client.releaseCatalog()
