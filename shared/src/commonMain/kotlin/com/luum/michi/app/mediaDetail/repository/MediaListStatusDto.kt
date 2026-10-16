@@ -1,11 +1,11 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.mediaDetail.repository
 
 import kotlinx.serialization.Serializable
 
 /**
  * The `mediaListEntry { status }` shape embedded in detail/relation nodes: the
- * viewer's list status only, distinct from the full [MediaViewerListEntryDto]
- * and the list [MediaListEntryDto].
+ * viewer's list status only, distinct from the full `MediaViewerListEntryDto`
+ * and the list `MediaListEntryDto` (both in `core/network`).
  */
 @Serializable
 internal data class MediaListStatusDto(

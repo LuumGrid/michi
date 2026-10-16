@@ -4,7 +4,7 @@ import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.network.repository.dto.MediaSearchItemDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -95,7 +95,7 @@ private data class StudioPageOnlyDto(
 @Serializable
 private data class StudioMediaConnectionDto(
     val pageInfo: PageInfoDto? = null,
-    val nodes: List<MediaSearchItemDto> = emptyList(),
+    val nodes: List<MediaDto> = emptyList(),
 )
 
 // ────────────── mapper helpers ──────────────

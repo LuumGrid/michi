@@ -1,4 +1,4 @@
-package com.luum.michi.app.core.model
+package com.luum.michi.app.mediaDetail.domain.common
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
 

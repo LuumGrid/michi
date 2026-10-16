@@ -10,11 +10,11 @@ import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.util.stripHtml
+import com.luum.michi.app.mediaDetail.domain.common.stripHtml
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
-import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTag
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer

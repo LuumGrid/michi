@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaDetail.domain.character.model
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.util.BiographyStat
+import com.luum.michi.app.mediaDetail.domain.common.BiographyStat
 
 
 

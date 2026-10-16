@@ -1,7 +1,4 @@
-package com.luum.michi.app.core.network.domain
-
-import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.core.model.matchCatalogSite
+package com.luum.michi.app.mediaDetail.domain.common
 
 /**
  * The AniList catalog of external-link sites (name, url, icon, colour). Used to

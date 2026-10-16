@@ -8,7 +8,7 @@ import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
 import com.luum.michi.app.core.model.Page
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }

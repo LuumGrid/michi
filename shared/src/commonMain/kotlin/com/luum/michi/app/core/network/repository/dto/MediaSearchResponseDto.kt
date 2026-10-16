@@ -14,27 +14,5 @@ internal data class MediaSearchResponseDto(
 @Serializable
 internal data class MediaSearchPageDto(
     val pageInfo: PageInfoDto? = null,
-    val media: List<MediaSearchItemDto> = emptyList(),
-)
-
-@Serializable
-internal data class MediaSearchItemDto(
-    val id: Int,
-    val type: String? = null,
-    val title: MediaTitleDto? = null,
-    val format: String? = null,
-    val status: String? = null,
-    val episodes: Int? = null,
-    val chapters: Int? = null,
-    val averageScore: Int? = null,
-    val popularity: Int? = null,
-    val favourites: Int? = null,
-    val genres: List<String>? = null,
-    val coverImage: MediaCoverImageDto? = null,
-    val season: String? = null,
-    val seasonYear: Int? = null,
-    val startDate: FuzzyDateDto? = null,
-    val isAdult: Boolean? = null,
-    val isFavourite: Boolean? = null,
-    val mediaListEntry: MediaViewerListEntryDto? = null,
+    val media: List<MediaDto> = emptyList(),
 )

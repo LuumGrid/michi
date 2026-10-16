@@ -1,6 +1,6 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaSearchItemDto
+import com.luum.michi.app.core.network.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaFormat
@@ -8,7 +8,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.core.network.repository.toCoverSizes
 
-internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): ExploreResult {
+internal fun MediaDto.toExploreResult(strings: LanguageStrings): ExploreResult {
     val titleText = title.bestTitle()
     return ExploreResult(
         id = id,
@@ -24,7 +24,7 @@ internal fun MediaSearchItemDto.toExploreResult(strings: LanguageStrings): Explo
     )
 }
 
-private fun MediaSearchItemDto.buildMeta(strings: LanguageStrings): String {
+private fun MediaDto.buildMeta(strings: LanguageStrings): String {
     val parts = mutableListOf<String>()
     parts.add(parseMediaFormat(format).label(unknownFallback = if (type == "MANGA") strings.mangaLabel else strings.animeLabel))
     when (type) {

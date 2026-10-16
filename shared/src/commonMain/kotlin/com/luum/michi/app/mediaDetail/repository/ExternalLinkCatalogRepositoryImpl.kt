@@ -1,11 +1,12 @@
-package com.luum.michi.app.core.network.repository
+package com.luum.michi.app.mediaDetail.repository
 
-import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
-import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async

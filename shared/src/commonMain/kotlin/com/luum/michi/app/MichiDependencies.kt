@@ -54,8 +54,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
-import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
-import com.luum.michi.app.core.network.repository.ExternalLinkCatalogRepositoryImpl
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
+import com.luum.michi.app.mediaDetail.repository.ExternalLinkCatalogRepositoryImpl
 
 /**
  * App-level composition root. Lives exactly once per process: owned by

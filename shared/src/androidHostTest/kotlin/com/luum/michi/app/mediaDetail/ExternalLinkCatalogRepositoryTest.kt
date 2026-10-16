@@ -1,10 +1,10 @@
-package com.luum.michi.app.core
+package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.network.repository.ExternalLinkCatalogRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.ExternalLinkCatalogRepositoryImpl
 import com.luum.michi.app.settings.FakeSettingsStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

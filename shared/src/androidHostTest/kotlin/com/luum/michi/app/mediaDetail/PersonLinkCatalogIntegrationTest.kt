@@ -5,7 +5,7 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.network.repository.ExternalLinkCatalogRepositoryImpl
+import com.luum.michi.app.mediaDetail.repository.ExternalLinkCatalogRepositoryImpl
 import com.luum.michi.app.mediaDetail.repository.character.CharacterDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.repository.staff.StaffDetailRepositoryImpl
 import com.luum.michi.app.settings.FakeSettingsStore

@@ -8,7 +8,7 @@ import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
-import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.PersonImageDto
 import com.luum.michi.app.core.network.repository.dto.PersonNameDto
@@ -21,7 +21,7 @@ import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.util.toHtmlContent
+import com.luum.michi.app.mediaDetail.domain.common.toHtmlContent
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
@@ -32,8 +32,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.core.network.repository.personCoverSizes
 import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.network.domain.RailPageSize
-import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
-import com.luum.michi.app.core.network.domain.resolveWithCatalog
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
+import com.luum.michi.app.mediaDetail.domain.common.resolveWithCatalog
 
 
 private const val StaffDetailQuery = """

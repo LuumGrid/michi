@@ -1,11 +1,10 @@
-package com.luum.michi.app.core.network.repository.dto
+package com.luum.michi.app.calendar.repository
 
+import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import kotlinx.serialization.Serializable
 
-/**
- * Airing-schedule page shape, shared by the calendar and the dashboard. Kept in
- * core because both features decode it.
- */
+/** Airing-schedule page shape; only the calendar decodes it. */
 @Serializable
 internal data class AiringSchedulePageDto(
     val pageInfo: PageInfoDto? = null,

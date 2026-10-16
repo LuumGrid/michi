@@ -22,7 +22,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.util.BiographyStat
+import com.luum.michi.app.mediaDetail.domain.common.BiographyStat
 import com.luum.michi.app.ui.components.SectionHeader
 
 /**

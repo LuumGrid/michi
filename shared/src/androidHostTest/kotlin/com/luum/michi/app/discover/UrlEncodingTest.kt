@@ -1,6 +1,6 @@
-package com.luum.michi.app.core
+package com.luum.michi.app.discover
 
-import com.luum.michi.app.core.util.urlEncodeQueryValue
+import com.luum.michi.app.discover.domain.genre.model.urlEncodeQueryValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

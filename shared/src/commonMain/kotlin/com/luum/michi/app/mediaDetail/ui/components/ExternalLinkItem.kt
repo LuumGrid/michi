@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.core.model.isOfficialSite
-import com.luum.michi.app.core.model.siteLabel
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.isOfficialSite
+import com.luum.michi.app.mediaDetail.domain.common.siteLabel
 
 /**
  * The one mapping from a domain [ExternalLink] to the shared link row: used by

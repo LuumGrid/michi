@@ -1,6 +1,8 @@
-package com.luum.michi.app.core.util
+package com.luum.michi.app.mediaDetail.domain.common
 
-import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.util.canonicalHost
+import com.luum.michi.app.core.util.isAniListHost
+import com.luum.michi.app.core.util.urlHost
 
 /** One `Label: value` line AniList marked in bold inside a biography. */
 internal data class BiographyStat(val label: String, val value: String)

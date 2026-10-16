@@ -14,8 +14,3 @@ package com.luum.michi.app.core.auth.domain
 internal interface AniListOAuthLauncher {
     fun open()
 }
-
-/** No-op launcher for environments without a real browser (tests, previews). */
-internal class NoopAniListOAuthLauncher : AniListOAuthLauncher {
-    override fun open() = Unit
-}

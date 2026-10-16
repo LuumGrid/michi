@@ -1,6 +1,5 @@
 package com.luum.michi.app.calendar.repository
 
-import com.luum.michi.app.core.network.repository.dto.AiringScheduleDto
 import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.parseMediaFormat

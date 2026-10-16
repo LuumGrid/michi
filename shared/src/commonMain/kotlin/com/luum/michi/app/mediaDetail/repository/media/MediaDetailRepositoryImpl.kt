@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.parseMediaSeason

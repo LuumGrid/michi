@@ -9,9 +9,9 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
-import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.core.model.isOfficialSite
-import com.luum.michi.app.core.model.siteLabel
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.isOfficialSite
+import com.luum.michi.app.mediaDetail.domain.common.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.mediaList.FakeGraphQL

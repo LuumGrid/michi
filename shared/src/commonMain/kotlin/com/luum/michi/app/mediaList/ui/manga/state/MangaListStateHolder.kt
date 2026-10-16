@@ -138,13 +138,3 @@ internal class MangaListStateHolder(
     override fun countInSection(section: MangaListSection): Int =
         loader.entries.sectionCount(section == MangaListSection.ALL) { it.status == section }
 }
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createMangaListStateHolder(
-    repository: MangaListRepository,
-    entryRepository: MediaListEntryRepository,
-    scope: CoroutineScope,
-    viewerId: Int,
-): MangaListStateHolder {
-    return MangaListStateHolder(repository, entryRepository, scope)
-}

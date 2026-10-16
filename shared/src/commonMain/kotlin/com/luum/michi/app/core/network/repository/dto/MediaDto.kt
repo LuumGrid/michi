@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class MediaDto(
     val id: Int,
+    val type: String? = null,
     val title: MediaTitleDto? = null,
     val format: String? = null,
     val status: String? = null,

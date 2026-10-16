@@ -18,8 +18,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.core.network.domain.ExternalLinkCatalogRepository
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
 
 private fun staffData(yearsActive: List<Int>, charName: JsonObject, mediaTitle: JsonObject): JsonElement =
     buildJsonObject {

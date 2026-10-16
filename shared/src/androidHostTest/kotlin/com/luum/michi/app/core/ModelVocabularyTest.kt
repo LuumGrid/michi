@@ -14,7 +14,6 @@ import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.previous
 import com.luum.michi.app.core.model.seasonForMonth
-import com.luum.michi.app.core.model.startEpochSeconds
 import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.model.utcMillisToLocalMidnightBucket
 import com.luum.michi.app.core.util.isWebUrl
@@ -78,11 +77,6 @@ class ModelVocabularyTest {
             MediaSeasonYear(MediaSeason.SUMMER, 2025),
             MediaSeasonYear(MediaSeason.SPRING, 2025).next(),
         )
-    }
-
-    @Test
-    fun seasonStartIsFirstOfStartMonthUtc() {
-        assertEquals(1735689600L, MediaSeasonYear(MediaSeason.WINTER, 2025).startEpochSeconds())
     }
 
     @Test

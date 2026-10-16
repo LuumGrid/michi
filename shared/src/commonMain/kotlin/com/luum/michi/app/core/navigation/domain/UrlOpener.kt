@@ -9,8 +9,3 @@ package com.luum.michi.app.core.navigation.domain
 internal interface UrlOpener {
     fun open(url: String)
 }
-
-/** No-op opener for environments without a browser (tests, previews, iOS). */
-internal class NoopUrlOpener : UrlOpener {
-    override fun open(url: String) = Unit
-}

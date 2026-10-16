@@ -1,7 +1,7 @@
-package com.luum.michi.app.core
+package com.luum.michi.app.mediaDetail
 
-import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.core.model.matchCatalogSite
+import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
+import com.luum.michi.app.mediaDetail.domain.common.matchCatalogSite
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

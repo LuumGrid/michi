@@ -6,8 +6,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.luum.michi.app.calendar.domain.CalendarEntry
 import com.luum.michi.app.calendar.domain.CalendarRepository
-import com.luum.michi.app.core.network.repository.dto.AiringScheduleDto
-import com.luum.michi.app.core.network.repository.dto.AiringSchedulePageDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
