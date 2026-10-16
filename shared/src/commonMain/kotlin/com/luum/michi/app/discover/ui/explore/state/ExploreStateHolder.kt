@@ -14,6 +14,7 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
@@ -204,7 +205,8 @@ internal class ExploreStateHolder(
     }
 
     private suspend fun fetchPage(page: Int) = when (category) {
-        ExploreCategory.ANIME -> repository.searchCatalog(
+        ExploreCategory.ANIME -> repository.searchMedia(
+            type = MediaType.ANIME,
             query = query.takeIf { it.isNotBlank() },
             genres = genres,
             formats = formats,
@@ -216,7 +218,8 @@ internal class ExploreStateHolder(
             hideAdult = hideAdult,
             strings = strings,
         )
-        ExploreCategory.MANGA -> repository.searchManga(
+        ExploreCategory.MANGA -> repository.searchMedia(
+            type = MediaType.MANGA,
             query = query.takeIf { it.isNotBlank() },
             genres = genres,
             formats = formats,

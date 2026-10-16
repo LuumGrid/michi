@@ -8,7 +8,7 @@ import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
+import com.luum.michi.app.core.model.MediaGridItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue

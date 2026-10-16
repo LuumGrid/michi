@@ -1,6 +1,4 @@
-package com.luum.michi.app.mediaDetail.domain.model
-
-import com.luum.michi.app.core.model.CoverSizes
+package com.luum.michi.app.core.model
 
 /**
  * One media cell of a detail poster grid (studio works, genre works). Carries

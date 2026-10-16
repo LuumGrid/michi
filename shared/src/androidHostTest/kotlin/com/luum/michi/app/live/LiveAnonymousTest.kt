@@ -4,6 +4,7 @@ import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.model.localMidnightEpoch
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.repository.AniListRateLimiter
@@ -76,7 +77,8 @@ class LiveAnonymousTest {
     fun exploreSearches() {
         assumeLive()
         val result = runBlocking {
-            ExploreRepositoryImpl(liveClient()).searchCatalog(
+            ExploreRepositoryImpl(liveClient()).searchMedia(
+                type = MediaType.ANIME,
                 query = "Naruto",
                 genres = emptyList(),
                 formats = emptyList(),

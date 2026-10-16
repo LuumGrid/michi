@@ -9,9 +9,9 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.ui.components.DetailPosterGrid
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
+import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.language.Strings

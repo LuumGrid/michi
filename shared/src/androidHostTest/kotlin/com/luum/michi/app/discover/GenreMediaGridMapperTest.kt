@@ -1,9 +1,9 @@
-package com.luum.michi.app.mediaDetail
+package com.luum.michi.app.discover
 
+import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
-import com.luum.michi.app.mediaDetail.repository.genre.GenreDetailRepositoryImpl
+import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.mediaList.FakeGraphQL
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -15,11 +15,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-private fun genrePageJson() = buildJsonObject {
+private fun genrePageJson(includeCurrentPage: Boolean = true) = buildJsonObject {
     put("Page", buildJsonObject {
         put("pageInfo", buildJsonObject {
             put("hasNextPage", false)
-            put("currentPage", 1)
+            if (includeCurrentPage) put("currentPage", 1)
         })
         put("media", JsonArray(listOf(
             buildJsonObject {
@@ -44,12 +44,18 @@ private fun genrePageJson() = buildJsonObject {
     })
 }
 
-class GenreDetailMapperTest {
+class GenreMediaGridMapperTest {
 
     @Test
     fun mapsTheGridItemFields() = runBlocking {
-        val repository = GenreDetailRepositoryImpl(FakeGraphQL(listOf(genrePageJson())))
-        val result = repository.loadPage("Action", MediaType.ANIME, 1, "POPULARITY_DESC", hideAdult = true)
+        val repository = ExploreRepositoryImpl(FakeGraphQL(listOf(genrePageJson())))
+        val result = repository.searchMediaGrid(
+            type = MediaType.ANIME,
+            genres = listOf("Action"),
+            page = 1,
+            sort = "POPULARITY_DESC",
+            hideAdult = true,
+        )
         assertIs<NetworkResult.Success<MediaGridPage>>(result)
         val item = result.value.items.single()
 
@@ -66,13 +72,13 @@ class GenreDetailMapperTest {
     @Test
     fun theQueryPinsGenreTypeSortPageAndTheAdultGate() = runBlocking {
         val graphQL = FakeGraphQL(listOf(genrePageJson()))
-        GenreDetailRepositoryImpl(graphQL)
-            .loadPage("Action", MediaType.MANGA, 2, "SCORE_DESC", hideAdult = true)
+        ExploreRepositoryImpl(graphQL)
+            .searchMediaGrid(MediaType.MANGA, genres = listOf("Action"), page = 2, sort = "SCORE_DESC", hideAdult = true)
 
         val request = graphQL.requests.single()
         assertTrue(request.query.contains("genre_in"), request.query)
         val variables = request.variables!!
-        assertEquals("Action", (variables["name"] as JsonPrimitive).content)
+        assertEquals("[\"Action\"]", variables["genre_in"].toString())
         assertEquals("MANGA", (variables["type"] as JsonPrimitive).content)
         assertEquals("2", (variables["page"] as JsonPrimitive).content)
         assertEquals("[\"SCORE_DESC\"]", variables["sort"].toString())
@@ -82,12 +88,26 @@ class GenreDetailMapperTest {
     @Test
     fun anAllowedAdultCatalogOmitsTheGate() = runBlocking {
         val graphQL = FakeGraphQL(listOf(genrePageJson()))
-        GenreDetailRepositoryImpl(graphQL)
-            .loadPage("Action", MediaType.ANIME, 1, "POPULARITY_DESC", hideAdult = false)
+        ExploreRepositoryImpl(graphQL)
+            .searchMediaGrid(MediaType.ANIME, genres = listOf("Action"), page = 1, sort = "POPULARITY_DESC", hideAdult = false)
 
         assertTrue(
             graphQL.requests.single().variables?.containsKey("isAdult") != true,
             "isAdult must be omitted (null = both)",
         )
+    }
+
+    @Test
+    fun aPageWithoutCurrentPageFallsBackToTheRequestedPage() = runBlocking {
+        val repository = ExploreRepositoryImpl(FakeGraphQL(listOf(genrePageJson(includeCurrentPage = false))))
+        val result = repository.searchMediaGrid(
+            type = MediaType.ANIME,
+            genres = listOf("Action"),
+            page = 3,
+            sort = "POPULARITY_DESC",
+            hideAdult = true,
+        )
+        assertIs<NetworkResult.Success<MediaGridPage>>(result)
+        assertEquals(3, result.value.currentPage)
     }
 }

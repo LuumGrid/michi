@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.ui.components
+package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,14 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
-import com.luum.michi.app.ui.components.GridCoverSizeProvider
-import com.luum.michi.app.ui.components.LoadMoreFooter
-import com.luum.michi.app.ui.components.LoadMoreKey
-import com.luum.michi.app.ui.components.PosterCard
-import com.luum.michi.app.ui.components.favouritesBadge
-import com.luum.michi.app.ui.components.rememberResetGridState
-import com.luum.michi.app.ui.components.scoreBadge
+import com.luum.michi.app.core.model.MediaGridItem
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 

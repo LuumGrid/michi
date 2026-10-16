@@ -1,8 +1,9 @@
-package com.luum.michi.app.mediaDetail.ui.genre.state
+package com.luum.michi.app.discover.ui.genre.state
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
@@ -10,8 +11,7 @@ import com.luum.michi.app.core.model.toMediaSort
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.util.DetailCache
-import com.luum.michi.app.mediaDetail.domain.genre.GenreDetailRepository
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
+import com.luum.michi.app.discover.domain.ExploreRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -34,13 +34,15 @@ private data class GenreSnapshot(
  * and catalog it was loaded with instead of a detail model; [pageLoaded] is the
  * "there is something to show" flag the screen hands to `LoadStateContainer`.
  *
- * Server order: the grid re-queries from page 1 on a sort (or catalog) change
- * instead of sorting a loaded page locally, so a genre with thousands of works
- * shows the real top of the chosen criterion. [refresh] keeps the loaded works
- * on screen while reloading; a catalog switch clears them.
+ * A genre is just the catalog filtered by name, so it reads from the shared
+ * [ExploreRepository] grid query. Server order: the grid re-queries from page 1
+ * on a sort (or catalog) change instead of sorting a loaded page locally, so a
+ * genre with thousands of works shows the real top of the chosen criterion.
+ * [refresh] keeps the loaded works on screen while reloading; a catalog switch
+ * clears them.
  */
 internal class GenreDetailStateHolder(
-    private val repository: GenreDetailRepository,
+    private val repository: ExploreRepository,
     private val scope: CoroutineScope,
     hideAdult: Boolean,
 ) {
@@ -160,7 +162,7 @@ internal class GenreDetailStateHolder(
         val nextPage = currentPage + 1
         moreJob = scope.launch {
             isLoadingMore = true
-            when (val result = repository.loadPage(name, type, nextPage, apiSort(), hideAdultState)) {
+            when (val result = loadPage(nextPage)) {
                 is NetworkResult.Success -> {
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     hasNextPage = result.value.hasNextPage
@@ -196,7 +198,7 @@ internal class GenreDetailStateHolder(
         isLoading = true
         isLoadingMore = false
         currentJob = scope.launch {
-            when (val result = repository.loadPage(name, type, 1, apiSort(), hideAdultState)) {
+            when (val result = loadPage(1)) {
                 is NetworkResult.Success -> {
                     mediaItems = result.value.items.distinctBy { it.mediaId }
                     hasNextPage = result.value.hasNextPage
@@ -209,6 +211,15 @@ internal class GenreDetailStateHolder(
             isLoading = false
         }
     }
+
+    /** One grid page for the current genre + catalog + sort + gate. */
+    private suspend fun loadPage(page: Int) = repository.searchMediaGrid(
+        type = type,
+        genres = listOf(name),
+        page = page,
+        sort = apiSort(),
+        hideAdult = hideAdultState,
+    )
 
     /** Puts a cached snapshot back on screen (works, cursor and sort). */
     private fun restore(snapshot: GenreSnapshot) {
@@ -253,7 +264,7 @@ private val DEFAULT_SORT_ORDER = UserListOrder.DESCENDING
 
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createGenreDetailStateHolder(
-    repository: GenreDetailRepository,
+    repository: ExploreRepository,
     scope: CoroutineScope,
     hideAdult: Boolean,
 ): GenreDetailStateHolder = GenreDetailStateHolder(repository, scope, hideAdult)

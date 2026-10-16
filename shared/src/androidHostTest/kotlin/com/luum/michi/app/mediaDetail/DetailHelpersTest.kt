@@ -9,7 +9,7 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText

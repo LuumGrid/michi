@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.domain.genre.model
+package com.luum.michi.app.discover.domain.genre.model
 
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.util.urlEncodeQueryValue

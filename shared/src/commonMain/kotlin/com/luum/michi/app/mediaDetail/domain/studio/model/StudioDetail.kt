@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.studio.model
 
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridPage
 
 internal data class StudioDetail(
     val id: Int,

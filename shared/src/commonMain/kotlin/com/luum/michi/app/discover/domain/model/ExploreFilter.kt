@@ -9,10 +9,10 @@ import com.luum.michi.app.core.model.FilterOption
 internal data class ExploreFormatOption(val value: String, val label: String)
 
 internal fun ExploreCategory.filterLabel(strings: LanguageStrings): String = when (this) {
-    ExploreCategory.ANIME -> "Anime"
-    ExploreCategory.MANGA -> "Manga"
+    ExploreCategory.ANIME -> strings.animeLabel
+    ExploreCategory.MANGA -> strings.mangaLabel
     ExploreCategory.CHARACTERS -> strings.charactersLabel
-    ExploreCategory.STAFF -> "Staff"
+    ExploreCategory.STAFF -> strings.mediaDetailTabStaff
     ExploreCategory.STUDIOS -> strings.studiosLabel
 }
 

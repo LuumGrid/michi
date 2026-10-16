@@ -13,31 +13,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-/** One mutation for every favourite target; only the matching variable is sent. */
-private const val ToggleFavouriteMutation = """
-mutation ToggleFavourite(
-  ${'$'}animeId: Int,
-  ${'$'}mangaId: Int,
-  ${'$'}characterId: Int,
-  ${'$'}staffId: Int,
-  ${'$'}studioId: Int
-) {
-  ToggleFavourite(
-    animeId: ${'$'}animeId,
-    mangaId: ${'$'}mangaId,
-    characterId: ${'$'}characterId,
-    staffId: ${'$'}staffId,
-    studioId: ${'$'}studioId
-  ) {
-    anime { nodes { id } }
-    manga { nodes { id } }
-    characters { nodes { id } }
-    staff { nodes { id } }
-    studios { nodes { id } }
-  }
-}
-"""
-
 @Serializable
 private data class ToggleFavouriteResponseDto(
     @SerialName("ToggleFavourite") val payload: JsonElement? = null,
@@ -47,17 +22,36 @@ internal class FavouriteRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : FavouriteRepository {
 
+    /**
+     * One mutation for every target, built so only the target's argument and
+     * selection list are sent (the five-variable/five-list version asked for
+     * everything on every toggle).
+     */
     override suspend fun toggleFavourite(target: FavouriteTarget): NetworkResult<Unit> {
-        val variableName = when (target) {
+        val argument = when (target) {
             is FavouriteTarget.Anime -> "animeId"
             is FavouriteTarget.Manga -> "mangaId"
             is FavouriteTarget.Character -> "characterId"
             is FavouriteTarget.Staff -> "staffId"
             is FavouriteTarget.Studio -> "studioId"
         }
+        val selection = when (target) {
+            is FavouriteTarget.Anime -> "anime"
+            is FavouriteTarget.Manga -> "manga"
+            is FavouriteTarget.Character -> "characters"
+            is FavouriteTarget.Staff -> "staff"
+            is FavouriteTarget.Studio -> "studios"
+        }
+        val query = """
+mutation ToggleFavourite(${'$'}id: Int) {
+  ToggleFavourite($argument: ${'$'}id) {
+    $selection { nodes { id } }
+  }
+}
+"""
         val request = AniListGraphQLRequest(
-            query = ToggleFavouriteMutation,
-            variables = JsonObject(mapOf(variableName to JsonPrimitive(target.id))),
+            query = query,
+            variables = JsonObject(mapOf("id" to JsonPrimitive(target.id))),
             operationName = "ToggleFavourite",
         )
         return graphQLClient.execute(request) { dataJson ->

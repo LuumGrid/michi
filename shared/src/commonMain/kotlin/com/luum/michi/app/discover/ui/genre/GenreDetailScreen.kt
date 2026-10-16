@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.ui.genre
+package com.luum.michi.app.discover.ui.genre
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.runtime.Composable
@@ -8,10 +8,10 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.MediaType
-import com.luum.michi.app.mediaDetail.ui.components.DetailPosterGrid
-import com.luum.michi.app.mediaDetail.ui.genre.state.GenreDetailStateHolder
+import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.language.Strings
 

@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.studio
 
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 
 internal interface StudioDetailRepository {

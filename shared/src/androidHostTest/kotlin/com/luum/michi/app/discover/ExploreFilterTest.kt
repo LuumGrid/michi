@@ -1,6 +1,9 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -47,7 +50,8 @@ private class FakeExploreRepository : ExploreRepository {
     val mangaCalls = mutableListOf<CatalogCall>()
     private fun empty() = NetworkResult.Success(ExplorePage(emptyList(), false))
 
-    override suspend fun searchCatalog(
+    override suspend fun searchMedia(
+        type: MediaType,
         query: String?,
         genres: List<String>,
         formats: List<String>,
@@ -58,47 +62,40 @@ private class FakeExploreRepository : ExploreRepository {
         season: String?,
         onList: Boolean?,
         hideAdult: Boolean,
-        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+        strings: LanguageStrings,
     ): NetworkResult<ExplorePage> {
-        catalogCalls += CatalogCall(query, genres, formats, year, sort, season)
+        val call = CatalogCall(query, genres, formats, year, sort, season)
+        if (type == MediaType.MANGA) mangaCalls += call else catalogCalls += call
         return empty()
     }
 
-    override suspend fun searchManga(
-        query: String?,
+    override suspend fun searchMediaGrid(
+        type: MediaType,
         genres: List<String>,
-        formats: List<String>,
-        year: Int?,
-        sort: String,
         page: Int,
-        perPage: Int,
-        onList: Boolean?,
+        sort: String,
         hideAdult: Boolean,
-        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
-    ): NetworkResult<ExplorePage> {
-        mangaCalls += CatalogCall(query, genres, formats, year, sort, season = null)
-        return empty()
-    }
+    ): NetworkResult<MediaGridPage> = NetworkResult.Success(MediaGridPage(emptyList(), false, page))
 
     override suspend fun searchCharacters(
         query: String?,
         page: Int,
         perPage: Int,
-        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+        strings: LanguageStrings,
     ) = empty()
 
     override suspend fun searchStaff(
         query: String?,
         page: Int,
         perPage: Int,
-        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+        strings: LanguageStrings,
     ) = empty()
 
     override suspend fun searchStudios(
         query: String?,
         page: Int,
         perPage: Int,
-        strings: com.luum.michi.app.core.language.domain.LanguageStrings,
+        strings: LanguageStrings,
     ) = empty()
 }
 
@@ -174,7 +171,8 @@ class ExploreFilterTest {
     fun catalogVariablesMatchUserCase() = runBlocking {
         val client = FakeGraphQLClient()
         val repo = ExploreRepositoryImpl(client)
-        repo.searchCatalog(
+        repo.searchMedia(
+            type = MediaType.ANIME,
             query = null,
             genres = listOf("Adventure", "Comedy"),
             formats = listOf("TV", "MOVIE"),
@@ -186,20 +184,22 @@ class ExploreFilterTest {
         )
         assertEquals(1, client.requests.size)
         val vars = varsOf(client.requests.single())
+        assertEquals("\"ANIME\"", vars["type"])
         assertEquals("[\"Adventure\",\"Comedy\"]", vars["genre_in"])
         assertEquals("[\"TV\",\"MOVIE\"]", vars["format_in"])
         assertEquals("2025", vars["seasonYear"])
         assertEquals("[\"TRENDING_DESC\"]", vars["sort"])
         assertEquals(null, vars["season"])
         assertEquals(null, vars["search"])
-        assertEquals("AnimeCatalog", client.requests.single().operationName)
+        assertEquals("MediaCatalog", client.requests.single().operationName)
     }
 
     @Test
     fun mangaYearUsesFuzzyDateBounds() = runBlocking {
         val client = FakeGraphQLClient()
         val repo = ExploreRepositoryImpl(client)
-        repo.searchManga(
+        repo.searchMedia(
+            type = MediaType.MANGA,
             query = null,
             genres = emptyList(),
             formats = emptyList(),
@@ -209,6 +209,7 @@ class ExploreFilterTest {
             strings = EnglishStrings,
         )
         val vars = varsOf(client.requests.single())
+        assertEquals("\"MANGA\"", vars["type"])
         assertEquals("20241231", vars["startDate_greater"])
         assertEquals("20260101", vars["startDate_lesser"])
         assertEquals(null, vars["seasonYear"])
@@ -218,7 +219,8 @@ class ExploreFilterTest {
     fun blankFiltersOmitOptionalVariables() = runBlocking {
         val client = FakeGraphQLClient()
         val repo = ExploreRepositoryImpl(client)
-        repo.searchCatalog(
+        repo.searchMedia(
+            type = MediaType.ANIME,
             query = "  ",
             genres = emptyList(),
             formats = emptyList(),
@@ -240,7 +242,8 @@ class ExploreFilterTest {
     fun formatValuesNormalizeToApiEnum() = runBlocking {
         val client = FakeGraphQLClient()
         val repo = ExploreRepositoryImpl(client)
-        repo.searchCatalog(
+        repo.searchMedia(
+            type = MediaType.ANIME,
             query = null,
             genres = emptyList(),
             formats = listOf("tv short", "one_shot"),

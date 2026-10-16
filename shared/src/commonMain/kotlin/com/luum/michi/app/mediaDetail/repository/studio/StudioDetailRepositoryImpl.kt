@@ -2,13 +2,8 @@ package com.luum.michi.app.mediaDetail.repository.studio
 
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
-import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.model.toTitleCase
-import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
-import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
-import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
-import com.luum.michi.app.core.network.repository.dto.MediaListStatusDto
+import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.network.repository.dto.MediaSearchItemDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -16,17 +11,29 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.repository.toMediaGridItem
+import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.network.repository.toCoverSizes
 import com.luum.michi.app.core.network.domain.GridPageSize
 
+/** The grid node selection, shared by both studio queries (they used to carry a
+ *  copy each). It is exactly the catalog node the shared grid mapper reads. */
+private const val StudioMediaNodeSelection = """
+        id
+        format
+        title { userPreferred romaji english native }
+        coverImage { extraLarge large medium color }
+        averageScore
+        favourites
+        genres
+        startDate { year }
+        mediaListEntry { id status }
+"""
 
 private const val StudioDetailQuery = """
 query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
@@ -38,17 +45,7 @@ query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}
     isFavourite
     media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
       pageInfo { hasNextPage currentPage }
-      nodes {
-        id
-        format
-        title { userPreferred romaji english native }
-        coverImage { extraLarge large medium color }
-        averageScore
-        favourites
-        genres
-        startDate { year }
-        mediaListEntry { status }
-      }
+      nodes {$StudioMediaNodeSelection}
     }
   }
 }
@@ -60,17 +57,7 @@ query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
     id
     media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
       pageInfo { hasNextPage currentPage }
-      nodes {
-        id
-        format
-        title { userPreferred romaji english native }
-        coverImage { extraLarge large medium color }
-        averageScore
-        favourites
-        genres
-        startDate { year }
-        mediaListEntry { status }
-      }
+      nodes {$StudioMediaNodeSelection}
     }
   }
 }
@@ -107,41 +94,15 @@ private data class StudioPageOnlyDto(
 @Serializable
 private data class StudioMediaConnectionDto(
     val pageInfo: PageInfoDto? = null,
-    val nodes: List<StudioMediaNodeDto> = emptyList(),
-)
-
-@Serializable
-private data class StudioMediaNodeDto(
-    val id: Int,
-    val format: String? = null,
-    val title: MediaTitleDto? = null,
-    val coverImage: MediaCoverImageDto? = null,
-    val averageScore: Int? = null,
-    val favourites: Int? = null,
-    val genres: List<String> = emptyList(),
-    val startDate: FuzzyDateDto? = null,
-    val mediaListEntry: MediaListStatusDto? = null,
+    val nodes: List<MediaSearchItemDto> = emptyList(),
 )
 
 // ────────────── mapper helpers ──────────────
 
-private fun StudioMediaNodeDto.toItem(): MediaGridItem = MediaGridItem(
-    mediaId = id,
-    title = title?.bestTitle() ?: "",
-    cover = coverImage?.toCoverSizes(),
-    paletteHex = coverImage?.color,
-    format = format?.toTitleCase(),
-    year = startDate?.year,
-    averageScore = averageScore?.takeIf { it > 0 },
-    viewerStatus = mediaListEntry?.status,
-    favourites = favourites?.takeIf { it > 0 },
-    genres = genres.filter { it.isNotBlank() },
-)
-
 private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): MediaGridPage {
     val nodes = this?.nodes.orEmpty()
     return MediaGridPage(
-        items = nodes.map { it.toItem() },
+        items = nodes.map { it.toMediaGridItem() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
     )

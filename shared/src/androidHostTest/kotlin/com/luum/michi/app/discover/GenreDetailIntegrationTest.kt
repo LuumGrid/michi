@@ -1,13 +1,15 @@
-package com.luum.michi.app.mediaDetail
+package com.luum.michi.app.discover
 
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.mediaDetail.domain.genre.GenreDetailRepository
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
-import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
-import com.luum.michi.app.mediaDetail.ui.genre.state.GenreDetailStateHolder
+import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.discover.domain.model.ExplorePage
+import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +36,7 @@ private fun gridPage(items: List<Int>, hasNextPage: Boolean = false, currentPage
     MediaGridPage(items.map { gridItem(it) }, hasNextPage = hasNextPage, currentPage = currentPage)
 
 private fun holderWired(
-    repository: GenreDetailRepository,
+    repository: ExploreRepository,
     hideAdult: Boolean = true,
 ) = GenreDetailStateHolder(
     repository = repository,
@@ -43,13 +45,63 @@ private fun holderWired(
 )
 
 /**
+ * The genre page only uses [ExploreRepository.searchMediaGrid]; the rest of the
+ * catalog interface is stubbed so the double stays a full implementation.
+ */
+private open class FakeGenreExploreRepository : ExploreRepository {
+    override suspend fun searchMedia(
+        type: MediaType,
+        query: String?,
+        genres: List<String>,
+        formats: List<String>,
+        year: Int?,
+        sort: String,
+        page: Int,
+        perPage: Int,
+        season: String?,
+        onList: Boolean?,
+        hideAdult: Boolean,
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+
+    override suspend fun searchMediaGrid(
+        type: MediaType,
+        genres: List<String>,
+        page: Int,
+        sort: String,
+        hideAdult: Boolean,
+    ): NetworkResult<MediaGridPage> = NetworkResult.Success(MediaGridPage(emptyList(), false, page))
+
+    override suspend fun searchCharacters(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+
+    override suspend fun searchStaff(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+
+    override suspend fun searchStudios(
+        query: String?,
+        page: Int,
+        perPage: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+}
+
+/**
  * Repository double: canned pages per page number plus call counters and the
  * last request, to prove cache hits, the adult gate and that a catalog/sort
  * change re-queries.
  */
 private class RecordingGenreRepository(
     private val pages: Map<Int, MediaGridPage> = emptyMap(),
-) : GenreDetailRepository {
+) : FakeGenreExploreRepository() {
     var calls = 0
         private set
     var lastSort: String? = null
@@ -60,10 +112,12 @@ private class RecordingGenreRepository(
         private set
     var lastHideAdult: Boolean? = null
         private set
+    var lastGenres: List<String>? = null
+        private set
 
-    override suspend fun loadPage(
-        name: String,
+    override suspend fun searchMediaGrid(
         type: MediaType,
+        genres: List<String>,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -73,6 +127,7 @@ private class RecordingGenreRepository(
         lastType = type
         lastPage = page
         lastHideAdult = hideAdult
+        lastGenres = genres
         return NetworkResult.Success(pages[page] ?: MediaGridPage(emptyList(), false, page))
     }
 }
@@ -103,6 +158,7 @@ class GenreDetailIntegrationTest {
         assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
         assertEquals("POPULARITY_DESC", repository.lastSort)
         assertEquals(MediaType.ANIME, repository.lastType)
+        assertEquals(listOf("Action"), repository.lastGenres, "the genre travels as the catalog filter")
         assertEquals(true, repository.lastHideAdult)
     }
 
@@ -303,12 +359,12 @@ class GenreDetailIntegrationTest {
  */
 private class GatedPageGenreRepository(
     private val pageItems: Map<MediaType, Map<Int, List<Int>>>,
-) : GenreDetailRepository {
+) : FakeGenreExploreRepository() {
     val gate = CompletableDeferred<Unit>()
 
-    override suspend fun loadPage(
-        name: String,
+    override suspend fun searchMediaGrid(
         type: MediaType,
+        genres: List<String>,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -328,7 +384,7 @@ private class GatedPageGenreRepository(
  * Page-1 double held until [release], so the "in flight" state of a reload is
  * observable; [pageOne] lets the test change what the next response carries.
  */
-private class GatedGenreRepository : GenreDetailRepository {
+private class GatedGenreRepository : FakeGenreExploreRepository() {
     var pageOne: List<Int> = listOf(1)
     private var gated = false
     private var gate = CompletableDeferred<Unit>()
@@ -340,9 +396,9 @@ private class GatedGenreRepository : GenreDetailRepository {
 
     fun release() = gate.complete(Unit)
 
-    override suspend fun loadPage(
-        name: String,
+    override suspend fun searchMediaGrid(
         type: MediaType,
+        genres: List<String>,
         page: Int,
         sort: String,
         hideAdult: Boolean,

@@ -54,9 +54,9 @@ import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
-import com.luum.michi.app.mediaDetail.domain.genre.GenreDetailRepository
-import com.luum.michi.app.mediaDetail.domain.genre.model.genreAniListUrl
-import com.luum.michi.app.mediaDetail.domain.genre.model.genreShareText
+import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.discover.domain.genre.model.genreAniListUrl
+import com.luum.michi.app.discover.domain.genre.model.genreShareText
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
@@ -78,10 +78,10 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
-import com.luum.michi.app.mediaDetail.ui.components.DetailGridSortOptions
+import com.luum.michi.app.ui.components.DetailGridSortOptions
 import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.genre.GenreDetailScreen
-import com.luum.michi.app.mediaDetail.ui.genre.state.createGenreDetailStateHolder
+import com.luum.michi.app.discover.ui.genre.GenreDetailScreen
+import com.luum.michi.app.discover.ui.genre.state.createGenreDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.ShareLauncher
@@ -201,7 +201,7 @@ internal fun Root(
     characterDetailRepository: CharacterDetailRepository,
     staffDetailRepository: StaffDetailRepository,
     studioDetailRepository: StudioDetailRepository,
-    genreDetailRepository: GenreDetailRepository,
+    exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
     dashboardFeedCache: DashboardFeedCache,
@@ -473,9 +473,9 @@ internal fun Root(
         createStudioDetailStateHolder(studioDetailRepository, studioScope)
     }
     val genreScope = rememberHolderScope(listScope, viewerId)
-    val genreHolder = remember(genreDetailRepository, genreScope, viewerId) {
+    val genreHolder = remember(exploreRepository, genreScope, viewerId) {
         createGenreDetailStateHolder(
-            genreDetailRepository,
+            exploreRepository,
             genreScope,
             !settingsState.displayAdultContent,
         )

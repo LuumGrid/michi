@@ -41,7 +41,10 @@ private fun studioDetailJson() = buildJsonObject {
                     put("favourites", 500)
                     put("genres", JsonArray(listOf(JsonPrimitive("Action"), JsonPrimitive("Comedy"))))
                     put("startDate", buildJsonObject { put("year", 2016) })
-                    put("mediaListEntry", buildJsonObject { put("status", "CURRENT") })
+                    put("mediaListEntry", buildJsonObject {
+                        put("id", 3)
+                        put("status", "CURRENT")
+                    })
                 },
             )))
         })

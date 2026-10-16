@@ -262,7 +262,7 @@ fun App(
                             characterDetailRepository = dependencies.characterDetailRepository,
                             staffDetailRepository = dependencies.staffDetailRepository,
                             studioDetailRepository = dependencies.studioDetailRepository,
-                            genreDetailRepository = dependencies.genreDetailRepository,
+                            exploreRepository = dependencies.exploreRepository,
                             calendarRepository = dependencies.calendarRepository,
                             dashboardRepository = dependencies.dashboardRepository,
                             dashboardFeedCache = dependencies.dashboardFeedCache,

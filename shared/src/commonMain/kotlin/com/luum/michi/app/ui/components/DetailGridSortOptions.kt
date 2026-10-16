@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.ui.components
+package com.luum.michi.app.ui.components
 
 import com.luum.michi.app.core.model.UserListSort
 
