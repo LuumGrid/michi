@@ -1,64 +1,27 @@
 package com.luum.michi.app.mediaList.ui.manga
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
-import com.luum.michi.app.core.model.MediaGenres
-import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
-import com.luum.michi.app.mediaList.domain.common.mediaListYears
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
-import com.luum.michi.app.mediaList.ui.common.ANY_SEASON_ID
-import com.luum.michi.app.mediaList.ui.common.MediaListFilterSheet
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
-import com.luum.michi.app.ui.components.SortSheet
-import com.luum.michi.app.mediaList.ui.common.toggled
-import com.luum.michi.app.mediaList.ui.common.yearFilterTabs
+import com.luum.michi.app.mediaList.ui.common.MediaListScreenScaffold
 import com.luum.michi.app.mediaList.ui.manga.components.MangaListEntryContent
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
-import com.luum.michi.app.ui.components.MediaCoverCard
-import com.luum.michi.app.ui.components.MessagePanel
-import com.luum.michi.app.ui.components.PullRefresh
-import com.luum.michi.app.ui.components.RefreshErrorRow
-import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * Manga list: section rail + entry cards. Mirrors [AnimeListScreen]: same
- * states, same card language, manga content (chapters, volumes for novels).
- * Manga exposes no airing dates, so the subtitle is the format alone.
+ * Manga list: thin wrapper over [MediaListScreenScaffold] that fills only what
+ * differs — sections, empty icon, meta line, format options and the entry body
+ * (chapters, volumes for novels). Manga exposes no airing dates, so the meta
+ * line is format + year.
  */
 @Composable
 internal fun MangaListScreen(
@@ -100,216 +63,49 @@ internal fun MangaListScreen(
     onOpenDetail: (Int) -> Unit = {},
     onEditEntry: (Int) -> Unit = {},
 ) {
-    val sections = listOf(MangaListSection.ALL) + mangaStatusSections(splitCompleted)
-    // Toggling split can strand the selection on a gone section (e.g.
-    // COMPLETED_MANGA with split off): fall back to ALL without churning state.
-    val effectiveSelected = if (selected in sections) selected else MangaListSection.ALL
-    // Scroll rule: a section chip change returns to the top; the position is
-    // kept on refresh, on sheet open/close and when coming back from a detail.
-    val listState = rememberResetListState(effectiveSelected)
-    val tabs = sections.map { section ->
-        ChipTab(
-            value = section,
-            label = section.label(strings),
-            count = holder.countInSection(section),
-        )
-    }
-    val trimmedQuery = query.trim()
-    val entries = holder.entriesInSection(effectiveSelected, hideAdult).let { sectionEntries ->
-        if (trimmedQuery.isEmpty()) {
-            sectionEntries
-        } else {
-            sectionEntries.filter { entry ->
-                entry.titles.any { it.contains(trimmedQuery, ignoreCase = true) }
-            }
-        }
-    }
-    Column(modifier = modifier.fillMaxSize()) {
-        ChipRail(
-            tabs = tabs,
-            selected = effectiveSelected,
-            onSelect = onSelectSection,
-        )
-        when {
-            holder.isLoading && entries.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = strings.listsLoadingLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-            holder.error != null && entries.isEmpty() -> {
-                MessagePanel(
-                    title = strings.listsErrorLabel,
-                    message = holder.error?.let { strings.networkErrorMessage(it) },
-                    icon = Icons.Filled.Warning,
-                    actionLabel = strings.retryAction,
-                    onAction = onRetry,
-                )
-            }
-            entries.isEmpty() -> {
-                // No match under an active query reads as no-results, not as
-                // an empty section (different message, same panel).
-                val noMatch = trimmedQuery.isNotEmpty()
-                MessagePanel(
-                    title = if (noMatch) strings.searchNoResultsLabel else strings.listsEmptyLabel,
-                    message = null,
-                    icon = if (noMatch) AppIcons.Search else AppIcons.Manga,
-                    actionLabel = null,
-                    onAction = {},
-                )
-            }
-            else -> {
-                holder.actionError?.let { error ->
-                    RefreshErrorRow(
-                        message = strings.networkErrorMessage(error),
-                        dismissLabel = strings.dismissAction,
-                        onDismiss = { holder.clearActionError() },
-                    )
-                }
-                PullRefresh(
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
-                ) {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            top = 16.dp,
-                            bottom = 16.dp + bottomPadding,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(
-                            items = entries,
-                            key = { it.id },
-                    ) { entry ->
-                        val meta = listOfNotNull(
-                            entry.format.label(strings.formatUnknownLabel),
-                            entry.seasonYear?.toString(),
-                            entry.mediaStatus?.label(strings, isManga = true),
-                        ).joinToString(" · ")
-                        MediaCoverCard(
-                            cover = entry.cover,
-                            title = entry.title,
-                            subtitle = meta,
-                            onClick = { onOpenDetail(entry.id) },
-                            titleTrailing = {
-                                IconButton(onClick = { onEditEntry(entry.id) }) {
-                                    Icon(
-                                        imageVector = AppIcons.Edit,
-                                        contentDescription = strings.editEntryAction,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                            content = {
-                                MangaListEntryContent(
-                                    entry = entry,
-                                    onIncrementChapters = { holder.incrementChapters(entry) },
-                                    onIncrementVolumes = { holder.incrementVolumes(entry) },
-                                    strings = strings,
-                                    isSmileyFormat = isSmileyFormat,
-                                    formatSmiley = formatSmiley,
-                                )
-                            },
-                        )
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (isFilterOpen) {
-        // Accordion decade: screen-local, auto-expands the decade holding
-        // the current year filter. Root never sees it (single sheet, so
-        // back always closes the filter sheet — no ordering involved).
-        var expandedDecade by remember {
-            mutableStateOf(holder.filterYear?.let { it / 10 * 10 })
-        }
-        val yearTabs = yearFilterTabs(
-            entries = holder.entries,
-            years = mediaListYears(),
-            anyLabel = strings.exploreAnyYearLabel,
-        )
-        MediaListFilterSheet(
-            seasonOptions = mediaListSeasonOptions(strings),
-            selectedSeasonId = holder.filterSeason?.name ?: ANY_SEASON_ID,
-            onSelectSeason = { id ->
-                holder.updateListFilters(
-                    season = if (id == ANY_SEASON_ID) null else parseMediaSeason(id),
-                    genres = holder.filterGenres,
-                    formats = holder.filterFormats,
-                    year = holder.filterYear,
-                )
-            },
-            yearTabs = yearTabs,
-            selectedYear = holder.filterYear,
-            onSelectYear = { year ->
-                holder.updateListFilters(
-                    season = holder.filterSeason,
-                    genres = holder.filterGenres,
-                    formats = holder.filterFormats,
-                    year = year,
-                )
-            },
-            expandedDecade = expandedDecade,
-            onToggleDecade = { expandedDecade = if (it == expandedDecade) null else it },
-            genres = MediaGenres,
-            selectedGenres = holder.filterGenres,
-            onToggleGenre = { genre ->
-                holder.updateListFilters(
-                    season = holder.filterSeason,
-                    genres = holder.filterGenres.toggled(genre),
-                    formats = holder.filterFormats,
-                    year = holder.filterYear,
-                )
-            },
-            formatOptions = mediaListFormatOptions(isAnimeTab = false, strings = strings),
-            selectedFormatIds = holder.filterFormats,
-            onToggleFormat = { formatId ->
-                holder.updateListFilters(
-                    season = holder.filterSeason,
-                    genres = holder.filterGenres,
-                    formats = holder.filterFormats.toggled(formatId),
-                    year = holder.filterYear,
-                )
-            },
-            onReset = {
-                expandedDecade = null
-                holder.updateListFilters(
-                    season = null,
-                    genres = emptyList(),
-                    formats = emptyList(),
-                    year = null,
-                )
-            },
-            onDismiss = {
-                expandedDecade = null
-                onDismissFilter()
-            },
-        )
-    }
-    if (isSortOpen) {
-        SortSheet(
-            options = UserListSort.entries,
-            selected = holder.currentSortOption,
-            onSelect = { option ->
-                holder.updateSort(option, holder.currentSortOrder, persist = sortPersist)
-            },
-            order = holder.currentSortOrder,
-            onSelectOrder = { order ->
-                holder.updateSort(holder.currentSortOption, order, persist = sortPersist)
-            },
-            onDismiss = onDismissSort,
-        )
-    }
+    MediaListScreenScaffold(
+        holder = holder,
+        selected = selected,
+        onSelectSection = onSelectSection,
+        onRetry = onRetry,
+        allSection = MangaListSection.ALL,
+        statusSections = ::mangaStatusSections,
+        sectionLabel = { section, s -> section.label(s) },
+        emptyIcon = AppIcons.Manga,
+        meta = ::mangaEntryMeta,
+        formatOptions = { s -> mediaListFormatOptions(isAnimeTab = false, strings = s) },
+        cardContent = { entry ->
+            MangaListEntryContent(
+                entry = entry,
+                onIncrementChapters = { holder.incrementChapters(entry) },
+                onIncrementVolumes = { holder.incrementVolumes(entry) },
+                strings = strings,
+                isSmileyFormat = isSmileyFormat,
+                formatSmiley = formatSmiley,
+            )
+        },
+        strings = strings,
+        modifier = modifier,
+        bottomPadding = bottomPadding,
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        query = query,
+        isFilterOpen = isFilterOpen,
+        onDismissFilter = onDismissFilter,
+        isSortOpen = isSortOpen,
+        onDismissSort = onDismissSort,
+        sortPersist = sortPersist,
+        splitCompleted = splitCompleted,
+        hideAdult = hideAdult,
+        onOpenDetail = onOpenDetail,
+        onEditEntry = onEditEntry,
+    )
 }
+
+/** Manga meta line: format + year + work status (no airing data for manga). */
+private fun mangaEntryMeta(entry: MangaListEntry, strings: LanguageStrings): String =
+    listOfNotNull(
+        entry.format.label(strings.formatUnknownLabel),
+        entry.seasonYear?.toString(),
+        entry.mediaStatus?.label(strings, isManga = true),
+    ).joinToString(" · ")

@@ -18,6 +18,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.domain.common.sectionCount
 import com.luum.michi.app.mediaList.domain.common.sectionEntries
 import com.luum.michi.app.mediaList.ui.common.state.ListProgressSaver
+import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.mediaList.ui.common.state.MediaListLoader
 import com.luum.michi.app.core.storage.domain.SortPersistence
 import com.luum.michi.app.core.storage.domain.SortScope
@@ -29,7 +30,7 @@ internal class AnimeListStateHolder(
     private val sortPersistence: SortPersistence? = null,
     private val sortScope: SortScope = SortScope.ANIME,
     onEntrySaved: () -> Unit = {},
-) {
+) : MediaListHolder<AnimeListEntry, AnimeListSection> {
     private val loader = MediaListLoader(scope) { userId ->
         repository.loadList(userId, lastSplitCompleted)
     }
@@ -48,29 +49,29 @@ internal class AnimeListStateHolder(
 
     // Snapshot-backed so filter/sort sheets recompose the list on every
     // intent (plain vars would apply silently until the next load).
-    var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
-    var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
+    override var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
+    override var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
     var isSortPersisted by mutableStateOf(false)
 
-    var filterSeason by mutableStateOf<MediaSeason?>(null)
-    var filterGenres by mutableStateOf(emptyList<String>())
-    var filterFormats by mutableStateOf(emptyList<String>())
-    var filterYear by mutableStateOf<Int?>(null)
+    override var filterSeason by mutableStateOf<MediaSeason?>(null)
+    override var filterGenres by mutableStateOf(emptyList<String>())
+    override var filterFormats by mutableStateOf(emptyList<String>())
+    override var filterYear by mutableStateOf<Int?>(null)
 
-    val entries: List<AnimeListEntry> get() = loader.entries
-    val isLoading: Boolean get() = loader.isLoading
+    override val entries: List<AnimeListEntry> get() = loader.entries
+    override val isLoading: Boolean get() = loader.isLoading
     val isRefreshing: Boolean get() = loader.isRefreshing
-    val error: NetworkError? get() = loader.error
+    override val error: NetworkError? get() = loader.error
 
     /** Non-blocking failure of a `+1` save, shown as a compact dismissible row. */
-    val actionError: NetworkError? get() = progressSaver.actionError
+    override val actionError: NetworkError? get() = progressSaver.actionError
 
     /** Dismisses the compact action-error row. */
-    fun clearActionError() {
+    override fun clearActionError() {
         progressSaver.clearActionError()
     }
 
-    fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
+    override fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
         currentSortOrder = order
         isSortPersisted = persist
@@ -80,7 +81,7 @@ internal class AnimeListStateHolder(
     }
 
     /** Client-side filters (the whole list is already loaded): season/genre/format/year. */
-    fun updateListFilters(season: MediaSeason?, genres: List<String>, formats: List<String>, year: Int?) {
+    override fun updateListFilters(season: MediaSeason?, genres: List<String>, formats: List<String>, year: Int?) {
         filterSeason = season
         filterGenres = genres
         filterFormats = formats
@@ -106,7 +107,7 @@ internal class AnimeListStateHolder(
         progressSaver.enqueue(entry.id) { it.incremented(lastSplitCompleted) }
     }
 
-    fun entriesInSection(section: AnimeListSection, hideAdult: Boolean = false): List<AnimeListEntry> =
+    override fun entriesInSection(section: AnimeListSection, hideAdult: Boolean): List<AnimeListEntry> =
         loader.entries.sectionEntries(
             // ALL has no status of its own: no entry carries it, so filtering
             // by it would always come back empty (counts already treat ALL as
@@ -125,7 +126,7 @@ internal class AnimeListStateHolder(
 
     // One rule: counts reflect the loaded list, never view state (sheet
     // filters, search query, 18+ setting).
-    fun countInSection(section: AnimeListSection): Int =
+    override fun countInSection(section: AnimeListSection): Int =
         loader.entries.sectionCount(section == AnimeListSection.ALL) { it.status == section }
 }
 

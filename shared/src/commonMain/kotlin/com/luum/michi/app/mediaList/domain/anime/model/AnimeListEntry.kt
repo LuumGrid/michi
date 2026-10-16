@@ -12,7 +12,7 @@ internal data class AnimeListEntry(
     override val id: Int,
     override val title: String,
     /** Every non-blank title variant (romaji/english/native): search matches any of them. */
-    val titles: List<String> = listOf(title),
+    override val titles: List<String> = listOf(title),
     override val format: MediaFormat,
     val mediaStatus: MediaWorkStatus? = null,
     val status: AnimeListSection,
@@ -21,7 +21,7 @@ internal data class AnimeListEntry(
     override val score: Double,
     val nextEpisodeRelease: MediaReleaseDateTime?,
     val paletteHex: String?,
-    val cover: CoverSizes? = null,
+    override val cover: CoverSizes? = null,
     override val originalIndex: Int = 0,
     override val updatedAt: Long = 0L,
     override val startedAtInt: Int = 0,

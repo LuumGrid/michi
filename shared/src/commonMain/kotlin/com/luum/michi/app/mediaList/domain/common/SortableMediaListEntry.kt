@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaList.domain.common
 
+import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.UserListOrder
@@ -13,6 +14,9 @@ import com.luum.michi.app.core.model.UserListSort
 internal interface SortableMediaListEntry {
     val id: Int
     val title: String
+    /** Every non-blank title variant (romaji/english/native): search matches any of them. */
+    val titles: List<String>
+    val cover: CoverSizes?
     val score: Double
     val updatedAt: Long
     val startedAtInt: Int

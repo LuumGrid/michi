@@ -76,12 +76,15 @@ mediaList/
     manga/              `toMangaListEntry` mapper, MangaListRepositoryImpl (thin wrapper)
     MediaListCollectionFetcher.kt  one `MediaListCollection` query (`$type: MediaType`) + fetch, shared by both impls
   ui/
-    common/state/       MediaListLoader + ListProgressSaver (shared fetch/cache + optimistic `+1`)
-    anime/state/        AnimeListStateHolder
-    manga/state/        MangaListStateHolder
+    common/MediaListScreenScaffold.kt  the one list screen (states, search, scroll, filter + sort sheets)
+    common/state/       MediaListLoader + ListProgressSaver + MediaListHolder (shared holder contract)
+    anime/AnimeListScreen.kt  thin wrapper (sections, empty icon, meta line, format options, entry body)
+    manga/MangaListScreen.kt  thin wrapper
+    anime/state/        AnimeListStateHolder (implements MediaListHolder)
+    manga/state/        MangaListStateHolder (implements MediaListHolder)
 ```
 
-`anime/` and `manga/` never import each other directly. Genuinely different things stay split: media formats, list sections (anime splits COMPLETED by format, manga doesn't), the entries' progress shape, and the progress/airing sort comparators; the collection query, the loader/saver and the rail assembly are shared.
+`anime/` and `manga/` never import each other directly. Genuinely different things stay split: media formats, list sections (anime splits COMPLETED by format, manga doesn't), the entries' progress shape, the progress/airing sort comparators, the meta line, the empty icon and the card body; the collection query, the loader/saver, the rail assembly and the whole screen (`MediaListScreenScaffold`, over the `MediaListHolder` contract) are shared.
 
 `mediaDetail/` is the third feature-group, same pattern, for detail scopes (`media/`, `character/`, `studio/` and `staff/` sub-scopes, each with the same `loadDetail`-shaped contract):
 
@@ -199,7 +202,7 @@ com.luum.michi.app
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder + CalendarScreen overlay (`CalendarDateBar` at TabBar-identical 24dp with deferred entrance + `CalendarReleaseRow` with shared `ChipRail` platform chips that open urls via `UrlOpener`, + filter sheet, per-day queries with session cache, UTC-safe picker)
   discover/               domain(+model)/repository/ui per dashboard+explore+genre state holders (dashboard renders the DISCOVER tab: type-scoped Anime/Manga rails keyed by `DashboardSectionKind`; Explore search UI pending, Explore honors `hideAdult`; genre is the shared catalog query filtered by name)
-  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (both screens live)
+  mediaList/              domain/{anime,manga,common}/repository/ui per anime+manga state holders (both screens are thin wrappers over one shared `MediaListScreenScaffold`)
   mediaDetail/            domain+repository/ui per media+character+studio+staff state holders (all four detail screens live: media banner hero + next-episode band + stats row + synopsis + framed information + genre chips + characters/staff rails + trailer + one framed links panel + related/recommendations + tag chips, character person hero + role chips + voice actors (voice-language picker, kept visible when the language has no cast) + animeography, staff person hero + occupation chips + roles + characters, studio hero + a "Works" grid; the studio grid is ordered by the server from the shared sort sheet, no client sort, no filters); studios and producers split, editor sheet, favourite + share + open-in-AniList toolbar per scope
   notifications/          domain(+model)/repository/ui/state holder (no screens yet)
   settings/
