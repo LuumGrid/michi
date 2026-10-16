@@ -224,6 +224,62 @@ class StudioDetailIntegrationTest {
     }
 
     @Test
+    fun aPageInFlightIsDroppedWhenAnotherStudioLoads() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+
+        holder.loadMore() // page 2, held at the gate
+        holder.load(2) // another studio cancels it
+
+        repository.gate.complete(Unit) // the stale page lands after the reload
+
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the stale page never appends")
+        assertEquals(2, holder.detail?.id)
+    }
+
+    @Test
+    fun refreshKeepsTheWorksVisibleUntilTheNewPageArrives() {
+        val repository = GatedDetailStudioRepository()
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+
+        repository.pageOne = listOf(9)
+        repository.hold()
+        holder.refresh()
+
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the works stay on screen")
+
+        repository.release()
+
+        assertEquals(listOf(9), holder.mediaItems.map { it.mediaId }, "the response replaces them")
+    }
+
+    @Test
+    fun changeSortClearsTheWorksWhileItReloads() {
+        val repository = GatedDetailStudioRepository()
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+
+        repository.pageOne = listOf(2)
+        repository.hold()
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        assertTrue(holder.mediaItems.isEmpty(), "a new order invalidates the loaded works")
+
+        repository.release()
+
+        assertEquals(listOf(2), holder.mediaItems.map { it.mediaId })
+    }
+
+    @Test
     fun toggleFavouriteFlips() {
         val repository = RecordingStudioRepository()
         val holder = holderWired(repository)
@@ -275,6 +331,46 @@ private class GatedStudioRepository : StudioDetailRepository by RecordingStudioR
         gate.await()
         return NetworkResult.Success(Unit)
     }
+}
+
+/**
+ * Detail-page double held until [release], so the "in flight" state of a reload
+ * is observable; [pageOne] lets the test change what the next response carries.
+ */
+private class GatedDetailStudioRepository : StudioDetailRepository {
+    var pageOne: List<Int> = listOf(1)
+    private var gated = false
+    private var gate = CompletableDeferred<Unit>()
+
+    fun hold() {
+        gate = CompletableDeferred()
+        gated = true
+    }
+
+    fun release() = gate.complete(Unit)
+
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
+        if (gated) gate.await()
+        return NetworkResult.Success(
+            studioDetail(
+                id = id,
+                media = StudioMediaPage(
+                    items = pageOne.map { studioMediaItem(it) },
+                    hasNextPage = false,
+                    currentPage = 1,
+                ),
+            ),
+        )
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        sort: String,
+    ): NetworkResult<StudioMediaPage> =
+        NetworkResult.Success(StudioMediaPage(emptyList(), hasNextPage = false, currentPage = page))
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
 }
 
 /** See `MediaDetailFavouriteCacheTest`: the late response must not mix entries. */

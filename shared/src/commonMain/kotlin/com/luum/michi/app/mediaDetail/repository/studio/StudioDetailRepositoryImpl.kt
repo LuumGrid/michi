@@ -31,7 +31,7 @@ query StudioDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}
     isAnimationStudio
     favourites
     isFavourite
-    media(isMain: true, page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
       pageInfo { hasNextPage currentPage }
       nodes {
         id
@@ -53,7 +53,7 @@ private const val StudioMediaPageQuery = """
 query StudioMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'$'}sort: [MediaSort]) {
   Studio(id: ${'$'}id) {
     id
-    media(isMain: true, page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
+    media(page: ${'$'}page, perPage: ${'$'}perPage, sort: ${'$'}sort) {
       pageInfo { hasNextPage currentPage }
       nodes {
         id

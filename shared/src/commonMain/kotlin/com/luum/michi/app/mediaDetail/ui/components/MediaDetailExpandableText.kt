@@ -14,10 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.util.BiographyStat
 import com.luum.michi.app.ui.components.SectionHeader
 
 /**
@@ -25,6 +30,10 @@ import com.luum.michi.app.ui.components.SectionHeader
  * synopsis, character/staff biography). Collapsed to five lines; the
  * read more/less link only appears when the collapsed text actually
  * overflows (or while expanded, so it can always be folded back).
+ *
+ * [stats] are the biography's `Label: value` lines AniList marked in bold (read
+ * by `core/util`): they become a stat block above the prose, with the label in
+ * bold and the value in `onSurface`. A synopsis passes none.
  */
 @Composable
 internal fun MediaDetailExpandableText(
@@ -35,6 +44,8 @@ internal fun MediaDetailExpandableText(
     // Baked 16dp matches the full-width layout; panels (already inset) pass
     // zero to avoid double padding.
     horizontalPadding: Dp = 16.dp,
+    // Person biographies carry the bold stats; a synopsis does not.
+    stats: List<BiographyStat> = emptyList(),
 ) {
     var expanded by remember(text) { mutableStateOf(false) }
     var overflows by remember(text) { mutableStateOf(false) }
@@ -45,17 +56,22 @@ internal fun MediaDetailExpandableText(
     ) {
         SectionHeader(title)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_LINES,
-            overflow = TextOverflow.Ellipsis,
-            // Measured only while collapsed: once expanded there is no
-            // overflow to report, and the link stays via [expanded].
-            onTextLayout = { result ->
-                if (!expanded) overflows = result.hasVisualOverflow
-            },
-        )
+        if (stats.isNotEmpty()) {
+            BiographyStats(stats)
+        }
+        if (text.isNotBlank()) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_LINES,
+                overflow = TextOverflow.Ellipsis,
+                // Measured only while collapsed: once expanded there is no
+                // overflow to report, and the link stays via [expanded].
+                onTextLayout = { result ->
+                    if (!expanded) overflows = result.hasVisualOverflow
+                },
+            )
+        }
         if (expanded || overflows) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -68,6 +84,27 @@ internal fun MediaDetailExpandableText(
                     .padding(vertical = 4.dp),
             )
         }
+    }
+}
+
+/** The stat block: the label in bold, the value in `onSurface` (wrapping). */
+@Composable
+private fun BiographyStats(stats: List<BiographyStat>) {
+    val valueColor = MaterialTheme.colorScheme.onSurface
+    Column(modifier = Modifier.fillMaxWidth()) {
+        stats.forEach { stat ->
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(stat.label) }
+                    append(": ")
+                    withStyle(SpanStyle(color = valueColor)) { append(stat.value) }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                // No maxLines on purpose: a long value wraps instead of clipping.
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

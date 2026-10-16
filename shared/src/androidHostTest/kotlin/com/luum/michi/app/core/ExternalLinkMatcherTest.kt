@@ -56,6 +56,16 @@ class ExternalLinkMatcherTest {
     }
 
     @Test
+    fun schemeLessCatalogUrlsStillMatch() {
+        // AniList's catalog mixes full URLs with bare hosts ("instagram.com"),
+        // which used to be dropped because they carry no scheme.
+        val catalog = listOf(site("Instagram", "instagram.com"))
+
+        assertEquals("Instagram", matchCatalogSite(catalog, "https://instagram.com/user")?.site)
+        assertEquals("Instagram", matchCatalogSite(catalog, "https://www.instagram.com/user")?.site)
+    }
+
+    @Test
     fun mostSpecificHostWins() {
         val catalog = listOf(
             site("Example", "https://example.com"),

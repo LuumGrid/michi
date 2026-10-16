@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 
 
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
@@ -77,28 +78,53 @@ internal fun MediaDetailInformationPanel(
             .takeIf { it.isNotEmpty() }
             ?.let { add(MediaDetailInfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
     }
-    if (entries.isEmpty() && wideEntries.isEmpty() && detail.studios.isEmpty()) return
+    if (
+        entries.isEmpty() &&
+        wideEntries.isEmpty() &&
+        detail.studios.isEmpty() &&
+        detail.producers.isEmpty()
+    ) {
+        return
+    }
     MediaDetailPanel {
         SectionHeader(strings.mediaDetailInformationTitle)
         Spacer(modifier = Modifier.height(12.dp))
         MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
-        if (detail.studios.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = strings.mediaDetailStudioLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            // Interactive on purpose: a studio chip opens the studio page.
-            ChipRail(
-                tabs = detail.studios.map { ChipTab(value = it.id, label = it.name) },
-                selected = null,
-                onSelect = onOpenStudio,
-                contentPadding = PaddingValues(0.dp),
-            )
-        }
+        StudioChipGroup(
+            label = strings.mediaDetailStudiosLabel,
+            studios = detail.studios,
+            onOpenStudio = onOpenStudio,
+        )
+        StudioChipGroup(
+            label = strings.mediaDetailProducersLabel,
+            studios = detail.producers,
+            onOpenStudio = onOpenStudio,
+        )
     }
+}
+
+/** One labelled row of interactive studio chips; an empty list paints nothing. */
+@Composable
+private fun StudioChipGroup(
+    label: String,
+    studios: List<StudioRef>,
+    onOpenStudio: (Int) -> Unit,
+) {
+    if (studios.isEmpty()) return
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+    // Interactive on purpose: a studio chip opens the studio page.
+    ChipRail(
+        tabs = studios.map { ChipTab(value = it.id, label = it.name) },
+        selected = null,
+        onSelect = onOpenStudio,
+        contentPadding = PaddingValues(0.dp),
+    )
 }
 
 /** Genres as flat, display-only pills, edge-to-edge under their header. */

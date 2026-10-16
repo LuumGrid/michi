@@ -29,6 +29,7 @@ internal data class MediaDetail(
     val duration: Int?,
     val genres: List<String>,
     val studios: List<StudioRef>,
+    val producers: List<StudioRef>,
     val source: String?,
     val season: String?,
     val startedLabel: String?,

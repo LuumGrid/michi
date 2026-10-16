@@ -38,8 +38,6 @@ import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
@@ -47,9 +45,9 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 
 /**
- * Character detail page: person hero + framed roles chips + description +
- * information panel + voice actors (with their language picker) + appearances
- * rail with its own local sort. Reached from a media character rail via
+ * Character detail page: person hero (portrait + identity, with the roles as
+ * chips inside it) + description + information panel + voice actors (with their
+ * language picker) + appearances rail. Reached from a media character rail via
  * [com.luum.michi.app.root.state.State.openCharacter].
  */
 @Composable
@@ -115,27 +113,17 @@ private fun CharacterDetailContent(
                 image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
+                // The roles live in the hero column, not in their own row.
+                chips = characterChips(detail, strings),
             )
         }
-        val chips = characterChips(detail, strings)
-        if (chips.isNotEmpty()) {
-            // The roles are the whole section: one full-bleed chip row under the
-            // hero, no panel and no title.
-            item(key = "roles") {
-                ChipRail(
-                    tabs = chips.map { ChipTab(value = it, label = it) },
-                    selected = null,
-                    onSelect = {},
-                    interactive = false,
-                )
-            }
-        }
-        if (detail.descriptionPlain.isNotBlank()) {
+        if (detail.descriptionPlain.isNotBlank() || detail.stats.isNotEmpty()) {
             item(key = "description") {
                 MediaDetailExpandableText(
                     title = strings.mediaDetailCharacterDescriptionTitle,
                     text = detail.descriptionPlain,
                     strings = strings,
+                    stats = detail.stats,
                 )
             }
         }

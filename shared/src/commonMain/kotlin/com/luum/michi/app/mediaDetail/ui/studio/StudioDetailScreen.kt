@@ -28,18 +28,19 @@ import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.PosterCard
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.favouritesBadge
-import com.luum.michi.app.ui.components.scoreBadge
 import com.luum.michi.app.ui.components.rememberResetGridState
+import com.luum.michi.app.ui.components.scoreBadge
 import com.luum.michi.app.ui.language.Strings
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
 /**
- * Studio detail page: name hero + a poster grid. The sort lives in the holder
- * and is edited from the shared `SortSheet` (Root toolbar action): the server
- * orders the grid, so a change re-queries from page 1. The grid pages itself
- * when its footer scrolls into view. Reached from a media information panel
- * studio chip via [com.luum.michi.app.root.state.State.openStudio].
+ * Studio detail page: full-width identity hero (name + "Anime studio"/"Producer"
+ * label + favourites) over a poster grid of the studio's works. The sort lives
+ * in the holder and is edited from the shared `SortSheet` (Root toolbar action):
+ * the server orders the grid, so a change re-queries from page 1. The grid pages
+ * itself when its footer scrolls into view. Reached from a media information
+ * panel studio chip via [com.luum.michi.app.root.state.State.openStudio].
  */
 @Composable
 internal fun StudioDetailScreen(
@@ -120,8 +121,12 @@ private fun StudioDetailGrid(
                 // Same type layout as the person heroes; a studio has no image.
                 MediaDetailPersonHero(
                     name = detail.name,
-                    // The anime-studio flag reads as the line under the name.
-                    nativeName = strings.mediaDetailAnimeStudioLabel.takeIf { detail.isAnimeStudio },
+                    // The animation flag reads as the line under the name.
+                    nativeName = if (detail.isAnimeStudio) {
+                        strings.mediaDetailAnimeStudioLabel
+                    } else {
+                        strings.mediaDetailProducerLabel
+                    },
                     image = null,
                     favourites = detail.favourites,
                     strings = strings,
@@ -130,7 +135,7 @@ private fun StudioDetailGrid(
             }
             item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
                 SectionHeader(
-                    title = strings.mediaDetailMediaTitle,
+                    title = strings.mediaDetailWorksTitle,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }

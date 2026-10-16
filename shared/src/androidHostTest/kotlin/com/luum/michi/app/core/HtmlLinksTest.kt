@@ -1,6 +1,7 @@
 package com.luum.michi.app.core
 
 import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.util.BiographyStat
 import com.luum.michi.app.core.util.toHtmlContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -111,6 +112,118 @@ class HtmlLinksTest {
         val content = "<a href=\"https://www.instagram.com/x/\">https://www.instagram.com/x/</a>".toHtmlContent()
 
         assertEquals("Instagram", content.links.single().site)
+        assertEquals("", content.text)
+    }
+
+    @Test
+    fun boldLabelWithTheColonInsideBecomesAStat() {
+        val content = "<p><strong>Height:</strong> 190 cm (6'3&quot;)</p>".toHtmlContent()
+
+        assertEquals(listOf(BiographyStat("Height", "190 cm (6'3\")")), content.stats)
+        assertEquals("", content.text)
+    }
+
+    @Test
+    fun boldLabelWithTheColonOutsideBecomesAStat() {
+        val content = "<strong>Height</strong>: 145-180 cm".toHtmlContent()
+
+        assertEquals(listOf(BiographyStat("Height", "145-180 cm")), content.stats)
+        assertEquals("", content.text)
+    }
+
+    @Test
+    fun bTagWorksLikeStrong() {
+        val content = "<b>Grade:</b> Special Grade Sorcerer".toHtmlContent()
+
+        assertEquals(listOf(BiographyStat("Grade", "Special Grade Sorcerer")), content.stats)
+    }
+
+    @Test
+    fun statsSurviveBlankLinesAndNestedSpansAndKeepTheirOrder() {
+        val content = ("<p><strong>Height:</strong> 190 cm<br />\n"
+            + "\n"
+            + "<span class='tooltip'><span><strong>True Devil Fruit:</strong> Nika</span></span>").toHtmlContent()
+
+        assertEquals(
+            listOf("Height" to "190 cm", "True Devil Fruit" to "Nika"),
+            content.stats.map { it.label to it.value },
+        )
+    }
+
+    @Test
+    fun aStatAfterAParagraphIsStillReadAndTheProseStays() {
+        val content = "<p>Born in Konoha.</p>\n<p><strong>Height:</strong> 170 cm</p>".toHtmlContent()
+
+        assertEquals("Born in Konoha.", content.text)
+        assertEquals(listOf(BiographyStat("Height", "170 cm")), content.stats)
+    }
+
+    @Test
+    fun aColonInPlainProseIsNotAStat() {
+        val content = "He said: hello and then left.".toHtmlContent()
+
+        assertTrue(content.stats.isEmpty())
+        assertEquals("He said: hello and then left.", content.text)
+    }
+
+    @Test
+    fun aBoldWordWithoutAColonIsNotAStat() {
+        val content = "<strong>Important</strong> note about the character.".toHtmlContent()
+
+        assertTrue(content.stats.isEmpty())
+        assertEquals("Important note about the character.", content.text)
+    }
+
+    @Test
+    fun aBoldWordInsideProseIsNotAStat() {
+        val content = "He is <strong>very</strong> strong.".toHtmlContent()
+
+        assertTrue(content.stats.isEmpty())
+        assertEquals("He is very strong.", content.text)
+    }
+
+    @Test
+    fun aBiographyWithoutStatsKeepsItsText() {
+        val content = "Voice actor and singer.".toHtmlContent()
+
+        assertTrue(content.stats.isEmpty())
+        assertEquals("Voice actor and singer.", content.text)
+    }
+
+    @Test
+    fun aLinkInsideAStatValueStillGoesToLinks() {
+        val content = "<strong>Website:</strong> <a href=\"https://example.com\">example.com</a>".toHtmlContent()
+
+        assertEquals("https://example.com", content.links.single().url)
+        assertTrue(content.stats.isEmpty(), "a value that is only a link leaves nothing to show")
+    }
+
+    @Test
+    fun aStatInsideASpoilerStaysInTheText() {
+        val content = "<span class='markdown_spoiler'><span><strong>Status:</strong> Deceased</span></span>".toHtmlContent()
+
+        assertTrue(content.stats.isEmpty(), "a spoiler stat must not be promoted")
+        // The line stays as prose; the existing cleaning drops the bare "Status:" rótulo.
+        assertEquals("Deceased", content.text)
+    }
+
+    @Test
+    fun aStatWrappedByASpoilerAcrossLinesStaysInTheText() {
+        val content = ("<span class='markdown_spoiler'><span><strong>True Devil Fruit:</strong> Nika<br />\n"
+            + "<strong>Blood type:</strong> AB</span></span>").toHtmlContent()
+
+        assertTrue(content.stats.isEmpty())
+        assertEquals("True Devil Fruit: Nika\nBlood type: AB", content.text)
+    }
+
+    @Test
+    fun severalStatsOnOneLineBecomeSeveralEntries() {
+        val content = "<b>Height:</b> 170 cm <b>Weight:</b> 60 kg".toHtmlContent()
+
+        assertEquals(
+            listOf(BiographyStat("Height", "170 cm"), BiographyStat("Weight", "60 kg")),
+            content.stats,
+        )
         assertEquals("", content.text)
     }
 }

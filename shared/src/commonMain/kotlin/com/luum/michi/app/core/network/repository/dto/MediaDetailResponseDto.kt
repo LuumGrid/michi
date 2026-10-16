@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
  *     volumes duration genres averageScore meanScore popularity favourites
  *     coverImage { ... } bannerImage source season seasonYear
  *     startDate { year month day } endDate { year month day }
- *     studios(isMain: true) { nodes { id name } }
+ *     studios(sort: [NAME]) { edges { isMain node { id name isAnimationStudio } } }
  *     nextAiringEpisode { episode airingAt timeUntilAiring }
  *     countryOfOrigin isAdult
  *   }
@@ -50,7 +50,7 @@ internal data class MediaDetailDto(
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
     val endDate: FuzzyDateDto? = null,
-    val studios: StudioConnectionDto? = null,
+    val studios: MediaStudioConnectionDto? = null,
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,
     val countryOfOrigin: String? = null,
     val isAdult: Boolean? = null,
@@ -63,6 +63,24 @@ internal data class MediaDetailDto(
     val externalLinks: List<MediaExternalLinkDto> = emptyList(),
     val trailer: MediaTrailerDto? = null,
     val synonyms: List<String> = emptyList(),
+)
+
+@Serializable
+internal data class MediaStudioConnectionDto(
+    val edges: List<MediaStudioEdgeDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaStudioEdgeDto(
+    val isMain: Boolean = false,
+    val node: MediaStudioNodeDto? = null,
+)
+
+@Serializable
+internal data class MediaStudioNodeDto(
+    val id: Int,
+    val name: String,
+    val isAnimationStudio: Boolean = false,
 )
 
 @Serializable

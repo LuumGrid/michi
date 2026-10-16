@@ -52,7 +52,7 @@ query MediaDetail(${'$'}id: Int!) {
     seasonYear
     startDate { year month day }
     endDate { year month day }
-    studios { nodes { id name } }
+    studios(sort: [NAME]) { edges { isMain node { id name isAnimationStudio } } }
     nextAiringEpisode { episode airingAt timeUntilAiring }
     countryOfOrigin
     isAdult

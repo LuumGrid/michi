@@ -71,6 +71,7 @@ private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
     duration = null,
     genres = emptyList(),
     studios = emptyList(),
+    producers = emptyList(),
     source = null,
     season = null,
     startedLabel = null,

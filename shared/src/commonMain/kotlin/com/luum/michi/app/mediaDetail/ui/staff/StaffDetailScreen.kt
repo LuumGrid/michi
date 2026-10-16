@@ -23,8 +23,6 @@ import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.network.domain.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
@@ -32,9 +30,9 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 
 /**
- * Staff detail page: person hero + framed occupations chips + description +
- * information panel + staff roles rail + characters rail (own pagination).
- * Reached from a media staff rail via
+ * Staff detail page: person hero (portrait + identity, with the occupations as
+ * chips inside it) + description + information panel + staff roles rail +
+ * characters rail (own pagination). Reached from a media staff rail via
  * [com.luum.michi.app.root.state.State.openStaff].
  */
 @Composable
@@ -99,27 +97,17 @@ private fun StaffDetailContent(
                 image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
+                // The occupations live in the hero column, not in their own row.
+                chips = staffChips(detail),
             )
         }
-        val chips = staffChips(detail)
-        if (chips.isNotEmpty()) {
-            // The occupations are the whole section: one full-bleed chip row
-            // under the hero, no panel and no title.
-            item(key = "occupations") {
-                ChipRail(
-                    tabs = chips.map { ChipTab(value = it, label = it) },
-                    selected = null,
-                    onSelect = {},
-                    interactive = false,
-                )
-            }
-        }
-        if (detail.descriptionPlain.isNotBlank()) {
+        if (detail.descriptionPlain.isNotBlank() || detail.stats.isNotEmpty()) {
             item(key = "description") {
                 MediaDetailExpandableText(
                     title = strings.mediaDetailBiographyTitle,
                     text = detail.descriptionPlain,
                     strings = strings,
+                    stats = detail.stats,
                 )
             }
         }

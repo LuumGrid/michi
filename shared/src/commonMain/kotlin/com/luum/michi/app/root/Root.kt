@@ -1138,6 +1138,11 @@ private fun toolbarActions(
     // The heart swaps to its filled twin when the entry is favourited.
     // Character/staff/studio details have no list entry, so only the heart.
     if (isDetailOpen) {
+        val sort = ToolbarAction(
+            id = ACTION_SORT,
+            icon = AppIcons.Sort,
+            contentDescription = strings.sortAction,
+        )
         // A "View all" list has nothing but its back chevron.
         if (isDetailList) return emptyList()
         val favourite = ToolbarAction(
@@ -1155,11 +1160,7 @@ private fun toolbarActions(
         // link + share).
         if (isStudioDetail) {
             return listOf(
-                ToolbarAction(
-                    id = ACTION_SORT,
-                    icon = AppIcons.Sort,
-                    contentDescription = strings.sortAction,
-                ),
+                sort,
                 favourite,
                 more,
             )

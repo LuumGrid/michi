@@ -112,12 +112,14 @@ internal class StudioDetailStateHolder(
         // user's last selection is per-studio, restored from the cache above).
         sortOption = DEFAULT_SORT_OPTION
         sortOrder = DEFAULT_SORT_ORDER
-        fetchFirstPage(id, clearDetail = true)
+        fetchFirstPage(id, clearDetail = true, clearMedia = true)
     }
 
     fun refresh() {
         val id = currentStudioId ?: return
-        fetchFirstPage(id, clearDetail = false)
+        // Keeps the works on screen while reloading (no flicker); only a new
+        // studio or a new sort clears them.
+        fetchFirstPage(id, clearDetail = false, clearMedia = false)
     }
 
     /**
@@ -130,7 +132,7 @@ internal class StudioDetailStateHolder(
         sortOption = option
         sortOrder = order
         val id = currentStudioId ?: return
-        fetchFirstPage(id, clearDetail = false)
+        fetchFirstPage(id, clearDetail = false, clearMedia = true)
     }
 
     fun loadMore() {
@@ -180,18 +182,25 @@ internal class StudioDetailStateHolder(
         }
     }
 
-    /** Fetches page 1 with the current sort; the single network path of the holder. */
-    private fun fetchFirstPage(id: Int, clearDetail: Boolean) {
+    /**
+     * Fetches page 1 with the current sort; the single network path of the
+     * holder. [clearMedia] empties the loaded works — a new studio or a new sort
+     * invalidates them, while a refresh keeps them on screen until the response
+     * replaces them.
+     */
+    private fun fetchFirstPage(id: Int, clearDetail: Boolean, clearMedia: Boolean) {
         currentJob?.cancel()
         // The new list starts at page 1: an in-flight page (old sort, or another
         // studio) is dropped instead of merging into it or overwriting the page.
         moreJob?.cancel()
         if (clearDetail) detail = null
+        if (clearMedia) {
+            mediaItems = emptyList()
+            hasNextPage = false
+            currentPage = 1
+        }
         error = null
         isLoading = true
-        mediaItems = emptyList()
-        hasNextPage = false
-        currentPage = 1
         isLoadingMore = false
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, apiSort())) {

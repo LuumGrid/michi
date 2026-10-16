@@ -91,15 +91,34 @@ internal fun <T> ChipRail(
                     ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
                 }
             } else {
-                Surface(
-                    shape = GlassShape,
-                    color = color,
-                    border = border,
-                ) {
-                    ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
-                }
+                FlatChip(
+                    label = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
+                )
             }
         }
+    }
+}
+
+/**
+ * Flat, inert chip — the one flat-chip recipe (`surface` + `outlineVariant`, no
+ * glass, no click). `ChipRail`'s `interactive = false` branch and the person
+ * hero's chip `FlowRow` both draw it, so the style never forks. A flat chip
+ * carries only a label: `iconUrl`/`compact` belong to the interactive rail.
+ */
+@Composable
+internal fun FlatChip(label: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = GlassShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
     }
 }
 

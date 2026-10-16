@@ -351,7 +351,8 @@ object EnglishStrings : LanguageStrings {
 
     // Media detail redesign
     override val mediaDetailSeasonLabel = "Season"
-    override val mediaDetailStudioLabel = "Studio"
+    override val mediaDetailStudiosLabel = "Studios"
+    override val mediaDetailProducersLabel = "Producers"
     override val mediaDetailFormatLabel = "Format"
     override val mediaDetailStatusLabel = "Status"
     override val mediaDetailStartDateLabel = "Start date"
@@ -384,9 +385,10 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailOccupationsLabel = "Occupations"
     override val mediaDetailAppearancesTitle = "Appearances"
     override val mediaDetailRolesTitle = "Roles"
-    override val mediaDetailMediaTitle = "Media"
+    override val mediaDetailWorksTitle = "Works"
     override val mediaDetailNoMediaLabel = "No media"
     override val mediaDetailAnimeStudioLabel = "Anime studio"
+    override val mediaDetailProducerLabel = "Producer"
     override val mediaDetailAlternativeNamesLabel = "Other names"
 
     // Entry editor redesign

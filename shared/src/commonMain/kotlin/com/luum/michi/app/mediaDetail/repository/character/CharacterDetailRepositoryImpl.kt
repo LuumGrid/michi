@@ -306,6 +306,7 @@ internal class CharacterDetailRepositoryImpl(
                                 ?.filter { it.isNotBlank() }.orEmpty(),
                             image = character.image?.let { personCoverSizes(it.large, it.medium) },
                             descriptionPlain = bio?.text.orEmpty(),
+                            stats = bio?.stats.orEmpty(),
                             links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                             gender = character.gender?.takeIf { it.isNotBlank() },
                             age = character.age?.takeIf { it.isNotBlank() },

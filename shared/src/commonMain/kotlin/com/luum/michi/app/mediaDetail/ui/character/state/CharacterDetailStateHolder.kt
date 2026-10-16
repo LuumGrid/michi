@@ -39,6 +39,9 @@ internal class CharacterDetailStateHolder(
 
     private var currentCharacterId: Int? = null
     private var currentJob: Job? = null
+    // Page-in-flight job, cancelled when the first page is (re)fetched so a page
+    // from the previous character/language can never append to the new list.
+    private var moreJob: Job? = null
 
     private val detailCache = DetailCache<Int, CharacterDetailSnapshot>(maxSize = 5)
 
@@ -76,47 +79,51 @@ internal class CharacterDetailStateHolder(
         }
 
         currentCharacterId = id
-        currentJob?.cancel()
-        detail = null
-        error = null
-        isLoading = true
-        mediaItems = emptyList()
-        hasNextPage = false
-        currentPage = 1
-        isLoadingMore = false
-
-        currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
-                is NetworkResult.Success -> {
-                    val value = result.value
-                    detail = value
-                    mediaItems = value.media.items
-                    hasNextPage = value.media.hasNextPage
-                    currentPage = value.media.currentPage
-                    isFavourite = value.isFavourite
-                    detailCache.put(
-                        id,
-                        CharacterDetailSnapshot(
-                            detail = value,
-                            mediaItems = mediaItems,
-                            hasNextPage = hasNextPage,
-                            currentPage = currentPage,
-                            voiceLanguage = voiceLanguage,
-                        ),
-                    )
-                }
-                is NetworkResult.Failure -> error = result.error
-            }
-            isLoading = false
-        }
+        fetchFirstPage(id, clearDetail = true, clearMedia = true)
     }
 
     fun refresh() {
         val id = currentCharacterId ?: return
         // Invalidate cached entry so the page is re-fetched from network.
         detailCache.remove(id)
+        // Keeps the detail and the list on screen while reloading (no flicker);
+        // only a new character clears them.
+        fetchFirstPage(id, clearDetail = false, clearMedia = false)
+    }
+
+    fun loadMore() {
+        if (isLoadingMore || !hasNextPage) return
+        val id = currentCharacterId ?: return
+        val nextPage = currentPage + 1
+        moreJob = scope.launch {
+            isLoadingMore = true
+            when (val result = repository.loadMediaPage(id, nextPage, voiceLanguage)) {
+                is NetworkResult.Success -> {
+                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
+                    hasNextPage = result.value.hasNextPage
+                    currentPage = result.value.currentPage
+                    detail?.let { cacheSnapshot(id, it) }
+                }
+                is NetworkResult.Failure -> error = result.error
+            }
+            isLoadingMore = false
+        }
+    }
+
+    /** Fetches page 1; the single network path of the holder. */
+    private fun fetchFirstPage(id: Int, clearDetail: Boolean, clearMedia: Boolean) {
         currentJob?.cancel()
+        // A page from the previous character/language must never append.
+        moreJob?.cancel()
+        if (clearDetail) detail = null
+        if (clearMedia) {
+            mediaItems = emptyList()
+            hasNextPage = false
+            currentPage = 1
+        }
+        error = null
         isLoading = true
+        isLoadingMore = false
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
                 is NetworkResult.Success -> {
@@ -126,16 +133,7 @@ internal class CharacterDetailStateHolder(
                     hasNextPage = value.media.hasNextPage
                     currentPage = value.media.currentPage
                     isFavourite = value.isFavourite
-                    detailCache.put(
-                        id,
-                        CharacterDetailSnapshot(
-                            detail = value,
-                            mediaItems = mediaItems,
-                            hasNextPage = hasNextPage,
-                            currentPage = currentPage,
-                            voiceLanguage = voiceLanguage,
-                        ),
-                    )
+                    cacheSnapshot(id, value)
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -143,34 +141,17 @@ internal class CharacterDetailStateHolder(
         }
     }
 
-    fun loadMore() {
-        if (isLoadingMore || !hasNextPage) return
-        val id = currentCharacterId ?: return
-        val nextPage = currentPage + 1
-        scope.launch {
-            isLoadingMore = true
-            when (val result = repository.loadMediaPage(id, nextPage, voiceLanguage)) {
-                is NetworkResult.Success -> {
-                    mediaItems = mediaItems + result.value.items
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
-                    detail?.let { d ->
-                        detailCache.put(
-                            id,
-                            CharacterDetailSnapshot(
-                                detail = d,
-                                mediaItems = mediaItems,
-                                hasNextPage = hasNextPage,
-                                currentPage = currentPage,
-                                    voiceLanguage = voiceLanguage,
-                            ),
-                        )
-                    }
-                }
-                is NetworkResult.Failure -> error = result.error
-            }
-            isLoadingMore = false
-        }
+    private fun cacheSnapshot(id: Int, detail: CharacterDetail) {
+        detailCache.put(
+            id,
+            CharacterDetailSnapshot(
+                detail = detail,
+                mediaItems = mediaItems,
+                hasNextPage = hasNextPage,
+                currentPage = currentPage,
+                voiceLanguage = voiceLanguage,
+            ),
+        )
     }
 
     /** Voice-actor language change: drop the cache and re-fetch with the new cast. */

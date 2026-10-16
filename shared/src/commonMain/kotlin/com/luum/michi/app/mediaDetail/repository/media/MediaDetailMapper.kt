@@ -7,6 +7,7 @@ import com.luum.michi.app.core.network.repository.dto.MediaDetailDto
 import com.luum.michi.app.core.network.repository.dto.MediaRelationEdgeDto
 import com.luum.michi.app.core.network.repository.dto.MediaStaffConnectionDto
 import com.luum.michi.app.core.network.repository.dto.MediaStaffEdgeDto
+import com.luum.michi.app.core.network.repository.dto.MediaStudioConnectionDto
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.model.toTitleCase
@@ -35,73 +36,103 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.core.network.repository.toCoverSizes
 
-internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail = MediaDetail(
-    id = id,
-    type = parseType(type),
-    title = title.bestTitle(),
-    cover = coverImage?.toCoverSizes(),
-    bannerUrl = bannerImage,
-    paletteHex = coverImage?.color,
-    format = format?.toTitleCase(),
-    status = status?.toTitleCase(),
-    episodes = episodes?.takeIf { it > 0 },
-    chapters = chapters?.takeIf { it > 0 },
-    volumes = volumes?.takeIf { it > 0 },
-    duration = duration?.takeIf { it > 0 },
-    genres = genres,
-    studios = studios?.nodes?.map { StudioRef(it.id, it.name) }?.distinctBy { it.id }.orEmpty(),
-    source = source?.toTitleCase(),
-    season = formatSeason(season, seasonYear, strings),
-    startedLabel = startDate?.format(strings),
-    endedLabel = endDate?.format(strings),
-    averageScore = averageScore?.takeIf { it > 0 },
-    meanScore = meanScore?.takeIf { it > 0 },
-    popularity = popularity?.takeIf { it > 0 },
-    favourites = favourites?.takeIf { it > 0 },
-    descriptionPlain = description?.stripHtml().orEmpty(),
-    isAdult = isAdult ?: false,
-    isFavourite = isFavourite ?: false,
-    nextEpisode = nextAiringEpisode?.let {
-        MediaNextEpisode(
-            episode = it.episode,
-            airingAtEpochSeconds = it.airingAt,
-            timeUntilAiringSeconds = it.timeUntilAiring,
-        )
-    },
-    viewerEntry = mediaListEntry?.toViewerEntry(),
-    relations = relations?.edges
-        ?.mapNotNull { it.toRelation() }
-        .orEmpty()
-        .distinctBy { it.mediaId },
-    characters = characters.toCharactersPage(currentPage = 1),
-    staff = staff.toStaffPage(currentPage = 1),
-    titleRomaji = title?.romaji,
-    titleNative = title?.native,
-    synonyms = synonyms,
-    tags = tags.mapNotNull { dto ->
-        dto.name?.takeIf { it.isNotBlank() }?.let { name ->
-            MediaTag(name = name, rank = dto.rank, isMediaSpoiler = dto.isMediaSpoiler)
-        }
-    },
-    externalLinks = externalLinks.mapNotNull { dto ->
-        if (dto.isDisabled == true) return@mapNotNull null
-        dto.url?.takeIf { it.isNotBlank() }?.let { url ->
-            dto.site?.takeIf { it.isNotBlank() }?.let { site ->
-                ExternalLink(
-                    site = site,
-                    url = url,
-                    type = dto.type,
-                    iconUrl = dto.icon,
-                    colorHex = dto.color,
-                    language = dto.language,
-                )
+internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
+    val studioEdges = studios.toStudioEdges()
+    return MediaDetail(
+        id = id,
+        type = parseType(type),
+        title = title.bestTitle(),
+        cover = coverImage?.toCoverSizes(),
+        bannerUrl = bannerImage,
+        paletteHex = coverImage?.color,
+        format = format?.toTitleCase(),
+        status = status?.toTitleCase(),
+        episodes = episodes?.takeIf { it > 0 },
+        chapters = chapters?.takeIf { it > 0 },
+        volumes = volumes?.takeIf { it > 0 },
+        duration = duration?.takeIf { it > 0 },
+        genres = genres,
+        studios = studioEdges.animationStudios(),
+        producers = studioEdges.producers(),
+        source = source?.toTitleCase(),
+        season = formatSeason(season, seasonYear, strings),
+        startedLabel = startDate?.format(strings),
+        endedLabel = endDate?.format(strings),
+        averageScore = averageScore?.takeIf { it > 0 },
+        meanScore = meanScore?.takeIf { it > 0 },
+        popularity = popularity?.takeIf { it > 0 },
+        favourites = favourites?.takeIf { it > 0 },
+        descriptionPlain = description?.stripHtml().orEmpty(),
+        isAdult = isAdult ?: false,
+        isFavourite = isFavourite ?: false,
+        nextEpisode = nextAiringEpisode?.let {
+            MediaNextEpisode(
+                episode = it.episode,
+                airingAtEpochSeconds = it.airingAt,
+                timeUntilAiringSeconds = it.timeUntilAiring,
+            )
+        },
+        viewerEntry = mediaListEntry?.toViewerEntry(),
+        relations = relations?.edges
+            ?.mapNotNull { it.toRelation() }
+            .orEmpty()
+            .distinctBy { it.mediaId },
+        characters = characters.toCharactersPage(currentPage = 1),
+        staff = staff.toStaffPage(currentPage = 1),
+        titleRomaji = title?.romaji,
+        titleNative = title?.native,
+        synonyms = synonyms,
+        tags = tags.mapNotNull { dto ->
+            dto.name?.takeIf { it.isNotBlank() }?.let { name ->
+                MediaTag(name = name, rank = dto.rank, isMediaSpoiler = dto.isMediaSpoiler)
             }
-        }
-    },
-    trailer = trailer?.let {
-        MediaTrailer(videoId = it.id.orEmpty(), site = it.site, thumbnailUrl = it.thumbnail)
-    }?.takeIf { it.videoId.isNotBlank() },
+        },
+        externalLinks = externalLinks.mapNotNull { dto ->
+            if (dto.isDisabled == true) return@mapNotNull null
+            dto.url?.takeIf { it.isNotBlank() }?.let { url ->
+                dto.site?.takeIf { it.isNotBlank() }?.let { site ->
+                    ExternalLink(
+                        site = site,
+                        url = url,
+                        type = dto.type,
+                        iconUrl = dto.icon,
+                        colorHex = dto.color,
+                        language = dto.language,
+                    )
+                }
+            }
+        },
+        trailer = trailer?.let {
+            MediaTrailer(videoId = it.id.orEmpty(), site = it.site, thumbnailUrl = it.thumbnail)
+        }?.takeIf { it.videoId.isNotBlank() },
+    )
+}
+
+/**
+ * One studio edge of the media's `studios` connection, flattened: AniList sends
+ * a single list mixing animation studios and producers, with the main one
+ * flagged per edge. Deduped by id (the same node can repeat).
+ */
+private data class StudioEdge(
+    val ref: StudioRef,
+    val isMain: Boolean,
+    val isAnimationStudio: Boolean,
 )
+
+private fun MediaStudioConnectionDto?.toStudioEdges(): List<StudioEdge> =
+    this?.edges.orEmpty()
+        .mapNotNull { edge ->
+            edge.node?.let { StudioEdge(StudioRef(it.id, it.name), edge.isMain, it.isAnimationStudio) }
+        }
+        .distinctBy { it.ref.id }
+
+/** Animation studios, the main one first (the server's NAME order stays inside each group). */
+private fun List<StudioEdge>.animationStudios(): List<StudioRef> =
+    filter { it.isAnimationStudio }.sortedByDescending { it.isMain }.map { it.ref }
+
+/** The rest: production companies that are not animation studios. */
+private fun List<StudioEdge>.producers(): List<StudioRef> =
+    filterNot { it.isAnimationStudio }.map { it.ref }
 
 internal fun MediaCharacterConnectionDto?.toCharactersPage(currentPage: Int): MediaCharactersPage {
     val edges = this?.edges.orEmpty()

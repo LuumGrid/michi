@@ -14,7 +14,7 @@ internal fun matchCatalogSite(catalog: List<ExternalLink>, url: String): Externa
     val host = canonicalHost(url) ?: return null
     return catalog
         .mapNotNull { candidate ->
-            val candidateHost = canonicalHost(candidate.url) ?: return@mapNotNull null
+            val candidateHost = canonicalHost(candidate.url.withScheme()) ?: return@mapNotNull null
             if (host == candidateHost || host.endsWith(".$candidateHost")) {
                 candidate to candidateHost.length
             } else {
@@ -24,6 +24,12 @@ internal fun matchCatalogSite(catalog: List<ExternalLink>, url: String): Externa
         .maxByOrNull { it.second }
         ?.first
 }
+
+/**
+ * AniList's catalog mixes full URLs (`https://x.com`) with bare hosts
+ * (`instagram.com`), which [canonicalHost] would drop; give the latter a scheme.
+ */
+private fun String.withScheme(): String = if (contains("://")) this else "https://$this"
 
 /** Lowercased host without common subdomain prefixes or known-alias spellings. */
 private fun canonicalHost(url: String): String? {

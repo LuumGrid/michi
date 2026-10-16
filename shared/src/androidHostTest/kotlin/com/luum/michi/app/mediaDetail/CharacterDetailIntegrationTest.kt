@@ -44,6 +44,7 @@ private fun characterDetail(
     alternativeNames = emptyList(),
     image = null,
     descriptionPlain = "",
+    stats = emptyList(),
     links = emptyList(),
     gender = null,
     age = null,

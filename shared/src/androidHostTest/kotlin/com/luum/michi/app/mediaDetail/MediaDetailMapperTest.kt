@@ -28,6 +28,15 @@ import kotlin.test.assertTrue
  * Canned AniList `Media` JSON (the shape returned by the real `MediaDetail`
  * query) driven through the real repository + mapper.
  */
+private fun studioEdge(id: Int, name: String, isMain: Boolean, isAnimation: Boolean) = buildJsonObject {
+    put("isMain", isMain)
+    put("node", buildJsonObject {
+        put("id", id)
+        put("name", name)
+        put("isAnimationStudio", isAnimation)
+    })
+}
+
 private fun mediaDetailPageJson() = buildJsonObject {
     put("Media", buildJsonObject {
         put("id", 42)
@@ -96,20 +105,17 @@ private fun mediaDetailPageJson() = buildJsonObject {
         // AniList can return the same studio twice (main + sub on the same
         // node); the mapper must collapse it or the studio chips rail
         // crashes on the duplicate LazyRow key.
+        // AniList sends ONE list mixing animation studios and producers, with
+        // the main one flagged per edge (NAME order from the server). The mapper
+        // splits it: animation studios first with the main one leading, then the
+        // producers; the repeated node collapses.
         put("studios", buildJsonObject {
-            put("nodes", JsonArray(listOf(
-                buildJsonObject {
-                    put("id", 7)
-                    put("name", "Studio Pierrot")
-                },
-                buildJsonObject {
-                    put("id", 7)
-                    put("name", "Studio Pierrot")
-                },
-                buildJsonObject {
-                    put("id", 8)
-                    put("name", "Bones")
-                },
+            put("edges", JsonArray(listOf(
+                studioEdge(id = 8, name = "Bones", isMain = false, isAnimation = true),
+                studioEdge(id = 7, name = "Studio Pierrot", isMain = true, isAnimation = true),
+                studioEdge(id = 7, name = "Studio Pierrot", isMain = true, isAnimation = true),
+                studioEdge(id = 9, name = "Aniplex", isMain = true, isAnimation = false),
+                studioEdge(id = 10, name = "Madhouse", isMain = false, isAnimation = false),
             )))
         })
         put("relations", buildJsonObject {
@@ -217,7 +223,18 @@ class MediaDetailMapperTest {
         val detail = loadDetail()
 
         assertEquals(2, detail.studios.size)
+        assertEquals(listOf(7, 8), detail.studios.map { it.id })
+    }
+
+    @Test
+    fun splitsAnimationStudiosFromProducersWithTheMainOneFirst() = runBlocking {
+        val detail = loadDetail()
+
+        // Animation studios, the main one (Studio Pierrot) ahead of the rest even
+        // though the server sent them in NAME order (Bones first).
         assertEquals(listOf("Studio Pierrot", "Bones"), detail.studios.map { it.name })
+        // The rest are producers (isAnimationStudio == false).
+        assertEquals(listOf("Aniplex", "Madhouse"), detail.producers.map { it.name })
     }
 
     @Test

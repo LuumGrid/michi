@@ -50,6 +50,7 @@ private fun sampleDetail(
     duration = null,
     genres = emptyList(),
     studios = emptyList(),
+    producers = emptyList(),
     source = null,
     season = null,
     startedLabel = null,

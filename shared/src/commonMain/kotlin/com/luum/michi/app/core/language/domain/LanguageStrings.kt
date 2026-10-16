@@ -331,7 +331,8 @@ interface LanguageStrings {
 
     // Media detail redesign
     val mediaDetailSeasonLabel: String
-    val mediaDetailStudioLabel: String
+    val mediaDetailStudiosLabel: String
+    val mediaDetailProducersLabel: String
     val mediaDetailFormatLabel: String
     val mediaDetailStatusLabel: String
     val mediaDetailStartDateLabel: String
@@ -364,9 +365,10 @@ interface LanguageStrings {
     val mediaDetailOccupationsLabel: String
     val mediaDetailAppearancesTitle: String
     val mediaDetailRolesTitle: String
-    val mediaDetailMediaTitle: String
+    val mediaDetailWorksTitle: String
     val mediaDetailNoMediaLabel: String
     val mediaDetailAnimeStudioLabel: String
+    val mediaDetailProducerLabel: String
     /** Character/staff alternate names (media keeps [mediaDetailSynonymsLabel]). */
     val mediaDetailAlternativeNamesLabel: String
 
