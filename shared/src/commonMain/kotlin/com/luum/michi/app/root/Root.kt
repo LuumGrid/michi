@@ -52,6 +52,9 @@ import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
+import com.luum.michi.app.mediaDetail.domain.genre.GenreDetailRepository
+import com.luum.michi.app.mediaDetail.domain.genre.model.genreAniListUrl
+import com.luum.michi.app.mediaDetail.domain.genre.model.genreShareText
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
@@ -73,8 +76,10 @@ import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
-import com.luum.michi.app.mediaDetail.ui.studio.state.StudioSortOptions
+import com.luum.michi.app.mediaDetail.ui.components.DetailGridSortOptions
 import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
+import com.luum.michi.app.mediaDetail.ui.genre.GenreDetailScreen
+import com.luum.michi.app.mediaDetail.ui.genre.state.createGenreDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.ShareLauncher
@@ -188,6 +193,7 @@ internal fun Root(
     characterDetailRepository: CharacterDetailRepository,
     staffDetailRepository: StaffDetailRepository,
     studioDetailRepository: StudioDetailRepository,
+    genreDetailRepository: GenreDetailRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
     dashboardFeedCache: DashboardFeedCache,
@@ -394,12 +400,25 @@ internal fun Root(
     val studioHolder = remember(studioDetailRepository, listScope) {
         createStudioDetailStateHolder(studioDetailRepository, listScope, viewerId ?: 0)
     }
+    val genreHolder = remember(genreDetailRepository, listScope) {
+        createGenreDetailStateHolder(
+            genreDetailRepository,
+            listScope,
+            !settingsState.displayAdultContent,
+        )
+    }
+    // 18+ gate: flipping it re-queries the open genre page (a no-op while no
+    // genre is loaded), so the setting applies without leaving the page.
+    LaunchedEffect(settingsState.displayAdultContent) {
+        genreHolder.setHideAdult(!settingsState.displayAdultContent)
+    }
     LaunchedEffect(state.currentDetail) {
         when (val destination = state.currentDetail) {
             is DetailDestination.Media -> mediaDetailHolder.load(destination.id)
             is DetailDestination.Character -> characterHolder.load(destination.id)
             is DetailDestination.Staff -> staffHolder.load(destination.id)
             is DetailDestination.Studio -> studioHolder.load(destination.id)
+            is DetailDestination.Genre -> genreHolder.load(destination.name, destination.type)
             // The list renders the parent's holder. Re-bind that holder to
             // [parentId] because an item opened from the list may have swapped
             // it for another media/character/staff; `load` is a no-op when the
@@ -493,6 +512,7 @@ internal fun Root(
         is DetailDestination.Character -> characterHolder.isFavourite
         is DetailDestination.Staff -> staffHolder.isFavourite
         is DetailDestination.Studio -> studioHolder.isFavourite
+        is DetailDestination.Genre -> false
         is DetailDestination.DetailList -> false
         null -> false
     }
@@ -511,6 +531,14 @@ internal fun Root(
         is DetailDestination.Studio -> studioHolder.detail?.let {
             DetailOverflow(it.name, it.studioAniListUrl(), it.studioShareText())
         }
+        // A genre is not an entity: the closest canonical page is the catalog
+        // search filtered by genre, so it is ready before anything hydrates. The
+        // URL follows the catalog chip the user has selected.
+        is DetailDestination.Genre -> DetailOverflow(
+            destination.name,
+            genreAniListUrl(destination.name, genreHolder.type),
+            genreShareText(destination.name, genreHolder.type),
+        )
         is DetailDestination.DetailList -> null
         null -> null
     }
@@ -534,7 +562,7 @@ internal fun Root(
             ) {
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
-                title = detailListTitle(state.currentDetail, strings)
+                title = detailToolbarTitle(state.currentDetail, strings)
                     ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
                 navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
                     ToolbarNavigation.Back(strings.backButton)
@@ -549,6 +577,7 @@ internal fun Root(
                     isDetailOpen = state.isDetailOpen,
                     isMediaDetail = state.currentDetail is DetailDestination.Media,
                     isStudioDetail = state.currentDetail is DetailDestination.Studio,
+                    isGenreDetail = state.currentDetail is DetailDestination.Genre,
                     isDetailList = state.currentDetail is DetailDestination.DetailList,
                     isDetailFavourite = isDetailFavourite,
                     isGuest = viewerId == null,
@@ -567,12 +596,13 @@ internal fun Root(
                         // list tab. ACTION_SORT also belongs to the studio
                         // detail page while it is open.
                         ACTION_FILTER -> state.openSectionFilter()
-                        ACTION_SORT ->
-                            if (state.currentDetail is DetailDestination.Studio) {
-                                state.openDetailSort()
-                            } else {
-                                state.openListSort()
-                            }
+                        ACTION_SORT -> when (state.currentDetail) {
+                            // The studio and genre grids are ordered by the
+                            // server, so the sheet targets their holder.
+                            is DetailDestination.Studio,
+                            is DetailDestination.Genre -> state.openDetailSort()
+                            else -> state.openListSort()
+                        }
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
@@ -581,6 +611,7 @@ internal fun Root(
                             is DetailDestination.Character -> characterHolder.toggleFavourite()
                             is DetailDestination.Staff -> staffHolder.toggleFavourite()
                             is DetailDestination.Studio -> studioHolder.toggleFavourite()
+                            is DetailDestination.Genre -> {}
                             is DetailDestination.DetailList -> {}
                             null -> {}
                         }
@@ -689,6 +720,7 @@ internal fun Root(
                                     onOpenCharacter = { state.openCharacter(it) },
                                     onOpenStaff = { state.openStaff(it) },
                                     onOpenStudio = { state.openStudio(it) },
+                                    onOpenGenre = { name, type -> state.openGenre(name, type) },
                                     onOpenUrl = { urlOpener.open(it) },
                                     onViewAll = { state.openDetailList(it, destination.id) },
                                 )
@@ -733,6 +765,19 @@ internal fun Root(
                                             studioHolder.load(destination.id)
                                         } else {
                                             studioHolder.refresh()
+                                        }
+                                    },
+                                    onOpenMedia = { state.openMedia(it) },
+                                )
+                                is DetailDestination.Genre -> GenreDetailScreen(
+                                    holder = genreHolder,
+                                    strings = strings,
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onRetry = {
+                                        if (genreHolder.pageLoaded) {
+                                            genreHolder.refresh()
+                                        } else {
+                                            genreHolder.load(destination.name, destination.type)
                                         }
                                     },
                                     onOpenMedia = { state.openMedia(it) },
@@ -990,11 +1035,22 @@ internal fun Root(
                 // Shared sort sheet over the studio holder: picking a row
                 // re-queries the grid from page 1 (server order).
                 SortSheet(
-                    options = StudioSortOptions,
+                    options = DetailGridSortOptions,
                     selected = studioHolder.sortOption,
                     onSelect = { studioHolder.changeSort(it, studioHolder.sortOrder) },
                     order = studioHolder.sortOrder,
                     onSelectOrder = { studioHolder.changeSort(studioHolder.sortOption, it) },
+                    onDismiss = { state.closeDetailSort() },
+                )
+            }
+            if (state.isDetailOpen && state.isDetailSortOpen && state.currentDetail is DetailDestination.Genre) {
+                // Same sheet over the genre holder (server order).
+                SortSheet(
+                    options = DetailGridSortOptions,
+                    selected = genreHolder.sortOption,
+                    onSelect = { genreHolder.changeSort(it, genreHolder.sortOrder) },
+                    order = genreHolder.sortOrder,
+                    onSelectOrder = { genreHolder.changeSort(genreHolder.sortOption, it) },
                     onDismiss = { state.closeDetailSort() },
                 )
             }
@@ -1128,6 +1184,7 @@ private fun toolbarActions(
     isDetailOpen: Boolean,
     isMediaDetail: Boolean,
     isStudioDetail: Boolean,
+    isGenreDetail: Boolean,
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
@@ -1155,9 +1212,15 @@ private fun toolbarActions(
             icon = AppIcons.More,
             contentDescription = strings.moreAction,
         )
-        // Media adds the editor pencil, studio its media sort; the other
-        // scopes have no list entry. All four open the overflow (AniList
-        // link + share).
+        // Media adds the editor pencil, studio and genre their media sort; the
+        // other scopes have no list entry. All open the overflow (AniList link +
+        // share). A genre has no entity to favourite, so it skips the heart.
+        if (isGenreDetail) {
+            return listOf(
+                sort,
+                more,
+            )
+        }
         if (isStudioDetail) {
             return listOf(
                 sort,
@@ -1269,20 +1332,24 @@ private fun toolbarTitle(
     tab.label(strings)
 }
 
-/** Toolbar title for a "View all" list; null for every other destination
- *  (detail pages keep the title in the hero, tabs in [toolbarTitle]). */
-private fun detailListTitle(destination: DetailDestination?, strings: LanguageStrings): String? {
-    val list = destination as? DetailDestination.DetailList ?: return null
-    return when (list.kind) {
-        DetailListKind.MEDIA_CHARACTERS -> strings.mediaDetailCharactersTitle
-        DetailListKind.MEDIA_STAFF -> strings.mediaDetailTabStaff
-        DetailListKind.MEDIA_RELATED -> strings.mediaDetailRelationsTitle
-        DetailListKind.MEDIA_RECOMMENDATIONS -> strings.mediaDetailTabRecommendations
-        DetailListKind.CHARACTER_MEDIA -> strings.mediaDetailAppearancesTitle
-        DetailListKind.STAFF_MEDIA -> strings.mediaDetailRolesTitle
-        DetailListKind.STAFF_CHARACTERS -> strings.mediaDetailCharactersTitle
+/** Toolbar title for a destination that carries its name in the bar instead of
+ *  the content: a "View all" list and a genre page (both are lists). Null for
+ *  every other destination — media/character/staff/studio keep their title in
+ *  the hero, and tabs use [toolbarTitle]. */
+private fun detailToolbarTitle(destination: DetailDestination?, strings: LanguageStrings): String? =
+    when (destination) {
+        is DetailDestination.DetailList -> when (destination.kind) {
+            DetailListKind.MEDIA_CHARACTERS -> strings.mediaDetailCharactersTitle
+            DetailListKind.MEDIA_STAFF -> strings.mediaDetailTabStaff
+            DetailListKind.MEDIA_RELATED -> strings.mediaDetailRelationsTitle
+            DetailListKind.MEDIA_RECOMMENDATIONS -> strings.mediaDetailTabRecommendations
+            DetailListKind.CHARACTER_MEDIA -> strings.mediaDetailAppearancesTitle
+            DetailListKind.STAFF_MEDIA -> strings.mediaDetailRolesTitle
+            DetailListKind.STAFF_CHARACTERS -> strings.mediaDetailCharactersTitle
+        }
+        is DetailDestination.Genre -> destination.name
+        else -> null
     }
-}
 
 /** Which saved surface the content area shows: the slot's tab + the view. */
 private fun surfaceKey(tab: TabSection, state: State): String = when {

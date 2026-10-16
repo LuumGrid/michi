@@ -5,8 +5,8 @@ import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 private fun studioMediaItem(
     id: Int,
     format: String? = "TV",
-) = StudioMediaItem(
+) = MediaGridItem(
     mediaId = id,
     title = "Media $id",
     cover = null,
@@ -35,7 +35,7 @@ private fun studioMediaItem(
 
 private fun studioDetail(
     id: Int,
-    media: StudioMediaPage = StudioMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media: MediaGridPage = MediaGridPage(emptyList(), hasNextPage = false, currentPage = 1),
     isFavourite: Boolean = false,
 ) = StudioDetail(
     id = id,
@@ -51,7 +51,7 @@ private fun studioDetail(
  * the last sort key, to prove cache hits and that a sort change re-queries.
  */
 private class RecordingStudioRepository(
-    private val mediaPages: Map<Int, StudioMediaPage> = emptyMap(),
+    private val mediaPages: Map<Int, MediaGridPage> = emptyMap(),
 ) : StudioDetailRepository {
     var detailCalls = 0
         private set
@@ -67,7 +67,7 @@ private class RecordingStudioRepository(
         return NetworkResult.Success(
             studioDetail(
                 id = id,
-                media = mediaPages[1] ?: StudioMediaPage(emptyList(), false, 1),
+                media = mediaPages[1] ?: MediaGridPage(emptyList(), false, 1),
                 isFavourite = favourite,
             ),
         )
@@ -77,10 +77,10 @@ private class RecordingStudioRepository(
         id: Int,
         page: Int,
         sort: String,
-    ): NetworkResult<StudioMediaPage> {
+    ): NetworkResult<MediaGridPage> {
         mediaCalls++
         lastSort = sort
-        return NetworkResult.Success(mediaPages[page] ?: StudioMediaPage(emptyList(), false, page))
+        return NetworkResult.Success(mediaPages[page] ?: MediaGridPage(emptyList(), false, page))
     }
 
     override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
@@ -100,7 +100,7 @@ class StudioDetailIntegrationTest {
     @Test
     fun loadHydratesDetailAndMediaByReleaseDate() {
         val repository = RecordingStudioRepository(
-            mediaPages = mapOf(1 to StudioMediaPage(listOf(studioMediaItem(7)), false, 1)),
+            mediaPages = mapOf(1 to MediaGridPage(listOf(studioMediaItem(7)), false, 1)),
         )
         val holder = holderWired(repository)
 
@@ -137,8 +137,8 @@ class StudioDetailIntegrationTest {
     fun loadMoreAppendsNextPage() {
         val repository = RecordingStudioRepository(
             mediaPages = mapOf(
-                1 to StudioMediaPage(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
-                2 to StudioMediaPage(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
+                1 to MediaGridPage(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to MediaGridPage(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
@@ -157,8 +157,8 @@ class StudioDetailIntegrationTest {
     fun changeSortRequeriesFromPageOneWithTheServerSort() {
         val repository = RecordingStudioRepository(
             mediaPages = mapOf(
-                1 to StudioMediaPage(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
-                2 to StudioMediaPage(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
+                1 to MediaGridPage(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to MediaGridPage(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
@@ -180,7 +180,7 @@ class StudioDetailIntegrationTest {
     @Test
     fun changeSortOrderDerivesTheAscendingApiKey() {
         val repository = RecordingStudioRepository(
-            mediaPages = mapOf(1 to StudioMediaPage(listOf(studioMediaItem(1)), false, 1)),
+            mediaPages = mapOf(1 to MediaGridPage(listOf(studioMediaItem(1)), false, 1)),
         )
         val holder = holderWired(repository)
         holder.load(1)
@@ -241,6 +241,28 @@ class StudioDetailIntegrationTest {
 
         assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the stale page never appends")
         assertEquals(2, holder.detail?.id)
+    }
+
+    @Test
+    fun aPageInFlightIsDroppedWhenAStudioComesFromTheCache() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1) // caches studio 1
+        holder.load(2) // caches studio 2
+        assertEquals(2, holder.detail?.id)
+
+        holder.loadMore() // page 2 of studio 2, held at the gate
+        holder.load(1) // studio 1 comes from the cache
+
+        repository.gate.complete(Unit) // the stale page lands after the restore
+
+        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the stale page never appends")
+        assertEquals(1, holder.detail?.id)
+        assertFalse(holder.isLoadingMore, "the footer must not keep spinning")
     }
 
     @Test
@@ -307,7 +329,7 @@ private class GatedPageStudioRepository(
     override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
         val items = pageItems[sort]?.get(1).orEmpty().map { studioMediaItem(it) }
         return NetworkResult.Success(
-            studioDetail(id = id, media = StudioMediaPage(items, hasNextPage = true, currentPage = 1)),
+            studioDetail(id = id, media = MediaGridPage(items, hasNextPage = true, currentPage = 1)),
         )
     }
 
@@ -315,10 +337,10 @@ private class GatedPageStudioRepository(
         id: Int,
         page: Int,
         sort: String,
-    ): NetworkResult<StudioMediaPage> {
+    ): NetworkResult<MediaGridPage> {
         gate.await()
         val items = pageItems[sort]?.get(page).orEmpty().map { studioMediaItem(it) }
-        return NetworkResult.Success(StudioMediaPage(items, hasNextPage = false, currentPage = page))
+        return NetworkResult.Success(MediaGridPage(items, hasNextPage = false, currentPage = page))
     }
 
     override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
@@ -354,7 +376,7 @@ private class GatedDetailStudioRepository : StudioDetailRepository {
         return NetworkResult.Success(
             studioDetail(
                 id = id,
-                media = StudioMediaPage(
+                media = MediaGridPage(
                     items = pageOne.map { studioMediaItem(it) },
                     hasNextPage = false,
                     currentPage = 1,
@@ -367,8 +389,8 @@ private class GatedDetailStudioRepository : StudioDetailRepository {
         id: Int,
         page: Int,
         sort: String,
-    ): NetworkResult<StudioMediaPage> =
-        NetworkResult.Success(StudioMediaPage(emptyList(), hasNextPage = false, currentPage = page))
+    ): NetworkResult<MediaGridPage> =
+        NetworkResult.Success(MediaGridPage(emptyList(), hasNextPage = false, currentPage = page))
 
     override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
 }

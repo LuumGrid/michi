@@ -4,6 +4,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaWorkStatus
@@ -11,6 +12,17 @@ import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.ExternalLink
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
+
+/**
+ * The catalog this entry belongs to, or null when AniList did not say
+ * ([MediaDetailType.UNKNOWN]). A genre page needs a real catalog, so an unknown
+ * type leaves its genre chips inert instead of guessing.
+ */
+internal fun MediaDetailType.toMediaType(): MediaType? = when (this) {
+    MediaDetailType.ANIME -> MediaType.ANIME
+    MediaDetailType.MANGA -> MediaType.MANGA
+    MediaDetailType.UNKNOWN -> null
+}
 
 internal data class StudioRef(val id: Int, val name: String)
 

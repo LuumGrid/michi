@@ -13,6 +13,7 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
 /**
@@ -168,6 +169,7 @@ internal class State(
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
+    fun openGenre(name: String, type: MediaType) = push(DetailDestination.Genre(name, type))
     fun openDetailList(kind: DetailListKind, parentId: Int) =
         push(DetailDestination.DetailList(kind, parentId))
     fun closeDetail() {

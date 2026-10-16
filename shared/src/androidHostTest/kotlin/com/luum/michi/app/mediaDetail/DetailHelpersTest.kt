@@ -9,8 +9,8 @@ import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
 import kotlin.test.Test
@@ -66,7 +66,7 @@ private fun studioDetail(id: Int, name: String) = StudioDetail(
     isAnimeStudio = true,
     favourites = null,
     isFavourite = false,
-    media = StudioMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media = MediaGridPage(emptyList(), hasNextPage = false, currentPage = 1),
 )
 
 class DetailHelpersTest {

@@ -29,8 +29,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
+import com.luum.michi.app.mediaDetail.domain.media.model.toMediaType
 
 
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
@@ -128,10 +130,16 @@ private fun StudioChipGroup(
     )
 }
 
-/** Genres as flat, display-only pills, edge-to-edge under their header. */
+/** Genres as interactive chips (a tap opens the genre page); flat when the
+ *  catalog is unknown, since a genre page needs a real one. */
 @Composable
-internal fun MediaDetailGenres(detail: MediaDetail, strings: LanguageStrings) {
+internal fun MediaDetailGenres(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    onOpenGenre: (String, MediaType) -> Unit,
+) {
     if (detail.genres.isEmpty()) return
+    val mediaType = detail.type.toMediaType()
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(
             title = strings.mediaDetailGenresTitle,
@@ -140,8 +148,9 @@ internal fun MediaDetailGenres(detail: MediaDetail, strings: LanguageStrings) {
         ChipRail(
             tabs = detail.genres.map { ChipTab(value = it, label = it) },
             selected = null,
-            onSelect = {},
-            interactive = false,
+            onSelect = { genre -> mediaType?.let { onOpenGenre(genre, it) } },
+            // Glass like the studio chips; UNKNOWN leaves them inert.
+            interactive = mediaType != null,
         )
     }
 }

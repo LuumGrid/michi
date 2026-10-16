@@ -11,8 +11,8 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaPage
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -149,7 +149,7 @@ private data class ToggleStudioFavouriteResponseDto(
 
 // ────────────── mapper helpers ──────────────
 
-private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
+private fun StudioMediaNodeDto.toItem(): MediaGridItem = MediaGridItem(
     mediaId = id,
     title = title?.bestTitle() ?: "",
     cover = coverImage?.toCoverSizes(),
@@ -162,9 +162,9 @@ private fun StudioMediaNodeDto.toItem(): StudioMediaItem = StudioMediaItem(
     genres = genres.filter { it.isNotBlank() },
 )
 
-private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): StudioMediaPage {
+private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): MediaGridPage {
     val nodes = this?.nodes.orEmpty()
-    return StudioMediaPage(
+    return MediaGridPage(
         items = nodes.map { it.toItem() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
@@ -225,7 +225,7 @@ internal class StudioDetailRepositoryImpl(
         id: Int,
         page: Int,
         sort: String,
-    ): NetworkResult<StudioMediaPage> {
+    ): NetworkResult<MediaGridPage> {
         val request = AniListGraphQLRequest(
             query = StudioMediaPageQuery,
             variables = JsonObject(

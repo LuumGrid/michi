@@ -42,6 +42,8 @@ import com.luum.michi.app.mediaDetail.repository.staff.StaffDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.repository.studio.StudioDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
+import com.luum.michi.app.mediaDetail.repository.genre.GenreDetailRepositoryImpl
+import com.luum.michi.app.mediaDetail.domain.genre.GenreDetailRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,6 +124,9 @@ class MichiDependencies internal constructor(
 
     internal val studioDetailRepository: StudioDetailRepository =
         StudioDetailRepositoryImpl(graphQLClient)
+
+    internal val genreDetailRepository: GenreDetailRepository =
+        GenreDetailRepositoryImpl(graphQLClient)
 
     internal val characterDetailRepository: CharacterDetailRepository =
         CharacterDetailRepositoryImpl(graphQLClient, externalLinkCatalogRepository)

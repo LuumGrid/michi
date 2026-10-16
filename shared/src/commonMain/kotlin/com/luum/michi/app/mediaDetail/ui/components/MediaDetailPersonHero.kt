@@ -94,6 +94,23 @@ internal fun MediaDetailPersonHero(
     }
 }
 
+/**
+ * The detail-page title: the person heroes' name (headline, bold, wrapping to
+ * three lines). Private to this file — the genre page's name lives in the
+ * toolbar, so the hero is its only caller.
+ */
+@Composable
+private fun MediaDetailPageTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
+}
+
 @Composable
 private fun PersonPortrait(image: CoverSizes?) {
     Surface(
@@ -127,13 +144,7 @@ private fun HeroIdentity(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.Start) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-        )
+        MediaDetailPageTitle(name)
         nativeName?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(4.dp))
             Text(

@@ -8,7 +8,7 @@ import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioMediaItem
+import com.luum.michi.app.mediaDetail.domain.model.MediaGridItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,24 +19,11 @@ import kotlinx.coroutines.launch
 /** Snapshot stored in the LRU cache for fast back-navigation. */
 private data class StudioDetailSnapshot(
     val detail: StudioDetail,
-    val mediaItems: List<StudioMediaItem>,
+    val mediaItems: List<MediaGridItem>,
     val hasNextPage: Boolean,
     val currentPage: Int,
     val sortOption: UserListSort,
     val sortOrder: UserListOrder,
-)
-
-/**
- * Sorts the studio sheet offers. Each one maps to a valid AniList `MediaSort`
- * through `UserListSort.toMediaSort`; the grid is ordered by the server, so the
- * other criteria of the shared sheet would not change anything here.
- */
-internal val StudioSortOptions = listOf(
-    UserListSort.POPULARITY,
-    UserListSort.AVERAGE_SCORE,
-    UserListSort.FAVORITES,
-    UserListSort.RELEASE_DATE,
-    UserListSort.TITLE,
 )
 
 internal class StudioDetailStateHolder(
@@ -61,7 +48,7 @@ internal class StudioDetailStateHolder(
 
     private val detailCache = DetailCache<Int, StudioDetailSnapshot>(maxSize = 5)
 
-    var mediaItems: List<StudioMediaItem> by mutableStateOf(emptyList())
+    var mediaItems: List<MediaGridItem> by mutableStateOf(emptyList())
         private set
     var hasNextPage: Boolean by mutableStateOf(false)
         private set
@@ -95,6 +82,10 @@ internal class StudioDetailStateHolder(
         if (cached != null) {
             currentStudioId = id
             currentJob?.cancel()
+            // A page in flight belongs to what was on screen; never let it
+            // append to the snapshot we are restoring, and drop its spinner (a
+            // cancelled coroutine never reaches its own `isLoadingMore = false`).
+            moreJob?.cancel()
             detail = cached.detail
             mediaItems = cached.mediaItems
             hasNextPage = cached.hasNextPage
@@ -104,6 +95,7 @@ internal class StudioDetailStateHolder(
             isFavourite = cached.detail.isFavourite
             error = null
             isLoading = false
+            isLoadingMore = false
             return
         }
 

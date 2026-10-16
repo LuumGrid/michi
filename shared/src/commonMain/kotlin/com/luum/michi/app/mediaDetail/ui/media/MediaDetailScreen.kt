@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
@@ -53,6 +54,7 @@ internal fun MediaDetailScreen(
     onOpenCharacter: (Int) -> Unit,
     onOpenStaff: (Int) -> Unit,
     onOpenStudio: (Int) -> Unit,
+    onOpenGenre: (String, MediaType) -> Unit,
     onOpenUrl: (String) -> Unit,
     onViewAll: (DetailListKind) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -78,6 +80,7 @@ internal fun MediaDetailScreen(
                 onOpenCharacter = onOpenCharacter,
                 onOpenStaff = onOpenStaff,
                 onOpenStudio = onOpenStudio,
+                onOpenGenre = onOpenGenre,
                 onOpenUrl = onOpenUrl,
                 onViewAll = onViewAll,
             )
@@ -95,6 +98,7 @@ private fun MediaDetailContent(
     onOpenCharacter: (Int) -> Unit,
     onOpenStaff: (Int) -> Unit,
     onOpenStudio: (Int) -> Unit,
+    onOpenGenre: (String, MediaType) -> Unit,
     onOpenUrl: (String) -> Unit,
     onViewAll: (DetailListKind) -> Unit,
     modifier: Modifier = Modifier,
@@ -142,7 +146,9 @@ private fun MediaDetailContent(
             )
         }
         if (detail.genres.isNotEmpty()) {
-            item(key = "genres") { MediaDetailGenres(detail = detail, strings = strings) }
+            item(key = "genres") {
+                MediaDetailGenres(detail = detail, strings = strings, onOpenGenre = onOpenGenre)
+            }
         }
         if (detail.characters.items.isNotEmpty()) {
             item(key = "characters") {

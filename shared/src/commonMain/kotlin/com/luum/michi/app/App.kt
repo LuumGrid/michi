@@ -58,7 +58,6 @@ import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.Theme
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
-import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
 
 /**
@@ -241,6 +240,7 @@ fun App(
                             characterDetailRepository = dependencies.characterDetailRepository,
                             staffDetailRepository = dependencies.staffDetailRepository,
                             studioDetailRepository = dependencies.studioDetailRepository,
+                            genreDetailRepository = dependencies.genreDetailRepository,
                             calendarRepository = dependencies.calendarRepository,
                             dashboardRepository = dependencies.dashboardRepository,
                             dashboardFeedCache = dependencies.dashboardFeedCache,
