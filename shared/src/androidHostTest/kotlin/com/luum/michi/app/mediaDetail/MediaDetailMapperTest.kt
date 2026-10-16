@@ -8,6 +8,7 @@ import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
 import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.core.model.isOfficialSite
 import com.luum.michi.app.core.model.siteLabel
@@ -23,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -217,6 +219,15 @@ class MediaDetailMapperTest {
         assertEquals("youtube", trailer?.site)
         assertEquals("https://i.ytimg.com/vi/abc123/hqdefault.jpg", trailer?.thumbnailUrl)
         assertEquals("https://youtu.be/abc123", trailer?.videoUrl())
+    }
+
+    @Test
+    fun buildsDailymotionUrlAndIgnoresUnknownSites() {
+        assertEquals(
+            "https://www.dailymotion.com/video/x9abc",
+            MediaTrailer(videoId = "x9abc", site = "dailymotion", thumbnailUrl = null).videoUrl(),
+        )
+        assertNull(MediaTrailer(videoId = "abc", site = "vimeo", thumbnailUrl = null).videoUrl())
     }
 
     @Test

@@ -11,6 +11,9 @@ internal interface MediaDetailRepository {
         strings: LanguageStrings,
     ): NetworkResult<MediaDetail>
 
+    /** Minimal query for the entry editor (no characters/staff/relations/links). */
+    suspend fun loadEditorData(mediaId: Int): NetworkResult<MediaEntryEditorData>
+
     suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,

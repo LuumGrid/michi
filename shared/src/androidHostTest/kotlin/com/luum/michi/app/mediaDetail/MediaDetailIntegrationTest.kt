@@ -14,6 +14,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
@@ -139,6 +140,19 @@ private class RecordingDetailRepository(
             ),
         )
     }
+
+    override suspend fun loadEditorData(mediaId: Int): NetworkResult<MediaEntryEditorData> =
+        NetworkResult.Success(
+            MediaEntryEditorData(
+                title = "Media $mediaId",
+                type = MediaDetailType.ANIME,
+                episodes = null,
+                chapters = null,
+                volumes = null,
+                isFavourite = false,
+                viewerEntry = viewerEntry,
+            ),
+        )
 
     override suspend fun loadCharactersPage(
         mediaId: Int,

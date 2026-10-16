@@ -17,6 +17,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import kotlinx.serialization.Serializable
@@ -92,6 +93,21 @@ query MediaDetail(${'$'}id: Int!) {
         node { id name { full native userPreferred } image { large medium } }
       }
     }
+  }
+}
+"""
+
+private const val MediaEntryEditorQuery = """
+query MediaEntryEditor(${'$'}id: Int!) {
+  Media(id: ${'$'}id) {
+    id
+    type
+    title { romaji english native userPreferred }
+    episodes
+    chapters
+    volumes
+    isFavourite
+    mediaListEntry { id status progress progressVolumes score advancedScores notes repeat priority private hiddenFromStatusLists startedAt { year month day } completedAt { year month day } }
   }
 }
 """
@@ -244,6 +260,23 @@ internal class MediaDetailRepositoryImpl(
             .map { it.media }
             .requireNode("Media", mediaId)
             .map { it.toDomain(strings) }
+    }
+
+    override suspend fun loadEditorData(mediaId: Int): NetworkResult<MediaEntryEditorData> {
+        val request = AniListGraphQLRequest(
+            query = MediaEntryEditorQuery,
+            variables = JsonObject(
+                mapOf("id" to JsonPrimitive(mediaId)),
+            ),
+            operationName = "MediaEntryEditor",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(MediaDetailResponseDto.serializer(), dataJson)
+        }
+            .map { it.media }
+            .requireNode("Media", mediaId)
+            .map { it.toEditorData() }
     }
 
     override suspend fun loadCharactersPage(

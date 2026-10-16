@@ -4,10 +4,9 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.todayCalendarMillis
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +18,6 @@ internal class MediaEntryEditorState(
     private val entryRepository: MediaListEntryRepository,
     private val detailRepository: MediaDetailRepository,
     private val scope: CoroutineScope,
-    private val stringsProvider: () -> LanguageStrings,
     val mediaId: Int,
     private val initialStatusOverride: MediaListStatus? = null,
     private val initialProgressOverride: Int? = null,
@@ -34,7 +32,7 @@ internal class MediaEntryEditorState(
     // deterministic in tests; same UTC-midnight millis the date pickers speak.
     private val todayMillis: () -> Long = { todayCalendarMillis() },
 ) {
-    var detail: MediaDetail? by mutableStateOf(null)
+    var data: MediaEntryEditorData? by mutableStateOf(null)
         private set
     var isLoadingDetail by mutableStateOf(true)
         private set
@@ -80,14 +78,14 @@ internal class MediaEntryEditorState(
     /** Save/delete share one guard: neither can run while the other is in flight. */
     val isBusy: Boolean get() = isSaving || isDeleting
 
-    val isManga: Boolean get() = detail?.type == MediaDetailType.MANGA
+    val isManga: Boolean get() = data?.type == MediaDetailType.MANGA
     val advancedScoringNames: List<String>
         get() = if (isManga) advancedScoringMangaNames else advancedScoringAnimeNames
     val showAdvancedScoring: Boolean
         get() = advancedScoringEnabled && advancedScoringNames.isNotEmpty()
-    val maxProgress: Int? get() = detail?.let { if (it.type == MediaDetailType.MANGA) it.chapters else it.episodes }
-    val maxProgressVolumes: Int? get() = detail?.volumes
-    val isExisting: Boolean get() = detail?.viewerEntry != null
+    val maxProgress: Int? get() = data?.let { if (it.type == MediaDetailType.MANGA) it.chapters else it.episodes }
+    val maxProgressVolumes: Int? get() = data?.volumes
+    val isExisting: Boolean get() = data?.viewerEntry != null
 
     /** Editable fields as loaded (or as defaults for a new entry): the dirty-tracking baseline. */
     private var baseline: EditorSnapshot? by mutableStateOf(null)
@@ -99,7 +97,7 @@ internal class MediaEntryEditorState(
      * Save gate: an existing entry needs a real edit; a new entry (the user
      * pressed "add to list") can always be saved as-is, e.g. straight to Planning.
      */
-    val isDirty: Boolean get() = detail != null && (!isExisting || hasChanges)
+    val isDirty: Boolean get() = data != null && (!isExisting || hasChanges)
 
     /**
      * Explicit load (no auto-load in init): Root calls this from a
@@ -109,9 +107,9 @@ internal class MediaEntryEditorState(
         isLoadingDetail = true
         loadError = null
         scope.launch {
-            when (val result = detailRepository.loadDetail(mediaId, strings = stringsProvider())) {
+            when (val result = detailRepository.loadEditorData(mediaId)) {
                 is NetworkResult.Success -> {
-                    detail = result.value
+                    data = result.value
                     isFavourite = result.value.isFavourite
                     val existing = result.value.viewerEntry
                     if (existing != null) {
@@ -232,7 +230,7 @@ internal class MediaEntryEditorState(
     )
 
     fun toggleFavourite() {
-        if (isTogglingFavourite || isLoadingDetail || detail == null) return
+        if (isTogglingFavourite || isLoadingDetail || data == null) return
         val previous = isFavourite
         val target = !previous
         isFavourite = target
@@ -250,7 +248,7 @@ internal class MediaEntryEditorState(
     }
 
     fun save(onSaved: () -> Unit) {
-        if (isBusy || detail == null) return
+        if (isBusy || data == null) return
         isSaving = true
         error = null
         scope.launch {
@@ -282,8 +280,8 @@ internal class MediaEntryEditorState(
     }
 
     fun delete(onDeleted: () -> Unit) {
-        if (isBusy || detail == null) return
-        val entryId = detail?.viewerEntry?.id
+        if (isBusy || data == null) return
+        val entryId = data?.viewerEntry?.id
         if (entryId == null || entryId == 0) return
         isDeleting = true
         error = null
@@ -319,7 +317,6 @@ internal fun createMediaEntryEditorState(
     entryRepository: MediaListEntryRepository,
     detailRepository: MediaDetailRepository,
     scope: CoroutineScope,
-    stringsProvider: () -> LanguageStrings,
     initialStatusOverride: MediaListStatus? = null,
     initialProgressOverride: Int? = null,
     advancedScoringEnabled: Boolean = false,
@@ -333,7 +330,6 @@ internal fun createMediaEntryEditorState(
         entryRepository = entryRepository,
         detailRepository = detailRepository,
         scope = scope,
-        stringsProvider = stringsProvider,
         mediaId = mediaId,
         initialStatusOverride = initialStatusOverride,
         initialProgressOverride = initialProgressOverride,

@@ -22,8 +22,6 @@ internal data class MediaListCollectionDto(
 
 @Serializable
 internal data class MediaListGroupDto(
-    val name: String? = null,
-    val status: String? = null,
     val isCustomList: Boolean = false,
     val entries: List<MediaListEntryDto> = emptyList(),
 )
@@ -35,14 +33,10 @@ internal data class MediaListEntryDto(
     val score: Double = 0.0,
     val progress: Int = 0,
     val progressVolumes: Int? = null,
-    val notes: String? = null,
     val updatedAt: Long? = null,
     val startedAt: FuzzyDateDto? = null,
     val completedAt: FuzzyDateDto? = null,
     val priority: Int? = null,
-    @SerialName("private")
-    val isPrivate: Boolean = false,
-    val hiddenFromStatusLists: Boolean = false,
     val media: MediaDto,
 )
 

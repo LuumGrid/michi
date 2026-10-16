@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * PagedList owns the page-in-flight job and the append/dedup rules; the holders
@@ -85,6 +86,78 @@ class PagedListTest {
             assertEquals(NetworkError.NoConnection, error)
             assertFalse(list.isLoadingMore)
             assertEquals(listOf(1), list.items)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun loadMoreOnANotStartedListDoesNothing() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val list = PagedList<Int>()
+            var fetched = false
+
+            list.loadMore(
+                scope = scope,
+                isCurrent = { true },
+                fetch = {
+                    fetched = true
+                    NetworkResult.Success(Page(listOf(1), hasNextPage = false, currentPage = 1))
+                },
+            )
+            dispatcher.runAll()
+
+            assertFalse(fetched, "an unseeded list must not fetch page 1 from loadMore")
+            assertEquals(emptyList(), list.items)
+            assertFalse(list.isLoadingMore)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun loadFirstLoadsPageOne() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val list = PagedList<Int>()
+
+            list.loadFirst(
+                scope = scope,
+                isCurrent = { true },
+                fetch = { NetworkResult.Success(Page(listOf(1, 2), hasNextPage = true, currentPage = 1)) },
+            )
+            dispatcher.runAll()
+
+            assertEquals(listOf(1, 2), list.items)
+            assertTrue(list.hasNextPage)
+            assertEquals(1, list.currentPage)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun theSpinnerClearsEvenWhenTheResultIsNotApplied() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val list = PagedList<Int>()
+            list.set(Page(listOf(1), hasNextPage = true, currentPage = 1))
+
+            // A holder that swapped entity without cancel/clear: isCurrent() is
+            // already false, but the spinner must still come down.
+            list.loadMore(
+                scope = scope,
+                isCurrent = { false },
+                fetch = { NetworkResult.Success(Page(listOf(2), hasNextPage = false, currentPage = 2)) },
+            )
+            dispatcher.runAll()
+
+            assertEquals(listOf(1), list.items, "the result is not applied")
+            assertFalse(list.isLoadingMore, "the spinner is not left stuck")
         } finally {
             scope.cancel()
         }

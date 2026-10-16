@@ -230,7 +230,13 @@ internal class MediaDetailStateHolder(
     /** Ensures the recommendations first page is loaded (no-op once it has items). */
     fun loadRecommendations() {
         if (recommendations.items.isNotEmpty()) return
-        loadMoreRecommendations()
+        val id = currentMediaId ?: return
+        recommendations.loadFirst(
+            scope = scope,
+            isCurrent = { currentMediaId == id },
+            fetch = { repository.loadRecommendations(id) },
+            onError = { actionError = it },
+        )
     }
 
     fun loadMoreRecommendations() {

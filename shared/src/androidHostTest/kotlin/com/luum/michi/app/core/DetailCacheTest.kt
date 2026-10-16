@@ -40,6 +40,21 @@ class DetailCacheTest {
     }
 
     @Test
+    fun getRefreshesRecencySoAFrequentlyReadEntrySurvives() {
+        val cache = DetailCache<Int, String>(maxSize = 3)
+        cache.put(1, "a")
+        cache.put(2, "b")
+        cache.put(3, "c")
+        assertEquals("a", cache.get(1), "the read touches a")
+        cache.put(4, "d")
+
+        assertEquals("a", cache.get(1), "the recently read entry survives")
+        assertNull(cache.get(2), "the least recently used one is evicted")
+        assertEquals("c", cache.get(3))
+        assertEquals("d", cache.get(4))
+    }
+
+    @Test
     fun removeDropsTheEntry() {
         val cache = DetailCache<Int, String>(maxSize = 2)
         cache.put(1, "a")

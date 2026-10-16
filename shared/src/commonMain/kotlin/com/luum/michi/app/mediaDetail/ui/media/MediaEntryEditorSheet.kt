@@ -91,7 +91,7 @@ internal fun MediaEntryEditorSheet(
             if (id == ACTION_FAVOURITE) editor.toggleFavourite()
         },
         footer = {
-            if (!editor.isLoadingDetail && editor.detail != null) {
+            if (!editor.isLoadingDetail && editor.data != null) {
                 SheetActionBar {
                     if (editor.isExisting) {
                         Box(modifier = Modifier.weight(1f)) {
@@ -233,7 +233,7 @@ private fun EditorBody(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = editor.detail?.title.orEmpty(),
+            text = editor.data?.title.orEmpty(),
             style = MaterialTheme.typography.headlineSmall,
         )
         Spacer(modifier = Modifier.height(16.dp))

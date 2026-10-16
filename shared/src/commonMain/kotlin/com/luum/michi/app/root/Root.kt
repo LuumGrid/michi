@@ -1100,7 +1100,6 @@ internal fun Root(
                         entryRepository = mediaListEntryRepository,
                         detailRepository = mediaDetailRepository,
                         scope = listScope,
-                        stringsProvider = { currentStrings },
                         initialStatusOverride = state.editorInitialStatus,
                         initialProgressOverride = state.editorInitialProgress,
                         advancedScoringEnabled = settingsState.advancedScoring,

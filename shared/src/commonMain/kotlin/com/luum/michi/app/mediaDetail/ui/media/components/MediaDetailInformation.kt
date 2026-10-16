@@ -70,7 +70,8 @@ internal fun MediaDetailInformationPanel(
         detail.season?.let { add(MediaDetailInfoEntry(strings.mediaDetailSeasonLabel, it)) }
         detail.startedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailStartDateLabel, it)) }
         detail.endedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailEndedLabel, it)) }
-        detail.source?.let { add(MediaDetailInfoEntry(strings.mediaDetailSourceLabel, humanizeSource(it))) }
+        // Already `toTitleCase()`-d by the mapper ("LIGHT_NOVEL" -> "Light Novel").
+        detail.source?.let { add(MediaDetailInfoEntry(strings.mediaDetailSourceLabel, it)) }
     }
     val wideEntries = buildList {
         detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailRomajiLabel, it)) }
@@ -182,7 +183,9 @@ internal fun MediaDetailVideos(
     onOpenUrl: (String) -> Unit,
 ) {
     val trailer = detail.trailer ?: return
-    val url = trailer.videoUrl()
+    // An unresolvable trailer (unknown site) has nothing to open: skip the card
+    // instead of painting an inert one.
+    val url = trailer.videoUrl() ?: return
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(
             title = strings.mediaDetailVideosTitle,
@@ -195,7 +198,7 @@ internal fun MediaDetailVideos(
                 .aspectRatio(16f / 9f)
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .then(if (url != null) Modifier.clickable { onOpenUrl(url) } else Modifier),
+                .clickable { onOpenUrl(url) },
         ) {
             if (!trailer.thumbnailUrl.isNullOrBlank()) {
                 SubcomposeAsyncImage(
@@ -225,7 +228,3 @@ internal fun MediaDetailVideos(
         }
     }
 }
-
-/** "LIGHT_NOVEL" → "Light Novel", "ORIGINAL" → "Original". */
-private fun humanizeSource(raw: String): String =
-    raw.split('_').joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }

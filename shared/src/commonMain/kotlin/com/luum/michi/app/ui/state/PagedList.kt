@@ -7,6 +7,7 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -16,12 +17,12 @@ import kotlinx.coroutines.launch
  * state and the page-in-flight job, so a holder only writes the network call.
  *
  * [merge] folds a freshly fetched page into the loaded items (dedup lives here);
- * it is applied to the first page too. A page is only applied while [loadMore]'s
+ * it is applied to the first page too. A page is only applied while the request's
  * `isCurrent()` still holds, so a page from the previous entity/sort never lands.
  *
- * [loadMore] from a list that has not started yet requests page 1 (the
- * recommendations first visit); once a page has been set/loaded it requests
- * `currentPage + 1` and stops when there is no next page.
+ * [set] seeds the first page (the holders that get it inside the detail
+ * response); [loadFirst] replaces it from its own call (recommendations);
+ * [loadMore] appends `currentPage + 1` and stops until [set]/[loadFirst] started.
  */
 internal class PagedList<T>(
     private val merge: (List<T>, List<T>) -> List<T> = { a, b -> a + b },
@@ -68,22 +69,22 @@ internal class PagedList<T>(
         isLoadingMore = false
     }
 
-    fun loadMore(
+    /**
+     * Loads page 1 and replaces the list. Only the recommendations list uses it;
+     * the other holders seed their first page from the detail response via [set].
+     */
+    fun loadFirst(
         scope: CoroutineScope,
         isCurrent: () -> Boolean,
-        fetch: suspend (page: Int) -> NetworkResult<Page<T>>,
+        fetch: suspend () -> NetworkResult<Page<T>>,
         onLoaded: () -> Unit = {},
         onError: (NetworkError) -> Unit = {},
     ) {
         if (isLoadingMore) return
-        if (started && !hasNextPage) return
-        val nextPage = if (started) currentPage + 1 else 1
-        isLoadingMore = true
-        job?.cancel()
-        job = scope.launch {
-            when (val result = fetch(nextPage)) {
+        request(scope) {
+            when (val result = fetch()) {
                 is NetworkResult.Success -> if (isCurrent()) {
-                    items = merge(items, result.value.items)
+                    items = merge(emptyList(), result.value.items)
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     started = true
@@ -91,7 +92,46 @@ internal class PagedList<T>(
                 }
                 is NetworkResult.Failure -> if (isCurrent()) onError(result.error)
             }
-            if (isCurrent()) isLoadingMore = false
         }
+    }
+
+    fun loadMore(
+        scope: CoroutineScope,
+        isCurrent: () -> Boolean,
+        fetch: suspend (page: Int) -> NetworkResult<Page<T>>,
+        onLoaded: () -> Unit = {},
+        onError: (NetworkError) -> Unit = {},
+    ) {
+        if (isLoadingMore || !started || !hasNextPage) return
+        val nextPage = currentPage + 1
+        request(scope) {
+            when (val result = fetch(nextPage)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    items = merge(items, result.value.items)
+                    hasNextPage = result.value.hasNextPage
+                    currentPage = result.value.currentPage
+                    onLoaded()
+                }
+                is NetworkResult.Failure -> if (isCurrent()) onError(result.error)
+            }
+        }
+    }
+
+    /**
+     * Runs a request and owns the spinner. Only the request the list still tracks
+     * clears [isLoadingMore] — a holder that swapped entity without a
+     * cancel/clear must not leave it stuck. Launched LAZY and then started so the
+     * job is stored before the body runs: the identity check is always valid even
+     * on an eagerly-dispatched scope.
+     */
+    private fun request(scope: CoroutineScope, block: suspend () -> Unit) {
+        isLoadingMore = true
+        job?.cancel()
+        val request = scope.launch(start = CoroutineStart.LAZY) {
+            block()
+            if (job === coroutineContext[Job]) isLoadingMore = false
+        }
+        job = request
+        request.start()
     }
 }

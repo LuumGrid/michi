@@ -21,6 +21,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
@@ -216,6 +217,17 @@ private fun MediaViewerListEntryDto.toViewerEntry(): MediaListViewerEntry = Medi
     hiddenFromStatusLists = hiddenFromStatusLists ?: false,
     startedAtMillis = startedAt?.toMillisOrNull(),
     completedAtMillis = completedAt?.toMillisOrNull(),
+)
+
+/** The subset the entry editor needs, from its minimal query. */
+internal fun MediaDetailDto.toEditorData(): MediaEntryEditorData = MediaEntryEditorData(
+    title = title.bestTitle(),
+    type = parseType(type),
+    episodes = episodes?.takeIf { it > 0 },
+    chapters = chapters?.takeIf { it > 0 },
+    volumes = volumes?.takeIf { it > 0 },
+    isFavourite = isFavourite ?: false,
+    viewerEntry = mediaListEntry?.toViewerEntry(),
 )
 
 private fun parseType(raw: String?): MediaDetailType = when (raw) {

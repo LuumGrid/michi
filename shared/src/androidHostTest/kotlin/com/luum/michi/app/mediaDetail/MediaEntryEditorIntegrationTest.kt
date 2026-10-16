@@ -9,12 +9,12 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
-import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
@@ -34,12 +34,15 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private class StubDetailRepository(
-    private val detail: MediaDetail,
+    private val editorData: MediaEntryEditorData,
 ) : MediaDetailRepository {
     override suspend fun loadDetail(
         mediaId: Int,
         strings: LanguageStrings,
-    ): NetworkResult<MediaDetail> = NetworkResult.Success(detail)
+    ): NetworkResult<MediaDetail> = NetworkResult.Failure(NetworkError.Http(500, null))
+
+    override suspend fun loadEditorData(mediaId: Int): NetworkResult<MediaEntryEditorData> =
+        NetworkResult.Success(editorData)
 
     override suspend fun loadCharactersPage(
         mediaId: Int,
@@ -60,43 +63,14 @@ private class StubDetailRepository(
         NetworkResult.Failure(NetworkError.Http(500, null))
 }
 
-private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
-    id = 101,
-    type = MediaDetailType.ANIME,
+private fun editorData(viewerEntry: MediaListViewerEntry?) = MediaEntryEditorData(
     title = "Editor Anime",
-    cover = null,
-    bannerUrl = null,
-    paletteHex = null,
-    format = "TV",
-    status = MediaWorkStatus.RELEASING,
+    type = MediaDetailType.ANIME,
     episodes = 12,
     chapters = null,
     volumes = null,
-    duration = null,
-    genres = emptyList(),
-    studios = emptyList(),
-    producers = emptyList(),
-    source = null,
-    season = null,
-    startedLabel = null,
-    endedLabel = null,
-    averageScore = null,
-    meanScore = null,
-    popularity = null,
-    favourites = null,
-    descriptionPlain = "",
-    isAdult = false,
     isFavourite = false,
     viewerEntry = viewerEntry,
-    relations = emptyList(),
-    characters = Page(emptyList(), hasNextPage = false, currentPage = 1),
-    staff = Page(emptyList(), hasNextPage = false, currentPage = 1),
-    titleRomaji = null,
-    titleNative = null,
-    synonyms = emptyList(),
-    tags = emptyList(),
-    externalLinks = emptyList(),
-    trailer = null,
 )
 
 private fun existingEntry() = MediaListViewerEntry(
@@ -126,9 +100,8 @@ private fun editorWired(
     todayMillis: () -> Long = { TODAY },
 ): MediaEntryEditorState = MediaEntryEditorState(
     entryRepository = MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL)),
-    detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
+    detailRepository = StubDetailRepository(editorData(viewerEntry)),
     scope = CoroutineScope(Dispatchers.Unconfined),
-    stringsProvider = { EnglishStrings },
     mediaId = mediaId,
     advancedScoringEnabled = advancedScoringEnabled,
     advancedScoringAnimeNames = advancedScoringAnimeNames,
@@ -491,5 +464,36 @@ class MediaEntryEditorIntegrationTest {
         val variables = graphQL.requests.single().variables
         assertEquals("12", variables?.get("progress")?.toString())
         assertTrue(variables?.get("completedAt") != null, "stamped completion date is sent")
+    }
+
+    @Test
+    fun loadEditorDataMapsTheMinimalFields(): Unit = runBlocking {
+        val page = buildJsonObject {
+            put("Media", buildJsonObject {
+                put("id", 1)
+                put("type", "MANGA")
+                put("title", buildJsonObject { put("romaji", "Editor Romaji") })
+                put("episodes", 0)
+                put("chapters", 30)
+                put("volumes", 5)
+                put("isFavourite", true)
+                put("mediaListEntry", buildJsonObject {
+                    put("id", 7)
+                    put("status", "CURRENT")
+                })
+            })
+        }
+        val repository = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
+
+        val result = repository.loadEditorData(1)
+
+        assertIs<NetworkResult.Success<MediaEntryEditorData>>(result)
+        assertEquals("Editor Romaji", result.value.title)
+        assertEquals(MediaDetailType.MANGA, result.value.type)
+        assertNull(result.value.episodes, "0 episodes maps to null (no progress cap)")
+        assertEquals(30, result.value.chapters)
+        assertEquals(5, result.value.volumes)
+        assertTrue(result.value.isFavourite)
+        assertNotNull(result.value.viewerEntry)
     }
 }
