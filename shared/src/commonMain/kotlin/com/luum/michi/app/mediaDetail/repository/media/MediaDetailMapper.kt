@@ -8,11 +8,11 @@ import com.luum.michi.app.core.model.toTitleCase
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.core.model.ExternalLink
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaNextEpisode
@@ -24,7 +24,6 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.core.network.repository.toCoverSizes
 
@@ -126,18 +125,18 @@ private fun List<StudioEdge>.animationStudios(): List<StudioRef> =
 private fun List<StudioEdge>.producers(): List<StudioRef> =
     filterNot { it.isAnimationStudio }.map { it.ref }
 
-internal fun MediaCharacterConnectionDto?.toCharactersPage(currentPage: Int): MediaCharactersPage {
+internal fun MediaCharacterConnectionDto?.toCharactersPage(currentPage: Int): Page<MediaCharacterEntry> {
     val edges = this?.edges.orEmpty()
-    return MediaCharactersPage(
+    return Page(
         items = edges.mapIndexedNotNull { index, edge -> edge.toEntry(currentPage, index) },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: currentPage,
     )
 }
 
-internal fun MediaStaffConnectionDto?.toStaffPage(currentPage: Int): MediaStaffPage {
+internal fun MediaStaffConnectionDto?.toStaffPage(currentPage: Int): Page<MediaStaffEntry> {
     val edges = this?.edges.orEmpty()
-    return MediaStaffPage(
+    return Page(
         items = edges.mapIndexedNotNull { index, edge -> edge.toEntry(currentPage, index) },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: currentPage,

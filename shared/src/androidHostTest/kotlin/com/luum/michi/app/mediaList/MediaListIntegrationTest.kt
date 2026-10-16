@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaList
 
+import com.luum.michi.app.DeferredDispatcher
 import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
@@ -27,10 +28,8 @@ import com.luum.michi.app.root.hydrateSort
 import com.luum.michi.app.root.resolveInitialSort
 import com.luum.michi.app.settings.domain.model.ListSort
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlin.coroutines.CoroutineContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
@@ -168,23 +167,6 @@ private class GatedEntryRepository(
         NetworkResult.Success(Unit)
 
     override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
-}
-
-/**
- * FIFO dispatcher that only runs when [runAll] is called: lets a test order two
- * `launch`ed saves deterministically (a coalesced first save) without pulling in
- * `kotlinx-coroutines-test`.
- */
-private class DeferredDispatcher : CoroutineDispatcher() {
-    private val tasks = ArrayDeque<Runnable>()
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        tasks.addLast(block)
-    }
-
-    fun runAll() {
-        while (tasks.isNotEmpty()) tasks.removeFirst().run()
-    }
 }
 
 class MediaListIntegrationTest {

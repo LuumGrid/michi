@@ -14,11 +14,11 @@ import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -249,7 +249,7 @@ internal class MediaDetailRepositoryImpl(
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaCharactersPage> {
+    ): NetworkResult<Page<MediaCharacterEntry>> {
         val request = AniListGraphQLRequest(
             query = MediaCharactersPageQuery,
             variables = JsonObject(
@@ -272,7 +272,7 @@ internal class MediaDetailRepositoryImpl(
     override suspend fun loadStaffPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaStaffPage> {
+    ): NetworkResult<Page<MediaStaffEntry>> {
         val request = AniListGraphQLRequest(
             query = MediaStaffPageQuery,
             variables = JsonObject(
@@ -295,7 +295,7 @@ internal class MediaDetailRepositoryImpl(
     override suspend fun loadRecommendations(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaRecommendationsPage> {
+    ): NetworkResult<Page<MediaRecommendationEntry>> {
         val request = AniListGraphQLRequest(
             query = MediaRecommendationsPageQuery,
             variables = JsonObject(
@@ -334,7 +334,7 @@ internal class MediaDetailRepositoryImpl(
                     )
                 }.orEmpty().distinctBy { it.id }
                 NetworkResult.Success(
-                    MediaRecommendationsPage(
+                    Page(
                         items = items,
                         hasNextPage = connection?.pageInfo?.hasNextPage == true,
                         currentPage = connection?.pageInfo?.currentPage ?: page,

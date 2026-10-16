@@ -164,10 +164,10 @@ private fun CharacterDetailContent(
         }
         // Kept visible while the character has media, so the language picker
         // stays reachable even when the chosen language has no cast.
-        if (holder.mediaItems.isNotEmpty()) {
+        if (holder.media.items.isNotEmpty()) {
             item(key = "voice-actors") {
                 VoiceActorsSection(
-                    voiceActors = holder.mediaItems.distinctVoiceActors(),
+                    voiceActors = holder.media.items.distinctVoiceActors(),
                     strings = strings,
                     language = holder.voiceLanguage,
                     onOpenLanguagePicker = { isVoiceLanguageOpen = true },
@@ -177,7 +177,7 @@ private fun CharacterDetailContent(
         }
         // Empty rails are not painted at all (a header with "No media" reads as
         // a broken section).
-        if (holder.mediaItems.isNotEmpty()) {
+        if (holder.media.items.isNotEmpty()) {
             item(key = "media") {
                 AppearancesSection(
                     holder = holder,
@@ -281,7 +281,7 @@ private fun AppearancesSection(
 ) {
     MediaRail(
         title = strings.mediaDetailAppearancesTitle,
-        items = holder.mediaItems.take(RailPageSize).map { it.toRailItem(strings) },
+        items = holder.media.items.take(RailPageSize).map { it.toRailItem(strings) },
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,

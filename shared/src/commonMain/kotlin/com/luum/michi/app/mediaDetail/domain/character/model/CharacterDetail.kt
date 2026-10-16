@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.character.model
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.util.BiographyStat
 
 
@@ -20,7 +21,7 @@ internal data class CharacterDetail(
     val birthday: String?,
     val favourites: Int?,
     val isFavourite: Boolean,
-    val media: CharacterMediaPage,
+    val media: Page<CharacterMediaItem>,
 )
 
 internal data class CharacterMediaItem(
@@ -37,12 +38,6 @@ internal data class CharacterMediaItem(
     val voiceActorImage: CoverSizes?,
     val voiceActorLanguage: String?,
     val voiceActorId: Int?,
-)
-
-internal data class CharacterMediaPage(
-    val items: List<CharacterMediaItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
 )
 
 /** Canonical AniList page for this character. */

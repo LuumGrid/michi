@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.staff.state
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -9,6 +10,7 @@ import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
+import com.luum.michi.app.ui.state.PagedList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,14 +25,8 @@ import kotlinx.coroutines.launch
  */
 private data class StaffDetailSnapshot(
     val detail: StaffDetail,
-    // ── media list state ──
-    val mediaItems: List<StaffMediaItem>,
-    val mediaHasNextPage: Boolean,
-    val mediaCurrentPage: Int,
-    // ── character list state ──
-    val characterItems: List<StaffCharacterItem>,
-    val charactersHasNextPage: Boolean,
-    val charactersCurrentPage: Int,
+    val media: Page<StaffMediaItem>,
+    val characters: Page<StaffCharacterItem>,
 )
 
 internal class StaffDetailStateHolder(
@@ -53,32 +49,17 @@ internal class StaffDetailStateHolder(
 
     private var currentStaffId: Int? = null
     private var currentJob: Job? = null
-    // Page-in-flight jobs (one per list), cancelled when the first page is
-    // (re)fetched so a page from the previous staff member can never append.
-    private var moreMediaJob: Job? = null
-    private var moreCharactersJob: Job? = null
 
     private val detailCache = DetailCache<Int, StaffDetailSnapshot>(maxSize = 5)
 
-    // ── media list ──
-    var mediaItems: List<StaffMediaItem> by mutableStateOf(emptyList())
-        private set
-    var mediaHasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var mediaCurrentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingMoreMedia: Boolean by mutableStateOf(false)
-        private set
+    // ── media (roles) list ──
+    // The same work can repeat with several roles (Director + Storyboard), so
+    // rows are deduped by (work, role), not by work alone.
+    val media = PagedList<StaffMediaItem> { a, b -> (a + b).distinctBy { it.mediaId to it.staffRole } }
 
     // ── character list ──
-    var characterItems: List<StaffCharacterItem> by mutableStateOf(emptyList())
-        private set
-    var charactersHasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var charactersCurrentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingMoreCharacters: Boolean by mutableStateOf(false)
-        private set
+    // The same character in two works is two rows: dedupe by (character, work).
+    val characters = PagedList<StaffCharacterItem> { a, b -> (a + b).distinctBy { it.characterId to it.mediaId } }
 
     // ── favourite ──
     override var isFavourite: Boolean by mutableStateOf(false)
@@ -94,23 +75,14 @@ internal class StaffDetailStateHolder(
             currentStaffId = id
             currentJob?.cancel()
             // Pages in flight belong to what was on screen: never append them to
-            // the restored snapshot, and drop their spinners (a cancelled
-            // coroutine never reaches its own `isLoadingMore = false`).
-            moreMediaJob?.cancel()
-            moreCharactersJob?.cancel()
+            // the restored snapshot (set cancels them).
             detail = cached.detail
-            mediaItems = cached.mediaItems
-            mediaHasNextPage = cached.mediaHasNextPage
-            mediaCurrentPage = cached.mediaCurrentPage
-            characterItems = cached.characterItems
-            charactersHasNextPage = cached.charactersHasNextPage
-            charactersCurrentPage = cached.charactersCurrentPage
+            media.set(cached.media)
+            characters.set(cached.characters)
             isFavourite = cached.detail.isFavourite
             error = null
             actionError = null
             isLoading = false
-            isLoadingMoreMedia = false
-            isLoadingMoreCharacters = false
             return
         }
 
@@ -129,79 +101,57 @@ internal class StaffDetailStateHolder(
 
     /** Loads the next page of the MEDIA (roles) list only. */
     fun loadMoreMedia() {
-        if (isLoadingMoreMedia || !mediaHasNextPage) return
         val id = currentStaffId ?: return
-        val nextPage = mediaCurrentPage + 1
-        moreMediaJob = scope.launch {
-            isLoadingMoreMedia = true
-            when (val result = repository.loadMediaPage(id, nextPage)) {
-                is NetworkResult.Success -> if (currentStaffId == id) {
-                    mediaItems = (mediaItems + result.value.items).distinctByRoles()
-                    mediaHasNextPage = result.value.hasNextPage
-                    mediaCurrentPage = result.value.currentPage
-                    detail?.let { cacheSnapshot(id, it) }
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentStaffId == id) actionError = result.error
-            }
-            if (currentStaffId == id) isLoadingMoreMedia = false
-        }
+        media.loadMore(
+            scope = scope,
+            isCurrent = { currentStaffId == id },
+            fetch = { page -> repository.loadMediaPage(id, page) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
     /** Loads the next page of the CHARACTERS list only. */
     fun loadMoreCharacters() {
-        if (isLoadingMoreCharacters || !charactersHasNextPage) return
         val id = currentStaffId ?: return
-        val nextPage = charactersCurrentPage + 1
-        moreCharactersJob = scope.launch {
-            isLoadingMoreCharacters = true
-            when (val result = repository.loadCharacterPage(id, nextPage)) {
-                is NetworkResult.Success -> if (currentStaffId == id) {
-                    characterItems = (characterItems + result.value.items).distinctRoles()
-                    charactersHasNextPage = result.value.hasNextPage
-                    charactersCurrentPage = result.value.currentPage
-                    detail?.let { cacheSnapshot(id, it) }
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentStaffId == id) actionError = result.error
-            }
-            if (currentStaffId == id) isLoadingMoreCharacters = false
-        }
+        characters.loadMore(
+            scope = scope,
+            isCurrent = { currentStaffId == id },
+            fetch = { page -> repository.loadCharacterPage(id, page) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
     /** Fetches page 1; the single network path of the holder. */
     private fun fetchFirstPage(id: Int, clearDetail: Boolean, clearMedia: Boolean) {
         currentJob?.cancel()
         // Pages from the previous staff member must never append.
-        moreMediaJob?.cancel()
-        moreCharactersJob?.cancel()
+        media.cancel()
+        characters.cancel()
         if (clearDetail) detail = null
         if (clearMedia) {
-            mediaItems = emptyList()
-            mediaHasNextPage = false
-            mediaCurrentPage = 1
-            characterItems = emptyList()
-            charactersHasNextPage = false
-            charactersCurrentPage = 1
+            media.clear()
+            characters.clear()
         }
         error = null
         actionError = null
         isLoading = true
-        isLoadingMoreMedia = false
-        isLoadingMoreCharacters = false
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, stringsProvider())) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items.distinctByRoles()
-                    mediaHasNextPage = value.media.hasNextPage
-                    mediaCurrentPage = value.media.currentPage
-                    characterItems = value.characters.items.distinctRoles()
-                    charactersHasNextPage = value.characters.hasNextPage
-                    charactersCurrentPage = value.characters.currentPage
+                    media.set(value.media)
+                    characters.set(value.characters)
                     isFavourite = value.isFavourite
-                    cacheSnapshot(id, value)
+                    cacheSnapshot(id)
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -246,18 +196,17 @@ internal class StaffDetailStateHolder(
         actionError = null
     }
 
-    private fun cacheSnapshot(id: Int, d: StaffDetail) = detailCache.put(
-        id,
-        StaffDetailSnapshot(
-            detail = d,
-            mediaItems = mediaItems,
-            mediaHasNextPage = mediaHasNextPage,
-            mediaCurrentPage = mediaCurrentPage,
-            characterItems = characterItems,
-            charactersHasNextPage = charactersHasNextPage,
-            charactersCurrentPage = charactersCurrentPage,
-        ),
-    )
+    private fun cacheSnapshot(id: Int) {
+        val value = detail ?: return
+        detailCache.put(
+            id,
+            StaffDetailSnapshot(
+                detail = value,
+                media = media.snapshot(),
+                characters = characters.snapshot(),
+            ),
+        )
+    }
 }
 
 /** Pure-logic factory (placeholder for UI wiring). */
@@ -268,14 +217,3 @@ internal fun createStaffDetailStateHolder(
 ): StaffDetailStateHolder {
     return StaffDetailStateHolder(repository, scope, stringsProvider)
 }
-
-/**
- * Roles de una obra: el mismo anime puede repetir con varios cargos (Director +
- * Storyboard), así que se deduplica por (obra, cargo), no solo por obra.
- */
-private fun List<StaffMediaItem>.distinctByRoles(): List<StaffMediaItem> =
-    distinctBy { it.mediaId to it.staffRole }
-
-/** Mismo personaje en dos obras son dos filas: dedupe por (personaje, obra). */
-private fun List<StaffCharacterItem>.distinctRoles(): List<StaffCharacterItem> =
-    distinctBy { it.characterId to it.mediaId }

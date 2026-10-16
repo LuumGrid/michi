@@ -2,7 +2,8 @@ package com.luum.michi.app.mediaDetail.repository.studio
 
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
-import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.repository.dto.MediaSearchItemDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
@@ -99,9 +100,9 @@ private data class StudioMediaConnectionDto(
 
 // ────────────── mapper helpers ──────────────
 
-private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): MediaGridPage {
+private fun StudioMediaConnectionDto?.toMediaPage(fallbackPage: Int): Page<MediaGridItem> {
     val nodes = this?.nodes.orEmpty()
-    return MediaGridPage(
+    return Page(
         items = nodes.map { it.toMediaGridItem() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
@@ -154,7 +155,7 @@ internal class StudioDetailRepositoryImpl(
         id: Int,
         page: Int,
         sort: String,
-    ): NetworkResult<MediaGridPage> {
+    ): NetworkResult<Page<MediaGridItem>> {
         val request = AniListGraphQLRequest(
             query = StudioMediaPageQuery,
             variables = JsonObject(

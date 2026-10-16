@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.staff.model
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.util.BiographyStat
 
 
@@ -25,8 +26,8 @@ internal data class StaffDetail(
     val bloodType: String?,
     val favourites: Int?,
     val isFavourite: Boolean,
-    val media: StaffMediaPage,
-    val characters: StaffCharacterPage,
+    val media: Page<StaffMediaItem>,
+    val characters: Page<StaffCharacterItem>,
 )
 
 internal data class StaffMediaItem(
@@ -40,12 +41,6 @@ internal data class StaffMediaItem(
     val averageScore: Int?,
 )
 
-internal data class StaffMediaPage(
-    val items: List<StaffMediaItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
 internal data class StaffCharacterItem(
     val characterId: Int,
     val name: String,
@@ -53,12 +48,6 @@ internal data class StaffCharacterItem(
     val mediaTitle: String?,
     /** The media this role belongs to; identity for dedup (a character in two works is two rows). */
     val mediaId: Int? = null,
-)
-
-internal data class StaffCharacterPage(
-    val items: List<StaffCharacterItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
 )
 
 /** Canonical AniList page for this staff member. */

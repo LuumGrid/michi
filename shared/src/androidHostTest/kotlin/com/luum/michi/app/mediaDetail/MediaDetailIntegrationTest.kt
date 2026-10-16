@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
@@ -11,13 +12,10 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
@@ -33,8 +31,8 @@ import kotlin.test.assertTrue
 
 private fun sampleDetail(
     id: Int,
-    characters: MediaCharactersPage = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
-    staff: MediaStaffPage = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
+    characters: Page<MediaCharacterEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    staff: Page<MediaStaffEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     viewerEntry: MediaListViewerEntry? = null,
 ) = MediaDetail(
     id = id,
@@ -111,9 +109,9 @@ private fun recommendation(id: Int) = MediaRecommendationEntry(
  * hits and voice-language reloads, and an optional failure switch.
  */
 private class RecordingDetailRepository(
-    private val charactersPages: Map<Int, MediaCharactersPage> = emptyMap(),
-    private val staffPages: Map<Int, MediaStaffPage> = emptyMap(),
-    private val recommendationsPages: Map<Int, MediaRecommendationsPage> = emptyMap(),
+    private val charactersPages: Map<Int, Page<MediaCharacterEntry>> = emptyMap(),
+    private val staffPages: Map<Int, Page<MediaStaffEntry>> = emptyMap(),
+    private val recommendationsPages: Map<Int, Page<MediaRecommendationEntry>> = emptyMap(),
     private val failDetail: Boolean = false,
     private val viewerEntry: MediaListViewerEntry? = null,
 ) : MediaDetailRepository {
@@ -135,8 +133,8 @@ private class RecordingDetailRepository(
         return NetworkResult.Success(
             sampleDetail(
                 id = mediaId,
-                characters = charactersPages[1] ?: MediaCharactersPage(emptyList(), false, 1),
-                staff = staffPages[1] ?: MediaStaffPage(emptyList(), false, 1),
+                characters = charactersPages[1] ?: Page(emptyList(), false, 1),
+                staff = staffPages[1] ?: Page(emptyList(), false, 1),
                 viewerEntry = viewerEntry,
             ),
         )
@@ -145,43 +143,43 @@ private class RecordingDetailRepository(
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaCharactersPage> {
+    ): NetworkResult<Page<MediaCharacterEntry>> {
         characterCalls++
-        return NetworkResult.Success(charactersPages[page] ?: MediaCharactersPage(emptyList(), false, page))
+        return NetworkResult.Success(charactersPages[page] ?: Page(emptyList(), false, page))
     }
 
     override suspend fun loadStaffPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaStaffPage> {
+    ): NetworkResult<Page<MediaStaffEntry>> {
         staffCalls++
-        return NetworkResult.Success(staffPages[page] ?: MediaStaffPage(emptyList(), false, page))
+        return NetworkResult.Success(staffPages[page] ?: Page(emptyList(), false, page))
     }
 
     override suspend fun loadRecommendations(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaRecommendationsPage> {
+    ): NetworkResult<Page<MediaRecommendationEntry>> {
         recommendationCalls++
         return NetworkResult.Success(
-            recommendationsPages[page] ?: MediaRecommendationsPage(emptyList(), false, page),
+            recommendationsPages[page] ?: Page(emptyList(), false, page),
         )
     }
 }
 
 /** Holds the characters page 2 at [gate], so a page in flight can be interrupted. */
 private class GatedPageDetailRepository(
-    charactersPages: Map<Int, MediaCharactersPage> = emptyMap(),
+    charactersPages: Map<Int, Page<MediaCharacterEntry>> = emptyMap(),
 ) : MediaDetailRepository by RecordingDetailRepository(charactersPages = charactersPages) {
     val gate = CompletableDeferred<Unit>()
 
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaCharactersPage> {
+    ): NetworkResult<Page<MediaCharacterEntry>> {
         if (page > 1) gate.await()
         return NetworkResult.Success(
-            MediaCharactersPage(listOf(character(mediaId * 100 + page)), hasNextPage = false, currentPage = page),
+            Page(listOf(character(mediaId * 100 + page)), hasNextPage = false, currentPage = page),
         )
     }
 }
@@ -255,8 +253,8 @@ class MediaDetailIntegrationTest {
 
     @Test
     fun loadHydratesDetailCharactersAndStaff() {
-        val characters = MediaCharactersPage(listOf(character(1), character(2)), false, 1)
-        val staff = MediaStaffPage(listOf(staffEntry(9)), false, 1)
+        val characters = Page(listOf(character(1), character(2)), false, 1)
+        val staff = Page(listOf(staffEntry(9)), false, 1)
         val repository = RecordingDetailRepository(
             charactersPages = mapOf(1 to characters),
             staffPages = mapOf(1 to staff),
@@ -266,8 +264,8 @@ class MediaDetailIntegrationTest {
         holder.load(5)
 
         assertEquals("Media 5", holder.detail?.title)
-        assertEquals(2, holder.characters.size)
-        assertEquals(1, holder.staff.size)
+        assertEquals(2, holder.characters.items.size)
+        assertEquals(1, holder.staff.items.size)
         assertFalse(holder.isLoading)
         assertNull(holder.error)
         assertEquals(1, repository.detailCalls)
@@ -291,47 +289,47 @@ class MediaDetailIntegrationTest {
     fun loadMoreCharactersAppendsNextPage() {
         val repository = RecordingDetailRepository(
             charactersPages = mapOf(
-                1 to MediaCharactersPage(listOf(character(1)), hasNextPage = true, currentPage = 1),
-                2 to MediaCharactersPage(listOf(character(2)), hasNextPage = false, currentPage = 2),
+                1 to Page(listOf(character(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(character(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
 
         holder.load(1)
-        assertEquals(1, holder.characters.size)
-        assertTrue(holder.charactersHasNextPage)
+        assertEquals(1, holder.characters.items.size)
+        assertTrue(holder.characters.hasNextPage)
 
         holder.loadMoreCharacters()
 
-        assertEquals(listOf(1, 2), holder.characters.map { it.characterId })
-        assertFalse(holder.charactersHasNextPage)
+        assertEquals(listOf(1, 2), holder.characters.items.map { it.characterId })
+        assertFalse(holder.characters.hasNextPage)
         assertEquals(1, repository.characterCalls)
     }
 
     @Test
     fun aCharactersPageInFlightIsDroppedWhenAnotherMediaLoads() {
         val repository = GatedPageDetailRepository(
-            charactersPages = mapOf(1 to MediaCharactersPage(emptyList(), hasNextPage = true, currentPage = 1)),
+            charactersPages = mapOf(1 to Page(emptyList(), hasNextPage = true, currentPage = 1)),
         )
         val holder = holderWired(repository)
 
         holder.load(1)
-        assertTrue(holder.charactersHasNextPage)
+        assertTrue(holder.characters.hasNextPage)
         holder.loadMoreCharacters() // page 2, held at the gate
 
         holder.load(2) // another media cancels it
         repository.gate.complete(Unit)
 
-        assertTrue(holder.characters.isEmpty(), "the stale page never appends")
-        assertFalse(holder.isLoadingCharacters, "its spinner is dropped")
+        assertTrue(holder.characters.items.isEmpty(), "the stale page never appends")
+        assertFalse(holder.characters.isLoadingMore, "its spinner is dropped")
     }
 
     @Test
     fun loadMoreRecommendationsAppendsNextPage() {
         val repository = RecordingDetailRepository(
             recommendationsPages = mapOf(
-                1 to MediaRecommendationsPage(listOf(recommendation(1)), hasNextPage = true, currentPage = 1),
-                2 to MediaRecommendationsPage(listOf(recommendation(2)), hasNextPage = false, currentPage = 2),
+                1 to Page(listOf(recommendation(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(recommendation(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
@@ -339,13 +337,13 @@ class MediaDetailIntegrationTest {
         holder.load(1)
         holder.loadRecommendations()
 
-        assertEquals(listOf(1), holder.recommendations.map { it.id })
-        assertTrue(holder.recommendationsHasNextPage)
+        assertEquals(listOf(1), holder.recommendations.items.map { it.id })
+        assertTrue(holder.recommendations.hasNextPage)
 
         holder.loadMoreRecommendations()
 
-        assertEquals(listOf(1, 2), holder.recommendations.map { it.id })
-        assertFalse(holder.recommendationsHasNextPage)
+        assertEquals(listOf(1, 2), holder.recommendations.items.map { it.id })
+        assertFalse(holder.recommendations.hasNextPage)
         assertEquals(2, repository.recommendationCalls)
     }
 
@@ -355,7 +353,7 @@ class MediaDetailIntegrationTest {
         // page 1; a cached restore must not keep another media's recommendations.
         val repository = RecordingDetailRepository(
             recommendationsPages = mapOf(
-                1 to MediaRecommendationsPage(listOf(recommendation(1)), hasNextPage = false, currentPage = 1),
+                1 to Page(listOf(recommendation(1)), hasNextPage = false, currentPage = 1),
             ),
         )
         val holder = holderWired(repository)
@@ -366,7 +364,7 @@ class MediaDetailIntegrationTest {
         holder.load(1)
 
         assertEquals(1, holder.detail?.id)
-        assertTrue(holder.recommendations.isEmpty())
+        assertTrue(holder.recommendations.items.isEmpty())
     }
 
     @Test

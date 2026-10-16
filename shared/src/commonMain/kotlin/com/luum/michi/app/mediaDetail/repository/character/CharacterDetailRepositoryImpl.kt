@@ -5,7 +5,7 @@ import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
@@ -198,9 +198,9 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
     )
 }
 
-private fun CharacterMediaConnectionDto?.toMediaPage(fallbackPage: Int): CharacterMediaPage {
+private fun CharacterMediaConnectionDto?.toMediaPage(fallbackPage: Int): Page<CharacterMediaItem> {
     val edges = this?.edges.orEmpty()
-    return CharacterMediaPage(
+    return Page(
         items = edges.mapNotNull { it.toItem() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
@@ -270,7 +270,7 @@ internal class CharacterDetailRepositoryImpl(
         id: Int,
         page: Int,
         voiceLanguage: String,
-    ): NetworkResult<CharacterMediaPage> {
+    ): NetworkResult<Page<CharacterMediaItem>> {
         val request = AniListGraphQLRequest(
             query = CharacterMediaPageQuery,
             variables = JsonObject(

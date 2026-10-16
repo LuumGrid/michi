@@ -1,16 +1,18 @@
 package com.luum.michi.app.mediaDetail.ui.studio.state
 
-import com.luum.michi.app.core.navigation.domain.DetailHolder
-import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.toMediaSort
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.navigation.domain.DetailHolder
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
+import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.ui.state.PagedList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,9 +23,7 @@ import kotlinx.coroutines.launch
 /** Snapshot stored in the LRU cache for fast back-navigation. */
 private data class StudioDetailSnapshot(
     val detail: StudioDetail,
-    val mediaItems: List<MediaGridItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
+    val media: Page<MediaGridItem>,
     val sortOption: UserListSort,
     val sortOrder: UserListOrder,
 )
@@ -46,26 +46,16 @@ internal class StudioDetailStateHolder(
 
     private var currentStudioId: Int? = null
     private var currentJob: Job? = null
-    // Page-in-flight job, cancelled when the first page is (re)fetched so a
-    // page from the previous sort/studio can never append to the new list.
-    private var moreJob: Job? = null
 
     private val detailCache = DetailCache<Int, StudioDetailSnapshot>(maxSize = 5)
 
-    var mediaItems: List<MediaGridItem> by mutableStateOf(emptyList())
-        private set
-    var hasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var currentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingMore: Boolean by mutableStateOf(false)
-        private set
-
     /**
-     * Server order: the grid re-queries from page 1 on a change (see
-     * [changeSort]) instead of sorting a loaded page locally, so a studio with
-     * hundreds of works shows the real top of the chosen criterion.
+     * Works grid. Server order: the grid re-queries from page 1 on a change
+     * (see [changeSort]) instead of sorting a loaded page locally, so a studio
+     * with hundreds of works shows the real top of the chosen criterion.
      */
+    val media = PagedList<MediaGridItem> { a, b -> (a + b).distinctBy { it.mediaId } }
+
     override var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
         private set
     override var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
@@ -86,21 +76,16 @@ internal class StudioDetailStateHolder(
         if (cached != null) {
             currentStudioId = id
             currentJob?.cancel()
-            // A page in flight belongs to what was on screen; never let it
-            // append to the snapshot we are restoring, and drop its spinner (a
-            // cancelled coroutine never reaches its own `isLoadingMore = false`).
-            moreJob?.cancel()
+            // A page in flight belongs to what was on screen: never let it
+            // append to the snapshot we are restoring (set cancels it).
             detail = cached.detail
-            mediaItems = cached.mediaItems
-            hasNextPage = cached.hasNextPage
-            currentPage = cached.currentPage
+            media.set(cached.media)
             sortOption = cached.sortOption
             sortOrder = cached.sortOrder
             isFavourite = cached.detail.isFavourite
             error = null
             actionError = null
             isLoading = false
-            isLoadingMore = false
             return
         }
 
@@ -133,23 +118,17 @@ internal class StudioDetailStateHolder(
     }
 
     fun loadMore() {
-        if (isLoadingMore || !hasNextPage) return
         val id = currentStudioId ?: return
-        val nextPage = currentPage + 1
-        moreJob = scope.launch {
-            isLoadingMore = true
-            when (val result = repository.loadMediaPage(id, nextPage, apiSort())) {
-                is NetworkResult.Success -> if (currentStudioId == id) {
-                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
-                    detail?.let { cacheSnapshot(id, it) }
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentStudioId == id) actionError = result.error
-            }
-            if (currentStudioId == id) isLoadingMore = false
-        }
+        media.loadMore(
+            scope = scope,
+            isCurrent = { currentStudioId == id },
+            fetch = { page -> repository.loadMediaPage(id, page, apiSort()) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
     override fun toggleFavourite() {
@@ -200,27 +179,20 @@ internal class StudioDetailStateHolder(
         currentJob?.cancel()
         // The new list starts at page 1: an in-flight page (old sort, or another
         // studio) is dropped instead of merging into it or overwriting the page.
-        moreJob?.cancel()
+        media.cancel()
         if (clearDetail) detail = null
-        if (clearMedia) {
-            mediaItems = emptyList()
-            hasNextPage = false
-            currentPage = 1
-        }
+        if (clearMedia) media.clear()
         error = null
         actionError = null
         isLoading = true
-        isLoadingMore = false
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, apiSort())) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items.distinctBy { it.mediaId }
-                    hasNextPage = value.media.hasNextPage
-                    currentPage = value.media.currentPage
+                    media.set(value.media)
                     isFavourite = value.isFavourite
-                    cacheSnapshot(id, value)
+                    cacheSnapshot(id)
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -228,14 +200,13 @@ internal class StudioDetailStateHolder(
         }
     }
 
-    private fun cacheSnapshot(id: Int, detail: StudioDetail) {
+    private fun cacheSnapshot(id: Int) {
+        val value = detail ?: return
         detailCache.put(
             id,
             StudioDetailSnapshot(
-                detail = detail,
-                mediaItems = mediaItems,
-                hasNextPage = hasNextPage,
-                currentPage = currentPage,
+                detail = value,
+                media = media.snapshot(),
                 sortOption = sortOption,
                 sortOrder = sortOrder,
             ),

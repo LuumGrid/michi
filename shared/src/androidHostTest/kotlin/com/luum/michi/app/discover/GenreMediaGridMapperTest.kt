@@ -1,6 +1,7 @@
 package com.luum.michi.app.discover
 
-import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
@@ -56,7 +57,7 @@ class GenreMediaGridMapperTest {
             sort = "POPULARITY_DESC",
             hideAdult = true,
         )
-        assertIs<NetworkResult.Success<MediaGridPage>>(result)
+        assertIs<NetworkResult.Success<Page<MediaGridItem>>>(result)
         val item = result.value.items.single()
 
         assertEquals(7, item.mediaId)
@@ -107,7 +108,7 @@ class GenreMediaGridMapperTest {
             sort = "POPULARITY_DESC",
             hideAdult = true,
         )
-        assertIs<NetworkResult.Success<MediaGridPage>>(result)
+        assertIs<NetworkResult.Success<Page<MediaGridItem>>>(result)
         assertEquals(3, result.value.currentPage)
     }
 }

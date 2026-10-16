@@ -1,10 +1,14 @@
 package com.luum.michi.app.settings
 
+import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
+import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.ui.state.SettingsState
@@ -358,6 +362,58 @@ class SettingsIntegrationTest {
                 "Story\u001FAnimation",
                 store.getString("advanced_scoring_anime_names"),
             )
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun clearSyncedResetsSyncedPrefsAndLeavesLocalOnes() {
+        setUp()
+        try {
+            val store = FakeSettingsStore()
+            val state = stateWith(ScriptedSettingsGraphQL(listOf(viewerPage)), store)
+
+            // Non-default synced values (refresh also sets the advanced-scoring
+            // names, which have no public setter) and non-default local values.
+            state.refresh()
+            state.startTab = StartTabOption.MANGA
+            state.imageQuality = ImageQuality.LOW
+            state.persistListSort = false
+
+            state.clearSynced()
+
+            // Synced prefs are back to their defaults, in state and in the store.
+            assertEquals(TitleLanguage.ROMAJI, state.titleLanguage)
+            assertEquals(StaffNameLanguage.ROMAJI_WESTERN, state.staffNameLanguage)
+            assertEquals(false, state.displayAdultContent)
+            assertEquals(ScoreFormat.POINT_10_DECIMAL, state.scoreFormat)
+            assertEquals(ListSort.UPDATED, state.listSort)
+            assertEquals(true, state.splitCompletedAnime)
+            assertEquals(false, state.splitCompletedManga)
+            assertEquals(false, state.advancedScoring)
+            assertEquals(emptyList(), state.advancedScoringAnime)
+            assertEquals(emptyList(), state.advancedScoringManga)
+            assertEquals(NotificationPreferences(), state.notifications)
+            assertEquals("ROMAJI", store.getString("title_language"))
+            assertEquals("ROMAJI_WESTERN", store.getString("staff_name_language"))
+            assertEquals(false, store.getBoolean("display_adult_content", true))
+            assertEquals("POINT_10_DECIMAL", store.getString("score_format"))
+            assertEquals("UPDATED", store.getString("list_sort"))
+            assertEquals(true, store.getBoolean("split_completed_anime", false))
+            assertEquals(false, store.getBoolean("split_completed_manga", true))
+            assertEquals(false, store.getBoolean("advanced_scoring", true))
+            assertEquals("", store.getString("advanced_scoring_anime_names"))
+            assertEquals("", store.getString("advanced_scoring_manga_names"))
+            assertEquals(true, store.getBoolean("notification_media", false))
+
+            // Local prefs are untouched, in state and in the store.
+            assertEquals(StartTabOption.MANGA, state.startTab)
+            assertEquals("MANGA", store.getString(SettingsStoreKeys.StartTab))
+            assertEquals(ImageQuality.LOW, state.imageQuality)
+            assertEquals("LOW", store.getString("image_quality"))
+            assertEquals(false, state.persistListSort)
+            assertEquals(false, store.getBoolean("persist_list_sort", true))
         } finally {
             tearDown()
         }

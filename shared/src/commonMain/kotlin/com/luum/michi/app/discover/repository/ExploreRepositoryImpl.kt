@@ -1,7 +1,8 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.repository.dto.CharacterDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.repository.dto.MediaSearchResponseDto
@@ -181,7 +182,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> {
+    ): NetworkResult<Page<MediaGridItem>> {
         val request = AniListGraphQLRequest(
             query = MediaCatalogQuery,
             variables = JsonObject(
@@ -205,7 +206,7 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            MediaGridPage(
+            Page(
                 items = response.page?.media.orEmpty().map { it.toMediaGridItem() },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
                 currentPage = response.page?.pageInfo?.currentPage ?: page,

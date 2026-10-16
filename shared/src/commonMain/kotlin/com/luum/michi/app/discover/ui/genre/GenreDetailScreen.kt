@@ -49,10 +49,10 @@ internal fun GenreDetailScreen(
         onDismissActionError = { holder.clearActionError() },
     ) {
         DetailPosterGrid(
-            items = holder.mediaItems,
-            hasNextPage = holder.hasNextPage,
+            items = holder.media.items,
+            hasNextPage = holder.media.hasNextPage,
             isLoading = holder.isLoading,
-            isLoadingMore = holder.isLoadingMore,
+            isLoadingMore = holder.media.isLoadingMore,
             onLoadMore = { holder.loadMore() },
             onOpenMedia = onOpenMedia,
             emptyLabel = strings.mediaDetailNoMediaLabel,

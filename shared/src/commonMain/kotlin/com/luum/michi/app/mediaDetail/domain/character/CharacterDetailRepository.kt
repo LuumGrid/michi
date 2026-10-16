@@ -1,8 +1,9 @@
 package com.luum.michi.app.mediaDetail.domain.character
 
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
+import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
 
 internal interface CharacterDetailRepository {
@@ -16,7 +17,7 @@ internal interface CharacterDetailRepository {
         id: Int,
         page: Int,
         voiceLanguage: String,
-    ): NetworkResult<CharacterMediaPage>
+    ): NetworkResult<Page<CharacterMediaItem>>
 
     suspend fun toggleFavourite(id: Int): NetworkResult<Unit>
 }

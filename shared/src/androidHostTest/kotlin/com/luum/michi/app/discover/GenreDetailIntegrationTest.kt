@@ -1,8 +1,8 @@
 package com.luum.michi.app.discover
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.MediaGridItem
-import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
@@ -33,7 +33,7 @@ private fun gridItem(id: Int) = MediaGridItem(
 )
 
 private fun gridPage(items: List<Int>, hasNextPage: Boolean = false, currentPage: Int = 1) =
-    MediaGridPage(items.map { gridItem(it) }, hasNextPage = hasNextPage, currentPage = currentPage)
+    Page(items.map { gridItem(it) }, hasNextPage = hasNextPage, currentPage = currentPage)
 
 private fun holderWired(
     repository: ExploreRepository,
@@ -70,7 +70,7 @@ private open class FakeGenreExploreRepository : ExploreRepository {
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> = NetworkResult.Success(MediaGridPage(emptyList(), false, page))
+    ): NetworkResult<Page<MediaGridItem>> = NetworkResult.Success(Page(emptyList(), false, page))
 
     override suspend fun searchCharacters(
         query: String?,
@@ -100,7 +100,7 @@ private open class FakeGenreExploreRepository : ExploreRepository {
  * change re-queries.
  */
 private class RecordingGenreRepository(
-    private val pages: Map<Int, MediaGridPage> = emptyMap(),
+    private val pages: Map<Int, Page<MediaGridItem>> = emptyMap(),
 ) : FakeGenreExploreRepository() {
     var calls = 0
         private set
@@ -121,14 +121,14 @@ private class RecordingGenreRepository(
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> {
+    ): NetworkResult<Page<MediaGridItem>> {
         calls++
         lastSort = sort
         lastType = type
         lastPage = page
         lastHideAdult = hideAdult
         lastGenres = genres
-        return NetworkResult.Success(pages[page] ?: MediaGridPage(emptyList(), false, page))
+        return NetworkResult.Success(pages[page] ?: Page(emptyList(), false, page))
     }
 }
 
@@ -145,8 +145,8 @@ class GenreDetailIntegrationTest {
 
         assertEquals("Action", holder.name)
         assertEquals(MediaType.ANIME, holder.type)
-        assertEquals(listOf(7), holder.mediaItems.map { it.mediaId })
-        val item = holder.mediaItems.single()
+        assertEquals(listOf(7), holder.media.items.map { it.mediaId })
+        val item = holder.media.items.single()
         assertEquals(42, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
         assertTrue(holder.pageLoaded)
@@ -186,12 +186,12 @@ class GenreDetailIntegrationTest {
         val holder = holderWired(repository)
 
         holder.load("Action", MediaType.ANIME)
-        assertTrue(holder.hasNextPage)
+        assertTrue(holder.media.hasNextPage)
 
         holder.loadMore()
 
-        assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
-        assertFalse(holder.hasNextPage)
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
+        assertFalse(holder.media.hasNextPage)
         assertEquals(2, repository.lastPage)
     }
 
@@ -209,7 +209,7 @@ class GenreDetailIntegrationTest {
         assertEquals(MediaType.MANGA, repository.lastType)
         assertEquals(2, repository.calls, "the switch re-queries page 1")
         assertEquals(1, repository.lastPage)
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
     }
 
     @Test
@@ -238,15 +238,15 @@ class GenreDetailIntegrationTest {
         val holder = holderWired(repository)
         holder.load("Action", MediaType.ANIME)
         holder.loadMore()
-        assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
 
         holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
 
         assertEquals(3, repository.calls, "the change re-queries page 1 (load, page 2, change)")
         assertEquals(1, repository.lastPage)
         assertEquals("SCORE_DESC", repository.lastSort)
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the loaded page 2 is dropped")
-        assertEquals(1, holder.currentPage)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the loaded page 2 is dropped")
+        assertEquals(1, holder.media.currentPage)
         assertEquals(UserListSort.AVERAGE_SCORE, holder.sortOption)
     }
 
@@ -286,15 +286,15 @@ class GenreDetailIntegrationTest {
         )
         val holder = holderWired(repository)
         holder.load("Action", MediaType.ANIME)
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         holder.loadMore() // page 2 of anime, held at the gate
         holder.changeType(MediaType.MANGA)
 
         repository.gate.complete(Unit) // the stale page lands after the switch
 
-        assertEquals(listOf(2), holder.mediaItems.map { it.mediaId }, "only the new catalog's page")
-        assertEquals(1, holder.currentPage)
+        assertEquals(listOf(2), holder.media.items.map { it.mediaId }, "only the new catalog's page")
+        assertEquals(1, holder.media.currentPage)
     }
 
     @Test
@@ -302,17 +302,17 @@ class GenreDetailIntegrationTest {
         val repository = GatedGenreRepository()
         val holder = holderWired(repository)
         holder.load("Action", MediaType.ANIME)
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         repository.pageOne = listOf(9)
         repository.hold()
         holder.refresh()
 
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId }, "the works stay on screen")
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the works stay on screen")
 
         repository.release()
 
-        assertEquals(listOf(9), holder.mediaItems.map { it.mediaId }, "the response replaces them")
+        assertEquals(listOf(9), holder.media.items.map { it.mediaId }, "the response replaces them")
     }
 
     @Test
@@ -320,17 +320,17 @@ class GenreDetailIntegrationTest {
         val repository = GatedGenreRepository()
         val holder = holderWired(repository)
         holder.load("Action", MediaType.ANIME)
-        assertEquals(listOf(1), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         repository.pageOne = listOf(2)
         repository.hold()
         holder.changeType(MediaType.MANGA)
 
-        assertTrue(holder.mediaItems.isEmpty(), "the other catalog invalidates the works")
+        assertTrue(holder.media.items.isEmpty(), "the other catalog invalidates the works")
 
         repository.release()
 
-        assertEquals(listOf(2), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(2), holder.media.items.map { it.mediaId })
     }
 
     @Test
@@ -368,7 +368,7 @@ private class GatedPageGenreRepository(
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> {
+    ): NetworkResult<Page<MediaGridItem>> {
         if (page > 1) gate.await()
         return NetworkResult.Success(
             gridPage(
@@ -402,7 +402,7 @@ private class GatedGenreRepository : FakeGenreExploreRepository() {
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> {
+    ): NetworkResult<Page<MediaGridItem>> {
         if (gated) gate.await()
         return NetworkResult.Success(gridPage(pageOne, hasNextPage = false, currentPage = 1))
     }

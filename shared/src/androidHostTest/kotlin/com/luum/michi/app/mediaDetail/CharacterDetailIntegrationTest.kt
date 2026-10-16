@@ -1,12 +1,12 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +35,7 @@ private fun characterMediaItem(id: Int) = CharacterMediaItem(
 
 private fun characterDetail(
     id: Int,
-    media: CharacterMediaPage = CharacterMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media: Page<CharacterMediaItem> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     isFavourite: Boolean = false,
 ) = CharacterDetail(
     id = id,
@@ -60,7 +60,7 @@ private fun characterDetail(
  * to prove cache hits and sort reloads.
  */
 private class RecordingCharacterRepository(
-    private val mediaPages: Map<Int, CharacterMediaPage> = emptyMap(),
+    private val mediaPages: Map<Int, Page<CharacterMediaItem>> = emptyMap(),
 ) : CharacterDetailRepository {
     var detailCalls = 0
         private set
@@ -79,7 +79,7 @@ private class RecordingCharacterRepository(
         return NetworkResult.Success(
             characterDetail(
                 id = id,
-                media = mediaPages[1] ?: CharacterMediaPage(emptyList(), false, 1),
+                media = mediaPages[1] ?: Page(emptyList(), false, 1),
                 isFavourite = favourite,
             ),
         )
@@ -89,9 +89,9 @@ private class RecordingCharacterRepository(
         id: Int,
         page: Int,
         voiceLanguage: String,
-    ): NetworkResult<CharacterMediaPage> {
+    ): NetworkResult<Page<CharacterMediaItem>> {
         mediaCalls++
-        return NetworkResult.Success(mediaPages[page] ?: CharacterMediaPage(emptyList(), false, page))
+        return NetworkResult.Success(mediaPages[page] ?: Page(emptyList(), false, page))
     }
 
     override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
@@ -112,14 +112,14 @@ class CharacterDetailIntegrationTest {
     @Test
     fun loadHydratesDetailAndMedia() {
         val repository = RecordingCharacterRepository(
-            mediaPages = mapOf(1 to CharacterMediaPage(listOf(characterMediaItem(7)), false, 1)),
+            mediaPages = mapOf(1 to Page(listOf(characterMediaItem(7)), false, 1)),
         )
         val holder = holderWired(repository)
 
         holder.load(3)
 
         assertEquals("Character 3", holder.detail?.name)
-        assertEquals(listOf(7), holder.mediaItems.map { it.mediaId })
+        assertEquals(listOf(7), holder.media.items.map { it.mediaId })
         assertFalse(holder.isLoading)
         assertNull(holder.error)
         assertEquals(1, repository.detailCalls)
@@ -142,19 +142,19 @@ class CharacterDetailIntegrationTest {
     fun loadMoreAppendsNextPage() {
         val repository = RecordingCharacterRepository(
             mediaPages = mapOf(
-                1 to CharacterMediaPage(listOf(characterMediaItem(1)), hasNextPage = true, currentPage = 1),
-                2 to CharacterMediaPage(listOf(characterMediaItem(2)), hasNextPage = false, currentPage = 2),
+                1 to Page(listOf(characterMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(characterMediaItem(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
 
         holder.load(1)
-        assertTrue(holder.hasNextPage)
+        assertTrue(holder.media.hasNextPage)
 
         holder.loadMore()
 
-        assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
-        assertFalse(holder.hasNextPage)
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
+        assertFalse(holder.media.hasNextPage)
         assertEquals(1, repository.mediaCalls)
     }
 

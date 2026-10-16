@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.media
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.*
 
@@ -13,15 +14,15 @@ internal interface MediaDetailRepository {
     suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaCharactersPage>
+    ): NetworkResult<Page<MediaCharacterEntry>>
 
     suspend fun loadStaffPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaStaffPage>
+    ): NetworkResult<Page<MediaStaffEntry>>
 
     suspend fun loadRecommendations(
         mediaId: Int,
         page: Int = 1,
-    ): NetworkResult<MediaRecommendationsPage>
+    ): NetworkResult<Page<MediaRecommendationEntry>>
 }

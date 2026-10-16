@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media.state
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -12,6 +13,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
+import com.luum.michi.app.ui.state.PagedList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,12 +24,8 @@ import kotlinx.coroutines.launch
 /** Snapshot of MediaDetail content that can be restored without a network call. */
 private data class MediaDetailSnapshot(
     val detail: MediaDetail,
-    val characters: List<MediaCharacterEntry>,
-    val charactersHasNextPage: Boolean,
-    val charactersCurrentPage: Int,
-    val staff: List<MediaStaffEntry>,
-    val staffHasNextPage: Boolean,
-    val staffCurrentPage: Int,
+    val characters: Page<MediaCharacterEntry>,
+    val staff: Page<MediaStaffEntry>,
 )
 
 internal class MediaDetailStateHolder(
@@ -55,39 +53,21 @@ internal class MediaDetailStateHolder(
 
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
-    private var charactersJob: Job? = null
-    private var staffJob: Job? = null
-    private var recommendationsJob: Job? = null
 
     /** Cache of up to 5 recently-visited detail pages. */
     private val detailCache = DetailCache<Int, MediaDetailSnapshot>(maxSize = 5)
 
-    var characters: List<MediaCharacterEntry> by mutableStateOf(emptyList())
-        private set
-    var charactersHasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var charactersCurrentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingCharacters: Boolean by mutableStateOf(false)
-        private set
+    /** Characters grid; a character is one row per media (dedup by id). */
+    val characters = PagedList<MediaCharacterEntry> { a, b -> (a + b).distinctBy { it.characterId } }
 
-    var staff: List<MediaStaffEntry> by mutableStateOf(emptyList())
-        private set
-    var staffHasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var staffCurrentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingStaff: Boolean by mutableStateOf(false)
-        private set
+    /** Staff grid; a person can repeat with a different role (dedup by id + role). */
+    val staff = PagedList<MediaStaffEntry> { a, b -> (a + b).distinctBy { it.staffId to it.role } }
 
-    var recommendations: List<MediaRecommendationEntry> by mutableStateOf(emptyList())
-        private set
-    var recommendationsHasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var recommendationsCurrentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingRecommendations: Boolean by mutableStateOf(false)
-        private set
+    /**
+     * Recommendations (per visit; not part of the cache snapshot). Loaded on
+     * demand the first time and paged from there.
+     */
+    val recommendations = PagedList<MediaRecommendationEntry> { a, b -> (a + b).distinctBy { it.id } }
 
     fun load(mediaId: Int) {
         if (currentMediaId == mediaId && (detail != null || isLoading)) return
@@ -97,52 +77,37 @@ internal class MediaDetailStateHolder(
         if (cached != null) {
             currentMediaId = mediaId
             currentJob?.cancel()
-            cancelPaginationJobs()
+            // Pages in flight belong to what was on screen: never append them to
+            // the restored snapshot (set cancels them).
             detail = cached.detail
-            characters = cached.characters
-            charactersHasNextPage = cached.charactersHasNextPage
-            charactersCurrentPage = cached.charactersCurrentPage
-            staff = cached.staff
-            staffHasNextPage = cached.staffHasNextPage
-            staffCurrentPage = cached.staffCurrentPage
+            characters.set(cached.characters)
+            staff.set(cached.staff)
             error = null
             actionError = null
             isLoading = false
-            isLoadingCharacters = false
-            isLoadingStaff = false
-            // Reset per-visit transient state
-            resetRecommendations()
+            // Reset per-visit transient state.
+            recommendations.clear()
             return
         }
 
         currentMediaId = mediaId
         currentJob?.cancel()
-        cancelPaginationJobs()
         detail = null
         error = null
         actionError = null
         isLoading = true
-        characters = emptyList()
-        staff = emptyList()
-        charactersHasNextPage = false
-        staffHasNextPage = false
-        charactersCurrentPage = 1
-        staffCurrentPage = 1
-
-        resetRecommendations()
+        characters.clear()
+        staff.clear()
+        recommendations.clear()
 
         currentJob = scope.launch {
             when (val result = repository.loadDetail(mediaId, stringsProvider())) {
                 is NetworkResult.Success -> {
                     detail = result.value
-                    characters = result.value.characters.items
-                    charactersHasNextPage = result.value.characters.hasNextPage
-                    charactersCurrentPage = result.value.characters.currentPage
-                    staff = result.value.staff.items
-                    staffHasNextPage = result.value.staff.hasNextPage
-                    staffCurrentPage = result.value.staff.currentPage
+                    characters.set(result.value.characters)
+                    staff.set(result.value.staff)
                     // Store in LRU cache for fast back-navigation
-                    cacheSnapshot(mediaId, result.value)
+                    cacheSnapshot(mediaId)
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -155,11 +120,13 @@ internal class MediaDetailStateHolder(
         // Invalidate cached entry so next load() re-fetches from network.
         detailCache.remove(id)
         currentJob?.cancel()
-        // Cancelling the pagination jobs would drop the initial recommendations
+        // Cancelling the pagination would drop the initial recommendations
         // fetch; remember it (or an already-loaded list) so it is relaunched in
         // the new language once the detail answers.
-        val hadRecommendations = recommendationsJob?.isActive == true || recommendations.isNotEmpty()
-        cancelPaginationJobs()
+        val hadRecommendations = recommendations.isLoadingMore || recommendations.items.isNotEmpty()
+        characters.cancel()
+        staff.cancel()
+        recommendations.cancel()
         error = null
         actionError = null
         isLoading = true
@@ -167,15 +134,11 @@ internal class MediaDetailStateHolder(
             when (val result = repository.loadDetail(id, stringsProvider())) {
                 is NetworkResult.Success -> {
                     detail = result.value
-                    characters = result.value.characters.items
-                    charactersHasNextPage = result.value.characters.hasNextPage
-                    charactersCurrentPage = result.value.characters.currentPage
-                    staff = result.value.staff.items
-                    staffHasNextPage = result.value.staff.hasNextPage
-                    staffCurrentPage = result.value.staff.currentPage
-                    cacheSnapshot(id, result.value)
+                    characters.set(result.value.characters)
+                    staff.set(result.value.staff)
+                    cacheSnapshot(id)
                     if (hadRecommendations && currentMediaId == id) {
-                        resetRecommendations()
+                        recommendations.clear()
                         loadRecommendations()
                     }
                 }
@@ -186,56 +149,41 @@ internal class MediaDetailStateHolder(
     }
 
     fun loadMoreCharacters() {
-        if (isLoadingCharacters || !charactersHasNextPage) return
         val id = currentMediaId ?: return
-        val nextPage = charactersCurrentPage + 1
-        charactersJob?.cancel()
-        charactersJob = scope.launch {
-            isLoadingCharacters = true
-            when (val result = repository.loadCharactersPage(id, page = nextPage)) {
-                is NetworkResult.Success -> if (currentMediaId == id) {
-                    characters = characters + result.value.items
-                    charactersHasNextPage = result.value.hasNextPage
-                    charactersCurrentPage = result.value.currentPage
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
-            }
-            if (currentMediaId == id) isLoadingCharacters = false
-        }
+        characters.loadMore(
+            scope = scope,
+            isCurrent = { currentMediaId == id },
+            fetch = { page -> repository.loadCharactersPage(id, page = page) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
     fun loadMoreStaff() {
-        if (isLoadingStaff || !staffHasNextPage) return
         val id = currentMediaId ?: return
-        val nextPage = staffCurrentPage + 1
-        staffJob?.cancel()
-        staffJob = scope.launch {
-            isLoadingStaff = true
-            when (val result = repository.loadStaffPage(id, page = nextPage)) {
-                is NetworkResult.Success -> if (currentMediaId == id) {
-                    staff = staff + result.value.items
-                    staffHasNextPage = result.value.hasNextPage
-                    staffCurrentPage = result.value.currentPage
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
-            }
-            if (currentMediaId == id) isLoadingStaff = false
-        }
+        staff.loadMore(
+            scope = scope,
+            isCurrent = { currentMediaId == id },
+            fetch = { page -> repository.loadStaffPage(id, page = page) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
-    private fun cacheSnapshot(mediaId: Int, value: MediaDetail) {
+    private fun cacheSnapshot(mediaId: Int) {
+        val value = detail ?: return
         detailCache.put(
             mediaId,
             MediaDetailSnapshot(
                 detail = value,
-                characters = characters,
-                charactersHasNextPage = charactersHasNextPage,
-                charactersCurrentPage = charactersCurrentPage,
-                staff = staff,
-                staffHasNextPage = staffHasNextPage,
-                staffCurrentPage = staffCurrentPage,
+                characters = characters.snapshot(),
+                staff = staff.snapshot(),
             ),
         )
     }
@@ -279,43 +227,20 @@ internal class MediaDetailStateHolder(
         }
     }
 
+    /** Ensures the recommendations first page is loaded (no-op once it has items). */
     fun loadRecommendations() {
-        if (isLoadingRecommendations || recommendations.isNotEmpty()) return
-        val id = currentMediaId ?: return
-        recommendationsJob?.cancel()
-        recommendationsJob = scope.launch {
-            isLoadingRecommendations = true
-            when (val result = repository.loadRecommendations(id)) {
-                is NetworkResult.Success -> if (currentMediaId == id) {
-                    recommendations = result.value.items
-                    recommendationsHasNextPage = result.value.hasNextPage
-                    recommendationsCurrentPage = result.value.currentPage
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
-            }
-            if (currentMediaId == id) isLoadingRecommendations = false
-        }
+        if (recommendations.items.isNotEmpty()) return
+        loadMoreRecommendations()
     }
 
     fun loadMoreRecommendations() {
-        if (isLoadingRecommendations || !recommendationsHasNextPage) return
         val id = currentMediaId ?: return
-        val nextPage = recommendationsCurrentPage + 1
-        recommendationsJob?.cancel()
-        recommendationsJob = scope.launch {
-            isLoadingRecommendations = true
-            when (val result = repository.loadRecommendations(id, nextPage)) {
-                is NetworkResult.Success -> if (currentMediaId == id) {
-                    recommendations = recommendations + result.value.items
-                    recommendationsHasNextPage = result.value.hasNextPage
-                    recommendationsCurrentPage = result.value.currentPage
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
-            }
-            if (currentMediaId == id) isLoadingRecommendations = false
-        }
+        recommendations.loadMore(
+            scope = scope,
+            isCurrent = { currentMediaId == id },
+            fetch = { page -> repository.loadRecommendations(id, page) },
+            onError = { actionError = it },
+        )
     }
 
     /**
@@ -339,41 +264,17 @@ internal class MediaDetailStateHolder(
         actionError = null
     }
 
-    private fun cancelPaginationJobs() {
-        charactersJob?.cancel()
-        charactersJob = null
-        staffJob?.cancel()
-        staffJob = null
-        recommendationsJob?.cancel()
-        recommendationsJob = null
-        isLoadingCharacters = false
-        isLoadingStaff = false
-        isLoadingRecommendations = false
-    }
-
-    private fun resetRecommendations() {
-        recommendations = emptyList()
-        recommendationsHasNextPage = false
-        recommendationsCurrentPage = 1
-    }
-
     fun clear() {
         currentJob?.cancel()
         currentJob = null
-        cancelPaginationJobs()
+        characters.clear()
+        staff.clear()
+        recommendations.clear()
         currentMediaId = null
         detail = null
         isLoading = false
         error = null
         actionError = null
-        characters = emptyList()
-        staff = emptyList()
-        charactersHasNextPage = false
-        staffHasNextPage = false
-        charactersCurrentPage = 1
-        staffCurrentPage = 1
-
-        resetRecommendations()
     }
 }
 

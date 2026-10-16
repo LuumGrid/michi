@@ -1,5 +1,9 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -9,11 +13,8 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharactersPage
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffPage
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
@@ -43,19 +44,19 @@ private class StubDetailRepository(
     override suspend fun loadCharactersPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaCharactersPage> =
+    ): NetworkResult<Page<MediaCharacterEntry>> =
         NetworkResult.Failure(NetworkError.Http(500, null))
 
     override suspend fun loadStaffPage(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaStaffPage> =
+    ): NetworkResult<Page<MediaStaffEntry>> =
         NetworkResult.Failure(NetworkError.Http(500, null))
 
     override suspend fun loadRecommendations(
         mediaId: Int,
         page: Int,
-    ): NetworkResult<MediaRecommendationsPage> =
+    ): NetworkResult<Page<MediaRecommendationEntry>> =
         NetworkResult.Failure(NetworkError.Http(500, null))
 }
 
@@ -88,8 +89,8 @@ private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
     isFavourite = false,
     viewerEntry = viewerEntry,
     relations = emptyList(),
-    characters = MediaCharactersPage(emptyList(), hasNextPage = false, currentPage = 1),
-    staff = MediaStaffPage(emptyList(), hasNextPage = false, currentPage = 1),
+    characters = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    staff = Page(emptyList(), hasNextPage = false, currentPage = 1),
     titleRomaji = null,
     titleNative = null,
     synonyms = emptyList(),

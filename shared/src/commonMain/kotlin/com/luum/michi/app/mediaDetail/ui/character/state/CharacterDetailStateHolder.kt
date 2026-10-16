@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.character.state
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
@@ -8,6 +9,7 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.util.DetailCache
+import com.luum.michi.app.ui.state.PagedList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,9 +19,7 @@ import kotlinx.coroutines.launch
 
 private data class CharacterDetailSnapshot(
     val detail: CharacterDetail,
-    val mediaItems: List<CharacterMediaItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
+    val media: Page<CharacterMediaItem>,
     val voiceLanguage: String,
 )
 
@@ -43,23 +43,16 @@ internal class CharacterDetailStateHolder(
 
     private var currentCharacterId: Int? = null
     private var currentJob: Job? = null
-    // Page-in-flight job, cancelled when the first page is (re)fetched so a page
-    // from the previous character/language can never append to the new list.
-    private var moreJob: Job? = null
 
     private val detailCache = DetailCache<Int, CharacterDetailSnapshot>(maxSize = 5)
 
-    var mediaItems: List<CharacterMediaItem> by mutableStateOf(emptyList())
-        private set
-    var hasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var currentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingMore: Boolean by mutableStateOf(false)
-        private set
     /** Voice-actor language for the media edges; changing it re-fetches. */
     var voiceLanguage: String by mutableStateOf("JAPANESE")
         private set
+
+    /** Appearances grid (one row per media). */
+    val media = PagedList<CharacterMediaItem> { a, b -> (a + b).distinctBy { it.mediaId } }
+
     override var isFavourite: Boolean by mutableStateOf(false)
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
@@ -73,18 +66,13 @@ internal class CharacterDetailStateHolder(
             currentCharacterId = id
             currentJob?.cancel()
             // A page in flight belongs to what was on screen: never append it to
-            // the restored snapshot, and drop its spinner (a cancelled coroutine
-            // never reaches its own `isLoadingMore = false`).
-            moreJob?.cancel()
+            // the restored snapshot (set cancels it).
             detail = cached.detail
-            mediaItems = cached.mediaItems
-            hasNextPage = cached.hasNextPage
-            currentPage = cached.currentPage
+            media.set(cached.media)
             isFavourite = cached.detail.isFavourite
             error = null
             actionError = null
             isLoading = false
-            isLoadingMore = false
             return
         }
 
@@ -102,50 +90,37 @@ internal class CharacterDetailStateHolder(
     }
 
     fun loadMore() {
-        if (isLoadingMore || !hasNextPage) return
         val id = currentCharacterId ?: return
-        val nextPage = currentPage + 1
-        moreJob = scope.launch {
-            isLoadingMore = true
-            when (val result = repository.loadMediaPage(id, nextPage, voiceLanguage)) {
-                is NetworkResult.Success -> if (currentCharacterId == id) {
-                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
-                    detail?.let { cacheSnapshot(id, it) }
-                    actionError = null
-                }
-                is NetworkResult.Failure -> if (currentCharacterId == id) actionError = result.error
-            }
-            if (currentCharacterId == id) isLoadingMore = false
-        }
+        media.loadMore(
+            scope = scope,
+            isCurrent = { currentCharacterId == id },
+            fetch = { page -> repository.loadMediaPage(id, page, voiceLanguage) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot(id)
+            },
+            onError = { actionError = it },
+        )
     }
 
     /** Fetches page 1; the single network path of the holder. */
     private fun fetchFirstPage(id: Int, clearDetail: Boolean, clearMedia: Boolean) {
         currentJob?.cancel()
         // A page from the previous character/language must never append.
-        moreJob?.cancel()
+        media.cancel()
         if (clearDetail) detail = null
-        if (clearMedia) {
-            mediaItems = emptyList()
-            hasNextPage = false
-            currentPage = 1
-        }
+        if (clearMedia) media.clear()
         error = null
         actionError = null
         isLoading = true
-        isLoadingMore = false
         currentJob = scope.launch {
             when (val result = repository.loadDetail(id, voiceLanguage, stringsProvider())) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items
-                    hasNextPage = value.media.hasNextPage
-                    currentPage = value.media.currentPage
+                    media.set(value.media)
                     isFavourite = value.isFavourite
-                    cacheSnapshot(id, value)
+                    cacheSnapshot(id)
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -153,14 +128,13 @@ internal class CharacterDetailStateHolder(
         }
     }
 
-    private fun cacheSnapshot(id: Int, detail: CharacterDetail) {
+    private fun cacheSnapshot(id: Int) {
+        val value = detail ?: return
         detailCache.put(
             id,
             CharacterDetailSnapshot(
-                detail = detail,
-                mediaItems = mediaItems,
-                hasNextPage = hasNextPage,
-                currentPage = currentPage,
+                detail = value,
+                media = media.snapshot(),
                 voiceLanguage = voiceLanguage,
             ),
         )

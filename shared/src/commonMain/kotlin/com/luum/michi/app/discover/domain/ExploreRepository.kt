@@ -1,7 +1,8 @@
 package com.luum.michi.app.discover.domain
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.model.ExplorePage
@@ -37,7 +38,7 @@ internal interface ExploreRepository {
         page: Int = 1,
         sort: String,
         hideAdult: Boolean = true,
-    ): NetworkResult<MediaGridPage>
+    ): NetworkResult<Page<MediaGridItem>>
 
     suspend fun searchCharacters(
         query: String?,

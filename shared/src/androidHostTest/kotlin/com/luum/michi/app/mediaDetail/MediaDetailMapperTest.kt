@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.model.MediaSeason
@@ -7,7 +9,6 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.core.model.ExternalLink
-import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationsPage
 import com.luum.michi.app.core.model.isOfficialSite
 import com.luum.michi.app.core.model.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
@@ -285,7 +286,7 @@ class MediaDetailMapperTest {
         val result = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
             .loadRecommendations(42, page = 2)
 
-        assertIs<NetworkResult.Success<MediaRecommendationsPage>>(result)
+        assertIs<NetworkResult.Success<Page<MediaRecommendationEntry>>>(result)
         assertEquals(listOf(99), result.value.items.map { it.id })
         assertEquals(true, result.value.hasNextPage)
         assertEquals(2, result.value.currentPage)

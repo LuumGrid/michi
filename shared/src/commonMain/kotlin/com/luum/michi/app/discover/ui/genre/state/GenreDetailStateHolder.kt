@@ -5,15 +5,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.MediaType
-import com.luum.michi.app.core.navigation.domain.DetailHolder
-import com.luum.michi.app.core.navigation.domain.GridSortHolder
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.toMediaSort
+import com.luum.michi.app.core.navigation.domain.DetailHolder
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -24,9 +26,7 @@ private data class GenreKey(val name: String, val type: MediaType, val hideAdult
 
 /** Snapshot stored in the LRU cache for fast back-navigation. */
 private data class GenreSnapshot(
-    val mediaItems: List<MediaGridItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
+    val media: Page<MediaGridItem>,
     val sortOption: UserListSort,
     val sortOrder: UserListOrder,
 )
@@ -66,14 +66,8 @@ internal class GenreDetailStateHolder(
     var actionError: NetworkError? by mutableStateOf(null)
         private set
 
-    var mediaItems: List<MediaGridItem> by mutableStateOf(emptyList())
-        private set
-    var hasNextPage: Boolean by mutableStateOf(false)
-        private set
-    var currentPage: Int by mutableStateOf(1)
-        private set
-    var isLoadingMore: Boolean by mutableStateOf(false)
-        private set
+    /** Works grid; the server orders it (re-queried from page 1 on a change). */
+    val media = PagedList<MediaGridItem> { a, b -> (a + b).distinctBy { it.mediaId } }
 
     override var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
         private set
@@ -82,9 +76,6 @@ internal class GenreDetailStateHolder(
 
     private var hideAdultState: Boolean = hideAdult
     private var currentJob: Job? = null
-    // Page-in-flight job, cancelled when the first page is (re)fetched so a
-    // page from the previous sort/catalog can never append to the new list.
-    private var moreJob: Job? = null
 
     private val detailCache = DetailCache<GenreKey, GenreSnapshot>(maxSize = 5)
 
@@ -99,9 +90,8 @@ internal class GenreDetailStateHolder(
         this.type = type
         if (cached != null) {
             currentJob?.cancel()
-            // A page in flight belongs to what was on screen; never let it
-            // append to the snapshot we are restoring.
-            moreJob?.cancel()
+            // A page in flight belongs to what was on screen: never let it
+            // append to the snapshot we are restoring (set cancels it).
             restore(cached)
             return
         }
@@ -129,7 +119,6 @@ internal class GenreDetailStateHolder(
         this.type = type
         if (cached != null) {
             currentJob?.cancel()
-            moreJob?.cancel()
             restore(cached)
             return
         }
@@ -160,22 +149,18 @@ internal class GenreDetailStateHolder(
     }
 
     fun loadMore() {
-        if (isLoadingMore || !hasNextPage) return
-        val nextPage = currentPage + 1
-        moreJob = scope.launch {
-            isLoadingMore = true
-            when (val result = loadPage(nextPage)) {
-                is NetworkResult.Success -> {
-                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
-                    cacheSnapshot()
-                    actionError = null
-                }
-                is NetworkResult.Failure -> actionError = result.error
-            }
-            isLoadingMore = false
-        }
+        val genre = name
+        val catalog = type
+        media.loadMore(
+            scope = scope,
+            isCurrent = { name == genre && type == catalog },
+            fetch = { page -> loadPage(page) },
+            onLoaded = {
+                actionError = null
+                cacheSnapshot()
+            },
+            onError = { actionError = it },
+        )
     }
 
     /**
@@ -188,23 +173,16 @@ internal class GenreDetailStateHolder(
         currentJob?.cancel()
         // The new list starts at page 1: an in-flight page (old sort, or another
         // catalog) is dropped instead of merging into it.
-        moreJob?.cancel()
-        if (clearMedia) {
-            mediaItems = emptyList()
-            hasNextPage = false
-            currentPage = 1
-        }
+        media.cancel()
+        if (clearMedia) media.clear()
         if (showSpinner) pageLoaded = false
         error = null
         actionError = null
         isLoading = true
-        isLoadingMore = false
         currentJob = scope.launch {
             when (val result = loadPage(1)) {
                 is NetworkResult.Success -> {
-                    mediaItems = result.value.items.distinctBy { it.mediaId }
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
+                    media.set(result.value)
                     pageLoaded = true
                     cacheSnapshot()
                 }
@@ -225,16 +203,13 @@ internal class GenreDetailStateHolder(
 
     /** Puts a cached snapshot back on screen (works, cursor and sort). */
     private fun restore(snapshot: GenreSnapshot) {
-        mediaItems = snapshot.mediaItems
-        hasNextPage = snapshot.hasNextPage
-        currentPage = snapshot.currentPage
+        media.set(snapshot.media)
         sortOption = snapshot.sortOption
         sortOrder = snapshot.sortOrder
         pageLoaded = true
         error = null
         actionError = null
         isLoading = false
-        isLoadingMore = false
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
@@ -256,9 +231,7 @@ internal class GenreDetailStateHolder(
         detailCache.put(
             GenreKey(name, type, hideAdultState),
             GenreSnapshot(
-                mediaItems = mediaItems,
-                hasNextPage = hasNextPage,
-                currentPage = currentPage,
+                media = media.snapshot(),
                 sortOption = sortOption,
                 sortOrder = sortOrder,
             ),

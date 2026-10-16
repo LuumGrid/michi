@@ -197,6 +197,7 @@ com.luum.michi.app
     util/                     pure helpers (HTML stripping, URL parsing/host normalization)
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
+    state/                  PagedList (shared paginated list: Compose state + append/dedup/cancel rules, used by the detail + genre holders)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
     theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle, ThemeProvider
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
@@ -210,7 +211,7 @@ com.luum.michi.app
                           ScoreFormat, ScoreFormatDisplay, ListSort, DiscoverTabOption, NotificationPreferences)
     repository/           SettingsRepositoryImpl (`UserSettings` query + `UpdateUser` mutation)
     ui/SettingsScreen.kt  shell (rows land step by step; no own header)
-    ui/state/             SettingsState (Compose-backed) + rememberSettingsState (App-owned instance; rows land step by step)
+    ui/state/             SettingsState (Compose-backed; prefs via `StoredPref`, one per preference: state + default + store codec + synced) + rememberSettingsState (App-owned instance; rows land step by step)
 ```
 
 Sub-packages follow the same feature-first rule inside `core/` (`core/auth/`,

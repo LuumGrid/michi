@@ -18,10 +18,3 @@ internal data class MediaGridItem(
     val favourites: Int? = null,
     val genres: List<String> = emptyList(),
 )
-
-/** A page of [MediaGridItem]s plus its pagination cursor. */
-internal data class MediaGridPage(
-    val items: List<MediaGridItem>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)

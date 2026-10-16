@@ -20,12 +20,11 @@ import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.util.toHtmlContent
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -245,16 +244,16 @@ private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
     }
 }
 
-private fun StaffMediaConnectionDto?.toMediaPage(fallbackPage: Int): StaffMediaPage {
-    return StaffMediaPage(
+private fun StaffMediaConnectionDto?.toMediaPage(fallbackPage: Int): Page<StaffMediaItem> {
+    return Page(
         items = this?.edges.orEmpty().mapNotNull { it.toItem() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
     )
 }
 
-private fun StaffCharacterMediaConnectionDto?.toCharacterPage(fallbackPage: Int): StaffCharacterPage {
-    return StaffCharacterPage(
+private fun StaffCharacterMediaConnectionDto?.toCharacterPage(fallbackPage: Int): Page<StaffCharacterItem> {
+    return Page(
         items = this?.edges.orEmpty().flatMap { it.toItems() },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
@@ -328,7 +327,7 @@ internal class StaffDetailRepositoryImpl(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-    ): NetworkResult<StaffMediaPage> {
+    ): NetworkResult<Page<StaffMediaItem>> {
         val request = AniListGraphQLRequest(
             query = StaffMediaPageQuery,
             variables = JsonObject(
@@ -351,7 +350,7 @@ internal class StaffDetailRepositoryImpl(
             .map { it.staffMedia.toMediaPage(fallbackPage = page) }
     }
 
-    override suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<StaffCharacterPage> {
+    override suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<Page<StaffCharacterItem>> {
         val request = AniListGraphQLRequest(
             query = StaffCharacterPageQuery,
             variables = JsonObject(

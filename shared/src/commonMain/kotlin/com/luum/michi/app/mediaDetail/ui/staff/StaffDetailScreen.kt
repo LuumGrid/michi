@@ -155,7 +155,7 @@ private fun StaffDetailContent(
         }
         // Empty rails are not painted at all (a header with "No media" reads as
         // a broken section).
-        if (holder.mediaItems.isNotEmpty()) {
+        if (holder.media.items.isNotEmpty()) {
             item(key = "roles") {
                 RolesSection(
                     holder = holder,
@@ -165,7 +165,7 @@ private fun StaffDetailContent(
                 )
             }
         }
-        if (holder.characterItems.isNotEmpty()) {
+        if (holder.characters.items.isNotEmpty()) {
             item(key = "characters") {
                 CharactersSection(
                     holder = holder,
@@ -210,7 +210,7 @@ private fun RolesSection(
 ) {
     MediaRail(
         title = strings.mediaDetailRolesTitle,
-        items = holder.mediaItems.take(RailPageSize).map { it.toRailItem() },
+        items = holder.media.items.take(RailPageSize).map { it.toRailItem() },
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
@@ -226,7 +226,7 @@ private fun CharactersSection(
 ) {
     MediaRail(
         title = strings.mediaDetailCharactersTitle,
-        items = holder.characterItems.take(RailPageSize).map { it.toRailItem() },
+        items = holder.characters.items.take(RailPageSize).map { it.toRailItem() },
         onSelect = onOpenCharacter,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,

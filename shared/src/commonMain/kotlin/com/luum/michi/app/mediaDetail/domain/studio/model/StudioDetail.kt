@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.studio.model
 
-import com.luum.michi.app.core.model.MediaGridPage
+import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.model.Page
 
 internal data class StudioDetail(
     val id: Int,
@@ -8,7 +9,7 @@ internal data class StudioDetail(
     val isAnimeStudio: Boolean,
     val favourites: Int?,
     val isFavourite: Boolean,
-    val media: MediaGridPage,
+    val media: Page<MediaGridItem>,
 )
 
 /** Canonical AniList page for this studio. */

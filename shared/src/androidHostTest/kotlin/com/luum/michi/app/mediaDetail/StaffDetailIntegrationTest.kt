@@ -1,14 +1,13 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -39,8 +38,8 @@ private fun staffCharacterItem(id: Int) = StaffCharacterItem(
 
 private fun staffDetail(
     id: Int,
-    media: StaffMediaPage = StaffMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
-    characters: StaffCharacterPage = StaffCharacterPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media: Page<StaffMediaItem> = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    characters: Page<StaffCharacterItem> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     isFavourite: Boolean = false,
 ) = StaffDetail(
     id = id,
@@ -71,8 +70,8 @@ private fun staffDetail(
  * cache hits, sort reloads and per-list pagination.
  */
 private class RecordingStaffRepository(
-    private val mediaPages: Map<Int, StaffMediaPage> = emptyMap(),
-    private val characterPages: Map<Int, StaffCharacterPage> = emptyMap(),
+    private val mediaPages: Map<Int, Page<StaffMediaItem>> = emptyMap(),
+    private val characterPages: Map<Int, Page<StaffCharacterItem>> = emptyMap(),
 ) : StaffDetailRepository {
     var detailCalls = 0
         private set
@@ -90,8 +89,8 @@ private class RecordingStaffRepository(
         return NetworkResult.Success(
             staffDetail(
                 id = id,
-                media = mediaPages[1] ?: StaffMediaPage(emptyList(), false, 1),
-                characters = characterPages[1] ?: StaffCharacterPage(emptyList(), false, 1),
+                media = mediaPages[1] ?: Page(emptyList(), false, 1),
+                characters = characterPages[1] ?: Page(emptyList(), false, 1),
                 isFavourite = favourite,
             ),
         )
@@ -100,14 +99,14 @@ private class RecordingStaffRepository(
     override suspend fun loadMediaPage(
         id: Int,
         page: Int,
-    ): NetworkResult<StaffMediaPage> {
+    ): NetworkResult<Page<StaffMediaItem>> {
         mediaCalls++
-        return NetworkResult.Success(mediaPages[page] ?: StaffMediaPage(emptyList(), false, page))
+        return NetworkResult.Success(mediaPages[page] ?: Page(emptyList(), false, page))
     }
 
-    override suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<StaffCharacterPage> {
+    override suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<Page<StaffCharacterItem>> {
         characterCalls++
-        return NetworkResult.Success(characterPages[page] ?: StaffCharacterPage(emptyList(), false, page))
+        return NetworkResult.Success(characterPages[page] ?: Page(emptyList(), false, page))
     }
 
     override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
@@ -127,16 +126,16 @@ class StaffDetailIntegrationTest {
     @Test
     fun loadHydratesDetailMediaAndCharacters() {
         val repository = RecordingStaffRepository(
-            mediaPages = mapOf(1 to StaffMediaPage(listOf(staffMediaItem(7)), false, 1)),
-            characterPages = mapOf(1 to StaffCharacterPage(listOf(staffCharacterItem(9)), false, 1)),
+            mediaPages = mapOf(1 to Page(listOf(staffMediaItem(7)), false, 1)),
+            characterPages = mapOf(1 to Page(listOf(staffCharacterItem(9)), false, 1)),
         )
         val holder = holderWired(repository)
 
         holder.load(3)
 
         assertEquals("Staff 3", holder.detail?.name)
-        assertEquals(listOf(7), holder.mediaItems.map { it.mediaId })
-        assertEquals(listOf(9), holder.characterItems.map { it.characterId })
+        assertEquals(listOf(7), holder.media.items.map { it.mediaId })
+        assertEquals(listOf(9), holder.characters.items.map { it.characterId })
         assertFalse(holder.isLoading)
         assertNull(holder.error)
         assertEquals(1, repository.detailCalls)
@@ -159,19 +158,19 @@ class StaffDetailIntegrationTest {
     fun loadMoreMediaAppendsNextPage() {
         val repository = RecordingStaffRepository(
             mediaPages = mapOf(
-                1 to StaffMediaPage(listOf(staffMediaItem(1)), hasNextPage = true, currentPage = 1),
-                2 to StaffMediaPage(listOf(staffMediaItem(2)), hasNextPage = false, currentPage = 2),
+                1 to Page(listOf(staffMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(staffMediaItem(2)), hasNextPage = false, currentPage = 2),
             ),
         )
         val holder = holderWired(repository)
 
         holder.load(1)
-        assertTrue(holder.mediaHasNextPage)
+        assertTrue(holder.media.hasNextPage)
 
         holder.loadMoreMedia()
 
-        assertEquals(listOf(1, 2), holder.mediaItems.map { it.mediaId })
-        assertFalse(holder.mediaHasNextPage)
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
+        assertFalse(holder.media.hasNextPage)
         assertEquals(1, repository.mediaCalls)
     }
 
@@ -225,7 +224,7 @@ class StaffDetailFavouriteCacheTest {
 
     @Test
     fun twoRolesOnTheSameWorkAreBothKept() {
-        val roles = StaffMediaPage(
+        val roles = Page(
             listOf(
                 staffMediaItem(7).copy(staffRole = "Director"),
                 staffMediaItem(7).copy(staffRole = "Storyboard"),
@@ -239,7 +238,7 @@ class StaffDetailFavouriteCacheTest {
 
         assertEquals(
             listOf("Director", "Storyboard"),
-            holder.mediaItems.map { it.staffRole },
+            holder.media.items.map { it.staffRole },
             "dedup is by work + role, not by work alone",
         )
     }

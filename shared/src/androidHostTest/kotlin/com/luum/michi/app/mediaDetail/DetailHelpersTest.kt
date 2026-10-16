@@ -1,15 +1,12 @@
 package com.luum.michi.app.mediaDetail
 
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
-import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaPage
 import com.luum.michi.app.mediaDetail.domain.character.model.aniListUrl as characterAniListUrl
 import com.luum.michi.app.mediaDetail.domain.character.model.shareText as characterShareText
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterPage
-import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaPage
 import com.luum.michi.app.mediaDetail.domain.staff.model.aniListUrl as staffAniListUrl
 import com.luum.michi.app.mediaDetail.domain.staff.model.shareText as staffShareText
-import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAniListUrl
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
@@ -33,7 +30,7 @@ private fun characterDetail(id: Int, name: String) = CharacterDetail(
     birthday = null,
     favourites = null,
     isFavourite = false,
-    media = CharacterMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media = Page(emptyList(), hasNextPage = false, currentPage = 1),
 )
 
 private fun staffDetail(id: Int, name: String) = StaffDetail(
@@ -56,8 +53,8 @@ private fun staffDetail(id: Int, name: String) = StaffDetail(
     bloodType = null,
     favourites = null,
     isFavourite = false,
-    media = StaffMediaPage(emptyList(), hasNextPage = false, currentPage = 1),
-    characters = StaffCharacterPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    characters = Page(emptyList(), hasNextPage = false, currentPage = 1),
 )
 
 private fun studioDetail(id: Int, name: String) = StudioDetail(
@@ -66,7 +63,7 @@ private fun studioDetail(id: Int, name: String) = StudioDetail(
     isAnimeStudio = true,
     favourites = null,
     isFavourite = false,
-    media = MediaGridPage(emptyList(), hasNextPage = false, currentPage = 1),
+    media = Page(emptyList(), hasNextPage = false, currentPage = 1),
 )
 
 class DetailHelpersTest {

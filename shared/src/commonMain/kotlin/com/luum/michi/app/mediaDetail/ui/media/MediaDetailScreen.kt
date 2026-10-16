@@ -158,21 +158,21 @@ private fun MediaDetailContent(
             item(key = "characters") {
                 MediaRail(
                     title = strings.mediaDetailCharactersTitle,
-                    items = holder.characters.take(RailPageSize).map { it.toRailItem(strings) },
+                    items = holder.characters.items.take(RailPageSize).map { it.toRailItem(strings) },
                     onSelect = onOpenCharacter,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_CHARACTERS) },
                     viewAllLabel = strings.viewAllAction,
                     // A language with no cast empties the rail: say so
                     // instead of leaving a bare header.
-                    emptyLabel = strings.mediaDetailNoCharactersLabel.takeIf { !holder.isLoadingCharacters },
+                    emptyLabel = strings.mediaDetailNoCharactersLabel.takeIf { !holder.characters.isLoadingMore },
                 )
             }
         }
-        if (holder.staff.isNotEmpty()) {
+        if (holder.staff.items.isNotEmpty()) {
             item(key = "staff") {
                 MediaRail(
                     title = strings.mediaDetailTabStaff,
-                    items = holder.staff.take(RailPageSize).map { it.toRailItem() },
+                    items = holder.staff.items.take(RailPageSize).map { it.toRailItem() },
                     onSelect = onOpenStaff,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_STAFF) },
                     viewAllLabel = strings.viewAllAction,
@@ -198,11 +198,11 @@ private fun MediaDetailContent(
                 )
             }
         }
-        if (holder.recommendations.isNotEmpty()) {
+        if (holder.recommendations.items.isNotEmpty()) {
             item(key = "recommendations") {
                 MediaRail(
                     title = strings.mediaDetailTabRecommendations,
-                    items = holder.recommendations.take(RailPageSize).map { it.toRailItem(strings, isManga) },
+                    items = holder.recommendations.items.take(RailPageSize).map { it.toRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RECOMMENDATIONS) },
                     viewAllLabel = strings.viewAllAction,

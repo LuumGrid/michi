@@ -28,28 +28,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val KeyTitleLanguage = "title_language"
-private const val KeyStaffNameLanguage = "staff_name_language"
-private const val KeyDisplayAdultContent = "display_adult_content"
-private const val KeyScoreFormat = "score_format"
-private const val KeyListSort = "list_sort"
-private const val KeySplitCompletedAnime = "split_completed_anime"
-private const val KeySplitCompletedManga = "split_completed_manga"
-private const val KeyAdvancedScoring = "advanced_scoring"
-private const val KeyAdvancedScoringAnimeNames = "advanced_scoring_anime_names"
-private const val KeyAdvancedScoringMangaNames = "advanced_scoring_manga_names"
-private const val KeyImageQuality = "image_quality"
-private const val KeyPersistListSort = "persist_list_sort"
-private const val KeyNotificationAiring = "notification_airing"
-private const val KeyNotificationActivity = "notification_activity"
-private const val KeyNotificationFollowing = "notification_following"
-private const val KeyNotificationForum = "notification_forum"
-private const val KeyNotificationMessages = "notification_messages"
-private const val KeyNotificationMedia = "notification_media"
+/**
+ * Store keys only SettingsState reads. The shell's startup keys
+ * (`SettingsStoreKeys.Start*`) stay in core because Root reads them; these never
+ * leave settings.
+ */
+private object SettingsPrefKeys {
+    const val TitleLanguage = "title_language"
+    const val StaffNameLanguage = "staff_name_language"
+    const val DisplayAdultContent = "display_adult_content"
+    const val ScoreFormat = "score_format"
+    const val ListSort = "list_sort"
+    const val SplitCompletedAnime = "split_completed_anime"
+    const val SplitCompletedManga = "split_completed_manga"
+    const val AdvancedScoring = "advanced_scoring"
+    const val AdvancedScoringAnimeNames = "advanced_scoring_anime_names"
+    const val AdvancedScoringMangaNames = "advanced_scoring_manga_names"
+    const val ImageQuality = "image_quality"
+    const val PersistListSort = "persist_list_sort"
+    const val NotificationAiring = "notification_airing"
+    const val NotificationActivity = "notification_activity"
+    const val NotificationFollowing = "notification_following"
+    const val NotificationForum = "notification_forum"
+    const val NotificationMessages = "notification_messages"
+    const val NotificationMedia = "notification_media"
+}
 
 private val SaveDebounce = 600.milliseconds
-
-private const val NAME_SEPARATOR = "\u001F"
 
 internal class SettingsState(
     private val repository: SettingsRepository,
@@ -57,163 +62,151 @@ internal class SettingsState(
     private val scope: CoroutineScope,
     val canSync: Boolean = true,
 ) {
-    // AniList-synced prefs. Backed by state so the UI recomposes on
-    // load/save; public setters persist locally and schedule the save.
-    private val titleLanguageState = mutableStateOf(TitleLanguage.ROMAJI)
-    var titleLanguage: TitleLanguage
-        get() = titleLanguageState.value
-        set(value) {
-            titleLanguageState.value = value
-            persistTitleLanguage(value)
-            scheduleSave()
-        }
+    // ── Synced pref factories: the public setter schedules the AniList save. ──
+    private fun syncedBoolean(key: String, default: Boolean) =
+        booleanPref(key, default, store) { scheduleSave() }
 
-    private val staffNameLanguageState = mutableStateOf(StaffNameLanguage.ROMAJI_WESTERN)
-    var staffNameLanguage: StaffNameLanguage
-        get() = staffNameLanguageState.value
-        set(value) {
-            staffNameLanguageState.value = value
-            persistStaffNameLanguage(value)
-            scheduleSave()
-        }
+    private fun <E : Enum<E>> syncedEnum(key: String, default: E, values: List<E>) =
+        enumPref(key, default, values, store) { scheduleSave() }
 
-    private val displayAdultContentState = mutableStateOf(false)
-    var displayAdultContent: Boolean
-        get() = displayAdultContentState.value
-        set(value) {
-            displayAdultContentState.value = value
-            store.putBoolean(KeyDisplayAdultContent, value)
-            scheduleSave()
-        }
+    private fun syncedStringList(key: String) =
+        stringListPref(key, store) { scheduleSave() }
 
-    private val scoreFormatState = mutableStateOf(ScoreFormat.POINT_10_DECIMAL)
-    var scoreFormat: ScoreFormat
-        get() = scoreFormatState.value
-        set(value) {
-            scoreFormatState.value = value
-            persistScoreFormat(value)
-            scheduleSave()
-        }
+    private fun syncedNotifications(keys: NotificationKeys) =
+        notificationsStoredPref(keys, store) { scheduleSave() }
 
-    private val listSortState = mutableStateOf(ListSort.UPDATED)
-    var listSort: ListSort
-        get() = listSortState.value
-        set(value) {
-            listSortState.value = value
-            saveListSort(value)
-            scheduleSave()
-        }
+    // ── Local pref factories: store only, never saved to AniList. ──
+    private fun localBoolean(key: String, default: Boolean) =
+        booleanPref(key, default, store)
 
-    private val splitCompletedAnimeState = mutableStateOf(true)
-    var splitCompletedAnime: Boolean
-        get() = splitCompletedAnimeState.value
-        set(value) {
-            splitCompletedAnimeState.value = value
-            store.putBoolean(KeySplitCompletedAnime, value)
-            scheduleSave()
-        }
+    private fun <E : Enum<E>> localEnum(key: String, default: E, values: List<E>) =
+        enumPref(key, default, values, store)
 
-    private val splitCompletedMangaState = mutableStateOf(false)
-    var splitCompletedManga: Boolean
-        get() = splitCompletedMangaState.value
-        set(value) {
-            splitCompletedMangaState.value = value
-            store.putBoolean(KeySplitCompletedManga, value)
-            scheduleSave()
-        }
+    private fun localString(key: String, default: String) =
+        stringPref(key, default, store)
 
-    private val advancedScoringState = mutableStateOf(false)
-    var advancedScoring: Boolean
-        get() = advancedScoringState.value
-        set(value) {
-            advancedScoringState.value = value
-            store.putBoolean(KeyAdvancedScoring, value)
-            scheduleSave()
-        }
+    // ── AniList-synced prefs. Backed by state so the UI recomposes on
+    //    load/save; public setters persist locally and schedule the save. ──
+    private val titleLanguagePref =
+        syncedEnum(SettingsPrefKeys.TitleLanguage, TitleLanguage.ROMAJI, TitleLanguage.entries)
+    var titleLanguage: TitleLanguage by titleLanguagePref
+
+    private val staffNameLanguagePref =
+        syncedEnum(SettingsPrefKeys.StaffNameLanguage, StaffNameLanguage.ROMAJI_WESTERN, StaffNameLanguage.entries)
+    var staffNameLanguage: StaffNameLanguage by staffNameLanguagePref
+
+    private val displayAdultContentPref =
+        syncedBoolean(SettingsPrefKeys.DisplayAdultContent, false)
+    var displayAdultContent: Boolean by displayAdultContentPref
+
+    private val scoreFormatPref =
+        syncedEnum(SettingsPrefKeys.ScoreFormat, ScoreFormat.POINT_10_DECIMAL, ScoreFormat.entries)
+    var scoreFormat: ScoreFormat by scoreFormatPref
+
+    private val listSortPref =
+        syncedEnum(SettingsPrefKeys.ListSort, ListSort.UPDATED, ListSort.entries)
+    var listSort: ListSort by listSortPref
+
+    private val splitCompletedAnimePref =
+        syncedBoolean(SettingsPrefKeys.SplitCompletedAnime, true)
+    var splitCompletedAnime: Boolean by splitCompletedAnimePref
+
+    private val splitCompletedMangaPref =
+        syncedBoolean(SettingsPrefKeys.SplitCompletedManga, false)
+    var splitCompletedManga: Boolean by splitCompletedMangaPref
+
+    private val advancedScoringPref =
+        syncedBoolean(SettingsPrefKeys.AdvancedScoring, false)
+    var advancedScoring: Boolean by advancedScoringPref
 
     // Advanced-scoring category names per list type: server-owned but
     // store-persisted (like the toggle) so the editor section survives
     // restarts without opening Settings; refresh overwrites from server.
-    // Encoded with the unit separator (never appears in category names).
-    private val advancedScoringAnimeState = mutableStateOf(emptyList<String>())
-    var advancedScoringAnime: List<String>
-        get() = advancedScoringAnimeState.value
-        private set(value) {
-            advancedScoringAnimeState.value = value
-        }
+    // Read-only outside: only the pref writes them (hydrate/reset/applyLoaded).
+    private val advancedScoringAnimePref =
+        syncedStringList(SettingsPrefKeys.AdvancedScoringAnimeNames)
+    val advancedScoringAnime: List<String> get() = advancedScoringAnimePref.value
 
-    private val advancedScoringMangaState = mutableStateOf(emptyList<String>())
-    var advancedScoringManga: List<String>
-        get() = advancedScoringMangaState.value
-        private set(value) {
-            advancedScoringMangaState.value = value
-        }
+    private val advancedScoringMangaPref =
+        syncedStringList(SettingsPrefKeys.AdvancedScoringMangaNames)
+    val advancedScoringManga: List<String> get() = advancedScoringMangaPref.value
 
-    // Local-only: AniList has no field for sort memory, so this never
-    // joins currentData()/scheduleSave — store only, like App theme/language.
-    // ON by default: sort is set-and-forget, and non-changers save nothing
-    // (fallback stays FOLLOW_LIST), so nobody is surprised either way.
-    private val persistListSortState = mutableStateOf(true)
-    var persistListSort: Boolean
-        get() = persistListSortState.value
-        set(value) {
-            persistListSortState.value = value
-            store.putBoolean(KeyPersistListSort, value)
-        }
+    private val notificationsPref = syncedNotifications(
+        NotificationKeys(
+            airing = SettingsPrefKeys.NotificationAiring,
+            activity = SettingsPrefKeys.NotificationActivity,
+            following = SettingsPrefKeys.NotificationFollowing,
+            forum = SettingsPrefKeys.NotificationForum,
+            messages = SettingsPrefKeys.NotificationMessages,
+            media = SettingsPrefKeys.NotificationMedia,
+        ),
+    )
+    var notifications: NotificationPreferences by notificationsPref
 
-    // Local-only (never synced): how sharp the covers render.
-    private val imageQualityState = mutableStateOf(ImageQuality.AUTO)
-    var imageQuality: ImageQuality
-        get() = imageQualityState.value
-        set(value) {
-            imageQualityState.value = value
-            store.putString(KeyImageQuality, value.name)
-        }
+    // ── Local-only prefs: AniList has no field for these, so they never join
+    //    currentData()/scheduleSave — store only, like App theme/language. ──
 
-    // Local-only (never synced): where the shell opens and the dependent
-    // sub-choice for that tab. The section ids are the feature enums' names —
-    // settings never imports a feature; Root validates and resolves them (an
-    // unknown/renamed id falls back to ALL).
-    private val startTabState = mutableStateOf(StartTabOption.DISCOVER)
-    var startTab: StartTabOption
-        get() = startTabState.value
-        set(value) {
-            startTabState.value = value
-            store.putString(SettingsStoreKeys.StartTab, value.name)
-        }
+    // Sort memory. ON by default: sort is set-and-forget, and non-changers
+    // save nothing (fallback stays FOLLOW_LIST), so nobody is surprised.
+    private val persistListSortPref = localBoolean(SettingsPrefKeys.PersistListSort, true)
+    var persistListSort: Boolean by persistListSortPref
 
-    private val startCatalogTypeState = mutableStateOf(StartCatalogOption.ANIME)
-    var startCatalogType: StartCatalogOption
-        get() = startCatalogTypeState.value
-        set(value) {
-            startCatalogTypeState.value = value
-            store.putString(SettingsStoreKeys.StartCatalogType, value.name)
-        }
+    // How sharp the covers render.
+    private val imageQualityPref =
+        localEnum(SettingsPrefKeys.ImageQuality, ImageQuality.AUTO, ImageQuality.entries)
+    var imageQuality: ImageQuality by imageQualityPref
 
-    private val startAnimeSectionState = mutableStateOf("ALL")
-    var startAnimeSectionId: String
-        get() = startAnimeSectionState.value
-        set(value) {
-            startAnimeSectionState.value = value
-            store.putString(SettingsStoreKeys.StartAnimeSection, value)
-        }
+    // "Pestaña al abrir": where the shell opens and the dependent sub-choice for
+    // that tab. The section ids are the feature enums' names — settings never
+    // imports a feature; Root validates and resolves them (an unknown/renamed
+    // id falls back to ALL).
+    private val startTabPref =
+        localEnum(SettingsStoreKeys.StartTab, StartTabOption.DISCOVER, StartTabOption.entries)
+    var startTab: StartTabOption by startTabPref
 
-    private val startMangaSectionState = mutableStateOf("ALL")
-    var startMangaSectionId: String
-        get() = startMangaSectionState.value
-        set(value) {
-            startMangaSectionState.value = value
-            store.putString(SettingsStoreKeys.StartMangaSection, value)
-        }
+    private val startCatalogTypePref =
+        localEnum(SettingsStoreKeys.StartCatalogType, StartCatalogOption.ANIME, StartCatalogOption.entries)
+    var startCatalogType: StartCatalogOption by startCatalogTypePref
 
-    private val notificationsState = mutableStateOf(NotificationPreferences())
-    var notifications: NotificationPreferences
-        get() = notificationsState.value
-        set(value) {
-            notificationsState.value = value
-            persistNotifications(value)
-            scheduleSave()
-        }
+    private val startAnimeSectionPref = localString(SettingsStoreKeys.StartAnimeSection, "ALL")
+    var startAnimeSectionId: String by startAnimeSectionPref
+
+    private val startMangaSectionPref = localString(SettingsStoreKeys.StartMangaSection, "ALL")
+    var startMangaSectionId: String by startMangaSectionPref
+
+    /** Every pref (hydrated together); synced ones also reset together. */
+    private val allPrefs: List<StoredPref<*>> = listOf(
+        titleLanguagePref,
+        staffNameLanguagePref,
+        displayAdultContentPref,
+        scoreFormatPref,
+        listSortPref,
+        splitCompletedAnimePref,
+        splitCompletedMangaPref,
+        advancedScoringPref,
+        advancedScoringAnimePref,
+        advancedScoringMangaPref,
+        notificationsPref,
+        persistListSortPref,
+        imageQualityPref,
+        startTabPref,
+        startCatalogTypePref,
+        startAnimeSectionPref,
+        startMangaSectionPref,
+    )
+    private val syncedPrefs: List<StoredPref<*>> = listOf(
+        titleLanguagePref,
+        staffNameLanguagePref,
+        displayAdultContentPref,
+        scoreFormatPref,
+        listSortPref,
+        splitCompletedAnimePref,
+        splitCompletedMangaPref,
+        advancedScoringPref,
+        advancedScoringAnimePref,
+        advancedScoringMangaPref,
+        notificationsPref,
+    )
 
     private val errorState = mutableStateOf<NetworkError?>(null)
     var error: NetworkError?
@@ -251,6 +244,7 @@ internal class SettingsState(
     /** In-flight load, if any. Same Job idiom as saveJob. */
     private var loadJob: Job? = null
 
+    // Runs after every pref + list above, so hydrateFromStore() sees them all.
     init {
         hydrateFromStore()
     }
@@ -293,109 +287,31 @@ internal class SettingsState(
      */
     fun seedFrom(viewer: Viewer) {
         val title = parseTitleLanguage(viewer.titleLanguage)
-        titleLanguageState.value = title
-        persistTitleLanguage(title)
-        displayAdultContentState.value = viewer.displayAdultContent
-        store.putBoolean(KeyDisplayAdultContent, viewer.displayAdultContent)
-        val score = parseScoreFormat(viewer.scoreFormat)
-        scoreFormatState.value = score
-        persistScoreFormat(score)
+        titleLanguagePref.setSilently(title)
+        displayAdultContentPref.setSilently(viewer.displayAdultContent)
+        scoreFormatPref.setSilently(parseScoreFormat(viewer.scoreFormat))
         lastSyncedTitleLanguage = title
     }
 
     /**
-     * Drops the synced prefs back to defaults and clears their store keys, so a
-     * guest never inherits the previous account's 18+ gate. Local-only prefs
-     * (theme, language, start tab, image quality) are untouched. Called only on
-     * a user → guest transition, never on a cold start as a guest.
+     * Drops the synced prefs back to defaults and writes those defaults to the
+     * store, so a guest never inherits the previous account's 18+ gate. Local
+     * prefs (start tab, image quality, persist list sort) are untouched. Called
+     * only on a user → guest transition, never on a cold start as a guest.
      */
     fun clearSynced() {
-        titleLanguageState.value = TitleLanguage.ROMAJI
-        store.putString(KeyTitleLanguage, TitleLanguage.ROMAJI.name)
-        staffNameLanguageState.value = StaffNameLanguage.ROMAJI_WESTERN
-        store.putString(KeyStaffNameLanguage, StaffNameLanguage.ROMAJI_WESTERN.name)
-        displayAdultContentState.value = false
-        store.putBoolean(KeyDisplayAdultContent, false)
-        scoreFormatState.value = ScoreFormat.POINT_10_DECIMAL
-        store.putString(KeyScoreFormat, ScoreFormat.POINT_10_DECIMAL.name)
-        listSortState.value = ListSort.UPDATED
-        store.putString(KeyListSort, ListSort.UPDATED.name)
-        splitCompletedAnimeState.value = true
-        store.putBoolean(KeySplitCompletedAnime, true)
-        splitCompletedMangaState.value = false
-        store.putBoolean(KeySplitCompletedManga, false)
-        advancedScoringState.value = false
-        store.putBoolean(KeyAdvancedScoring, false)
-        advancedScoringAnime = emptyList()
-        store.putString(KeyAdvancedScoringAnimeNames, "")
-        advancedScoringManga = emptyList()
-        store.putString(KeyAdvancedScoringMangaNames, "")
-        notificationsState.value = NotificationPreferences()
-        persistNotifications(NotificationPreferences())
-        lastSyncedTitleLanguage = TitleLanguage.ROMAJI
-        lastSyncedStaffNameLanguage = StaffNameLanguage.ROMAJI_WESTERN
+        syncedPrefs.forEach { it.reset() }
+        // reset() restored the defaults, so the state is the new baseline.
+        lastSyncedTitleLanguage = titleLanguage
+        lastSyncedStaffNameLanguage = staffNameLanguage
     }
 
     private fun hydrateFromStore() {
-        store.getString(KeyTitleLanguage)?.let { saved ->
-            TitleLanguage.entries.firstOrNull { it.name == saved }?.let {
-                titleLanguageState.value = it
-            }
-        }
-        store.getString(KeyStaffNameLanguage)?.let { saved ->
-            StaffNameLanguage.entries.firstOrNull { it.name == saved }?.let {
-                staffNameLanguageState.value = it
-            }
-        }
-        displayAdultContentState.value =
-            store.getBoolean(KeyDisplayAdultContent, displayAdultContentState.value)
-        store.getString(KeyScoreFormat)?.let { saved ->
-            ScoreFormat.entries.firstOrNull { it.name == saved }?.let {
-                scoreFormatState.value = it
-            }
-        }
-        store.getString(KeyListSort)?.let { saved ->
-            ListSort.entries.firstOrNull { it.name == saved }?.let { listSortState.value = it }
-        }
-        splitCompletedAnimeState.value =
-            store.getBoolean(KeySplitCompletedAnime, splitCompletedAnimeState.value)
-        splitCompletedMangaState.value =
-            store.getBoolean(KeySplitCompletedManga, splitCompletedMangaState.value)
-        advancedScoringState.value =
-            store.getBoolean(KeyAdvancedScoring, advancedScoringState.value)
-        advancedScoringAnime = decodeNames(store.getString(KeyAdvancedScoringAnimeNames))
-        advancedScoringManga = decodeNames(store.getString(KeyAdvancedScoringMangaNames))
-        persistListSortState.value =
-            store.getBoolean(KeyPersistListSort, true)
-        store.getString(KeyImageQuality)?.let { saved ->
-            ImageQuality.entries.firstOrNull { it.name == saved }?.let {
-                imageQualityState.value = it
-            }
-        }
-        store.getString(SettingsStoreKeys.StartTab)?.let { saved ->
-            StartTabOption.entries.firstOrNull { it.name == saved }?.let { startTabState.value = it }
-        }
-        store.getString(SettingsStoreKeys.StartCatalogType)?.let { saved ->
-            StartCatalogOption.entries.firstOrNull { it.name == saved }?.let {
-                startCatalogTypeState.value = it
-            }
-        }
-        // Section ids are validated against the live section list by Root; a
-        // stale/renamed id simply resolves to ALL there.
-        store.getString(SettingsStoreKeys.StartAnimeSection)?.let { startAnimeSectionState.value = it }
-        store.getString(SettingsStoreKeys.StartMangaSection)?.let { startMangaSectionState.value = it }
-        notificationsState.value = NotificationPreferences(
-            airing = store.getBoolean(KeyNotificationAiring, notificationsState.value.airing),
-            activity = store.getBoolean(KeyNotificationActivity, notificationsState.value.activity),
-            following = store.getBoolean(KeyNotificationFollowing, notificationsState.value.following),
-            forum = store.getBoolean(KeyNotificationForum, notificationsState.value.forum),
-            messages = store.getBoolean(KeyNotificationMessages, notificationsState.value.messages),
-            media = store.getBoolean(KeyNotificationMedia, notificationsState.value.media),
-        )
+        allPrefs.forEach { it.hydrate() }
         // The hydrated values are the baseline until the server confirms: without
         // this, the first save would look like a change and force a false reload.
-        lastSyncedTitleLanguage = titleLanguageState.value
-        lastSyncedStaffNameLanguage = staffNameLanguageState.value
+        lastSyncedTitleLanguage = titleLanguage
+        lastSyncedStaffNameLanguage = staffNameLanguage
     }
 
     /**
@@ -406,78 +322,22 @@ internal class SettingsState(
      * (`current != before`) is kept instead of being overwritten.
      */
     private fun applyLoaded(data: SettingsData, before: SettingsData? = null) {
-        val title = keepEdited(titleLanguage, data.titleLanguage, before?.titleLanguage)
-        titleLanguageState.value = title
-        persistTitleLanguage(title)
-        val staffName = keepEdited(staffNameLanguage, data.staffNameLanguage, before?.staffNameLanguage)
-        staffNameLanguageState.value = staffName
-        persistStaffNameLanguage(staffName)
-        val adult = keepEdited(displayAdultContent, data.displayAdultContent, before?.displayAdultContent)
-        displayAdultContentState.value = adult
-        store.putBoolean(KeyDisplayAdultContent, adult)
-        val score = keepEdited(scoreFormat, data.scoreFormat, before?.scoreFormat)
-        scoreFormatState.value = score
-        persistScoreFormat(score)
-        val sort = keepEdited(listSort, data.listSort, before?.listSort)
-        listSortState.value = sort
-        saveListSort(sort)
-        val splitAnime = keepEdited(splitCompletedAnime, data.splitCompletedAnime, before?.splitCompletedAnime)
-        splitCompletedAnimeState.value = splitAnime
-        store.putBoolean(KeySplitCompletedAnime, splitAnime)
-        val splitManga = keepEdited(splitCompletedManga, data.splitCompletedManga, before?.splitCompletedManga)
-        splitCompletedMangaState.value = splitManga
-        store.putBoolean(KeySplitCompletedManga, splitManga)
-        val adv = keepEdited(advancedScoring, data.advancedScoring, before?.advancedScoring)
-        advancedScoringState.value = adv
-        store.putBoolean(KeyAdvancedScoring, adv)
-        val advAnime = keepEdited(advancedScoringAnime, data.advancedScoringAnime, before?.advancedScoringAnime)
-        advancedScoringAnime = advAnime
-        store.putString(KeyAdvancedScoringAnimeNames, encodeNames(advAnime))
-        val advManga = keepEdited(advancedScoringManga, data.advancedScoringManga, before?.advancedScoringManga)
-        advancedScoringManga = advManga
-        store.putString(KeyAdvancedScoringMangaNames, encodeNames(advManga))
-        val notifs = keepEdited(notifications, data.notifications, before?.notifications)
-        notificationsState.value = notifs
-        persistNotifications(notifs)
+        titleLanguagePref.applyLoaded(data.titleLanguage, before?.titleLanguage)
+        staffNameLanguagePref.applyLoaded(data.staffNameLanguage, before?.staffNameLanguage)
+        displayAdultContentPref.applyLoaded(data.displayAdultContent, before?.displayAdultContent)
+        scoreFormatPref.applyLoaded(data.scoreFormat, before?.scoreFormat)
+        listSortPref.applyLoaded(data.listSort, before?.listSort)
+        splitCompletedAnimePref.applyLoaded(data.splitCompletedAnime, before?.splitCompletedAnime)
+        splitCompletedMangaPref.applyLoaded(data.splitCompletedManga, before?.splitCompletedManga)
+        advancedScoringPref.applyLoaded(data.advancedScoring, before?.advancedScoring)
+        advancedScoringAnimePref.applyLoaded(data.advancedScoringAnime, before?.advancedScoringAnime)
+        advancedScoringMangaPref.applyLoaded(data.advancedScoringManga, before?.advancedScoringManga)
+        notificationsPref.applyLoaded(data.notifications, before?.notifications)
         // The baseline is what the SERVER sent, not the (possibly edited) value
         // kept above: an edit made during the load must still count as unsaved.
         lastSyncedTitleLanguage = data.titleLanguage
         lastSyncedStaffNameLanguage = data.staffNameLanguage
         error = null
-    }
-
-    /** Keeps the user's edit when it differs from the load-start value. */
-    private fun <T> keepEdited(current: T, loaded: T, baseline: T?): T =
-        if (baseline != null && current != baseline) current else loaded
-
-    private fun persistTitleLanguage(value: TitleLanguage) {
-        store.putString(KeyTitleLanguage, value.name)
-    }
-
-    private fun persistStaffNameLanguage(value: StaffNameLanguage) {
-        store.putString(KeyStaffNameLanguage, value.name)
-    }
-
-    private fun persistScoreFormat(value: ScoreFormat) {
-        store.putString(KeyScoreFormat, value.name)
-    }
-
-    private fun saveListSort(value: ListSort) {
-        store.putString(KeyListSort, value.name)
-    }
-
-    private fun encodeNames(names: List<String>): String =
-        names.filter { it.isNotBlank() }.joinToString(NAME_SEPARATOR)
-
-    private fun decodeNames(raw: String?): List<String> =
-        raw?.split(NAME_SEPARATOR).orEmpty().filter { it.isNotBlank() }
-
-    private fun persistNotifications(value: NotificationPreferences) {        store.putBoolean(KeyNotificationAiring, value.airing)
-        store.putBoolean(KeyNotificationActivity, value.activity)
-        store.putBoolean(KeyNotificationFollowing, value.following)
-        store.putBoolean(KeyNotificationForum, value.forum)
-        store.putBoolean(KeyNotificationMessages, value.messages)
-        store.putBoolean(KeyNotificationMedia, value.media)
     }
 
     private fun currentData(): SettingsData = SettingsData(

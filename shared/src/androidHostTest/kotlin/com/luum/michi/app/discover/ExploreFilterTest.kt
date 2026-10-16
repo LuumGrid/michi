@@ -1,8 +1,9 @@
 package com.luum.michi.app.discover
 
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaGridPage
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -75,7 +76,7 @@ private class FakeExploreRepository : ExploreRepository {
         page: Int,
         sort: String,
         hideAdult: Boolean,
-    ): NetworkResult<MediaGridPage> = NetworkResult.Success(MediaGridPage(emptyList(), false, page))
+    ): NetworkResult<Page<MediaGridItem>> = NetworkResult.Success(Page(emptyList(), false, page))
 
     override suspend fun searchCharacters(
         query: String?,

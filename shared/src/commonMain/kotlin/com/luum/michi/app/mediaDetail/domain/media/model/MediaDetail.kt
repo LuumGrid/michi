@@ -9,6 +9,7 @@ import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.ExternalLink
+import com.luum.michi.app.core.model.Page
 
 internal enum class MediaDetailType { ANIME, MANGA, UNKNOWN }
 
@@ -54,8 +55,8 @@ internal data class MediaDetail(
     val isFavourite: Boolean,
     val viewerEntry: MediaListViewerEntry?,
     val relations: List<MediaDetailRelation>,
-    val characters: MediaCharactersPage,
-    val staff: MediaStaffPage,
+    val characters: Page<MediaCharacterEntry>,
+    val staff: Page<MediaStaffEntry>,
     val titleRomaji: String?,
     val titleNative: String?,
     val synonyms: List<String>,
@@ -91,12 +92,6 @@ internal data class MediaTrailer(
     val thumbnailUrl: String?,
 )
 
-internal data class MediaRecommendationsPage(
-    val items: List<MediaRecommendationEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
 /** Localized work-release status (RELEASING → Airing/Publishing, etc.). */
 internal fun MediaDetail.workStatusLabel(strings: LanguageStrings): String? =
     status?.label(strings, type == MediaDetailType.MANGA)
@@ -120,24 +115,12 @@ internal data class MediaCharacterEntry(
     val role: MediaCharacterRole,
 )
 
-internal data class MediaCharactersPage(
-    val items: List<MediaCharacterEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
-)
-
 internal data class MediaStaffEntry(
     val edgeKey: String,
     val staffId: Int,
     val name: String,
     val image: CoverSizes?,
     val role: String?,
-)
-
-internal data class MediaStaffPage(
-    val items: List<MediaStaffEntry>,
-    val hasNextPage: Boolean,
-    val currentPage: Int,
 )
 
 internal enum class MediaRelationKind {

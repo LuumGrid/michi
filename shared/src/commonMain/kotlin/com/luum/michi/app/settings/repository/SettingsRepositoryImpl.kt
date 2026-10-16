@@ -146,6 +146,8 @@ private val MediaTypes get() = NotificationBucket.MEDIA.apiTypes
 
 private fun ViewerOptionsDto?.toNotificationPreferences(): NotificationPreferences {
     val byType = this?.notificationOptions.orEmpty().associate { it.type to it.enabled }
+    // Defaults live on NotificationPreferences itself, never repeated here.
+    val defaults = NotificationPreferences()
     fun bucketEnabled(types: List<String>, default: Boolean): Boolean {
         if (byType.isEmpty()) return default
         val relevant = types.mapNotNull { byType[it] }
@@ -153,12 +155,12 @@ private fun ViewerOptionsDto?.toNotificationPreferences(): NotificationPreferenc
         return relevant.any { it }
     }
     return NotificationPreferences(
-        airing = this?.airingNotifications ?: bucketEnabled(AiringTypes, default = true),
-        activity = bucketEnabled(ActivityTypes, default = true),
-        following = bucketEnabled(FollowingTypes, default = true),
-        forum = bucketEnabled(ForumTypes, default = false),
-        messages = bucketEnabled(MessagesTypes, default = true),
-        media = bucketEnabled(MediaTypes, default = true),
+        airing = this?.airingNotifications ?: bucketEnabled(AiringTypes, defaults.airing),
+        activity = bucketEnabled(ActivityTypes, defaults.activity),
+        following = bucketEnabled(FollowingTypes, defaults.following),
+        forum = bucketEnabled(ForumTypes, defaults.forum),
+        messages = bucketEnabled(MessagesTypes, defaults.messages),
+        media = bucketEnabled(MediaTypes, defaults.media),
     )
 }
 
