@@ -9,7 +9,7 @@ import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
 import com.luum.michi.app.settings.FakeSettingsStore
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

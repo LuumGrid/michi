@@ -18,7 +18,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
 import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

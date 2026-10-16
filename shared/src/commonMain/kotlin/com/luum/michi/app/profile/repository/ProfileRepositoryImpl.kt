@@ -4,9 +4,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 import com.luum.michi.app.profile.domain.ProfileData
-import com.luum.michi.app.profile.domain.ProfileFavoritesPage
 import com.luum.michi.app.profile.domain.ProfileRepository
+import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.person.repository.dto.CharacterDto
@@ -16,6 +17,7 @@ import com.luum.michi.app.core.person.repository.dto.StudioDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 
@@ -33,13 +35,11 @@ private const val PersonFavoriteNodeFields = """
   image { large medium }
 """
 
-/** Shared node fields for studio favourites. Single source of truth for both profile queries. */
+/** Shared node fields for studio favourites. Single source of truth for both
+ *  profile queries. Studios have no image on AniList, so it is text only. */
 private const val StudioFavoriteNodeFields = """
   id
   name
-  media(sort: [START_DATE_DESC], perPage: 10) {
-    nodes { coverImage { extraLarge large medium color } }
-  }
 """
 
 private const val UserProfileQuery = """
@@ -112,7 +112,7 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
     val field = when (category) {
         ProfileFavoritesCategory.ANIME -> """
             anime(page: ${'$'}page, perPage: ${'$'}perPage) {
-              pageInfo { hasNextPage }
+              pageInfo { hasNextPage currentPage }
               nodes {
                 $MediaFavoriteNodeFields
               }
@@ -120,7 +120,7 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
         """.trimIndent()
         ProfileFavoritesCategory.MANGA -> """
             manga(page: ${'$'}page, perPage: ${'$'}perPage) {
-              pageInfo { hasNextPage }
+              pageInfo { hasNextPage currentPage }
               nodes {
                 $MediaFavoriteNodeFields
               }
@@ -128,19 +128,19 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
         """.trimIndent()
         ProfileFavoritesCategory.CHARACTERS -> """
             characters(page: ${'$'}page, perPage: ${'$'}perPage) {
-              pageInfo { hasNextPage }
+              pageInfo { hasNextPage currentPage }
               nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
         ProfileFavoritesCategory.STAFF -> """
             staff(page: ${'$'}page, perPage: ${'$'}perPage) {
-              pageInfo { hasNextPage }
+              pageInfo { hasNextPage currentPage }
               nodes { $PersonFavoriteNodeFields }
             }
         """.trimIndent()
         ProfileFavoritesCategory.STUDIOS -> """
             studios(page: ${'$'}page, perPage: ${'$'}perPage) {
-              pageInfo { hasNextPage }
+              pageInfo { hasNextPage currentPage }
               nodes {
                 $StudioFavoriteNodeFields
               }
@@ -192,7 +192,7 @@ internal class ProfileRepositoryImpl(
         userId: Int,
         category: ProfileFavoritesCategory,
         page: Int,
-    ): NetworkResult<ProfileFavoritesPage> {
+    ): NetworkResult<Page<ProfileFavorite>> {
         val request = AniListGraphQLRequest(
             query = favoritesPageQuery(category),
             variables = JsonObject(
@@ -210,27 +210,49 @@ internal class ProfileRepositoryImpl(
         }.map { response ->
             val favourites = response.user?.favourites
             when (category) {
-                ProfileFavoritesCategory.ANIME -> ProfileFavoritesPage(
-                    mediaItems = favourites?.anime?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
-                    hasNextPage = favourites?.anime?.pageInfo?.hasNextPage ?: false,
+                ProfileFavoritesCategory.ANIME -> favoritePage(
+                    nodes = favourites?.anime?.nodes,
+                    pageInfo = favourites?.anime?.pageInfo,
+                    requestedPage = page,
+                    map = MediaDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.MANGA -> ProfileFavoritesPage(
-                    mediaItems = favourites?.manga?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
-                    hasNextPage = favourites?.manga?.pageInfo?.hasNextPage ?: false,
+                ProfileFavoritesCategory.MANGA -> favoritePage(
+                    nodes = favourites?.manga?.nodes,
+                    pageInfo = favourites?.manga?.pageInfo,
+                    requestedPage = page,
+                    map = MediaDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.CHARACTERS -> ProfileFavoritesPage(
-                    personItems = favourites?.characters?.nodes?.map(CharacterDto::toProfileFavoritePerson).orEmpty(),
-                    hasNextPage = favourites?.characters?.pageInfo?.hasNextPage ?: false,
+                ProfileFavoritesCategory.CHARACTERS -> favoritePage(
+                    nodes = favourites?.characters?.nodes,
+                    pageInfo = favourites?.characters?.pageInfo,
+                    requestedPage = page,
+                    map = CharacterDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.STAFF -> ProfileFavoritesPage(
-                    personItems = favourites?.staff?.nodes?.map(StaffDto::toProfileFavoritePerson).orEmpty(),
-                    hasNextPage = favourites?.staff?.pageInfo?.hasNextPage ?: false,
+                ProfileFavoritesCategory.STAFF -> favoritePage(
+                    nodes = favourites?.staff?.nodes,
+                    pageInfo = favourites?.staff?.pageInfo,
+                    requestedPage = page,
+                    map = StaffDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.STUDIOS -> ProfileFavoritesPage(
-                    studioItems = favourites?.studios?.nodes?.map(StudioDto::toProfileFavoriteStudio).orEmpty(),
-                    hasNextPage = favourites?.studios?.pageInfo?.hasNextPage ?: false,
+                ProfileFavoritesCategory.STUDIOS -> favoritePage(
+                    nodes = favourites?.studios?.nodes,
+                    pageInfo = favourites?.studios?.pageInfo,
+                    requestedPage = page,
+                    map = StudioDto::toProfileFavorite,
                 )
             }
         }
     }
 }
+
+/** Maps one favourites connection to a [Page], dedup left to the holder's PagedList. */
+private fun <T> favoritePage(
+    nodes: List<T>?,
+    pageInfo: PageInfoDto?,
+    requestedPage: Int,
+    map: (T) -> ProfileFavorite,
+): Page<ProfileFavorite> = Page(
+    items = nodes.orEmpty().map(map),
+    hasNextPage = pageInfo?.hasNextPage ?: false,
+    currentPage = pageInfo?.currentPage ?: requestedPage,
+)

@@ -1,111 +1,92 @@
 package com.luum.michi.app.profile.ui.state
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.luum.michi.app.profile.domain.ProfileRepository
-import com.luum.michi.app.profile.domain.model.ProfileFavoriteMedia
-import com.luum.michi.app.profile.domain.model.ProfileFavoritePerson
-import com.luum.michi.app.profile.domain.model.ProfileFavoriteStudio
+import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Paginated state for the "see more" favourites grid screen. One instance is
- * scoped to a single (userId, category) pair; the screen recreates it via
- * [createProfileFavoritesGridStateHolder] whenever the category changes.
+ * Paginated state for the "see more" favourites grid screen. All five categories
+ * share one [ProfileFavorite] list; a category switch is a new search, so the
+ * loaded pages are dropped and a page still in flight never lands (generation).
  */
 internal class ProfileFavoritesGridStateHolder(
     private val repository: ProfileRepository,
     private val scope: CoroutineScope,
 ) {
-    private val mediaItemsState = mutableListOf<ProfileFavoriteMedia>()
-    private val personItemsState = mutableListOf<ProfileFavoritePerson>()
-    private val studioItemsState = mutableListOf<ProfileFavoriteStudio>()
-    private var isLoadingState = false
-    private var isLoadingMoreState = false
-    private var hasNextPageState = false
-    private var errorState: NetworkError? = null
-    private var currentPage = 0
+    private var loadingState by mutableStateOf(false)
+    private var errorState by mutableStateOf<NetworkError?>(null)
+
+    private val paginated = PagedList<ProfileFavorite> { a, b -> (a + b).distinctBy { it.id } }
+
+    /** Bumped on every new (userId, category): a page from the previous one never lands. */
+    private var generation = 0
+
     private var loadedUserId: Int? = null
     private var loadedCategory: ProfileFavoritesCategory? = null
-    private var fetchJob: Job? = null
+    private var loadJob: Job? = null
 
-    val mediaItems: List<ProfileFavoriteMedia> get() = mediaItemsState
-    val personItems: List<ProfileFavoritePerson> get() = personItemsState
-    val studioItems: List<ProfileFavoriteStudio> get() = studioItemsState
-    val isLoading: Boolean get() = isLoadingState
-    val isLoadingMore: Boolean get() = isLoadingMoreState
-    val hasNextPage: Boolean get() = hasNextPageState
+    val items: List<ProfileFavorite> get() = paginated.items
+    val isLoading: Boolean get() = loadingState
+    val isLoadingMore: Boolean get() = paginated.isLoadingMore
+    val hasNextPage: Boolean get() = paginated.hasNextPage
     val error: NetworkError? get() = errorState
 
     fun load(userId: Int, category: ProfileFavoritesCategory) {
         if (loadedUserId == userId && loadedCategory == category) return
-        // Drop overlapping loads so a slower (stale) page cannot overwrite a newer one.
-        if (isLoadingState) return
         loadedUserId = userId
         loadedCategory = category
-        currentPage = 1
-        mediaItemsState.clear()
-        personItemsState.clear()
-        studioItemsState.clear()
-        hasNextPageState = false
+        loadJob?.cancel()
+        generation++
+        paginated.clear()
         errorState = null
-        isLoadingState = true
-        fetchJob?.cancel()
-        fetchJob = scope.launch {
+        loadingState = true
+        // LAZY then start, so the identity check below is valid on an eagerly
+        // dispatched scope.
+        val request = scope.launch(start = CoroutineStart.LAZY) {
             try {
-                fetchPage(userId, category, page = 1)
+                when (val result = repository.loadFavoritesPage(userId, category, page = 1)) {
+                    is NetworkResult.Success -> if (loadJob === coroutineContext[Job]) {
+                        paginated.set(result.value)
+                    }
+                    is NetworkResult.Failure -> if (loadJob === coroutineContext[Job]) {
+                        errorState = result.error
+                        // A failed first page leaves nothing to page from: forget the
+                        // markers so a retry via load() is not swallowed by the early-return.
+                        loadedUserId = null
+                        loadedCategory = null
+                    }
+                }
             } finally {
-                isLoadingState = false
+                // Only the current request owns the spinner.
+                if (loadJob === coroutineContext[Job]) loadingState = false
             }
         }
+        loadJob = request
+        request.start()
     }
 
     fun loadMore() {
         val userId = loadedUserId ?: return
         val category = loadedCategory ?: return
-        if (isLoadingMoreState || isLoadingState || !hasNextPageState) return
-        isLoadingMoreState = true
-        val nextPage = currentPage + 1
-        fetchJob = scope.launch {
-            try {
-                fetchPage(userId, category, page = nextPage)
-            } finally {
-                isLoadingMoreState = false
-            }
-        }
-    }
-
-    private suspend fun fetchPage(userId: Int, category: ProfileFavoritesCategory, page: Int) {
-        when (val result = repository.loadFavoritesPage(userId, category, page)) {
-            is NetworkResult.Success -> {
-                // Las páginas pueden solaparse (el orden por favourites cambia entre
-                // requests) o llegar un fetch viejo tras cambiar de categoría: solo
-                // se agrega lo que no esté ya, o el grid revienta por keys duplicadas.
-                mediaItemsState.addAll(result.value.mediaItems.filter { fresh ->
-                    mediaItemsState.none { it.id == fresh.id }
-                })
-                personItemsState.addAll(result.value.personItems.filter { fresh ->
-                    personItemsState.none { it.id == fresh.id }
-                })
-                studioItemsState.addAll(result.value.studioItems.filter { fresh ->
-                    studioItemsState.none { it.id == fresh.id }
-                })
-                hasNextPageState = result.value.hasNextPage
-                currentPage = page
-            }
-            is NetworkResult.Failure -> {
-                errorState = result.error
-                // A failed first page leaves nothing to page from: forget the
-                // markers so a retry via load() is not swallowed by the early-return.
-                if (page == 1) {
-                    loadedUserId = null
-                    loadedCategory = null
-                }
-            }
-        }
+        // A new search is already on its way: page N+1 of it cannot be asked yet.
+        if (loadingState) return
+        val currentGeneration = generation
+        paginated.loadMore(
+            scope = scope,
+            isCurrent = { generation == currentGeneration },
+            fetch = { page -> repository.loadFavoritesPage(userId, category, page) },
+            onError = { errorState = it },
+        )
     }
 }
 

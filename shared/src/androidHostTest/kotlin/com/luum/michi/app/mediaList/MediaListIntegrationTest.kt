@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList
 
 import com.luum.michi.app.DeferredDispatcher
+import com.luum.michi.app.FakeGraphQL
 import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus

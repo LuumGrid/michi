@@ -6,7 +6,6 @@ internal enum class NotificationCategory { AIRING, FOLLOWING, ACTIVITY, FORUM, M
 internal sealed interface NotificationTarget {
     data class Media(val id: Int) : NotificationTarget
     data class Web(val url: String) : NotificationTarget
-    data object None : NotificationTarget
 }
 
 internal data class AppNotification(

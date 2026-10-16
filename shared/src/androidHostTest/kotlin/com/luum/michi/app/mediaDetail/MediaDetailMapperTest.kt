@@ -14,7 +14,7 @@ import com.luum.michi.app.mediaDetail.domain.common.isOfficialSite
 import com.luum.michi.app.mediaDetail.domain.common.siteLabel
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive

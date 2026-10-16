@@ -119,9 +119,6 @@ query StudioSearch(${'$'}search: String, ${'$'}sort: [StudioSort], ${'$'}page: I
     studios(search: ${'$'}search, sort: ${'$'}sort) {
       id
       name
-      media(sort: [START_DATE_DESC], perPage: 10) {
-        nodes { status coverImage { extraLarge large medium color } }
-      }
     }
   }
 }
@@ -384,12 +381,13 @@ private fun StaffDto.toExploreResult(strings: LanguageStrings): ExploreResult = 
     averageScore = null
 )
 
+/** A studio has no image on AniList: text-only, like the profile favourites. */
 private fun StudioDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(
     id = id,
     title = name,
     meta = strings.studioLabel,
-    cover = latestCoverImage?.toCoverSizes(),
-    paletteHex = latestCoverImage?.color,
+    cover = null,
+    paletteHex = null,
     averageScore = null
 )
 

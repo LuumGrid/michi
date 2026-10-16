@@ -1,8 +1,6 @@
 package com.luum.michi.app.profile.repository
 
-import com.luum.michi.app.profile.domain.model.ProfileFavoriteMedia
-import com.luum.michi.app.profile.domain.model.ProfileFavoritePerson
-import com.luum.michi.app.profile.domain.model.ProfileFavoriteStudio
+import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.media.repository.dto.MediaDto
@@ -13,37 +11,38 @@ import com.luum.michi.app.core.media.repository.toCoverSizes
 import com.luum.michi.app.core.person.repository.toCoverSizes
 
 internal fun FavouritesDto.toDomain(): ProfileFavorites = ProfileFavorites(
-    anime = anime?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
-    manga = manga?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),
-    characters = characters?.nodes?.map(CharacterDto::toProfileFavoritePerson).orEmpty(),
-    staff = staff?.nodes?.map(StaffDto::toProfileFavoritePerson).orEmpty(),
-    studios = studios?.nodes?.map(StudioDto::toProfileFavoriteStudio).orEmpty(),
+    anime = anime?.nodes?.map(MediaDto::toProfileFavorite).orEmpty(),
+    manga = manga?.nodes?.map(MediaDto::toProfileFavorite).orEmpty(),
+    characters = characters?.nodes?.map(CharacterDto::toProfileFavorite).orEmpty(),
+    staff = staff?.nodes?.map(StaffDto::toProfileFavorite).orEmpty(),
+    studios = studios?.nodes?.map(StudioDto::toProfileFavorite).orEmpty(),
 )
 
-internal fun MediaDto.toProfileFavoriteMedia(): ProfileFavoriteMedia = ProfileFavoriteMedia(
+internal fun MediaDto.toProfileFavorite(): ProfileFavorite = ProfileFavorite(
     id = id,
-    title = title.bestTitle(),
-    cover = coverImage?.toCoverSizes(),
+    name = title.bestTitle(),
+    image = coverImage?.toCoverSizes(),
     paletteHex = coverImage?.color,
 )
 
-internal fun CharacterDto.toProfileFavoritePerson(): ProfileFavoritePerson = ProfileFavoritePerson(
+internal fun CharacterDto.toProfileFavorite(): ProfileFavorite = ProfileFavorite(
     id = id,
     name = name?.bestName.orEmpty(),
     image = image?.toCoverSizes(),
     paletteHex = null,
 )
 
-internal fun StaffDto.toProfileFavoritePerson(): ProfileFavoritePerson = ProfileFavoritePerson(
+internal fun StaffDto.toProfileFavorite(): ProfileFavorite = ProfileFavorite(
     id = id,
     name = name?.bestName.orEmpty(),
     image = image?.toCoverSizes(),
     paletteHex = null,
 )
 
-internal fun StudioDto.toProfileFavoriteStudio(): ProfileFavoriteStudio = ProfileFavoriteStudio(
+/** A studio has no image on AniList: it always maps to a text-only favourite. */
+internal fun StudioDto.toProfileFavorite(): ProfileFavorite = ProfileFavorite(
     id = id,
     name = name,
-    cover = latestCoverImage?.toCoverSizes(),
-    paletteHex = latestCoverImage?.color,
+    image = null,
+    paletteHex = null,
 )

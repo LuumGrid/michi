@@ -4,7 +4,7 @@ import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import com.luum.michi.app.mediaDetail.repository.studio.StudioDetailRepositoryImpl
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive

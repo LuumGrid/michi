@@ -1,6 +1,5 @@
 package com.luum.michi.app.core.person.repository.dto
 
-import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import kotlinx.serialization.Serializable
 
 /**
@@ -41,24 +40,7 @@ internal data class StaffDto(
 )
 
 @Serializable
-internal data class StudioLatestMediaNodeDto(
-    val status: String? = null,
-    val coverImage: MediaCoverImageDto? = null,
-)
-
-@Serializable
-internal data class StudioLatestMediaConnectionDto(
-    val nodes: List<StudioLatestMediaNodeDto>? = null,
-)
-
-@Serializable
 internal data class StudioDto(
     val id: Int,
     val name: String,
-    val media: StudioLatestMediaConnectionDto? = null,
-) {
-    val latestCoverImage: MediaCoverImageDto?
-        get() = media?.nodes
-            ?.firstOrNull { it.status == "FINISHED" || it.status == "RELEASING" }
-            ?.coverImage
-}
+)

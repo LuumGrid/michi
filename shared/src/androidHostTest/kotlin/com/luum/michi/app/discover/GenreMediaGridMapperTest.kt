@@ -5,7 +5,7 @@ import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive

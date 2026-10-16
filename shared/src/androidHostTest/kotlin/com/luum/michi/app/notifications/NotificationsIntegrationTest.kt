@@ -1,7 +1,7 @@
 package com.luum.michi.app.notifications
 
 import com.luum.michi.app.DeferredDispatcher
-import com.luum.michi.app.mediaList.FakeGraphQL
+import com.luum.michi.app.FakeGraphQL
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.notifications.domain.model.NotificationCategory

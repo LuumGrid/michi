@@ -7,7 +7,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+
+/** Collapses whitespace so a query-shape assertion is independent of indentation. */
+private fun normalized(query: String) = query.replace(Regex("\\s+"), " ").trim()
 
 class ProfileRepositoryLoadTest {
 
@@ -19,7 +23,7 @@ class ProfileRepositoryLoadTest {
         assertEquals(5, result.value.stats.mangaCount)
         assertEquals(7, result.value.stats.followersCount)
         assertEquals(9, result.value.stats.followingCount)
-        assertEquals("A", result.value.favorites.anime.single().title)
+        assertEquals("A", result.value.favorites.anime.single().name)
         assertTrue(result.value.favorites.manga.isEmpty())
     }
 
@@ -41,7 +45,7 @@ class ProfileRepositoryLoadTest {
                 .loadFavoritesPage(1, ProfileFavoritesCategory.ANIME, 1)
         }
         assertTrue(result is NetworkResult.Success)
-        assertEquals("A", result.value.mediaItems.single().title)
+        assertEquals("A", result.value.items.single().name)
         assertTrue(result.value.hasNextPage)
     }
 
@@ -52,7 +56,7 @@ class ProfileRepositoryLoadTest {
                 .loadFavoritesPage(1, ProfileFavoritesCategory.CHARACTERS, 1)
         }
         assertTrue(result is NetworkResult.Success)
-        assertEquals("C", result.value.personItems.single().name)
+        assertEquals("C", result.value.items.single().name)
     }
 
     @Test
@@ -62,7 +66,7 @@ class ProfileRepositoryLoadTest {
                 .loadFavoritesPage(1, ProfileFavoritesCategory.MANGA, 1)
         }
         assertTrue(result is NetworkResult.Success)
-        assertEquals("M", result.value.mediaItems.single().title)
+        assertEquals("M", result.value.items.single().name)
     }
 
     @Test
@@ -72,15 +76,48 @@ class ProfileRepositoryLoadTest {
                 .loadFavoritesPage(1, ProfileFavoritesCategory.STAFF, 1)
         }
         assertTrue(result is NetworkResult.Success)
-        assertEquals("S", result.value.personItems.single().name)
+        assertEquals("S", result.value.items.single().name)
     }
 
     @Test
-    fun loadFavoritesPageMapsStudioBranch() {        val result = runBlocking {
+    fun loadFavoritesPageMapsStudioBranchWithoutAnImage() {
+        val result = runBlocking {
             ProfileRepositoryImpl(FakeProfileGraphQL(listOf(favouritesPage("studios", "S", false))))
                 .loadFavoritesPage(1, ProfileFavoritesCategory.STUDIOS, 1)
         }
         assertTrue(result is NetworkResult.Success)
-        assertEquals("S", result.value.studioItems.single().name)
+        val studio = result.value.items.single()
+        assertEquals("S", studio.name)
+        assertNull(studio.image, "a studio has no image on AniList")
+        assertNull(studio.paletteHex)
+    }
+
+    /**
+     * Tripwire: the studios selection is exactly `{ id name }` — the old
+     * `media { nodes { coverImage } }` trick must never come back. Asserted on the
+     * exact normalized block, not a loose `!contains("media")` over the query.
+     */
+    @Test
+    fun studioQueriesNeverAskForMedia() {
+        val client = FakeProfileGraphQL(listOf(profileData(), favouritesPage("studios", "S", false)))
+        val repository = ProfileRepositoryImpl(client)
+        runBlocking {
+            repository.loadProfile(1)
+            repository.loadFavoritesPage(1, ProfileFavoritesCategory.STUDIOS, 1)
+        }
+
+        assertTrue(
+            normalized(client.requests[0].query)
+                .contains("studios(perPage: 12) { nodes { id name } }"),
+            "the profile studios selection must be only id + name",
+        )
+        assertTrue(
+            normalized(client.requests[1].query)
+                .contains(
+                    "studios(page: \$page, perPage: \$perPage) { " +
+                        "pageInfo { hasNextPage currentPage } nodes { id name } }",
+                ),
+            "the paged studios selection must be only id + name",
+        )
     }
 }
