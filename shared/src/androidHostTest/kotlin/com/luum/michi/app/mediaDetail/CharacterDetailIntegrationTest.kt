@@ -104,8 +104,7 @@ private class RecordingCharacterRepository(
 private fun holderWired(repository: CharacterDetailRepository) = CharacterDetailStateHolder(
     repository = repository,
     scope = CoroutineScope(Dispatchers.Unconfined),
-    strings = EnglishStrings,
-    viewerId = 0,
+    stringsProvider = { EnglishStrings },
 )
 
 class CharacterDetailIntegrationTest {

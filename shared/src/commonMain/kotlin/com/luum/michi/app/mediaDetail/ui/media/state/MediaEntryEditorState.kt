@@ -19,7 +19,7 @@ internal class MediaEntryEditorState(
     private val entryRepository: MediaListEntryRepository,
     private val detailRepository: MediaDetailRepository,
     private val scope: CoroutineScope,
-    private val strings: LanguageStrings,
+    private val stringsProvider: () -> LanguageStrings,
     val mediaId: Int,
     private val initialStatusOverride: MediaListStatus? = null,
     private val initialProgressOverride: Int? = null,
@@ -27,6 +27,9 @@ internal class MediaEntryEditorState(
     private val advancedScoringAnimeNames: List<String> = emptyList(),
     private val advancedScoringMangaNames: List<String> = emptyList(),
     private val scoreMax: Float = 10f,
+    // Tells the detail holder a favourite toggled here, so closing the editor
+    // never leaves the detail page's heart stale.
+    private val onFavouriteChanged: (mediaId: Int, value: Boolean) -> Unit = { _, _ -> },
     // Injectable so status automations (started/completed = today) are
     // deterministic in tests; same UTC-midnight millis the date pickers speak.
     private val todayMillis: () -> Long = { todayCalendarMillis() },
@@ -74,6 +77,9 @@ internal class MediaEntryEditorState(
     var error: NetworkError? by mutableStateOf(null)
         private set
 
+    /** Save/delete share one guard: neither can run while the other is in flight. */
+    val isBusy: Boolean get() = isSaving || isDeleting
+
     val isManga: Boolean get() = detail?.type == MediaDetailType.MANGA
     val advancedScoringNames: List<String>
         get() = if (isManga) advancedScoringMangaNames else advancedScoringAnimeNames
@@ -103,14 +109,14 @@ internal class MediaEntryEditorState(
         isLoadingDetail = true
         loadError = null
         scope.launch {
-            when (val result = detailRepository.loadDetail(mediaId, strings = strings)) {
+            when (val result = detailRepository.loadDetail(mediaId, strings = stringsProvider())) {
                 is NetworkResult.Success -> {
                     detail = result.value
                     isFavourite = result.value.isFavourite
                     val existing = result.value.viewerEntry
                     if (existing != null) {
-                        status = initialStatusOverride ?: (existing.status ?: MediaListStatus.CURRENT)
-                        progress = initialProgressOverride ?: existing.progress
+                        status = existing.status ?: MediaListStatus.CURRENT
+                        progress = existing.progress
                         progressVolumes = existing.progressVolumes ?: 0
                         score = existing.score
                         notes = existing.notes
@@ -131,10 +137,13 @@ internal class MediaEntryEditorState(
                         // Baseline is the stored entry: a status/progress override
                         // (e.g. open-for-completion) is an unsaved edit, so Save
                         // stays enabled for it.
-                        baseline = snapshot().copy(
-                            status = existing.status ?: MediaListStatus.CURRENT,
-                            progress = existing.progress,
-                        )
+                        baseline = snapshot()
+                        // "Completar" flows through the same automation as picking
+                        // it in the sheet: fill the totals and stamp the end date.
+                        if (initialStatusOverride != null) {
+                            initialProgressOverride?.let { progress = it }
+                            updateStatus(initialStatusOverride)
+                        }
                     } else {
                         status = initialStatusOverride ?: MediaListStatus.PLANNING
                         progress = initialProgressOverride ?: 0
@@ -223,13 +232,14 @@ internal class MediaEntryEditorState(
     )
 
     fun toggleFavourite() {
-        if (isTogglingFavourite || isLoadingDetail) return
+        if (isTogglingFavourite || isLoadingDetail || detail == null) return
         val previous = isFavourite
-        isFavourite = !previous
+        val target = !previous
+        isFavourite = target
         isTogglingFavourite = true
         scope.launch {
             when (val result = entryRepository.toggleFavourite(mediaId, isManga)) {
-                is NetworkResult.Success -> {}
+                is NetworkResult.Success -> onFavouriteChanged(mediaId, target)
                 is NetworkResult.Failure -> {
                     isFavourite = previous
                     error = result.error
@@ -240,7 +250,7 @@ internal class MediaEntryEditorState(
     }
 
     fun save(onSaved: () -> Unit) {
-        if (isSaving || isLoadingDetail) return
+        if (isBusy || detail == null) return
         isSaving = true
         error = null
         scope.launch {
@@ -272,7 +282,7 @@ internal class MediaEntryEditorState(
     }
 
     fun delete(onDeleted: () -> Unit) {
-        if (isDeleting || isSaving || isLoadingDetail) return
+        if (isBusy || detail == null) return
         val entryId = detail?.viewerEntry?.id
         if (entryId == null || entryId == 0) return
         isDeleting = true
@@ -309,20 +319,21 @@ internal fun createMediaEntryEditorState(
     entryRepository: MediaListEntryRepository,
     detailRepository: MediaDetailRepository,
     scope: CoroutineScope,
-    strings: LanguageStrings,
+    stringsProvider: () -> LanguageStrings,
     initialStatusOverride: MediaListStatus? = null,
     initialProgressOverride: Int? = null,
     advancedScoringEnabled: Boolean = false,
     advancedScoringAnimeNames: List<String> = emptyList(),
     advancedScoringMangaNames: List<String> = emptyList(),
     scoreMax: Float = 10f,
+    onFavouriteChanged: (mediaId: Int, value: Boolean) -> Unit = { _, _ -> },
     todayMillis: () -> Long = { todayCalendarMillis() },
 ): MediaEntryEditorState {
     return MediaEntryEditorState(
         entryRepository = entryRepository,
         detailRepository = detailRepository,
         scope = scope,
-        strings = strings,
+        stringsProvider = stringsProvider,
         mediaId = mediaId,
         initialStatusOverride = initialStatusOverride,
         initialProgressOverride = initialProgressOverride,
@@ -330,6 +341,7 @@ internal fun createMediaEntryEditorState(
         advancedScoringAnimeNames = advancedScoringAnimeNames,
         advancedScoringMangaNames = advancedScoringMangaNames,
         scoreMax = scoreMax,
+        onFavouriteChanged = onFavouriteChanged,
         todayMillis = todayMillis,
     )
 }

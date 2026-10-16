@@ -211,6 +211,62 @@ class SettingsIntegrationTest {
     }
 
     @Test
+    fun aSaveReloadsOnlyWhenTheLanguageActuallyChanged(): Unit = runBlocking {
+        val testScope = CoroutineScope(Dispatchers.Unconfined)
+        try {
+            val client = ScriptedSettingsGraphQL(
+                listOf(viewerPage, emptyUpdatePage, emptyUpdatePage, emptyUpdatePage),
+            )
+            val state = SettingsState(
+                repository = SettingsRepositoryImpl(client),
+                store = FakeSettingsStore(),
+                scope = testScope,
+            )
+            state.refresh() // server: title ENGLISH, staff NATIVE
+            assertEquals(0, state.syncedGeneration)
+
+            // A non-language save does not reload.
+            state.splitCompletedAnime = true
+            delay(1_200)
+            assertEquals(0, state.syncedGeneration, "a non-language save must not reload")
+
+            // Changing the title language bumps it once the save is confirmed.
+            state.titleLanguage = TitleLanguage.NATIVE
+            delay(1_200)
+            assertEquals(1, state.syncedGeneration)
+
+            // Re-saving the same confirmed value does not bump again.
+            state.listSort = ListSort.TITLE
+            delay(1_200)
+            assertEquals(1, state.syncedGeneration)
+        } finally {
+            testScope.cancel()
+        }
+    }
+
+    @Test
+    fun aColdStartSaveDoesNotReloadWhenTheLanguageIsUnchanged(): Unit = runBlocking {
+        val testScope = CoroutineScope(Dispatchers.Unconfined)
+        try {
+            // No refresh: the hydrated store value is the baseline.
+            val store = FakeSettingsStore().apply { putString("title_language", "ENGLISH") }
+            val state = SettingsState(
+                repository = SettingsRepositoryImpl(ScriptedSettingsGraphQL(listOf(emptyUpdatePage))),
+                store = store,
+                scope = testScope,
+            )
+            assertEquals(0, state.syncedGeneration)
+
+            state.listSort = ListSort.TITLE
+            delay(1_200)
+
+            assertEquals(0, state.syncedGeneration, "the hydrated baseline avoids a false reload")
+        } finally {
+            testScope.cancel()
+        }
+    }
+
+    @Test
     fun loadFailureSetsErrorAndKeepsDefaults() {
         setUp()
         try {

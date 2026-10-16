@@ -164,6 +164,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.browser)
+            implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.coil.network.okhttp)
         }

@@ -203,8 +203,9 @@ class HtmlLinksTest {
         val content = "<span class='markdown_spoiler'><span><strong>Status:</strong> Deceased</span></span>".toHtmlContent()
 
         assertTrue(content.stats.isEmpty(), "a spoiler stat must not be promoted")
-        // The line stays as prose; the existing cleaning drops the bare "Status:" rótulo.
-        assertEquals("Deceased", content.text)
+        // The line stays as prose. Its rótulo is kept: label stripping now runs
+        // only on lines that carried links, so prose like "Re:Zero" survives.
+        assertEquals("Status: Deceased", content.text)
     }
 
     @Test
@@ -225,5 +226,37 @@ class HtmlLinksTest {
             content.stats,
         )
         assertEquals("", content.text)
+    }
+
+    @Test
+    fun bareUrlStopsAtTagsAndKeepsTheTrailingPunctuation() {
+        val content = "See <p>https://example.com/path).</p> for more".toHtmlContent()
+
+        assertEquals("https://example.com/path", content.links.single().url)
+        // The trimmed punctuation stays in the prose (only the URL is removed).
+        assertEquals("See ). for more", content.text)
+    }
+
+    @Test
+    fun bareUrlKeepsABalancedClosingParenthesis() {
+        val content = "https://en.wikipedia.org/wiki/Foo_(bar)".toHtmlContent()
+
+        assertEquals("https://en.wikipedia.org/wiki/Foo_(bar)", content.links.single().url)
+    }
+
+    @Test
+    fun proseWithAColonWordKeepsItsLabelWhenThereAreNoLinks() {
+        // Rótulo stripping only runs on lines that carried links.
+        val content = "Favorite: Re:Zero. Note: watch it".toHtmlContent()
+
+        assertEquals("Favorite: Re:Zero. Note: watch it", content.text)
+    }
+
+    @Test
+    fun aBioWithAngleBracketsIsNotEatenAsTags() {
+        // The final text is not re-stripped, so "<3" survives.
+        val content = "I &lt;3 cats &gt;_&lt;".toHtmlContent()
+
+        assertEquals("I <3 cats >_<", content.text)
     }
 }

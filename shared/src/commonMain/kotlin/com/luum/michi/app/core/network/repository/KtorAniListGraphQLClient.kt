@@ -69,6 +69,9 @@ internal class KtorAniListGraphQLClient(
     private val rateLimiter: AniListRateLimiter = AniListRateLimiter(),
     // Debug builds only: logs each operation's duration (operationName + ms).
     private val debugLogging: Boolean = false,
+    // Fired when a request that carried a token gets a 401, so the session can
+    // drop the dead token. Never fired for anonymous requests.
+    private val onUnauthorized: (AniListToken) -> Unit = {},
 ) : AniListGraphQLClient {
 
     override suspend fun <T> execute(
@@ -112,7 +115,13 @@ internal class KtorAniListGraphQLClient(
 
         if (!response.status.isSuccess()) {
             return when (response.status.value) {
-                401 -> NetworkResult.Failure(NetworkError.Unauthorized(body))
+                401 -> {
+                    // Only a token-authenticated request means the session died;
+                    // an anonymous 401 must not close a session it never had.
+                    // The token travels so a stale 401 cannot close a newer one.
+                    if (token != null) onUnauthorized(token)
+                    NetworkResult.Failure(NetworkError.Unauthorized(body))
+                }
                 429 -> {
                     val retryAfterSeconds = response.headers["Retry-After"]?.toLongOrNull()
                         ?: AniListNetworkPolicy.DEFAULT_RETRY_AFTER_SECONDS

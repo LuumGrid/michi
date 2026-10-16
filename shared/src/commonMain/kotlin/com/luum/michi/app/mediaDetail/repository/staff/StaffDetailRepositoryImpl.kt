@@ -286,12 +286,14 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
 
 private fun StaffCharacterMediaEdgeDto.toItems(): List<StaffCharacterItem> {
     val mediaTitle = node?.title?.bestTitle()
+    val mediaId = node?.id
     return characters.map { char ->
         StaffCharacterItem(
             characterId = char.id,
             name = char.name?.userPreferred ?: char.name?.native ?: "",
             image = char.image?.let { personCoverSizes(it.large, it.medium) },
             mediaTitle = mediaTitle,
+            mediaId = mediaId,
         )
     }
 }

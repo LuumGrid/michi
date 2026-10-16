@@ -5,6 +5,7 @@ import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.completedMangaSection
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
@@ -59,16 +60,7 @@ private fun mapMangaStatus(
     splitCompleted: Boolean,
 ): MangaListSection = when (status?.uppercase()) {
     "CURRENT" -> MangaListSection.CURRENT
-    "COMPLETED" -> if (splitCompleted) {
-        when (format) {
-            MediaFormat.MANGA -> MangaListSection.COMPLETED_MANGA
-            MediaFormat.NOVEL -> MangaListSection.COMPLETED_NOVEL
-            MediaFormat.ONE_SHOT -> MangaListSection.COMPLETED_ONE_SHOT
-            else -> MangaListSection.COMPLETED
-        }
-    } else {
-        MangaListSection.COMPLETED
-    }
+    "COMPLETED" -> format.completedMangaSection(splitCompleted)
     "PAUSED" -> MangaListSection.PAUSED
     "DROPPED" -> MangaListSection.DROPPED
     "PLANNING" -> MangaListSection.PLANNING

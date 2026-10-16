@@ -50,6 +50,7 @@ import com.luum.michi.app.mediaList.ui.common.yearFilterTabs
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
+import com.luum.michi.app.ui.components.RefreshErrorRow
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
@@ -168,6 +169,13 @@ internal fun AnimeListScreen(
                 )
             }
             else -> {
+                holder.actionError?.let { error ->
+                    RefreshErrorRow(
+                        message = strings.networkErrorMessage(error),
+                        dismissLabel = strings.dismissAction,
+                        onDismiss = { holder.clearActionError() },
+                    )
+                }
                 PullRefresh(
                     isRefreshing = isRefreshing,
                     onRefresh = onRefresh,

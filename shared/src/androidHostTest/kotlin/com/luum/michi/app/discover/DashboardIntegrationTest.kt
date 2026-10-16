@@ -532,6 +532,29 @@ class DashboardIntegrationTest {
     }
 
     @Test
+    fun invalidateCancelsTheInFlightLoadSoTheNextLoadIsNotDropped() {
+        val cache = InMemoryDashboardFeedCache()
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "B"))),
+            ),
+        ).apply { gate = CompletableDeferred() }
+        val holder = wiredWithCache(graphQL, cache)
+        val gate = graphQL.gate!!
+
+        holder.load() // in flight, held at the gate
+        holder.invalidate() // language change: cancels the doomed request
+
+        graphQL.gate = null
+        gate.complete(Unit)
+        holder.load() // the screen composes again: fires, does not join
+
+        assertEquals(2, graphQL.calls, "the stale request was cancelled, a fresh one ran")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
     fun loadingIsTrackedPerType() {
         val graphQL = FakeGraphQL(
             listOf(

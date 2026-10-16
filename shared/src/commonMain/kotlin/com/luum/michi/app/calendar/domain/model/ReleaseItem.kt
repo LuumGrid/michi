@@ -8,8 +8,8 @@ import com.luum.michi.app.core.model.CoverSizes
 
 internal data class ReleaseItem(
     val title: String,
-    val release: String,
-    val time: String,
+    /** Aired episode number; the "Ep. N" label is localized at the UI boundary. */
+    val episode: Int,
     val airingAtEpoch: Long,
     val paletteHex: String?,
     val id: Int? = null,

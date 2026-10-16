@@ -7,7 +7,6 @@ import com.luum.michi.app.core.model.MediaSeason
 import com.luum.michi.app.core.model.MediaType
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.ExternalLink
 
@@ -34,7 +33,7 @@ internal data class MediaDetail(
     val bannerUrl: String?,
     val paletteHex: String?,
     val format: String?,
-    val status: String?,
+    val status: MediaWorkStatus?,
     val episodes: Int?,
     val chapters: Int?,
     val volumes: Int?,
@@ -98,11 +97,9 @@ internal data class MediaRecommendationsPage(
     val currentPage: Int,
 )
 
-/** Localized work-release status (raw RELEASING → Airing/Publishing, etc.). */
-internal fun MediaDetail.workStatusLabel(strings: LanguageStrings): String? {
-    val parsed = parseMediaWorkStatus(status)
-    return parsed?.label(strings, type == MediaDetailType.MANGA) ?: status
-}
+/** Localized work-release status (RELEASING → Airing/Publishing, etc.). */
+internal fun MediaDetail.workStatusLabel(strings: LanguageStrings): String? =
+    status?.label(strings, type == MediaDetailType.MANGA)
 
 /** Canonical AniList page for this entry. */
 internal fun MediaDetail.aniListUrl(): String {

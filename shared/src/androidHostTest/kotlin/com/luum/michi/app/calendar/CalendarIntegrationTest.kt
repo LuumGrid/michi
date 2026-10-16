@@ -148,6 +148,27 @@ class CalendarIntegrationTest {
     }
 
     @Test
+    fun invalidatingKeepsTheShownDayAndRefetches() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                pageJson(false, schedJson(1, Now, mediaJson(10))),
+                pageJson(false, schedJson(1, Now, mediaJson(10))),
+            ),
+        )
+        val (holder) = wiredHolder(graphQL)
+        holder.load()
+        assertEquals(1, graphQL.calls)
+        assertEquals(1, holder.selectedItems.size)
+
+        holder.invalidateEntries()
+
+        assertEquals(1, holder.selectedItems.size, "the calendar does not go blank")
+
+        holder.selectDay(holder.todayBucket)
+        assertEquals(2, graphQL.calls, "an invalidated day refetches")
+    }
+
+    @Test
     fun dayQueryCarriesMidnightSliceWindow() {
         val graphQL = FakeGraphQL(
             listOf(pageJson(false, schedJson(1, Now, mediaJson(10)))),
@@ -159,9 +180,10 @@ class CalendarIntegrationTest {
         val variables = graphQL.requests.single().variables!!
         val from = variables["from"].toString().toLong()
         val to = variables["to"].toString().toLong()
-        assertEquals(holder.todayBucket, from)
+        // Exclusive bounds: start one second before local midnight, end exclusive.
+        assertEquals(holder.todayBucket - 1, from)
         assertTrue(to > from)
-        assertTrue(to - from <= 86400)
+        assertTrue(to - from <= 86401)
     }
 
     @Test
@@ -444,7 +466,7 @@ class CalendarIntegrationTest {
         assertEquals(MediaWorkStatus.RELEASING, item.mediaStatus)
         assertEquals(8.5f, item.userScore)
         assertEquals(Now, item.airingAtEpoch)
-        assertEquals("Ep. 1", item.release)
+        assertEquals(1, item.episode)
         assertEquals(listOf("Crunchyroll"), item.streamingPlatforms.map { it.site })
         assertEquals("https://example.com/cr", item.streamingPlatforms.single().url)
         assertEquals("#F47521", item.streamingPlatforms.single().color)
@@ -452,7 +474,7 @@ class CalendarIntegrationTest {
 
     @Test
     fun releaseLabelDropsTotalEpisodes() {
-        // "Ep. N" only: the "/ total" suffix was removed from the card line.
+        // The raw episode number is carried; "Ep. N" is built at the UI.
         val media = buildJsonObject {
             put("id", 10)
             put("episodes", 13)
@@ -464,6 +486,6 @@ class CalendarIntegrationTest {
 
         holder.load()
 
-        assertEquals("Ep. 13", holder.selectedItems.single().item.release)
+        assertEquals(13, holder.selectedItems.single().item.episode)
     }
 }

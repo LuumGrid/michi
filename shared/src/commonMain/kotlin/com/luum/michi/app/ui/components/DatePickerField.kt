@@ -21,10 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.millisToCalendarParts
 import com.luum.michi.app.ui.language.Strings
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 /**
  * Date button opening the system-style M3 calendar dialog (CLEAR / CANCEL
@@ -56,7 +54,7 @@ internal fun DatePickerField(
             Spacer(modifier = Modifier.height(8.dp))
         }
         GhostButton(
-            label = buttonLabel ?: millis?.let { formatDateLabel(it) } ?: strings.selectDateAction,
+            label = buttonLabel ?: millis?.let { formatDateLabel(it, strings) } ?: strings.selectDateAction,
             onClick = { showPicker = true },
         )
     }
@@ -98,20 +96,18 @@ internal fun DatePickerField(
     }
 }
 
-private val MONTH_ABBR = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-)
-
 /** Default range: every date selectable (the editor has no bounds). */
 private object AllDates : SelectableDates {
     override fun isSelectableDate(utcTimeMillis: Long): Boolean = true
     override fun isSelectableYear(year: Int): Boolean = true
 }
 
-private fun formatDateLabel(millis: Long): String {
-    val date = Instant.fromEpochMilliseconds(millis)
-        .toLocalDateTime(TimeZone.currentSystemDefault())
-        .date
-    return "${date.day.toString().padStart(2, '0')}-${MONTH_ABBR[date.month.ordinal]}-${date.year}"
+/**
+ * The picker speaks UTC calendar dates, so the label is formatted in UTC (a
+ * local-zone read would shift the day behind west of Greenwich) with the
+ * localized month names.
+ */
+private fun formatDateLabel(millis: Long, strings: LanguageStrings): String {
+    val parts = millisToCalendarParts(millis)
+    return "${parts.day.toString().padStart(2, '0')}-${strings.monthShortName(parts.month)}-${parts.year}"
 }

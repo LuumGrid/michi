@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
@@ -37,6 +38,12 @@ internal class MediaListLoader<T>(
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
 
+    private var loadJob: Job? = null
+    private var inFlightUserId: Int? = null
+    // Bumped per launch so a cancelled load's `finally` never clears the
+    // indicators of the load that replaced it.
+    private var loadGeneration = 0
+
     val entries: List<T> get() = entriesBacking
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
@@ -47,13 +54,21 @@ internal class MediaListLoader<T>(
         if (!forceRefresh && lastUserId == userId && mark != null
             && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && entriesBacking.isNotEmpty()
         ) return
-        // Drop overlapping loads: two in-flight fetches race on
-        // entriesBacking.clear()/addAll() and the slower (stale) one can win.
-        if (loadingState || refreshingState) return
+        val inFlight = loadJob
+        if (inFlight?.isActive == true) {
+            // Same request already running: join it (existing behaviour). A
+            // forced reload or a different user supersedes it — cancel and
+            // relaunch, so a stale response can never win.
+            if (inFlightUserId == userId && !forceRefresh) return
+            inFlight.cancel()
+        }
         val isRefresh = forceRefresh && entriesBacking.isNotEmpty()
-        if (isRefresh) refreshingState = true else loadingState = true
+        loadingState = !isRefresh
+        refreshingState = isRefresh
         errorState = null
-        scope.launch {
+        inFlightUserId = userId
+        val gen = ++loadGeneration
+        loadJob = scope.launch {
             try {
                 when (val result = fetch(userId)) {
                     is NetworkResult.Success -> {
@@ -67,8 +82,11 @@ internal class MediaListLoader<T>(
                     }
                 }
             } finally {
-                loadingState = false
-                refreshingState = false
+                if (gen == loadGeneration) {
+                    loadingState = false
+                    refreshingState = false
+                    inFlightUserId = null
+                }
             }
         }
     }

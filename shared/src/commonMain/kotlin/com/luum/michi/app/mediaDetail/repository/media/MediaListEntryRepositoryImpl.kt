@@ -10,6 +10,7 @@ import com.luum.michi.app.core.model.millisToCalendarParts
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 import kotlinx.serialization.SerialName
@@ -170,25 +171,35 @@ internal class MediaListEntryRepositoryImpl(
             operationName = "SaveMediaListEntry",
         )
 
-        return graphQLClient.execute(request) { dataJson ->
-            AniListJson.decodeFromJsonElement(SaveMediaListEntryResponse.serializer(), dataJson)
-        }.map { response ->
-            val entry = response.entry
-            MediaListViewerEntry(
-                id = entry?.id ?: 0,
-                status = parseMediaListStatus(entry?.status) ?: status,
-                progress = entry?.progress ?: progress,
-                progressVolumes = entry?.progressVolumes ?: progressVolumes,
-                score = entry?.score?.toFloat() ?: score,
-                advancedScores = entry?.advancedScores ?: emptyMap(),
-                notes = entry?.notes.orEmpty(),
-                repeat = entry?.repeat ?: repeat,
-                priority = entry?.priority ?: priority,
-                isPrivate = entry?.isPrivate ?: isPrivate,
-                hiddenFromStatusLists = entry?.hiddenFromStatusLists ?: hiddenFromStatusLists,
-                startedAtMillis = entry?.startedAt?.toMillisOrNull() ?: startedAtMillis,
-                completedAtMillis = entry?.completedAt?.toMillisOrNull() ?: completedAtMillis,
-            )
+        return when (
+            val result = graphQLClient.execute(request) { dataJson ->
+                AniListJson.decodeFromJsonElement(SaveMediaListEntryResponse.serializer(), dataJson)
+            }
+        ) {
+            is NetworkResult.Success -> {
+                val entry = result.value.entry
+                    ?: return NetworkResult.Failure(
+                        NetworkError.GraphQL(listOf("SaveMediaListEntry returned no entry")),
+                    )
+                NetworkResult.Success(
+                    MediaListViewerEntry(
+                        id = entry.id,
+                        status = parseMediaListStatus(entry.status) ?: status,
+                        progress = entry.progress ?: progress,
+                        progressVolumes = entry.progressVolumes ?: progressVolumes,
+                        score = entry.score?.toFloat() ?: score,
+                        advancedScores = entry.advancedScores ?: emptyMap(),
+                        notes = entry.notes.orEmpty(),
+                        repeat = entry.repeat ?: repeat,
+                        priority = entry.priority ?: priority,
+                        isPrivate = entry.isPrivate ?: isPrivate,
+                        hiddenFromStatusLists = entry.hiddenFromStatusLists ?: hiddenFromStatusLists,
+                        startedAtMillis = entry.startedAt?.toMillisOrNull() ?: startedAtMillis,
+                        completedAtMillis = entry.completedAt?.toMillisOrNull() ?: completedAtMillis,
+                    ),
+                )
+            }
+            is NetworkResult.Failure -> result
         }
     }
 

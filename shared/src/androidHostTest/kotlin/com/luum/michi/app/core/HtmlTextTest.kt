@@ -25,4 +25,10 @@ class HtmlTextTest {
     fun mixedContentStripsTagsAndDecodesEntities() {
         assertEquals("A \uD83D\uDE00 & B", "<b>A</b> &#128512; &amp; B".stripHtml())
     }
+
+    @Test
+    fun ampersandIsDecodedLastSoDoubleEncodedTextSurvives() {
+        // `&amp;lt;` was written as a literal "&lt;", not as "<".
+        assertEquals("&lt;", "&amp;lt;".stripHtml())
+    }
 }

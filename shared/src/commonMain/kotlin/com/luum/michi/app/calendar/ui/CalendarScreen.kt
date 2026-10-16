@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import com.luum.michi.app.calendar.ui.components.CalendarFilterSheet
 import com.luum.michi.app.calendar.ui.components.CalendarReleaseRow
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
@@ -89,6 +90,14 @@ internal fun CalendarScreen(
 ) {
     val items = holder.selectedItems
     val selected = holder.selectedDayBucket
+    // Loads on open (the holder dedups repeats; an invalidated day refetches).
+    LaunchedEffect(holder) { holder.load() }
+    // Countdown tick: runs only while the calendar is visible AND the app is in
+    // the foreground (stopped in the background, like the whole screen).
+    LifecycleStartEffect(holder) {
+        holder.startTicking()
+        onStopOrDispose { holder.stopTicking() }
+    }
     // Scroll rule: changing the day returns the list to the top.
     val listState = rememberResetListState(selected)
     val minBucket = holder.minDayBucket
@@ -159,6 +168,8 @@ internal fun CalendarScreen(
                                     entry = entry,
                                     onOpenDetail = onOpenDetail,
                                     onOpenUrl = onOpenUrl,
+                                    timeZone = holder.timeZone,
+                                    nowEpochSeconds = holder.nowEpochSeconds,
                                 )
                             }
                         }

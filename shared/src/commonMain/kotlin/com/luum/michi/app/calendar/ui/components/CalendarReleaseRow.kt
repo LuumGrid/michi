@@ -13,26 +13,30 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.calendar.domain.CalendarEntry
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import com.luum.michi.app.calendar.domain.model.airingCountdownLabel
+import com.luum.michi.app.calendar.domain.model.formatAiringTime
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.language.Strings
-import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
 
 /**
  * One airing release as a cover card: title + format/season meta subtitle,
  * episode/time/countdown line in list-card type, plus a streaming platform
- * rail. Card tap navigates to detail (dormant until detail nav lands, same
- * as the list cards); the id is null only for malformed feed items, which
- * no-op instead of navigating nowhere.
+ * rail. The episode label comes from strings, the time from [timeZone] and the
+ * countdown from [nowEpochSeconds] (both owned by the holder, so no clock read
+ * happens in composition). Card tap navigates to detail; the id is null only
+ * for malformed feed items, which no-op instead of navigating nowhere.
  */
 @Composable
 internal fun CalendarReleaseRow(
     entry: CalendarEntry,
     onOpenDetail: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
+    timeZone: TimeZone,
+    nowEpochSeconds: Long,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
@@ -49,10 +53,17 @@ internal fun CalendarReleaseRow(
     val countdown = airingCountdownLabel(
         strings = strings,
         airingAtEpochSeconds = item.airingAtEpoch,
-        nowEpochSeconds = Clock.System.now().epochSeconds,
+        nowEpochSeconds = nowEpochSeconds,
     )
-    val episodeLine = if (countdown != null) "${item.release} - ${item.time}, $countdown"
-    else "${item.release} - ${item.time}"
+    val episodeLine = buildString {
+        append(strings.calendarEpisodeLabel(item.episode))
+        append(" - ")
+        append(formatAiringTime(item.airingAtEpoch, timeZone))
+        if (countdown != null) {
+            append(", ")
+            append(countdown)
+        }
+    }
     MediaCoverCard(
         cover = item.cover,
         title = item.title,

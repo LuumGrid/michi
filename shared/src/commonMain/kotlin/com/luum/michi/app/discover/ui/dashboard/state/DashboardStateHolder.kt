@@ -16,6 +16,7 @@ import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.TimeSource
@@ -109,6 +110,14 @@ internal class DashboardStateHolder(
      */
     fun invalidate() {
         generationState += 1
+        // Cancel any in-flight request: its response would be discarded by the
+        // generation check, and a load() arriving meanwhile would otherwise
+        // "join" that doomed request instead of firing a fresh one.
+        inFlight.values.forEach { it.cancel() }
+        inFlight.clear()
+        inFlightGate.clear()
+        pendingReload = false
+        pendingForce = false
         cache.clear()
         feeds.clear()
         lastLoaded.clear()
@@ -201,17 +210,22 @@ internal class DashboardStateHolder(
                         }
                 }
             } finally {
-                inFlight.remove(type)
-                inFlightGate.remove(type)
-                // Only this type's indicators: another type's request (or a
-                // cached switch) is untouched.
-                loading[type] = false
-                refreshing[type] = false
-                if (pendingReload) {
-                    val force = pendingForce
-                    pendingReload = false
-                    pendingForce = false
-                    load(forceRefresh = force)
+                // Only clear when this job is still the current one: the finally
+                // of a cancelled job must not wipe the state of the load that
+                // replaced it.
+                if (inFlight[type] === coroutineContext[Job]) {
+                    inFlight.remove(type)
+                    inFlightGate.remove(type)
+                    // Only this type's indicators: another type's request (or a
+                    // cached switch) is untouched.
+                    loading[type] = false
+                    refreshing[type] = false
+                    if (pendingReload) {
+                        val force = pendingForce
+                        pendingReload = false
+                        pendingForce = false
+                        load(forceRefresh = force)
+                    }
                 }
             }
         }

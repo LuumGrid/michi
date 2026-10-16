@@ -5,8 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -19,6 +22,7 @@ import com.luum.michi.app.calendar.domain.model.matches
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
 import com.luum.michi.app.core.model.MediaSeasonYear
 import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 
@@ -34,6 +38,27 @@ internal class CalendarStateHolder(
     private var cacheState: Map<Long, List<CalendarEntry>> by mutableStateOf(emptyMap())
     private var loadingBucketsState: Set<Long> by mutableStateOf(emptySet())
     private var errorState: NetworkError? by mutableStateOf(null)
+
+    // When each bucket was fetched, so the cache can expire with the shared TTL
+    // instead of serving a day forever.
+    private val timeMark = TimeSource.Monotonic
+    private val loadedAt = mutableMapOf<Long, TimeSource.Monotonic.ValueTimeMark>()
+    // Bumped when the cache is invalidated: a fetch launched before it must not
+    // write its (now stale) result.
+    private var invalidation = 0
+    // The invalidation each in-flight bucket was launched under, so a fetch that
+    // predates the last invalidation can be superseded instead of skipped.
+    private val loadingInvalidation = mutableMapOf<Long, Int>()
+
+    // Ticking "now" for the countdown line: refreshed every minute while the
+    // calendar is visible (startTicking/stopTicking), never read from the clock
+    // inside composition.
+    var nowEpochSeconds: Long by mutableStateOf(nowProvider())
+        private set
+    private var tickerJob: Job? = null
+
+    /** Zone the row times are formatted in (same one the day buckets use). */
+    val timeZone: TimeZone get() = timeZoneProvider()
 
     var seasonFilter by mutableStateOf(CalendarSeasonFilter.ALL)
         private set
@@ -115,8 +140,13 @@ internal class CalendarStateHolder(
     }
 
     private fun fetchDay(bucket: Long, force: Boolean = false) {
-        if (!force && cacheState.containsKey(bucket)) return
-        if (bucket in loadingBucketsState) return
+        if (!force && isFresh(bucket)) return
+        // Skip only an in-flight fetch launched under the current invalidation:
+        // one from before the last invalidation is superseded (it discards
+        // itself via the counter), so launch a fresh one.
+        if (bucket in loadingBucketsState && loadingInvalidation[bucket] == invalidation) return
+        val launchInvalidation = invalidation
+        loadingInvalidation[bucket] = launchInvalidation
         loadingBucketsState = loadingBucketsState + bucket
         errorState = null
         scope.launch {
@@ -125,9 +155,16 @@ internal class CalendarStateHolder(
                 val date = Instant.fromEpochSeconds(bucket).toLocalDateTime(zone).date
                 val endExclusive = LocalDate.fromEpochDays(date.toEpochDays() + 1)
                     .atStartOfDayIn(zone).epochSeconds
-                when (val result = repository.loadDay(bucket, endExclusive - 1)) {
+                // airingAt_greater / airingAt_lesser are exclusive: start one
+                // second before local midnight so a release exactly at midnight
+                // is not dropped.
+                when (val result = repository.loadDay(bucket - 1, endExclusive)) {
                     is NetworkResult.Success -> {
-                        cacheState = cacheState + (bucket to result.value)
+                        // Drop a response that landed after an invalidation.
+                        if (launchInvalidation == invalidation) {
+                            cacheState = cacheState + (bucket to result.value)
+                            loadedAt[bucket] = timeMark.markNow()
+                        }
                         if (selectedDayBucket == bucket) errorState = null
                     }
                     is NetworkResult.Failure -> {
@@ -139,9 +176,49 @@ internal class CalendarStateHolder(
             } catch (throwable: Throwable) {
                 if (selectedDayBucket == bucket) errorState = NetworkError.Unknown(throwable)
             } finally {
-                loadingBucketsState = loadingBucketsState - bucket
+                // Only the newest fetch for this bucket frees it.
+                if (loadingInvalidation[bucket] == launchInvalidation) {
+                    loadingInvalidation.remove(bucket)
+                    loadingBucketsState = loadingBucketsState - bucket
+                }
             }
         }
+    }
+
+    /** A cached bucket still within the shared TTL; older slices re-fetch. */
+    private fun isFresh(bucket: Long): Boolean {
+        if (!cacheState.containsKey(bucket)) return false
+        val mark = loadedAt[bucket] ?: return false
+        return mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL
+    }
+
+    /**
+     * Marks every cached day stale (a list entry changed, or the viewer/language
+     * did) without dropping it: the calendar keeps showing what it had instead
+     * of going blank, and the next load refetches. The counter discards an
+     * in-flight fetch that started before this invalidation.
+     */
+    fun invalidateEntries() {
+        loadedAt.clear()
+        invalidation++
+    }
+
+    /** Starts the per-minute countdown tick; call while the calendar is visible. */
+    fun startTicking() {
+        if (tickerJob?.isActive == true) return
+        nowEpochSeconds = nowProvider()
+        tickerJob = scope.launch {
+            while (true) {
+                delay(60_000)
+                nowEpochSeconds = nowProvider()
+            }
+        }
+    }
+
+    /** Stops the countdown tick (the calendar was closed). */
+    fun stopTicking() {
+        tickerJob?.cancel()
+        tickerJob = null
     }
 
     private fun todayDate(): LocalDate =

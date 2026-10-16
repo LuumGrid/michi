@@ -1,10 +1,13 @@
 package com.luum.michi.app.settings.ui.state
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SettingsStore
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.core.model.ImageQuality
@@ -17,6 +20,8 @@ import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
+import com.luum.michi.app.settings.domain.model.parseScoreFormat
+import com.luum.michi.app.settings.domain.model.parseTitleLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -226,6 +231,20 @@ internal class SettingsState(
 
     private var saveJob: Job? = null
 
+    /**
+     * Bumps after an `UpdateUser` confirms a change to a setting that alters how
+     * server content is localized (title language, staff name language). Root
+     * reloads lists/dashboard/details/calendar off this counter — never off the
+     * value change itself, which happens before the save lands.
+     */
+    var syncedGeneration: Int by mutableStateOf(0)
+        private set
+
+    // Last values confirmed by the server (load or save): the baseline the
+    // generation compares against, so an edit only reloads once it is saved.
+    private var lastSyncedTitleLanguage: TitleLanguage = TitleLanguage.ROMAJI
+    private var lastSyncedStaffNameLanguage: StaffNameLanguage = StaffNameLanguage.ROMAJI_WESTERN
+
     /** True after the first successful load. Plain var: no UI reads it, only gating. */
     private var hasLoaded = false
 
@@ -248,11 +267,14 @@ internal class SettingsState(
         if (!force && loadJob?.isActive == true) return
         loadJob?.cancel()
         isRefreshing = true
+        // Snapshot before the request: a field the user edits while this load is
+        // in flight is kept instead of being clobbered by the server value.
+        val before = currentData()
         loadJob = scope.launch {
             try {
                 when (val result = repository.loadSettings()) {
                     is NetworkResult.Success -> {
-                        applyLoaded(result.value)
+                        applyLoaded(result.value, before)
                         hasLoaded = true
                     }
                     is NetworkResult.Failure -> error = result.error
@@ -261,6 +283,57 @@ internal class SettingsState(
                 isRefreshing = false
             }
         }
+    }
+
+    /**
+     * Seeds the synced prefs from the freshly authenticated [Viewer] (which
+     * carries title language, 18+ and score format) so the UI is correct before
+     * [refresh] lands; the remaining synced values (split completed, etc.)
+     * arrive with that refresh. Never schedules a save.
+     */
+    fun seedFrom(viewer: Viewer) {
+        val title = parseTitleLanguage(viewer.titleLanguage)
+        titleLanguageState.value = title
+        persistTitleLanguage(title)
+        displayAdultContentState.value = viewer.displayAdultContent
+        store.putBoolean(KeyDisplayAdultContent, viewer.displayAdultContent)
+        val score = parseScoreFormat(viewer.scoreFormat)
+        scoreFormatState.value = score
+        persistScoreFormat(score)
+        lastSyncedTitleLanguage = title
+    }
+
+    /**
+     * Drops the synced prefs back to defaults and clears their store keys, so a
+     * guest never inherits the previous account's 18+ gate. Local-only prefs
+     * (theme, language, start tab, image quality) are untouched. Called only on
+     * a user → guest transition, never on a cold start as a guest.
+     */
+    fun clearSynced() {
+        titleLanguageState.value = TitleLanguage.ROMAJI
+        store.putString(KeyTitleLanguage, TitleLanguage.ROMAJI.name)
+        staffNameLanguageState.value = StaffNameLanguage.ROMAJI_WESTERN
+        store.putString(KeyStaffNameLanguage, StaffNameLanguage.ROMAJI_WESTERN.name)
+        displayAdultContentState.value = false
+        store.putBoolean(KeyDisplayAdultContent, false)
+        scoreFormatState.value = ScoreFormat.POINT_10_DECIMAL
+        store.putString(KeyScoreFormat, ScoreFormat.POINT_10_DECIMAL.name)
+        listSortState.value = ListSort.UPDATED
+        store.putString(KeyListSort, ListSort.UPDATED.name)
+        splitCompletedAnimeState.value = true
+        store.putBoolean(KeySplitCompletedAnime, true)
+        splitCompletedMangaState.value = false
+        store.putBoolean(KeySplitCompletedManga, false)
+        advancedScoringState.value = false
+        store.putBoolean(KeyAdvancedScoring, false)
+        advancedScoringAnime = emptyList()
+        store.putString(KeyAdvancedScoringAnimeNames, "")
+        advancedScoringManga = emptyList()
+        store.putString(KeyAdvancedScoringMangaNames, "")
+        notificationsState.value = NotificationPreferences()
+        persistNotifications(NotificationPreferences())
+        lastSyncedTitleLanguage = TitleLanguage.ROMAJI
+        lastSyncedStaffNameLanguage = StaffNameLanguage.ROMAJI_WESTERN
     }
 
     private fun hydrateFromStore() {
@@ -319,38 +392,63 @@ internal class SettingsState(
             messages = store.getBoolean(KeyNotificationMessages, notificationsState.value.messages),
             media = store.getBoolean(KeyNotificationMedia, notificationsState.value.media),
         )
+        // The hydrated values are the baseline until the server confirms: without
+        // this, the first save would look like a change and force a false reload.
+        lastSyncedTitleLanguage = titleLanguageState.value
+        lastSyncedStaffNameLanguage = staffNameLanguageState.value
     }
 
     /**
      * Applies server-loaded values directly to the backing states,
      * bypassing the save scheduler (what we just loaded must not be
-     * sent straight back).
+     * sent straight back). [before] is the data captured when the load
+     * started: a field the user edited while the request was in flight
+     * (`current != before`) is kept instead of being overwritten.
      */
-    private fun applyLoaded(data: SettingsData) {
-        titleLanguageState.value = data.titleLanguage
-        persistTitleLanguage(data.titleLanguage)
-        staffNameLanguageState.value = data.staffNameLanguage
-        persistStaffNameLanguage(data.staffNameLanguage)
-        displayAdultContentState.value = data.displayAdultContent
-        store.putBoolean(KeyDisplayAdultContent, data.displayAdultContent)
-        scoreFormatState.value = data.scoreFormat
-        persistScoreFormat(data.scoreFormat)
-        listSortState.value = data.listSort
-        saveListSort(data.listSort)
-        splitCompletedAnimeState.value = data.splitCompletedAnime
-        store.putBoolean(KeySplitCompletedAnime, data.splitCompletedAnime)
-        splitCompletedMangaState.value = data.splitCompletedManga
-        store.putBoolean(KeySplitCompletedManga, data.splitCompletedManga)
-        advancedScoringState.value = data.advancedScoring
-        store.putBoolean(KeyAdvancedScoring, data.advancedScoring)
-        advancedScoringAnime = data.advancedScoringAnime
-        store.putString(KeyAdvancedScoringAnimeNames, encodeNames(data.advancedScoringAnime))
-        advancedScoringManga = data.advancedScoringManga
-        store.putString(KeyAdvancedScoringMangaNames, encodeNames(data.advancedScoringManga))
-        notificationsState.value = data.notifications
-        persistNotifications(data.notifications)
+    private fun applyLoaded(data: SettingsData, before: SettingsData? = null) {
+        val title = keepEdited(titleLanguage, data.titleLanguage, before?.titleLanguage)
+        titleLanguageState.value = title
+        persistTitleLanguage(title)
+        val staffName = keepEdited(staffNameLanguage, data.staffNameLanguage, before?.staffNameLanguage)
+        staffNameLanguageState.value = staffName
+        persistStaffNameLanguage(staffName)
+        val adult = keepEdited(displayAdultContent, data.displayAdultContent, before?.displayAdultContent)
+        displayAdultContentState.value = adult
+        store.putBoolean(KeyDisplayAdultContent, adult)
+        val score = keepEdited(scoreFormat, data.scoreFormat, before?.scoreFormat)
+        scoreFormatState.value = score
+        persistScoreFormat(score)
+        val sort = keepEdited(listSort, data.listSort, before?.listSort)
+        listSortState.value = sort
+        saveListSort(sort)
+        val splitAnime = keepEdited(splitCompletedAnime, data.splitCompletedAnime, before?.splitCompletedAnime)
+        splitCompletedAnimeState.value = splitAnime
+        store.putBoolean(KeySplitCompletedAnime, splitAnime)
+        val splitManga = keepEdited(splitCompletedManga, data.splitCompletedManga, before?.splitCompletedManga)
+        splitCompletedMangaState.value = splitManga
+        store.putBoolean(KeySplitCompletedManga, splitManga)
+        val adv = keepEdited(advancedScoring, data.advancedScoring, before?.advancedScoring)
+        advancedScoringState.value = adv
+        store.putBoolean(KeyAdvancedScoring, adv)
+        val advAnime = keepEdited(advancedScoringAnime, data.advancedScoringAnime, before?.advancedScoringAnime)
+        advancedScoringAnime = advAnime
+        store.putString(KeyAdvancedScoringAnimeNames, encodeNames(advAnime))
+        val advManga = keepEdited(advancedScoringManga, data.advancedScoringManga, before?.advancedScoringManga)
+        advancedScoringManga = advManga
+        store.putString(KeyAdvancedScoringMangaNames, encodeNames(advManga))
+        val notifs = keepEdited(notifications, data.notifications, before?.notifications)
+        notificationsState.value = notifs
+        persistNotifications(notifs)
+        // The baseline is what the SERVER sent, not the (possibly edited) value
+        // kept above: an edit made during the load must still count as unsaved.
+        lastSyncedTitleLanguage = data.titleLanguage
+        lastSyncedStaffNameLanguage = data.staffNameLanguage
         error = null
     }
+
+    /** Keeps the user's edit when it differs from the load-start value. */
+    private fun <T> keepEdited(current: T, loaded: T, baseline: T?): T =
+        if (baseline != null && current != baseline) current else loaded
 
     private fun persistTitleLanguage(value: TitleLanguage) {
         store.putString(KeyTitleLanguage, value.name)
@@ -401,8 +499,20 @@ internal class SettingsState(
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(SaveDebounce)
-            when (val result = repository.saveSettings(currentData())) {
-                is NetworkResult.Success -> error = null
+            val sent = currentData()
+            when (val result = repository.saveSettings(sent)) {
+                is NetworkResult.Success -> {
+                    error = null
+                    // Reload only when what we actually sent differs from the
+                    // last server-confirmed values.
+                    if (sent.titleLanguage != lastSyncedTitleLanguage ||
+                        sent.staffNameLanguage != lastSyncedStaffNameLanguage
+                    ) {
+                        lastSyncedTitleLanguage = sent.titleLanguage
+                        lastSyncedStaffNameLanguage = sent.staffNameLanguage
+                        syncedGeneration += 1
+                    }
+                }
                 is NetworkResult.Failure -> error = result.error
             }
         }

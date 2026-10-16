@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.ui.icons.AppIcons
 
 /**
  * Loading / error / content switch shared by the detail screens and the
@@ -28,7 +31,9 @@ import androidx.compose.ui.unit.dp
  *
  * [refreshError] adds a compact, non-blocking line above the content when a
  * refresh failed while there is already something to show; callers that do not
- * want it (the detail screens) leave it null.
+ * want it (the detail screens) leave it null. [actionError] is the same row for
+ * a failed action (a page load, a favourite): it carries a dismiss button
+ * instead of a retry, since re-running the action is the user's call.
  */
 @Composable
 internal fun LoadStateContainer(
@@ -41,6 +46,9 @@ internal fun LoadStateContainer(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     refreshError: String? = null,
+    actionError: String? = null,
+    dismissLabel: String? = null,
+    onDismissActionError: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     when {
@@ -78,6 +86,13 @@ internal fun LoadStateContainer(
                         onRetry = onRetry,
                     )
                 }
+                if (actionError != null) {
+                    RefreshErrorRow(
+                        message = actionError,
+                        dismissLabel = dismissLabel,
+                        onDismiss = onDismissActionError,
+                    )
+                }
                 PullRefresh(isRefreshing = isLoading, onRefresh = onRetry) {
                     content()
                 }
@@ -86,12 +101,18 @@ internal fun LoadStateContainer(
     }
 }
 
-/** Compact refresh error: content stays visible, only a line with retry shows. */
+/**
+ * Compact, non-blocking error row: content stays visible, only a line shows.
+ * Either a retry ([retryLabel]/[onRetry], a failed load/refresh) or a dismiss
+ * ([dismissLabel]/[onDismiss], a failed action the user can just repeat).
+ */
 @Composable
-private fun RefreshErrorRow(
+internal fun RefreshErrorRow(
     message: String,
-    retryLabel: String,
-    onRetry: () -> Unit,
+    retryLabel: String? = null,
+    onRetry: (() -> Unit)? = null,
+    dismissLabel: String? = null,
+    onDismiss: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
@@ -105,8 +126,15 @@ private fun RefreshErrorRow(
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onRetry) {
-            Text(text = retryLabel)
+        if (onRetry != null && retryLabel != null) {
+            TextButton(onClick = onRetry) {
+                Text(text = retryLabel)
+            }
+        }
+        if (onDismiss != null) {
+            IconButton(onClick = onDismiss) {
+                Icon(imageVector = AppIcons.Clear, contentDescription = dismissLabel)
+            }
         }
     }
 }

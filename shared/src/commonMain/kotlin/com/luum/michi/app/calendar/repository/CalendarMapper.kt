@@ -8,18 +8,15 @@ import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
-import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.core.network.repository.toCoverSizes
 
 internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
     val media = media ?: return null
     val hasUserScore = (media.mediaListEntry?.score ?: 0.0) > 0.0
-    val releaseLabel = "Ep. $episode"
     return ReleaseItem(
         title = media.title.bestTitle(),
-        release = releaseLabel,
-        time = formatAiringTime(airingAt),
+        episode = episode,
         airingAtEpoch = airingAt,
         paletteHex = media.coverImage?.color,
         id = media.id,
@@ -48,9 +45,4 @@ private fun MediaExternalLinkDto.toStreamingPlatform(): StreamingPlatform? {
     val site = site?.takeIf { it.isNotBlank() } ?: return null
     val url = url?.takeIf { it.isNotBlank() } ?: return null
     return StreamingPlatform(site = site, url = url, iconUrl = icon, color = color)
-}
-
-private fun formatAiringTime(airingAtEpoch: Long): String {
-    val localDateTime = airingAtEpoch.toLocalMediaReleaseDateTime()
-    return "${localDateTime.hour.toString().padStart(2, '0')}:${localDateTime.minute.toString().padStart(2, '0')}"
 }

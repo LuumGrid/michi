@@ -83,8 +83,22 @@ class MichiDependencies internal constructor(
     internal val httpClient: HttpClient = createAniListHttpClient()
     internal val graphQLClient: AniListGraphQLClient = KtorAniListGraphQLClient(
         httpClient = httpClient,
-        tokenProvider = { tokenStorage.load() },
+        // Never send an expired token: it would 401 forever, so an expired stored
+        // token closes the session instead.
+        tokenProvider = {
+            tokenStorage.load()?.let { token ->
+                if (token.isExpired) {
+                    sessionManager.onUnauthorized(token)
+                    null
+                } else {
+                    token
+                }
+            }
+        },
         debugLogging = isDebug,
+        // A mid-session 401 closes the session only if that token is still the
+        // stored one (a stale 401 never closes a newer session).
+        onUnauthorized = { token -> scope.launch { sessionManager.onUnauthorized(token) } },
     )
     internal val viewerRepository: AniListViewerRepository =
         AniListViewerRepositoryImpl(graphQLClient)

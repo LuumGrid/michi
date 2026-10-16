@@ -1,13 +1,22 @@
 package com.luum.michi.app.mediaList
 
+import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SortScope
 import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
+import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
+import com.luum.michi.app.mediaList.domain.anime.model.incremented
+import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.incrementedChapters
 import com.luum.michi.app.mediaList.domain.manga.model.isComplete
 import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
@@ -16,8 +25,11 @@ import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.hydrateSort
 import com.luum.michi.app.root.resolveInitialSort
 import com.luum.michi.app.settings.domain.model.ListSort
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
@@ -112,7 +124,109 @@ private fun mangaWired(graphQL: FakeGraphQL): Pair<MangaListStateHolder, MediaLi
     return holder to entryRepository
 }
 
+/** Entry repo whose progress save is held at [gate], to queue two `+1`s. */
+private class GatedEntryRepository(
+    private val failAtCall: Int = -1,
+) : MediaListEntryRepository {
+    val gate = CompletableDeferred<Unit>()
+    var progressCalls = 0
+        private set
+
+    override suspend fun saveEntry(
+        mediaId: Int,
+        status: MediaListStatus,
+        progress: Int,
+        progressVolumes: Int?,
+        score: Float,
+        advancedScores: List<Float>?,
+        notes: String,
+        repeat: Int,
+        priority: Int,
+        isPrivate: Boolean,
+        hiddenFromStatusLists: Boolean,
+        startedAtMillis: Long?,
+        completedAtMillis: Long?,
+    ): NetworkResult<MediaListViewerEntry> = NetworkResult.Failure(NetworkError.Unknown(null))
+
+    override suspend fun saveProgress(
+        mediaId: Int,
+        progress: Int?,
+        status: MediaListStatus?,
+        progressVolumes: Int?,
+    ): NetworkResult<Unit> {
+        progressCalls++
+        gate.await()
+        return if (progressCalls == failAtCall) {
+            NetworkResult.Failure(NetworkError.Http(500, null))
+        } else {
+            NetworkResult.Success(Unit)
+        }
+    }
+
+    override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> =
+        NetworkResult.Success(Unit)
+
+    override suspend fun deleteEntry(entryId: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
+}
+
+/**
+ * FIFO dispatcher that only runs when [runAll] is called: lets a test order two
+ * `launch`ed saves deterministically (a coalesced first save) without pulling in
+ * `kotlinx-coroutines-test`.
+ */
+private class DeferredDispatcher : CoroutineDispatcher() {
+    private val tasks = ArrayDeque<Runnable>()
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        tasks.addLast(block)
+    }
+
+    fun runAll() {
+        while (tasks.isNotEmpty()) tasks.removeFirst().run()
+    }
+}
+
 class MediaListIntegrationTest {
+    @Test
+    fun openingTheListFetchesWithoutACache() {
+        val graphQL = FakeGraphQL(listOf(animeCollection()))
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7) // non-forced, nothing cached yet
+
+        assertEquals(1, graphQL.calls, "a non-forced load with no cache still fetches")
+        assertTrue(holder.entries.isNotEmpty())
+    }
+
+    @Test
+    fun twoQuickTapsWithAFailureRevertToTheConfirmedProgress() {
+        val graphQL = FakeGraphQL(listOf(animeCollection()))
+        val dispatcher = DeferredDispatcher()
+        // A (call 1) succeeds; B (call 2) is scripted to fail — but with the fix
+        // B has nothing new to send, so it skips and the value stays confirmed.
+        val entries = GatedEntryRepository(failAtCall = 2)
+        val holder = AnimeListStateHolder(
+            AnimeListRepositoryImpl(graphQL),
+            entries,
+            CoroutineScope(dispatcher),
+        )
+        holder.load(7)
+        dispatcher.runAll()
+        val entry = holder.entries.first { it.id == 101 }
+        assertEquals(5, entry.progress)
+
+        holder.incrementProgress(entry) // tap A
+        holder.incrementProgress(entry) // tap B
+        dispatcher.runAll() // A coalesces the latest value (7) and holds at the gate
+        assertEquals(7, holder.entries.first { it.id == 101 }.progress)
+
+        entries.gate.complete(Unit)
+        dispatcher.runAll() // A succeeds (confirmed = 7); B sees nothing new and skips
+
+        // Never reverts to the stale tap-time copy (5): the server has 7.
+        assertEquals(7, holder.entries.first { it.id == 101 }.progress, "kept the confirmed value")
+        assertEquals(1, entries.progressCalls, "B did not re-send")
+    }
 
     @Test
     fun animeMapsStatusTitlesWorkStatusAndSections() {
@@ -354,6 +468,45 @@ class MediaListIntegrationTest {
         holder.load(7, splitCompleted = false)
         assertEquals(1, holder.entriesInSection(AnimeListSection.COMPLETED).size)
         assertEquals(0, holder.entriesInSection(AnimeListSection.COMPLETED_MOVIE).size)
+    }
+
+    @Test
+    fun incrementingToTheLastEpisodeHonorsTheSplitFlag() {
+        val movie = AnimeListEntry(
+            id = 1,
+            title = "M",
+            format = MediaFormat.MOVIE,
+            status = AnimeListSection.WATCHING,
+            progress = 0,
+            totalEpisodes = 1,
+            score = 0.0,
+            nextEpisodeRelease = null,
+            paletteHex = null,
+        )
+
+        assertEquals(AnimeListSection.COMPLETED_MOVIE, movie.incremented(splitCompleted = true).status)
+        assertEquals(AnimeListSection.COMPLETED, movie.incremented(splitCompleted = false).status)
+    }
+
+    @Test
+    fun incrementingMangaToTheEndUsesTheFormatSectionWhenSplit() {
+        val unknownFormat = MangaListEntry(
+            id = 1,
+            title = "M",
+            format = MediaFormat.UNKNOWN,
+            status = MangaListSection.CURRENT,
+            chaptersProgress = 0,
+            totalChapters = 1,
+            volumesProgress = 0,
+            totalVolumes = null,
+            score = 0.0,
+            paletteHex = null,
+        )
+
+        // Unknown format falls into the generic manga section (like anime's TV),
+        // never the merged COMPLETED that the split section list does not show.
+        assertEquals(MangaListSection.COMPLETED_MANGA, unknownFormat.incrementedChapters(splitCompleted = true).status)
+        assertEquals(MangaListSection.COMPLETED, unknownFormat.incrementedChapters(splitCompleted = false).status)
     }
 
     @Test

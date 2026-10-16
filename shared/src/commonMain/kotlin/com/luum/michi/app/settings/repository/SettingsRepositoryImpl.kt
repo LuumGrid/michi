@@ -12,6 +12,8 @@ import com.luum.michi.app.settings.domain.model.NotificationPreferences
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
+import com.luum.michi.app.settings.domain.model.parseScoreFormat
+import com.luum.michi.app.settings.domain.model.parseTitleLanguage
 import com.luum.michi.app.core.model.NotificationBucket
 import com.luum.michi.app.core.model.apiTypes
 import kotlinx.serialization.SerialName
@@ -98,12 +100,6 @@ private fun TitleLanguage.toApiValue(): String = when (this) {
     TitleLanguage.NATIVE -> "NATIVE"
 }
 
-private fun String?.toTitleLanguage(): TitleLanguage = when (this) {
-    "ENGLISH" -> TitleLanguage.ENGLISH
-    "NATIVE" -> TitleLanguage.NATIVE
-    else -> TitleLanguage.ROMAJI
-}
-
 private fun StaffNameLanguage.toApiValue(): String = when (this) {
     StaffNameLanguage.ROMAJI_WESTERN -> "ROMAJI_WESTERN"
     StaffNameLanguage.ROMAJI -> "ROMAJI"
@@ -122,14 +118,6 @@ private fun ScoreFormat.toApiValue(): String = when (this) {
     ScoreFormat.POINT_10 -> "POINT_10"
     ScoreFormat.POINT_5_STARS -> "POINT_5"
     ScoreFormat.POINT_3_SMILEYS -> "POINT_3"
-}
-
-private fun String?.toScoreFormat(): ScoreFormat = when (this) {
-    "POINT_100" -> ScoreFormat.POINT_100
-    "POINT_10" -> ScoreFormat.POINT_10
-    "POINT_5" -> ScoreFormat.POINT_5_STARS
-    "POINT_3" -> ScoreFormat.POINT_3_SMILEYS
-    else -> ScoreFormat.POINT_10_DECIMAL
 }
 
 // AniList offers no "release date" rowOrder, so it is not offered in the UI;
@@ -201,9 +189,9 @@ internal class SettingsRepositoryImpl(
             val options = viewer?.options
             val listOptions = viewer?.mediaListOptions
             SettingsData(
-                titleLanguage = options?.titleLanguage.toTitleLanguage(),
+                titleLanguage = parseTitleLanguage(options?.titleLanguage),
                 staffNameLanguage = options?.staffNameLanguage.toStaffNameLanguage(),
-                scoreFormat = listOptions?.scoreFormat.toScoreFormat(),
+                scoreFormat = parseScoreFormat(listOptions?.scoreFormat),
                 displayAdultContent = options?.displayAdultContent ?: false,
                 listSort = listOptions?.rowOrder.toListSort(),
                 splitCompletedAnime = listOptions?.animeList?.splitCompletedSectionByFormat ?: true,

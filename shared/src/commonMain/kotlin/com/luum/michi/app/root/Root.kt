@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -41,6 +42,7 @@ import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.navigation.domain.TabSection
@@ -141,6 +143,12 @@ import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
 import com.materialkolor.PaletteStyle
+import com.luum.michi.app.ui.components.PlatformBackHandler
+import com.luum.michi.app.root.state.BackStep
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlin.math.roundToInt
 
 /**
@@ -224,6 +232,13 @@ internal fun Root(
     val tabQuery = if (searchTab == tab) activeQuery else ""
     val showScrim = search != null && activeQuery.isEmpty()
 
+    // System back funnels through the same progressive step as the toolbar
+    // chevron. When nothing is left to consume (SystemDefault) the handler is
+    // disabled, so the platform closes the app as usual.
+    PlatformBackHandler(enabled = state.nextBackStep() != BackStep.SystemDefault) {
+        state.applyBackStep()
+    }
+
     // Synced settings load once per session, on first open — never on
     // composition, never for guests (canSync). The holder dedups repeats.
     LaunchedEffect(state.isSettingsOpen) {
@@ -253,52 +268,101 @@ internal fun Root(
         }
     }
 
+    // ── Session transitions ────────────────────────────────────────────────
+    // viewerId drives three things: seeding/clearing the synced prefs, resetting
+    // the transient navigation state, and re-keying the holders (their favourite
+    // state is per-user). It only fires on a real change, so a cold start (or a
+    // deep link opened during it) never loses navigation.
+    val viewerId = viewer?.id
+    // Latest strings for the holders' providers, without keying them on language.
+    val currentStrings by rememberUpdatedState(strings)
+
     // Anime list holder, recreated per viewer. Loads are explicit and the
     // loader dedups repeats via TTL; guests never load (no user id).
     val listScope = rememberCoroutineScope()
-    val viewerId = viewer?.id
-    val animeHolder = remember(viewerId, animeListRepository, mediaListEntryRepository, sortPersistence) {
-        viewerId?.let {
-            AnimeListStateHolder(animeListRepository, mediaListEntryRepository, listScope, sortPersistence)
+
+    // Airing calendar holder: session-independent (public feed, no viewer id)
+    // and shared by guests. Declared before the list holders so their
+    // `onEntrySaved` can invalidate its cache.
+    val calendarScope = rememberHolderScope(listScope)
+    val calendarHolder = remember(calendarRepository, calendarScope) {
+        createCalendarStateHolder(calendarRepository, calendarScope)
+    }
+
+    // Session change: drop the transient navigation state (the synced prefs are
+    // seeded/cleared in App, next to the settings holder) and mark the calendar
+    // stale — its rows carry the viewer's status/score.
+    var lastViewerId by remember { mutableStateOf(viewerId) }
+    LaunchedEffect(viewerId) {
+        if (viewerId != lastViewerId) {
+            state.reset()
+            calendarHolder.invalidateEntries()
+            lastViewerId = viewerId
         }
     }
-    val mangaHolder = remember(viewerId, mangaListRepository, mediaListEntryRepository, sortPersistence) {
+
+    val animeScope = rememberHolderScope(listScope, viewerId)
+    val mangaScope = rememberHolderScope(listScope, viewerId)
+    val animeHolder = remember(viewerId, animeListRepository, mediaListEntryRepository, sortPersistence, animeScope) {
         viewerId?.let {
-            MangaListStateHolder(mangaListRepository, mediaListEntryRepository, listScope, sortPersistence)
+            AnimeListStateHolder(
+                animeListRepository,
+                mediaListEntryRepository,
+                animeScope,
+                sortPersistence,
+                onEntrySaved = { calendarHolder.invalidateEntries() },
+            )
         }
     }
-    // Server-mapped titles (userPreferred) only re-map on load: changing
-    // the title language forces one reload so cards stop showing stale
-    // titles. The write below recomposes once but never relaunches the
-    // effect (keys unchanged), so there is no loop.
-    var lastTitleLanguage by remember { mutableStateOf(settingsState.titleLanguage) }
-    val titleLanguageChanged = settingsState.titleLanguage != lastTitleLanguage
-    LaunchedEffect(tab, viewerId, settingsState.splitCompletedAnime, settingsState.splitCompletedManga, settingsState.titleLanguage) {
+    val mangaHolder = remember(viewerId, mangaListRepository, mediaListEntryRepository, sortPersistence, mangaScope) {
+        viewerId?.let {
+            MangaListStateHolder(
+                mangaListRepository,
+                mediaListEntryRepository,
+                mangaScope,
+                sortPersistence,
+                onEntrySaved = { calendarHolder.invalidateEntries() },
+            )
+        }
+    }
+    // Server-mapped titles (userPreferred) and person names only re-map on load:
+    // a confirmed language change (syncedGeneration) forces one reload so cards
+    // stop showing stale titles. A list that is not visible reloads when it
+    // opens, via its pending flag.
+    var lastSyncedGeneration by remember { mutableStateOf(settingsState.syncedGeneration) }
+    var pendingAnimeReload by remember { mutableStateOf(false) }
+    var pendingMangaReload by remember { mutableStateOf(false) }
+    LaunchedEffect(
+        tab,
+        viewerId,
+        settingsState.splitCompletedAnime,
+        settingsState.splitCompletedManga,
+        settingsState.syncedGeneration,
+    ) {
+        val languageSynced = settingsState.syncedGeneration != lastSyncedGeneration
+        if (languageSynced) {
+            pendingAnimeReload = true
+            pendingMangaReload = true
+        }
+        // Always load the visible list (the TTL dedups repeats): opening the tab,
+        // a new viewer or a split flip must fetch, not only a language change.
         if (tab == TabSection.ANIME && viewerId != null) {
             animeHolder?.load(
                 viewerId,
-                forceRefresh = titleLanguageChanged,
+                forceRefresh = languageSynced || pendingAnimeReload,
                 splitCompleted = settingsState.splitCompletedAnime,
             )
+            pendingAnimeReload = false
         }
         if (tab == TabSection.MANGA && viewerId != null) {
             mangaHolder?.load(
                 viewerId,
-                forceRefresh = titleLanguageChanged,
+                forceRefresh = languageSynced || pendingMangaReload,
                 splitCompleted = settingsState.splitCompletedManga,
             )
+            pendingMangaReload = false
         }
-        lastTitleLanguage = settingsState.titleLanguage
-    }
-
-    // Airing calendar holder: session-independent (public feed, no viewer
-    // id) and shared by guests. Loads are explicit on open; the loader
-    // dedups repeats.
-    val calendarHolder = remember(calendarRepository) {
-        createCalendarStateHolder(calendarRepository, listScope)
-    }
-    LaunchedEffect(state.isCalendarOpen) {
-        if (state.isCalendarOpen) calendarHolder.load()
+        lastSyncedGeneration = settingsState.syncedGeneration
     }
 
     // Discover dashboard holder: session-independent (public catalog) and
@@ -306,16 +370,16 @@ internal fun Root(
     // revisits and the 18+ gate lives in the holder. The holder is keyed
     // without `strings` so a language change keeps the Anime/Manga selection;
     // the provider is read at launch so one request never mixes languages.
-    val currentDashboardStrings by rememberUpdatedState(strings)
-    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, listScope) {
+    val dashboardScope = rememberHolderScope(listScope)
+    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, dashboardScope) {
         createDashboardStateHolder(
             repository = dashboardRepository,
             cache = dashboardFeedCache,
-            scope = listScope,
+            scope = dashboardScope,
             hideAdult = !settingsState.displayAdultContent,
             // "Pestaña al abrir" → DISCOVER sub-choice; startup only, no load.
             initialType = settingsState.startCatalogType.toDashboardMediaType(),
-        ) { currentDashboardStrings }
+        ) { currentStrings }
     }
 
     // "Pestaña al abrir": the settings row stays feature-agnostic, so Root
@@ -384,26 +448,35 @@ internal fun Root(
         }
     }
 
-    // Media detail holder: session-independent (public data) and shared by
-    // guests. Loads on intent when a media destination opens; the holder's
-    // own LRU makes revisits instant. Character/staff/studio holders mirror
-    // the same shape for their own destinations.
-    val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, listScope, strings) {
-        createMediaDetailStateHolder(mediaDetailRepository, mediaListEntryRepository, listScope, strings)
+    // Detail holders: session-independent data but per-user favourite state, so
+    // they are re-keyed per viewer and read strings through a provider (a
+    // language change keeps the holder and its cache). Each owns a child scope
+    // cancelled when it is replaced.
+    val mediaDetailScope = rememberHolderScope(listScope, viewerId)
+    val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, mediaDetailScope, viewerId) {
+        createMediaDetailStateHolder(
+            mediaDetailRepository,
+            mediaListEntryRepository,
+            mediaDetailScope,
+        ) { currentStrings }
     }
-    val characterHolder = remember(characterDetailRepository, listScope, strings) {
-        createCharacterDetailStateHolder(characterDetailRepository, listScope, strings, viewerId ?: 0)
+    val characterScope = rememberHolderScope(listScope, viewerId)
+    val characterHolder = remember(characterDetailRepository, characterScope, viewerId) {
+        createCharacterDetailStateHolder(characterDetailRepository, characterScope) { currentStrings }
     }
-    val staffHolder = remember(staffDetailRepository, listScope, strings) {
-        createStaffDetailStateHolder(staffDetailRepository, listScope, strings, viewerId ?: 0)
+    val staffScope = rememberHolderScope(listScope, viewerId)
+    val staffHolder = remember(staffDetailRepository, staffScope, viewerId) {
+        createStaffDetailStateHolder(staffDetailRepository, staffScope) { currentStrings }
     }
-    val studioHolder = remember(studioDetailRepository, listScope) {
-        createStudioDetailStateHolder(studioDetailRepository, listScope, viewerId ?: 0)
+    val studioScope = rememberHolderScope(listScope, viewerId)
+    val studioHolder = remember(studioDetailRepository, studioScope, viewerId) {
+        createStudioDetailStateHolder(studioDetailRepository, studioScope)
     }
-    val genreHolder = remember(genreDetailRepository, listScope) {
+    val genreScope = rememberHolderScope(listScope, viewerId)
+    val genreHolder = remember(genreDetailRepository, genreScope, viewerId) {
         createGenreDetailStateHolder(
             genreDetailRepository,
-            listScope,
+            genreScope,
             !settingsState.displayAdultContent,
         )
     }
@@ -411,6 +484,31 @@ internal fun Root(
     // genre is loaded), so the setting applies without leaving the page.
     LaunchedEffect(settingsState.displayAdultContent) {
         genreHolder.setHideAdult(!settingsState.displayAdultContent)
+    }
+    // A confirmed language change (titles/staff names) also re-localizes the
+    // open detail page and the calendar day; the dashboard re-hydrates when its
+    // screen is visible again (invalidate bumps its generation).
+    LaunchedEffect(settingsState.syncedGeneration) {
+        if (settingsState.syncedGeneration == 0) return@LaunchedEffect
+        dashboardHolder.invalidate()
+        // Every cached detail snapshot is re-localized: drop all of them so the
+        // back stack never restores stale titles, then refresh the visible one.
+        mediaDetailHolder.invalidateCache()
+        characterHolder.invalidateCache()
+        staffHolder.invalidateCache()
+        studioHolder.invalidateCache()
+        genreHolder.invalidateCache()
+        when (state.currentDetail) {
+            is DetailDestination.Media -> mediaDetailHolder.refresh()
+            is DetailDestination.Character -> characterHolder.refresh()
+            is DetailDestination.Staff -> staffHolder.refresh()
+            is DetailDestination.Studio -> studioHolder.refresh()
+            is DetailDestination.Genre -> genreHolder.refresh()
+            is DetailDestination.DetailList -> {}
+            null -> {}
+        }
+        // Always: the calendar rows are re-localized too (open or not).
+        calendarHolder.invalidateEntries()
     }
     LaunchedEffect(state.currentDetail) {
         when (val destination = state.currentDetail) {
@@ -484,6 +582,8 @@ internal fun Root(
         val id = viewerId ?: return
         animeHolder?.load(id, forceRefresh = true, splitCompleted = settingsState.splitCompletedAnime)
         mangaHolder?.load(id, forceRefresh = true, splitCompleted = settingsState.splitCompletedManga)
+        // A saved/edited entry changes the calendar's user status/score.
+        calendarHolder.invalidateEntries()
     }
 
     // Editor score display in the user's format (translation lives in
@@ -785,6 +885,9 @@ internal fun Root(
                                 is DetailDestination.DetailList -> {
                                     val listBottom = padding.calculateBottomPadding()
                                     val isManga = mediaDetailHolder.detail?.type == MediaDetailType.MANGA
+                                    val mediaError = mediaDetailHolder.actionError?.let { strings.networkErrorMessage(it) }
+                                    val characterError = characterHolder.actionError?.let { strings.networkErrorMessage(it) }
+                                    val staffError = staffHolder.actionError?.let { strings.networkErrorMessage(it) }
                                     when (destination.kind) {
                                         DetailListKind.MEDIA_CHARACTERS -> DetailListScreen(
                                             items = mediaDetailHolder.characters.map { it.toRailItem(strings) },
@@ -794,6 +897,9 @@ internal fun Root(
                                             hasMore = mediaDetailHolder.charactersHasNextPage,
                                             isLoadingMore = mediaDetailHolder.isLoadingCharacters,
                                             onLoadMore = { mediaDetailHolder.loadMoreCharacters() },
+                                            actionError = mediaError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { mediaDetailHolder.clearActionError() },
                                         )
                                         DetailListKind.MEDIA_STAFF -> DetailListScreen(
                                             items = mediaDetailHolder.staff.map { it.toRailItem() },
@@ -803,12 +909,18 @@ internal fun Root(
                                             hasMore = mediaDetailHolder.staffHasNextPage,
                                             isLoadingMore = mediaDetailHolder.isLoadingStaff,
                                             onLoadMore = { mediaDetailHolder.loadMoreStaff() },
+                                            actionError = mediaError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { mediaDetailHolder.clearActionError() },
                                         )
                                         DetailListKind.MEDIA_RELATED -> DetailListScreen(
                                             items = mediaDetailHolder.detail?.relations.orEmpty().map { it.toRailItem(strings, isManga) },
                                             layout = DetailListLayout.ROWS,
                                             onSelect = { state.openMedia(it) },
                                             bottomPadding = listBottom,
+                                            actionError = mediaError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { mediaDetailHolder.clearActionError() },
                                         )
                                         DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
                                             items = mediaDetailHolder.recommendations.map { it.toRailItem(strings, isManga) },
@@ -818,6 +930,9 @@ internal fun Root(
                                             hasMore = mediaDetailHolder.recommendationsHasNextPage,
                                             isLoadingMore = mediaDetailHolder.isLoadingRecommendations,
                                             onLoadMore = { mediaDetailHolder.loadMoreRecommendations() },
+                                            actionError = mediaError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { mediaDetailHolder.clearActionError() },
                                         )
                                         DetailListKind.CHARACTER_MEDIA -> DetailListScreen(
                                             items = characterHolder.mediaItems.map { it.toRailItem(strings) },
@@ -827,6 +942,9 @@ internal fun Root(
                                             hasMore = characterHolder.hasNextPage,
                                             isLoadingMore = characterHolder.isLoadingMore,
                                             onLoadMore = { characterHolder.loadMore() },
+                                            actionError = characterError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { characterHolder.clearActionError() },
                                         )
                                         DetailListKind.STAFF_MEDIA -> DetailListScreen(
                                             items = staffHolder.mediaItems.map { it.toRailItem() },
@@ -836,6 +954,9 @@ internal fun Root(
                                             hasMore = staffHolder.mediaHasNextPage,
                                             isLoadingMore = staffHolder.isLoadingMoreMedia,
                                             onLoadMore = { staffHolder.loadMoreMedia() },
+                                            actionError = staffError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { staffHolder.clearActionError() },
                                         )
                                         DetailListKind.STAFF_CHARACTERS -> DetailListScreen(
                                             items = staffHolder.characterItems.map { it.toRailItem() },
@@ -845,6 +966,9 @@ internal fun Root(
                                             hasMore = staffHolder.charactersHasNextPage,
                                             isLoadingMore = staffHolder.isLoadingMoreCharacters,
                                             onLoadMore = { staffHolder.loadMoreCharacters() },
+                                            actionError = staffError,
+                                            dismissLabel = strings.dismissAction,
+                                            onDismissActionError = { staffHolder.clearActionError() },
                                         )
                                     }
                                 }
@@ -1002,13 +1126,14 @@ internal fun Root(
                         entryRepository = mediaListEntryRepository,
                         detailRepository = mediaDetailRepository,
                         scope = listScope,
-                        strings = strings,
+                        stringsProvider = { currentStrings },
                         initialStatusOverride = state.editorInitialStatus,
                         initialProgressOverride = state.editorInitialProgress,
                         advancedScoringEnabled = settingsState.advancedScoring,
                         advancedScoringAnimeNames = settingsState.advancedScoringAnime,
                         advancedScoringMangaNames = settingsState.advancedScoringManga,
                         scoreMax = scoreMax,
+                        onFavouriteChanged = { id, value -> mediaDetailHolder.applyFavouriteChange(id, value) },
                     )
                 }
                 LaunchedEffect(editorId) { editor.load() }
@@ -1312,6 +1437,23 @@ private fun toolbarActions(
  * omission). No surface opts in yet; the first long list will add its case.
  */
 private fun hidesToolbarOnScroll(tab: TabSection, state: State): Boolean = false
+
+/**
+ * A child scope per state holder, derived from Root's `rememberCoroutineScope`
+ * (same dispatcher, cancelled when Root leaves). It is recreated — and the old
+ * one cancelled — when its [keys] change (a new viewer, a new holder), so an
+ * in-flight request of a replaced holder can never write into its successor.
+ */
+@Composable
+private fun rememberHolderScope(parent: CoroutineScope, vararg keys: Any?): CoroutineScope {
+    val scope = remember(*keys) {
+        CoroutineScope(parent.coroutineContext + SupervisorJob(parent.coroutineContext[Job]))
+    }
+    DisposableEffect(scope) {
+        onDispose { scope.cancel() }
+    }
+    return scope
+}
 
 /**
  * Explicit opt-in per surface: the tab bar shows unless a surface asks to

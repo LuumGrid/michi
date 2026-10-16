@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -136,6 +137,27 @@ fun App(
     // session-independent — Root hydrates holders from it, holders save
     // into it. Local-only, like theme/language.
     val sortPersistence = remember { StoreSortPersistence(store) }
+
+    // Synced prefs follow the viewer. This lives here (not in Root) so it
+    // survives Root being recomposed from scratch (login → error → retry):
+    // seed from the Viewer + refresh the rest on authenticate; clear on
+    // user → guest so a guest never inherits the account's 18+ gate.
+    val settingsViewerId = (session as? SessionState.Authenticated)?.viewer?.id
+    var lastSettingsViewerId by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(settingsViewerId) {
+        val previous = lastSettingsViewerId
+        if (settingsViewerId != previous) {
+            val viewer = (session as? SessionState.Authenticated)?.viewer
+            if (viewer != null) {
+                settingsState.seedFrom(viewer)
+                // Pulls the rest (split completed, etc.) the Viewer does not carry.
+                settingsState.refresh(force = true)
+            } else if (previous != null) {
+                settingsState.clearSynced()
+            }
+            lastSettingsViewerId = settingsViewerId
+        }
+    }
 
     // Sign-in modal auto-open: first anonymous launch only. Logout never
     // reopens it (the flag persists); login closes it via the viewer effect.

@@ -88,9 +88,15 @@ internal fun AnimeListEntry.behindLabel(strings: LanguageStrings): String? {
     }
 }
 
-internal fun AnimeListEntry.incremented(): AnimeListEntry {
+internal fun AnimeListEntry.incremented(splitCompleted: Boolean): AnimeListEntry {
     val total = totalEpisodes
     val nextProgress = if (total == null) progress + 1 else minOf(progress + 1, total)
-    val nextStatus = if (total != null && nextProgress >= total) format.completedSection() else status
+    // Same section rule as the mapper: a per-format COMPLETED only when split is
+    // on, otherwise the merged one the sections list actually shows.
+    val nextStatus = if (total != null && nextProgress >= total) {
+        if (splitCompleted) format.completedSection() else AnimeListSection.COMPLETED
+    } else {
+        status
+    }
     return copy(progress = nextProgress, status = nextStatus)
 }

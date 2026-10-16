@@ -35,8 +35,8 @@ private data class StaffDetailSnapshot(
 internal class StaffDetailStateHolder(
     private val repository: StaffDetailRepository,
     private val scope: CoroutineScope,
-    private val strings: LanguageStrings,
-    @Suppress("UNUSED_PARAMETER") viewerId: Int,
+    // Read at request launch: a language change keeps the holder (and its cache).
+    private val stringsProvider: () -> LanguageStrings,
 ) {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
@@ -45,6 +45,9 @@ internal class StaffDetailStateHolder(
     var isLoading: Boolean by mutableStateOf(false)
         private set
     var error: NetworkError? by mutableStateOf(null)
+        private set
+    /** Non-blocking action failure (page load / favourite), shown as a compact row. */
+    var actionError: NetworkError? by mutableStateOf(null)
         private set
 
     private var currentStaffId: Int? = null
@@ -89,6 +92,11 @@ internal class StaffDetailStateHolder(
         if (cached != null) {
             currentStaffId = id
             currentJob?.cancel()
+            // Pages in flight belong to what was on screen: never append them to
+            // the restored snapshot, and drop their spinners (a cancelled
+            // coroutine never reaches its own `isLoadingMore = false`).
+            moreMediaJob?.cancel()
+            moreCharactersJob?.cancel()
             detail = cached.detail
             mediaItems = cached.mediaItems
             mediaHasNextPage = cached.mediaHasNextPage
@@ -98,7 +106,10 @@ internal class StaffDetailStateHolder(
             charactersCurrentPage = cached.charactersCurrentPage
             isFavourite = cached.detail.isFavourite
             error = null
+            actionError = null
             isLoading = false
+            isLoadingMoreMedia = false
+            isLoadingMoreCharacters = false
             return
         }
 
@@ -123,15 +134,16 @@ internal class StaffDetailStateHolder(
         moreMediaJob = scope.launch {
             isLoadingMoreMedia = true
             when (val result = repository.loadMediaPage(id, nextPage)) {
-                is NetworkResult.Success -> {
-                    mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
+                is NetworkResult.Success -> if (currentStaffId == id) {
+                    mediaItems = (mediaItems + result.value.items).distinctByRoles()
                     mediaHasNextPage = result.value.hasNextPage
                     mediaCurrentPage = result.value.currentPage
                     detail?.let { cacheSnapshot(id, it) }
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentStaffId == id) actionError = result.error
             }
-            isLoadingMoreMedia = false
+            if (currentStaffId == id) isLoadingMoreMedia = false
         }
     }
 
@@ -143,15 +155,16 @@ internal class StaffDetailStateHolder(
         moreCharactersJob = scope.launch {
             isLoadingMoreCharacters = true
             when (val result = repository.loadCharacterPage(id, nextPage)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentStaffId == id) {
                     characterItems = (characterItems + result.value.items).distinctRoles()
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
                     detail?.let { cacheSnapshot(id, it) }
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentStaffId == id) actionError = result.error
             }
-            isLoadingMoreCharacters = false
+            if (currentStaffId == id) isLoadingMoreCharacters = false
         }
     }
 
@@ -171,15 +184,16 @@ internal class StaffDetailStateHolder(
             charactersCurrentPage = 1
         }
         error = null
+        actionError = null
         isLoading = true
         isLoadingMoreMedia = false
         isLoadingMoreCharacters = false
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, strings)) {
+            when (val result = repository.loadDetail(id, stringsProvider())) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
-                    mediaItems = value.media.items.distinctBy { it.mediaId }
+                    mediaItems = value.media.items.distinctByRoles()
                     mediaHasNextPage = value.media.hasNextPage
                     mediaCurrentPage = value.media.currentPage
                     characterItems = value.characters.items.distinctRoles()
@@ -214,11 +228,21 @@ internal class StaffDetailStateHolder(
                 }
                 is NetworkResult.Failure -> if (currentStaffId == id) {
                     isFavourite = previous
-                    error = result.error
+                    actionError = result.error
                 }
             }
             isTogglingFavourite = false
         }
+    }
+
+    /** Drops every cached snapshot: a language change re-localizes all of them. */
+    fun invalidateCache() {
+        detailCache.clear()
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
     }
 
     private fun cacheSnapshot(id: Int, d: StaffDetail) = detailCache.put(
@@ -239,12 +263,18 @@ internal class StaffDetailStateHolder(
 internal fun createStaffDetailStateHolder(
     repository: StaffDetailRepository,
     scope: CoroutineScope,
-    strings: LanguageStrings,
-    viewerId: Int,
+    stringsProvider: () -> LanguageStrings,
 ): StaffDetailStateHolder {
-    return StaffDetailStateHolder(repository, scope, strings, viewerId)
+    return StaffDetailStateHolder(repository, scope, stringsProvider)
 }
 
-/** Roles son únicos por (personaje, anime): mismo personaje en dos anime son dos filas. */
+/**
+ * Roles de una obra: el mismo anime puede repetir con varios cargos (Director +
+ * Storyboard), así que se deduplica por (obra, cargo), no solo por obra.
+ */
+private fun List<StaffMediaItem>.distinctByRoles(): List<StaffMediaItem> =
+    distinctBy { it.mediaId to it.staffRole }
+
+/** Mismo personaje en dos obras son dos filas: dedupe por (personaje, obra). */
 private fun List<StaffCharacterItem>.distinctRoles(): List<StaffCharacterItem> =
-    distinctBy { "${it.characterId}_${it.mediaTitle}" }
+    distinctBy { it.characterId to it.mediaId }

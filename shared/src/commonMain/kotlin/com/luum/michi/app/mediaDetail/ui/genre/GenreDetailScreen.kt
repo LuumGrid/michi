@@ -43,6 +43,10 @@ internal fun GenreDetailScreen(
         retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
+        refreshError = if (holder.pageLoaded) holder.error?.let { strings.networkErrorMessage(it) } else null,
+        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
+        dismissLabel = strings.dismissAction,
+        onDismissActionError = { holder.clearActionError() },
     ) {
         DetailPosterGrid(
             items = holder.mediaItems,

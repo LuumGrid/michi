@@ -11,7 +11,10 @@ import com.luum.michi.app.core.session.domain.CachedViewerStore
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.core.session.domain.Viewer
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -185,6 +188,64 @@ class SessionManagerTest {
             assertNull(storage.load())
         }
         assertNull(cache.stored)
+        assertTrue(manager.state.value is SessionState.Anonymous)
+    }
+
+    @Test
+    fun onUnauthorizedMidSessionGoesAnonymous() {
+        val storage = InMemoryAniListTokenStorage()
+        val token = freshToken()
+        runBlocking { storage.save(token) }
+        val (manager, _, cache) = manager(storage, NetworkResult.Success(viewer()), cached = viewer())
+        runBlocking { manager.bootstrap() }
+        assertTrue(manager.state.value is SessionState.Authenticated)
+
+        runBlocking { manager.onUnauthorized(token) }
+
+        assertTrue(manager.state.value is SessionState.Anonymous)
+        runBlocking { assertNull(storage.load()) }
+        assertNull(cache.stored)
+    }
+
+    @Test
+    fun aStaleUnauthorizedDoesNotCloseANewerSession() {
+        val storage = InMemoryAniListTokenStorage()
+        val old = freshToken()
+        runBlocking { storage.save(old) }
+        val (manager, _, _) = manager(storage, NetworkResult.Success(viewer()), cached = viewer())
+        runBlocking { manager.bootstrap() }
+
+        // A new token replaced the old one (e.g. re-login) before the 401 lands.
+        val fresh = AniListToken(
+            accessToken = "new-token",
+            savedAtEpochSeconds = currentEpochSeconds(),
+            expiresInSeconds = 3600L,
+        )
+        runBlocking { storage.save(fresh) }
+
+        runBlocking { manager.onUnauthorized(old) }
+
+        assertEquals(fresh, runBlocking { storage.load() }, "the stale 401 is ignored")
+    }
+
+    @Test
+    fun aBootstrapLandingAfterLogoutCannotResurrectTheSession() = runBlocking {
+        val storage = InMemoryAniListTokenStorage()
+        storage.save(freshToken())
+        val gate = CompletableDeferred<NetworkResult<Viewer>>()
+        val slowRepository = object : AniListViewerRepository {
+            override suspend fun fetchViewer(): NetworkResult<Viewer> = gate.await()
+        }
+        val manager = SessionManager(storage, slowRepository, InMemoryCachedViewerStore())
+
+        val bootstrap = launch { manager.bootstrap() }
+        yield() // bootstrap enters its viewer refresh and waits at the gate
+        val logout = launch { manager.logout() }
+        yield() // logout queues behind the serialized bootstrap
+        gate.complete(NetworkResult.Success(viewer()))
+        bootstrap.join()
+        logout.join()
+
         assertTrue(manager.state.value is SessionState.Anonymous)
     }
 }

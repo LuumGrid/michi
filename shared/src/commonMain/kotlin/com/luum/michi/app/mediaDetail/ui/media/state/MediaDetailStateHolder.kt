@@ -33,7 +33,9 @@ internal class MediaDetailStateHolder(
     private val repository: MediaDetailRepository,
     private val entryRepository: MediaListEntryRepository,
     private val scope: CoroutineScope,
-    private val strings: LanguageStrings,
+    // Read at request launch (not stored): a language change must not recreate
+    // the holder and drop its cache, but a new request must use the new strings.
+    private val stringsProvider: () -> LanguageStrings,
 ) {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
@@ -45,9 +47,16 @@ internal class MediaDetailStateHolder(
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
+    /** Non-blocking action failure (a page load or a favourite toggle): shown as
+     *  a compact row while the content stays visible, never as the load error. */
+    var actionError: NetworkError? by mutableStateOf(null)
+        private set
 
     private var currentMediaId: Int? = null
     private var currentJob: Job? = null
+    private var charactersJob: Job? = null
+    private var staffJob: Job? = null
+    private var recommendationsJob: Job? = null
 
     /** Cache of up to 5 recently-visited detail pages. */
     private val detailCache = DetailCache<Int, MediaDetailSnapshot>(maxSize = 5)
@@ -87,6 +96,7 @@ internal class MediaDetailStateHolder(
         if (cached != null) {
             currentMediaId = mediaId
             currentJob?.cancel()
+            cancelPaginationJobs()
             detail = cached.detail
             characters = cached.characters
             charactersHasNextPage = cached.charactersHasNextPage
@@ -95,18 +105,21 @@ internal class MediaDetailStateHolder(
             staffHasNextPage = cached.staffHasNextPage
             staffCurrentPage = cached.staffCurrentPage
             error = null
+            actionError = null
             isLoading = false
             isLoadingCharacters = false
             isLoadingStaff = false
             // Reset per-visit transient state
-            recommendations = emptyList()
+            resetRecommendations()
             return
         }
 
         currentMediaId = mediaId
         currentJob?.cancel()
+        cancelPaginationJobs()
         detail = null
         error = null
+        actionError = null
         isLoading = true
         characters = emptyList()
         staff = emptyList()
@@ -115,10 +128,10 @@ internal class MediaDetailStateHolder(
         charactersCurrentPage = 1
         staffCurrentPage = 1
 
-        recommendations = emptyList()
+        resetRecommendations()
 
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(mediaId, strings)) {
+            when (val result = repository.loadDetail(mediaId, stringsProvider())) {
                 is NetworkResult.Success -> {
                     detail = result.value
                     characters = result.value.characters.items
@@ -141,9 +154,16 @@ internal class MediaDetailStateHolder(
         // Invalidate cached entry so next load() re-fetches from network.
         detailCache.remove(id)
         currentJob?.cancel()
+        // Cancelling the pagination jobs would drop the initial recommendations
+        // fetch; remember it (or an already-loaded list) so it is relaunched in
+        // the new language once the detail answers.
+        val hadRecommendations = recommendationsJob?.isActive == true || recommendations.isNotEmpty()
+        cancelPaginationJobs()
+        error = null
+        actionError = null
         isLoading = true
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, strings)) {
+            when (val result = repository.loadDetail(id, stringsProvider())) {
                 is NetworkResult.Success -> {
                     detail = result.value
                     characters = result.value.characters.items
@@ -153,6 +173,10 @@ internal class MediaDetailStateHolder(
                     staffHasNextPage = result.value.staff.hasNextPage
                     staffCurrentPage = result.value.staff.currentPage
                     cacheSnapshot(id, result.value)
+                    if (hadRecommendations && currentMediaId == id) {
+                        resetRecommendations()
+                        loadRecommendations()
+                    }
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -164,17 +188,19 @@ internal class MediaDetailStateHolder(
         if (isLoadingCharacters || !charactersHasNextPage) return
         val id = currentMediaId ?: return
         val nextPage = charactersCurrentPage + 1
-        scope.launch {
+        charactersJob?.cancel()
+        charactersJob = scope.launch {
             isLoadingCharacters = true
             when (val result = repository.loadCharactersPage(id, page = nextPage)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentMediaId == id) {
                     characters = characters + result.value.items
                     charactersHasNextPage = result.value.hasNextPage
                     charactersCurrentPage = result.value.currentPage
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
-            isLoadingCharacters = false
+            if (currentMediaId == id) isLoadingCharacters = false
         }
     }
 
@@ -182,17 +208,19 @@ internal class MediaDetailStateHolder(
         if (isLoadingStaff || !staffHasNextPage) return
         val id = currentMediaId ?: return
         val nextPage = staffCurrentPage + 1
-        scope.launch {
+        staffJob?.cancel()
+        staffJob = scope.launch {
             isLoadingStaff = true
             when (val result = repository.loadStaffPage(id, page = nextPage)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentMediaId == id) {
                     staff = staff + result.value.items
                     staffHasNextPage = result.value.hasNextPage
                     staffCurrentPage = result.value.currentPage
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
-            isLoadingStaff = false
+            if (currentMediaId == id) isLoadingStaff = false
         }
     }
 
@@ -239,8 +267,9 @@ internal class MediaDetailStateHolder(
                         snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
                     }
                     if (currentMediaId == id) detail = detail?.copy(isFavourite = target)
+                    actionError = null
                 }
-                is NetworkResult.Failure -> if (currentMediaId == id) error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
             isTogglingFavourite = false
         }
@@ -249,17 +278,19 @@ internal class MediaDetailStateHolder(
     fun loadRecommendations() {
         if (isLoadingRecommendations || recommendations.isNotEmpty()) return
         val id = currentMediaId ?: return
-        scope.launch {
+        recommendationsJob?.cancel()
+        recommendationsJob = scope.launch {
             isLoadingRecommendations = true
             when (val result = repository.loadRecommendations(id)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentMediaId == id) {
                     recommendations = result.value.items
                     recommendationsHasNextPage = result.value.hasNextPage
                     recommendationsCurrentPage = result.value.currentPage
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
-            isLoadingRecommendations = false
+            if (currentMediaId == id) isLoadingRecommendations = false
         }
     }
 
@@ -267,27 +298,70 @@ internal class MediaDetailStateHolder(
         if (isLoadingRecommendations || !recommendationsHasNextPage) return
         val id = currentMediaId ?: return
         val nextPage = recommendationsCurrentPage + 1
-        scope.launch {
+        recommendationsJob?.cancel()
+        recommendationsJob = scope.launch {
             isLoadingRecommendations = true
             when (val result = repository.loadRecommendations(id, nextPage)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentMediaId == id) {
                     recommendations = recommendations + result.value.items
                     recommendationsHasNextPage = result.value.hasNextPage
                     recommendationsCurrentPage = result.value.currentPage
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
-            isLoadingRecommendations = false
+            if (currentMediaId == id) isLoadingRecommendations = false
         }
+    }
+
+    /**
+     * Applies a favourite change made from the editor to this media's state and
+     * cached snapshot, so closing the editor never leaves the detail stale.
+     */
+    fun applyFavouriteChange(mediaId: Int, value: Boolean) {
+        detailCache.update(mediaId) { snapshot ->
+            snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
+        }
+        if (currentMediaId == mediaId) detail = detail?.copy(isFavourite = value)
+    }
+
+    /** Drops every cached snapshot: a language change re-localizes all of them. */
+    fun invalidateCache() {
+        detailCache.clear()
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
+    }
+
+    private fun cancelPaginationJobs() {
+        charactersJob?.cancel()
+        charactersJob = null
+        staffJob?.cancel()
+        staffJob = null
+        recommendationsJob?.cancel()
+        recommendationsJob = null
+        isLoadingCharacters = false
+        isLoadingStaff = false
+        isLoadingRecommendations = false
+    }
+
+    private fun resetRecommendations() {
+        recommendations = emptyList()
+        recommendationsHasNextPage = false
+        recommendationsCurrentPage = 1
     }
 
     fun clear() {
         currentJob?.cancel()
         currentJob = null
+        cancelPaginationJobs()
         currentMediaId = null
         detail = null
         isLoading = false
         error = null
+        actionError = null
         characters = emptyList()
         staff = emptyList()
         charactersHasNextPage = false
@@ -295,9 +369,7 @@ internal class MediaDetailStateHolder(
         charactersCurrentPage = 1
         staffCurrentPage = 1
 
-        recommendations = emptyList()
-        recommendationsHasNextPage = false
-        recommendationsCurrentPage = 1
+        resetRecommendations()
     }
 }
 
@@ -306,7 +378,7 @@ internal fun createMediaDetailStateHolder(
     repository: MediaDetailRepository,
     entryRepository: MediaListEntryRepository,
     scope: CoroutineScope,
-    strings: LanguageStrings,
+    stringsProvider: () -> LanguageStrings,
 ): MediaDetailStateHolder {
-    return MediaDetailStateHolder(repository, entryRepository, scope, strings)
+    return MediaDetailStateHolder(repository, entryRepository, scope, stringsProvider)
 }

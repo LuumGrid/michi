@@ -294,6 +294,34 @@ internal class State(
     fun closeSignIn() {
         isSignInOpen = false
     }
+
+    /**
+     * Drops every transient navigation surface when the session changes user
+     * (login, logout, account switch): the detail stack, searches, the editor
+     * and the overlays/sheets. Tab and section selection are kept — they are
+     * not session data.
+     */
+    fun reset() {
+        detailStack.clear()
+        entryIds.clear()
+        editorMediaId = null
+        editorInitialStatus = null
+        editorInitialProgress = null
+        searchActiveTab = null
+        searchQueries.clear()
+        isExploreOpen = false
+        isCalendarOpen = false
+        isNotificationsOpen = false
+        isSectionFilterOpen = false
+        isCalendarFilterOpen = false
+        isDetailMenuOpen = false
+        isDetailSortOpen = false
+        isListSortOpen = false
+        isExploreFilterOpen = false
+        isShareProfileOpen = false
+        isSettingsOpen = false
+        isSignInOpen = false
+    }
 }
 
 /** Composition factory: shell preview entry (empty profile until session routing lands). */

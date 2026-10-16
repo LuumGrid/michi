@@ -22,6 +22,11 @@ internal class DetailCache<K, V>(private val maxSize: Int) {
         map.remove(key)
     }
 
+    /** Drops every snapshot (e.g. a language change re-localizes all of them). */
+    fun clear() {
+        map.clear()
+    }
+
     /**
      * Rewrites the entry for [key] in place when it is present, so a late
      * response can update **its own** snapshot without touching the one being

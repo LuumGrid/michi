@@ -51,6 +51,8 @@ internal data class StaffCharacterItem(
     val name: String,
     val image: CoverSizes?,
     val mediaTitle: String?,
+    /** The media this role belongs to; identity for dedup (a character in two works is two rows). */
+    val mediaId: Int? = null,
 )
 
 internal data class StaffCharacterPage(

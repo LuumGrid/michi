@@ -25,8 +25,8 @@ private data class CharacterDetailSnapshot(
 internal class CharacterDetailStateHolder(
     private val repository: CharacterDetailRepository,
     private val scope: CoroutineScope,
-    private val strings: LanguageStrings,
-    @Suppress("UNUSED_PARAMETER") viewerId: Int,
+    // Read at request launch: a language change keeps the holder (and its cache).
+    private val stringsProvider: () -> LanguageStrings,
 ) {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
@@ -35,6 +35,9 @@ internal class CharacterDetailStateHolder(
     var isLoading: Boolean by mutableStateOf(false)
         private set
     var error: NetworkError? by mutableStateOf(null)
+        private set
+    /** Non-blocking action failure (page load / favourite), shown as a compact row. */
+    var actionError: NetworkError? by mutableStateOf(null)
         private set
 
     private var currentCharacterId: Int? = null
@@ -68,13 +71,19 @@ internal class CharacterDetailStateHolder(
         if (cached != null && cached.voiceLanguage == voiceLanguage) {
             currentCharacterId = id
             currentJob?.cancel()
+            // A page in flight belongs to what was on screen: never append it to
+            // the restored snapshot, and drop its spinner (a cancelled coroutine
+            // never reaches its own `isLoadingMore = false`).
+            moreJob?.cancel()
             detail = cached.detail
             mediaItems = cached.mediaItems
             hasNextPage = cached.hasNextPage
             currentPage = cached.currentPage
             isFavourite = cached.detail.isFavourite
             error = null
+            actionError = null
             isLoading = false
+            isLoadingMore = false
             return
         }
 
@@ -98,15 +107,16 @@ internal class CharacterDetailStateHolder(
         moreJob = scope.launch {
             isLoadingMore = true
             when (val result = repository.loadMediaPage(id, nextPage, voiceLanguage)) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentCharacterId == id) {
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     detail?.let { cacheSnapshot(id, it) }
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentCharacterId == id) actionError = result.error
             }
-            isLoadingMore = false
+            if (currentCharacterId == id) isLoadingMore = false
         }
     }
 
@@ -122,10 +132,11 @@ internal class CharacterDetailStateHolder(
             currentPage = 1
         }
         error = null
+        actionError = null
         isLoading = true
         isLoadingMore = false
         currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, voiceLanguage, strings)) {
+            when (val result = repository.loadDetail(id, voiceLanguage, stringsProvider())) {
                 is NetworkResult.Success -> {
                     val value = result.value
                     detail = value
@@ -181,11 +192,21 @@ internal class CharacterDetailStateHolder(
                 }
                 is NetworkResult.Failure -> if (currentCharacterId == id) {
                     isFavourite = previous
-                    error = result.error
+                    actionError = result.error
                 }
             }
             isTogglingFavourite = false
         }
+    }
+
+    /** Drops every cached snapshot: a language change re-localizes all of them. */
+    fun invalidateCache() {
+        detailCache.clear()
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
     }
 }
 
@@ -193,8 +214,7 @@ internal class CharacterDetailStateHolder(
 internal fun createCharacterDetailStateHolder(
     repository: CharacterDetailRepository,
     scope: CoroutineScope,
-    strings: LanguageStrings,
-    viewerId: Int,
+    stringsProvider: () -> LanguageStrings,
 ): CharacterDetailStateHolder {
-    return CharacterDetailStateHolder(repository, scope, strings, viewerId)
+    return CharacterDetailStateHolder(repository, scope, stringsProvider)
 }

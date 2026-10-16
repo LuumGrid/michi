@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,7 @@ import com.luum.michi.app.ui.components.LoadMoreKey
 import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.PosterCard
+import com.luum.michi.app.ui.components.RefreshErrorRow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -56,27 +58,40 @@ internal fun DetailListScreen(
     hasMore: Boolean = false,
     isLoadingMore: Boolean = false,
     onLoadMore: (() -> Unit)? = null,
+    // Page-load failure of the parent holder, shown as a compact dismissible row.
+    actionError: String? = null,
+    dismissLabel: String? = null,
+    onDismissActionError: (() -> Unit)? = null,
 ) {
     val paged = hasMore && (onLoadMore != null || isLoadingMore)
-    when (layout) {
-        DetailListLayout.ROWS -> RowsList(
-            items = items,
-            onSelect = onSelect,
-            bottomPadding = bottomPadding,
-            paged = paged,
-            isLoadingMore = isLoadingMore,
-            onLoadMore = onLoadMore,
-            modifier = modifier,
-        )
-        DetailListLayout.GRID -> GridList(
-            items = items,
-            onSelect = onSelect,
-            bottomPadding = bottomPadding,
-            paged = paged,
-            isLoadingMore = isLoadingMore,
-            onLoadMore = onLoadMore,
-            modifier = modifier,
-        )
+    Column(modifier = modifier.fillMaxSize()) {
+        if (actionError != null) {
+            RefreshErrorRow(
+                message = actionError,
+                dismissLabel = dismissLabel,
+                onDismiss = onDismissActionError,
+            )
+        }
+        when (layout) {
+            DetailListLayout.ROWS -> RowsList(
+                items = items,
+                onSelect = onSelect,
+                bottomPadding = bottomPadding,
+                paged = paged,
+                isLoadingMore = isLoadingMore,
+                onLoadMore = onLoadMore,
+                modifier = Modifier.weight(1f),
+            )
+            DetailListLayout.GRID -> GridList(
+                items = items,
+                onSelect = onSelect,
+                bottomPadding = bottomPadding,
+                paged = paged,
+                isLoadingMore = isLoadingMore,
+                onLoadMore = onLoadMore,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 

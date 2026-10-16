@@ -119,8 +119,7 @@ private class RecordingStaffRepository(
 private fun holderWired(repository: StaffDetailRepository) = StaffDetailStateHolder(
     repository = repository,
     scope = CoroutineScope(Dispatchers.Unconfined),
-    strings = EnglishStrings,
-    viewerId = 0,
+    stringsProvider = { EnglishStrings },
 )
 
 class StaffDetailIntegrationTest {
@@ -222,5 +221,26 @@ class StaffDetailFavouriteCacheTest {
         assertFalse(holder.isFavourite, "the late response does not touch the visible one")
         holder.load(1)
         assertTrue(holder.isFavourite, "the first staff member's snapshot kept the toggle")
+    }
+
+    @Test
+    fun twoRolesOnTheSameWorkAreBothKept() {
+        val roles = StaffMediaPage(
+            listOf(
+                staffMediaItem(7).copy(staffRole = "Director"),
+                staffMediaItem(7).copy(staffRole = "Storyboard"),
+            ),
+            hasNextPage = false,
+            currentPage = 1,
+        )
+        val holder = holderWired(RecordingStaffRepository(mediaPages = mapOf(1 to roles)))
+
+        holder.load(1)
+
+        assertEquals(
+            listOf("Director", "Storyboard"),
+            holder.mediaItems.map { it.staffRole },
+            "dedup is by work + role, not by work alone",
+        )
     }
 }

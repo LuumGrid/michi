@@ -14,6 +14,13 @@ internal fun ThemeMode.label(strings: LanguageStrings): String = when (this) {
 
 internal enum class TitleLanguage { ROMAJI, ENGLISH, NATIVE }
 
+/** Parses AniList's raw `UserTitleLanguage` value (`Viewer.options.titleLanguage`). */
+internal fun parseTitleLanguage(raw: String?): TitleLanguage = when (raw) {
+    "ENGLISH" -> TitleLanguage.ENGLISH
+    "NATIVE" -> TitleLanguage.NATIVE
+    else -> TitleLanguage.ROMAJI
+}
+
 internal fun TitleLanguage.label(strings: LanguageStrings): String = when (this) {
     TitleLanguage.ROMAJI -> strings.settingsTitleLanguageRomaji
     TitleLanguage.ENGLISH -> strings.settingsTitleLanguageEnglish
@@ -34,6 +41,15 @@ internal enum class ScoreFormat {
     POINT_10,
     POINT_5_STARS,
     POINT_3_SMILEYS,
+}
+
+/** Parses AniList's raw `ScoreFormat` value (`Viewer.mediaListOptions.scoreFormat`). */
+internal fun parseScoreFormat(raw: String?): ScoreFormat = when (raw) {
+    "POINT_100" -> ScoreFormat.POINT_100
+    "POINT_10" -> ScoreFormat.POINT_10
+    "POINT_5" -> ScoreFormat.POINT_5_STARS
+    "POINT_3" -> ScoreFormat.POINT_3_SMILEYS
+    else -> ScoreFormat.POINT_10_DECIMAL
 }
 
 internal fun ScoreFormat.label(strings: LanguageStrings): String = when (this) {

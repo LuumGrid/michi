@@ -58,6 +58,8 @@ interface LanguageStrings {
     val seasonFallLabel: String
     val calendarTitle: String
     val calendarEmptyLabel: String
+    /** Short episode label used by the calendar rows ("Ep. N"). */
+    fun calendarEpisodeLabel(episode: Int): String
     val tomorrowLabel: String
     fun calendarHeaderLabel(prefix: String, day: Int, month: Int, year: Int): String
     val dayMonday: String

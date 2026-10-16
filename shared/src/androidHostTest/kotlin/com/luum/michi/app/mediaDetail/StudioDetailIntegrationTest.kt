@@ -92,7 +92,6 @@ private class RecordingStudioRepository(
 private fun holderWired(repository: StudioDetailRepository) = StudioDetailStateHolder(
     repository = repository,
     scope = CoroutineScope(Dispatchers.Unconfined),
-    viewerId = 0,
 )
 
 class StudioDetailIntegrationTest {

@@ -5,6 +5,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
@@ -43,7 +44,7 @@ private fun sampleDetail(
     bannerUrl = null,
     paletteHex = null,
     format = "TV",
-    status = "Releasing",
+    status = MediaWorkStatus.RELEASING,
     episodes = 12,
     chapters = null,
     volumes = null,
@@ -168,6 +169,23 @@ private class RecordingDetailRepository(
     }
 }
 
+/** Holds the characters page 2 at [gate], so a page in flight can be interrupted. */
+private class GatedPageDetailRepository(
+    charactersPages: Map<Int, MediaCharactersPage> = emptyMap(),
+) : MediaDetailRepository by RecordingDetailRepository(charactersPages = charactersPages) {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun loadCharactersPage(
+        mediaId: Int,
+        page: Int,
+    ): NetworkResult<MediaCharactersPage> {
+        if (page > 1) gate.await()
+        return NetworkResult.Success(
+            MediaCharactersPage(listOf(character(mediaId * 100 + page)), hasNextPage = false, currentPage = page),
+        )
+    }
+}
+
 private object NoopEntryRepository : MediaListEntryRepository {
     override suspend fun saveEntry(
         mediaId: Int,
@@ -230,7 +248,7 @@ private fun holderWired(
     repository = repository,
     entryRepository = entryRepository,
     scope = CoroutineScope(Dispatchers.Unconfined),
-    strings = EnglishStrings,
+    stringsProvider = { EnglishStrings },
 )
 
 class MediaDetailIntegrationTest {
@@ -288,6 +306,24 @@ class MediaDetailIntegrationTest {
         assertEquals(listOf(1, 2), holder.characters.map { it.characterId })
         assertFalse(holder.charactersHasNextPage)
         assertEquals(1, repository.characterCalls)
+    }
+
+    @Test
+    fun aCharactersPageInFlightIsDroppedWhenAnotherMediaLoads() {
+        val repository = GatedPageDetailRepository(
+            charactersPages = mapOf(1 to MediaCharactersPage(emptyList(), hasNextPage = true, currentPage = 1)),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertTrue(holder.charactersHasNextPage)
+        holder.loadMoreCharacters() // page 2, held at the gate
+
+        holder.load(2) // another media cancels it
+        repository.gate.complete(Unit)
+
+        assertTrue(holder.characters.isEmpty(), "the stale page never appends")
+        assertFalse(holder.isLoadingCharacters, "its spinner is dropped")
     }
 
     @Test

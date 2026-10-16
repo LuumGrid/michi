@@ -65,21 +65,22 @@ internal class AniListRateLimiter {
      * propagates as usual.
      */
     suspend fun <T> withPermit(block: suspend () -> T): T {
-        // Phase 1: wait for the sliding window + any active backoff (guarded by mutex).
-        // We release the mutex before delaying so other coroutines can also check/update state.
+        // Phase 1: wait for the sliding window + any active backoff (guarded by
+        // mutex). The send timestamp is recorded inside the same lock that
+        // decides admission, so concurrent callers can never all read "room
+        // left" before any of them records — a burst cannot jump the cap.
         while (true) {
-            val waitMs = mutex.withLock { computeWaitMs() }
+            val waitMs = mutex.withLock {
+                val wait = computeWaitMs()
+                if (wait <= 0L) sendTimes.addLast(nowMs())
+                wait
+            }
             if (waitMs <= 0L) break
             delay(waitMs.milliseconds)
         }
 
         // Phase 2: hold a concurrency permit for the round-trip; released in finally.
-        return semaphore.withPermit {
-            // Phase 3: record this send timestamp now that we hold both slots.
-            // (A tiny gap exists between Phase 1 and 3 — acceptable; the window math re-checks.)
-            mutex.withLock { sendTimes.addLast(nowMs()) }
-            block()
-        }
+        return semaphore.withPermit { block() }
     }
 
     /**

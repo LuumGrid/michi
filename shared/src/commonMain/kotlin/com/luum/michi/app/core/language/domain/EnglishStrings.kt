@@ -56,6 +56,7 @@ object EnglishStrings : LanguageStrings {
     override val seasonFallLabel = "Fall"
     override val calendarTitle = "Calendar"
     override val calendarEmptyLabel = "No releases in the next few days"
+    override fun calendarEpisodeLabel(episode: Int): String = "Ep. $episode"
     override val tomorrowLabel = "Tomorrow"
     override fun calendarHeaderLabel(prefix: String, day: Int, month: Int, year: Int) =
         "$prefix $day ${monthName(month)} $year"

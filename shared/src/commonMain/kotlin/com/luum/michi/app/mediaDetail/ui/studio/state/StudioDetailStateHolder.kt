@@ -29,7 +29,6 @@ private data class StudioDetailSnapshot(
 internal class StudioDetailStateHolder(
     private val repository: StudioDetailRepository,
     private val scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER") viewerId: Int,
 ) {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
@@ -38,6 +37,9 @@ internal class StudioDetailStateHolder(
     var isLoading: Boolean by mutableStateOf(false)
         private set
     var error: NetworkError? by mutableStateOf(null)
+        private set
+    /** Non-blocking action failure (page load / favourite), shown as a compact row. */
+    var actionError: NetworkError? by mutableStateOf(null)
         private set
 
     private var currentStudioId: Int? = null
@@ -94,6 +96,7 @@ internal class StudioDetailStateHolder(
             sortOrder = cached.sortOrder
             isFavourite = cached.detail.isFavourite
             error = null
+            actionError = null
             isLoading = false
             isLoadingMore = false
             return
@@ -134,15 +137,16 @@ internal class StudioDetailStateHolder(
         moreJob = scope.launch {
             isLoadingMore = true
             when (val result = repository.loadMediaPage(id, nextPage, apiSort())) {
-                is NetworkResult.Success -> {
+                is NetworkResult.Success -> if (currentStudioId == id) {
                     mediaItems = (mediaItems + result.value.items).distinctBy { it.mediaId }
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     detail?.let { cacheSnapshot(id, it) }
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> if (currentStudioId == id) actionError = result.error
             }
-            isLoadingMore = false
+            if (currentStudioId == id) isLoadingMore = false
         }
     }
 
@@ -167,11 +171,21 @@ internal class StudioDetailStateHolder(
                 }
                 is NetworkResult.Failure -> if (currentStudioId == id) {
                     isFavourite = previous
-                    error = result.error
+                    actionError = result.error
                 }
             }
             isTogglingFavourite = false
         }
+    }
+
+    /** Drops every cached snapshot: a language change re-localizes all of them. */
+    fun invalidateCache() {
+        detailCache.clear()
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
     }
 
     /**
@@ -192,6 +206,7 @@ internal class StudioDetailStateHolder(
             currentPage = 1
         }
         error = null
+        actionError = null
         isLoading = true
         isLoadingMore = false
         currentJob = scope.launch {
@@ -233,7 +248,6 @@ private val DEFAULT_SORT_ORDER = UserListOrder.DESCENDING
 internal fun createStudioDetailStateHolder(
     repository: StudioDetailRepository,
     scope: CoroutineScope,
-    viewerId: Int,
 ): StudioDetailStateHolder {
-    return StudioDetailStateHolder(repository, scope, viewerId)
+    return StudioDetailStateHolder(repository, scope)
 }

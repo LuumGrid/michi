@@ -16,8 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** Cache key: one snapshot per genre + catalog, so switching back is instant. */
-private data class GenreKey(val name: String, val type: MediaType)
+/** Cache key: one snapshot per genre + catalog + 18+ gate, so a cached snapshot
+ *  can never be restored under a gate it was not fetched with. */
+private data class GenreKey(val name: String, val type: MediaType, val hideAdult: Boolean)
 
 /** Snapshot stored in the LRU cache for fast back-navigation. */
 private data class GenreSnapshot(
@@ -57,6 +58,9 @@ internal class GenreDetailStateHolder(
         private set
     var error: NetworkError? by mutableStateOf(null)
         private set
+    /** Non-blocking action failure (page load), shown as a compact row. */
+    var actionError: NetworkError? by mutableStateOf(null)
+        private set
 
     var mediaItems: List<MediaGridItem> by mutableStateOf(emptyList())
         private set
@@ -86,7 +90,7 @@ internal class GenreDetailStateHolder(
     fun load(name: String, type: MediaType) {
         if (this.name == name && this.type == type && (pageLoaded || isLoading)) return
 
-        val cached = detailCache.get(GenreKey(name, type))
+        val cached = detailCache.get(GenreKey(name, type, hideAdultState))
         this.name = name
         this.type = type
         if (cached != null) {
@@ -117,7 +121,7 @@ internal class GenreDetailStateHolder(
      */
     fun changeType(type: MediaType) {
         if (type == this.type) return
-        val cached = detailCache.get(GenreKey(name, type))
+        val cached = detailCache.get(GenreKey(name, type, hideAdultState))
         this.type = type
         if (cached != null) {
             currentJob?.cancel()
@@ -162,8 +166,9 @@ internal class GenreDetailStateHolder(
                     hasNextPage = result.value.hasNextPage
                     currentPage = result.value.currentPage
                     cacheSnapshot()
+                    actionError = null
                 }
-                is NetworkResult.Failure -> error = result.error
+                is NetworkResult.Failure -> actionError = result.error
             }
             isLoadingMore = false
         }
@@ -187,6 +192,7 @@ internal class GenreDetailStateHolder(
         }
         if (showSpinner) pageLoaded = false
         error = null
+        actionError = null
         isLoading = true
         isLoadingMore = false
         currentJob = scope.launch {
@@ -213,13 +219,24 @@ internal class GenreDetailStateHolder(
         sortOrder = snapshot.sortOrder
         pageLoaded = true
         error = null
+        actionError = null
         isLoading = false
         isLoadingMore = false
     }
 
+    /** Drops every cached snapshot: a language change re-localizes all of them. */
+    fun invalidateCache() {
+        detailCache.clear()
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
+    }
+
     private fun cacheSnapshot() {
         detailCache.put(
-            GenreKey(name, type),
+            GenreKey(name, type, hideAdultState),
             GenreSnapshot(
                 mediaItems = mediaItems,
                 hasNextPage = hasNextPage,

@@ -86,16 +86,24 @@ internal fun MangaListEntry.behindLabel(strings: LanguageStrings): String? {
     }
 }
 
-internal fun MangaListEntry.incrementedChapters(): MangaListEntry {
+internal fun MangaListEntry.incrementedChapters(splitCompleted: Boolean): MangaListEntry {
     val total = totalChapters
     val nextProgress = if (total == null) chaptersProgress + 1 else minOf(chaptersProgress + 1, total)
-    val nextStatus = if (total != null && nextProgress >= total) MangaListSection.COMPLETED else status
+    val nextStatus = if (total != null && nextProgress >= total) {
+        format.completedMangaSection(splitCompleted)
+    } else {
+        status
+    }
     return copy(chaptersProgress = nextProgress, status = nextStatus)
 }
 
-internal fun MangaListEntry.incrementedVolumes(): MangaListEntry {
+internal fun MangaListEntry.incrementedVolumes(splitCompleted: Boolean): MangaListEntry {
     val total = totalVolumes
     val nextProgress = if (total == null) volumesProgress + 1 else minOf(volumesProgress + 1, total)
-    val nextStatus = if (total != null && nextProgress >= total) MangaListSection.COMPLETED else status
+    val nextStatus = if (total != null && nextProgress >= total) {
+        format.completedMangaSection(splitCompleted)
+    } else {
+        status
+    }
     return copy(volumesProgress = nextProgress, status = nextStatus)
 }

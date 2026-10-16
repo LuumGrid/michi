@@ -17,7 +17,7 @@ private val AnchorRegex = Regex(
     setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
 )
 private val BreakRegex = Regex("<br\\s*/?>", RegexOption.IGNORE_CASE)
-private val BareUrlRegex = Regex("https?://\\S+", RegexOption.IGNORE_CASE)
+private val BareUrlRegex = Regex("https?://[^\\s<>\"']+", RegexOption.IGNORE_CASE)
 // AniList's spoiler wrapper: `<span class='markdown_spoiler'><span>…</span></span>`
 // (inline, or opened on one line and closed on a later one).
 private val SpoilerOpenRegex = Regex("""<span\b[^>]*markdown_spoiler[^>]*>""", RegexOption.IGNORE_CASE)
@@ -62,17 +62,19 @@ internal fun String.toHtmlContent(): HtmlContent {
     // the link list left behind, not prose.
     val linkTexts = AnchorRegex.findAll(this)
         .filter { isExternalHttpUrl(it.groupValues[1].trim()) }
-        .map { cleanLine(it.groupValues[2]).lowercase() }
+        .map { cleanLine(it.groupValues[2], stripLabels = true).lowercase() }
         .filter { it.isNotEmpty() }
         .toSet()
     fun extractText(raw: String): String {
         // 1) Anchors first: collect them and substitute their text (keep prose,
         //    drop link-y text). Their `href` must not be seen as a bare URL.
+        var removedLink = false
         var out = AnchorRegex.replace(raw) { match ->
-            val url = match.groupValues[1].trim()
+            val url = match.groupValues[1].trim().trimUrlTrailingPunctuation()
             if (!isExternalHttpUrl(url)) {
                 match.value
             } else {
+                removedLink = true
                 val text = match.groupValues[2].stripHtml().trim()
                 if (seen.add(normalizedUrl(url))) {
                     links += ExternalLink(
@@ -84,19 +86,24 @@ internal fun String.toHtmlContent(): HtmlContent {
                 if (isLinkyText(text, url)) "" else text
             }
         }
-        // 2) Bare URLs (no anchor) are collected and removed.
+        // 2) Bare URLs (no anchor) are collected and removed. The punctuation
+        //    trimmed off the URL (a sentence period, an unmatched bracket) stays
+        //    in the prose.
         out = BareUrlRegex.replace(out) { match ->
-            val url = match.value
+            val url = match.value.trimUrlTrailingPunctuation()
             if (!isExternalHttpUrl(url)) {
                 match.value
             } else {
+                removedLink = true
                 if (seen.add(normalizedUrl(url))) {
                     links += ExternalLink(site = hostLabel(url), url = url)
                 }
-                ""
+                match.value.substring(url.length)
             }
         }
-        return cleanLine(out)
+        // Rótulos ("Twitter:", "Website:") are only stripped from lines that
+        // actually carried links; doing it on every line mangles prose ("Re:Zero").
+        return cleanLine(out, stripLabels = removedLink)
     }
     val stats = mutableListOf<BiographyStat>()
     // A stat hidden inside a `markdown_spoiler` stays as prose: promoting it
@@ -123,7 +130,7 @@ internal fun String.toHtmlContent(): HtmlContent {
         val cleaned = extractText(line)
         if (cleaned.isBlank() || cleaned.isOnlyLinkText(linkTexts)) null else cleaned
     }
-    val text = kept.joinToString("\n").stripHtml().replace(BlankLinesRegex, "\n\n").trim()
+    val text = kept.joinToString("\n").replace(BlankLinesRegex, "\n\n").trim()
     return HtmlContent(text = text, links = links, stats = stats)
 }
 
@@ -182,12 +189,31 @@ private fun isLinkyText(text: String, url: String): Boolean =
         text.startsWith("@") ||
         text.equals(hostLabel(url), ignoreCase = true)
 
-private fun cleanLine(line: String): String {
+private fun cleanLine(line: String, stripLabels: Boolean): String {
     var s = line.stripHtml()
-    s = LabelTokenRegex.replace(s) { " " }
+    if (stripLabels) s = LabelTokenRegex.replace(s) { " " }
     s = PipeSeparatorRegex.replace(s, " ")
     s = SpacedSeparatorRegex.replace(s, " ")
     return s.replace(SpacesRegex, " ").trim()
+}
+
+/**
+ * Drops the punctuation a bare URL tends to pick up from surrounding prose
+ * (`https://x.com).` / `https://x.com,`). A closing bracket is kept when it is
+ * balanced (`.../Foo_(bar)`), so real URLs survive.
+ */
+private fun String.trimUrlTrailingPunctuation(): String {
+    var end = length
+    while (end > 0) {
+        when (this[end - 1]) {
+            '.', ',', ';', ':', '!', '?', '"', '\'' -> end--
+            ')' -> if (count { it == '(' } < count { it == ')' }) end-- else break
+            ']' -> if (count { it == '[' } < count { it == ']' }) end-- else break
+            '}' -> if (count { it == '{' } < count { it == '}' }) end-- else break
+            else -> break
+        }
+    }
+    return substring(0, end)
 }
 
 private fun isExternalHttpUrl(url: String): Boolean {

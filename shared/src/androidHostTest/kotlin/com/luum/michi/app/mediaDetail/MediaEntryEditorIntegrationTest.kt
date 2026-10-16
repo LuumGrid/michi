@@ -4,6 +4,7 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.model.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
@@ -26,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -64,7 +66,7 @@ private fun editorDetail(viewerEntry: MediaListViewerEntry?) = MediaDetail(
     bannerUrl = null,
     paletteHex = null,
     format = "TV",
-    status = "RELEASING",
+    status = MediaWorkStatus.RELEASING,
     episodes = 12,
     chapters = null,
     volumes = null,
@@ -124,7 +126,7 @@ private fun editorWired(
     entryRepository = MediaListEntryRepositoryImpl(graphQL),
     detailRepository = StubDetailRepository(editorDetail(viewerEntry)),
     scope = CoroutineScope(Dispatchers.Unconfined),
-    strings = EnglishStrings,
+    stringsProvider = { EnglishStrings },
     mediaId = mediaId,
     advancedScoringEnabled = advancedScoringEnabled,
     advancedScoringAnimeNames = advancedScoringAnimeNames,
@@ -187,6 +189,22 @@ class MediaEntryEditorIntegrationTest {
         val variables = graphQL.requests.single().variables
         assertEquals("COMPLETED", variables?.get("status")?.toString()?.trim('"'))
         assertEquals(101, variables?.get("mediaId")?.toString()?.toInt())
+    }
+
+    @Test
+    fun saveWithAnEmptyServerEntryFails() {
+        // `SaveMediaListEntry: null` (a malformed/refused response) must not be
+        // mistaken for a saved entry with id 0.
+        val emptyAck = buildJsonObject { put("SaveMediaListEntry", JsonNull) }
+        val graphQL = FakeGraphQL(listOf(emptyAck))
+        val editor = editorWired(graphQL, existingEntry())
+
+        editor.load()
+        var saved = false
+        editor.save { saved = true }
+
+        assertFalse(saved, "an empty response is not a save")
+        assertNotNull(editor.error)
     }
 
     @Test

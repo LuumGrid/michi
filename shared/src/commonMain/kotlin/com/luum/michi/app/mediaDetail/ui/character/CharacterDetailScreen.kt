@@ -72,6 +72,10 @@ internal fun CharacterDetailScreen(
         retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
+        refreshError = if (detail != null) holder.error?.let { strings.networkErrorMessage(it) } else null,
+        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
+        dismissLabel = strings.dismissAction,
+        onDismissActionError = { holder.clearActionError() },
     ) {
         if (detail != null) {
             CharacterDetailContent(

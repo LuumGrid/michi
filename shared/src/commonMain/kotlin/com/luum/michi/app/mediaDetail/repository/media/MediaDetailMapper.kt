@@ -46,7 +46,7 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
         bannerUrl = bannerImage,
         paletteHex = coverImage?.color,
         format = format?.toTitleCase(),
-        status = status?.toTitleCase(),
+        status = parseMediaWorkStatus(status),
         episodes = episodes?.takeIf { it > 0 },
         chapters = chapters?.takeIf { it > 0 },
         volumes = volumes?.takeIf { it > 0 },
