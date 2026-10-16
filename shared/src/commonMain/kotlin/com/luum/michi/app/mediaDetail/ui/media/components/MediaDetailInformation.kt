@@ -113,7 +113,8 @@ private fun StudioChipGroup(
     if (studios.isEmpty()) return
     Spacer(modifier = Modifier.height(12.dp))
     Text(
-        text = label,
+        // Same label treatment as the grid's cells (uppercase labelSmall).
+        text = label.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
