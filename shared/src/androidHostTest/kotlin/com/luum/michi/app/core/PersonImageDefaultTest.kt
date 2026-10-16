@@ -1,9 +1,9 @@
 package com.luum.michi.app.core
 
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.core.network.repository.dto.PersonImageDto
-import com.luum.michi.app.core.network.repository.personCoverSizes
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.personCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

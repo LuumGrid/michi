@@ -1,9 +1,9 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaWorkStatus
-import com.luum.michi.app.core.model.label as coreModelLabel
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.label as coreModelLabel
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation

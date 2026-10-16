@@ -20,8 +20,8 @@ import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.calendar.domain.model.matches
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
-import com.luum.michi.app.core.model.MediaSeasonYear
-import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
+import com.luum.michi.app.core.media.domain.currentSeasonAndYear
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult

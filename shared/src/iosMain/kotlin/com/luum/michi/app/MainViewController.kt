@@ -3,10 +3,10 @@ package com.luum.michi.app
 import androidx.compose.ui.window.ComposeUIViewController
 import com.luum.michi.app.core.auth.repository.NSUserDefaultsAniListTokenStorage
 import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
-import com.luum.michi.app.core.navigation.repository.IosUrlOpener
-import com.luum.michi.app.core.navigation.repository.IosShareLauncher
+import com.luum.michi.app.core.platform.repository.IosUrlOpener
+import com.luum.michi.app.core.platform.repository.IosShareLauncher
 import com.luum.michi.app.core.storage.repository.NSUserDefaultsSettingsStore
-import com.luum.michi.app.core.network.repository.IosConnectivity
+import com.luum.michi.app.core.platform.repository.IosConnectivity
 import kotlin.native.Platform
 import platform.UIKit.UIViewController
 

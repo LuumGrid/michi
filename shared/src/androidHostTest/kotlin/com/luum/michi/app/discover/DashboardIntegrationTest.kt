@@ -1,7 +1,7 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl

@@ -29,7 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 import com.luum.michi.app.mediaDetail.domain.media.model.toMediaType

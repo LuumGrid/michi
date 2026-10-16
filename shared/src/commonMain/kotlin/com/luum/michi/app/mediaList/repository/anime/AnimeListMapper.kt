@@ -5,16 +5,16 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.toAnimeSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.model.parseMediaFormat
-import com.luum.michi.app.core.model.parseMediaSeason
-import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaFormat
+import com.luum.michi.app.core.media.domain.parseMediaFormat
+import com.luum.michi.app.core.media.domain.parseMediaSeason
+import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
 import com.luum.michi.app.mediaList.repository.MediaListEntryDto
-import com.luum.michi.app.core.network.repository.dto.allTitles
-import com.luum.michi.app.core.network.repository.dto.bestTitle
+import com.luum.michi.app.core.media.repository.allTitles
+import com.luum.michi.app.core.media.repository.bestTitle
 import com.luum.michi.app.mediaList.repository.toComparableInt
-import com.luum.michi.app.core.network.repository.toMediaReleaseDateTime
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toMediaReleaseDateTime
+import com.luum.michi.app.core.media.repository.toCoverSizes
 
 internal fun MediaListEntryDto.toAnimeListEntry(
     index: Int = 0,

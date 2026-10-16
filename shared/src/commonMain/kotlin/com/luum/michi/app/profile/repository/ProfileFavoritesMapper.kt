@@ -4,12 +4,13 @@ import com.luum.michi.app.profile.domain.model.ProfileFavoriteMedia
 import com.luum.michi.app.profile.domain.model.ProfileFavoritePerson
 import com.luum.michi.app.profile.domain.model.ProfileFavoriteStudio
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
-import com.luum.michi.app.core.network.repository.dto.CharacterDto
-import com.luum.michi.app.core.network.repository.dto.MediaDto
-import com.luum.michi.app.core.network.repository.dto.StaffDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.network.repository.dto.StudioDto
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.dto.CharacterDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
+import com.luum.michi.app.core.person.repository.dto.StaffDto
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.person.repository.dto.StudioDto
+import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
 
 internal fun FavouritesDto.toDomain(): ProfileFavorites = ProfileFavorites(
     anime = anime?.nodes?.map(MediaDto::toProfileFavoriteMedia).orEmpty(),

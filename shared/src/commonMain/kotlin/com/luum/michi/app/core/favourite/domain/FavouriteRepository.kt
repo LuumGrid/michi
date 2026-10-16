@@ -17,8 +17,10 @@ internal sealed interface FavouriteTarget {
 }
 
 /**
- * One favourite toggle for every entity type, so the four features that can
- * favourite something share a single mutation instead of four copies.
+ * One favourite toggle for every entity type. The only consumer today is
+ * mediaDetail — directly for character/staff/studio and through
+ * `MediaListEntryRepository` for anime/manga — and profile will use it to
+ * unfavourite. One mutation instead of a copy per feature.
  */
 internal interface FavouriteRepository {
     suspend fun toggleFavourite(target: FavouriteTarget): NetworkResult<Unit>

@@ -2,8 +2,8 @@ package com.luum.michi.app.core
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
-import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
-import com.luum.michi.app.core.network.repository.dto.format
+import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.media.repository.dto.format
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

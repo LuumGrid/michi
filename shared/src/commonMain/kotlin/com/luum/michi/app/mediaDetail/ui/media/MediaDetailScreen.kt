@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
@@ -31,7 +31,7 @@ import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailTags
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 
 /**

@@ -1,6 +1,6 @@
 package com.luum.michi.app.ui.components
 
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListSort
 
 /**
  * Sorts the detail poster grids offer (studio works, genre works). Each one maps

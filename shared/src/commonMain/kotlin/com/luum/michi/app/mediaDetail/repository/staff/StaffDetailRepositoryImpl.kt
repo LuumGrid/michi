@@ -2,17 +2,17 @@ package com.luum.michi.app.mediaDetail.repository.staff
 
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
-import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.model.toTitleCase
+import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
-import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
-import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
 import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.network.repository.dto.PersonImageDto
-import com.luum.michi.app.core.network.repository.dto.PersonNameDto
-import com.luum.michi.app.core.network.repository.dto.format
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.PersonNameDto
+import com.luum.michi.app.core.media.repository.dto.format
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -29,9 +29,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.network.repository.personCoverSizes
-import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.person.repository.personCoverSizes
+import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
+import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
 import com.luum.michi.app.mediaDetail.domain.common.resolveWithCatalog
 

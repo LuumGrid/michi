@@ -2,7 +2,7 @@ package com.luum.michi.app.mediaList.domain.anime.model
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.core.model.MediaFormat
+import com.luum.michi.app.core.media.domain.MediaFormat
 
 internal enum class AnimeListSection {
     ALL,

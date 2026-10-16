@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.FilterOption
-import com.luum.michi.app.core.model.MediaGenres
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.media.domain.MediaGenres
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.media.domain.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
 import com.luum.michi.app.mediaList.domain.common.mediaListYears

@@ -5,6 +5,7 @@ import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -26,17 +27,6 @@ internal fun calendarPartsToMillis(parts: CalendarDateParts): Long =
     LocalDateTime(parts.year, parts.month, parts.day, 0, 0)
         .toInstant(TimeZone.UTC)
         .toEpochMilliseconds()
-
-internal fun Long.toLocalMediaReleaseDateTime(): MediaReleaseDateTime {
-    val dateTime = Instant.fromEpochSeconds(this).toLocalDateTime(TimeZone.currentSystemDefault())
-    return MediaReleaseDateTime(
-        day = dateTime.day,
-        month = dateTime.month.number,
-        year = dateTime.year,
-        hour = dateTime.hour,
-        minute = dateTime.minute,
-    )
-}
 
 internal fun localMidnightEpoch(
     epochSeconds: Long,
@@ -70,3 +60,11 @@ internal fun todayCalendarMillis(
     val date = now.toLocalDateTime(timeZone).date
     return calendarPartsToMillis(CalendarDateParts(year = date.year, month = date.month.number, day = date.day))
 }
+
+/**
+ * Returns the ISO day-of-week for the given epoch seconds in the device's local
+ * time zone. 1 = Monday, ..., 7 = Sunday.
+ */
+internal fun isoDayOfWeek(epochSeconds: Long): Int =
+    Instant.fromEpochSeconds(epochSeconds)
+        .toLocalDateTime(TimeZone.currentSystemDefault()).dayOfWeek.isoDayNumber

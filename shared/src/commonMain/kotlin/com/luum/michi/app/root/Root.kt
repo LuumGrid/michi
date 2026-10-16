@@ -43,13 +43,13 @@ import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
-import com.luum.michi.app.core.storage.domain.SortPersistence
-import com.luum.michi.app.core.storage.domain.SortScope
+import com.luum.michi.app.core.medialist.domain.SortPersistence
+import com.luum.michi.app.core.medialist.domain.SortScope
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
@@ -86,7 +86,7 @@ import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.GridSortHolder
-import com.luum.michi.app.core.navigation.domain.ShareLauncher
+import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.settings.domain.model.ListSort
@@ -98,7 +98,7 @@ import com.luum.michi.app.settings.domain.model.scoreStepFor
 import com.luum.michi.app.settings.domain.model.scoreSuffixFor
 import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
-import com.luum.michi.app.core.navigation.domain.UrlOpener
+import com.luum.michi.app.core.platform.domain.UrlOpener
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen

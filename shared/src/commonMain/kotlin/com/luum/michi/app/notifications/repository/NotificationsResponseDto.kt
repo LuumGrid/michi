@@ -1,9 +1,9 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
-import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.network.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

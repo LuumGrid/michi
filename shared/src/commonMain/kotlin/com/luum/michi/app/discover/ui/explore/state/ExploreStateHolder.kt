@@ -12,10 +12,10 @@ import kotlin.time.Duration.Companion.milliseconds
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.MediaType
-import com.luum.michi.app.core.model.toMediaSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreResult

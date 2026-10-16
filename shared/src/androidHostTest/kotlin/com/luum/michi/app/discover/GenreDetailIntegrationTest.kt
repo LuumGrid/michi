@@ -2,10 +2,10 @@ package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaGridItem
-import com.luum.michi.app.core.model.MediaType
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExplorePage

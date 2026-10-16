@@ -39,7 +39,7 @@ import com.luum.michi.app.core.language.domain.getLanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
-import com.luum.michi.app.core.storage.repository.StoreSortPersistence
+import com.luum.michi.app.core.medialist.repository.StoreSortPersistence
 import com.luum.michi.app.root.AuthService
 import com.luum.michi.app.root.Root
 import com.luum.michi.app.settings.ui.state.rememberSettingsState

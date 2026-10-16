@@ -145,17 +145,27 @@ converted at the UI boundary). Contents:
 core/
   auth/domain|repository/       AniList OAuth flow + token storage (launchers, stores)
   session/domain|repository/    viewer identity, SessionManager, SessionState
-  network/domain|repository/    Ktor GraphQL client, NetworkResult, rate limiter,
-                                endpoints + anilist/dto/ (API transport shapes shared by
-                                several features — never import these from UI directly,
-                                map at feature boundaries) + the shared catalog→grid mapper
+  network/domain|repository/    transport only: Ktor GraphQL client, NetworkResult, endpoints,
+                                rate limiter, HTTP client + `PageInfoDto` (never import DTOs
+                                from UI directly, map at feature boundaries)
+  platform/domain|repository/   system services: `Connectivity` (image quality), `UrlOpener`,
+                                `ShareLauncher`; platform impls (Android/iOS) in `repository/`
+  media/domain|repository/      media vocabulary (format/season/type/status/dates/genres/grid item)
+                                + AniList media DTOs/mappers (`dto/MediaDto`, `dto/FuzzyDateDto`,
+                                titles, cover sizes, grid-item/release-date mappers)
+  person/repository/            person DTOs (character/staff/studio) + person cover sizes
+                                (AniList placeholder handling)
+  medialist/domain|repository/  list-status contracts + `MediaListEntryRepositoryImpl`
+                                (save/progress/favourite/delete), list sort vocabulary
+                                (`UserListSort`, `MediaSort`) + sort persistence
   storage/domain/               settings/filter keys and stores
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
-  navigation/domain/            routes, url-opening + sharing (`UrlOpener`, `ShareLauncher`), AniList deep-link parsing (`parseAniListMediaId`); platform openers/launchers in `repository/`
+  navigation/domain/            routes, AniList deep-link parsing (`parseAniListMediaId`),
+                                pushed-detail holder contracts (`DetailHolder`, `GridSortHolder`)
   favourite/domain|repository/  one favourite toggle for every entity type (media/person/studio)
-  medialist/domain|repository/  list-status contracts + `MediaListEntryRepositoryImpl` (save/progress/favourite/delete), shared by lists and detail
-  model/                        neutral domain vocabulary (MediaFormat, MediaSeason, dates,
-                                sort, FilterOption, compact count, MediaGenres, MediaGridItem/MediaGridPage) — cross-concept, belongs to no feature
+  model/                        neutral domain vocabulary (CoverSizes, FilterOption, compact count,
+                                ImageQuality, Page, calendar dates, notification buckets, page sizes)
+                                — cross-concept, belongs to no feature
   util/                         pure helpers with no feature owner (`DetailCache`, URL parsing/host normalization)
 ```
 
@@ -187,15 +197,23 @@ com.luum.michi.app
   core/
     auth/domain|repository/   AniList OAuth flow + token storage
     session/domain|repository/ viewer identity + SessionManager
-    network/domain|repository/ Ktor GraphQL client + NetworkResult (+ anilist/dto/)
+    network/domain|repository/ transport only: Ktor GraphQL client, NetworkResult, endpoints,
+                              rate limiter, HTTP client + `PageInfoDto`
+    platform/domain|repository/ system services: connectivity, url opener, share launcher
+                              (+ Android/iOS impls)
+    media/domain|repository/  media vocabulary + AniList media DTOs/mappers
+                              (`dto/MediaDto`, `dto/FuzzyDateDto`, titles, cover sizes,
+                              grid-item/release-date mappers)
+    person/repository/        person DTOs (character/staff/studio) + person cover sizes
+    medialist/domain|repository/ list-status contracts + `MediaListEntryRepositoryImpl`,
+                              list sort vocabulary (`UserListSort`, `MediaSort`) + sort persistence
     storage/domain/           settings/filter stores (+ platform `SettingsStore` impls:
                                 `SharedPreferencesSettingsStore` on Android,
                                 `NSUserDefaultsSettingsStore` on iOS, wired via `MichiDependencies`)
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
-    navigation/domain/        routes, back-handler contracts, url-opening + sharing (`UrlOpener`, `ShareLauncher`), deep-link parsing (`parseAniListMediaId`), the pushed-detail holder contract (`DetailHolder`, `GridSortHolder`)
+    navigation/domain/        routes, back-handler contracts, deep-link parsing (`parseAniListMediaId`), the pushed-detail holder contract (`DetailHolder`, `GridSortHolder`)
     favourite/domain|repository/ one favourite toggle for every entity type
-    medialist/domain|repository/ list-status contracts + `MediaListEntryRepositoryImpl`
-    model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort, MediaGenres, MediaGridItem/MediaGridPage)
+    model/                    neutral domain vocabulary (CoverSizes, FilterOption, compact count, ImageQuality, Page, calendar dates, notification buckets, page sizes)
     util/                     pure helpers with no feature owner (DetailCache, URL parsing/host normalization)
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
@@ -306,12 +324,12 @@ A rail inside a card gets boxed in (first/last cards clip on the rounded corners
 - **Scroll rule (validated oct-2026)**: changing **what** is shown — a section chip, a filter, a sort, the calendar day, the Anime/Manga selector, a new detail destination — returns to the top; refreshing, closing a sheet or coming back (back, another tab) keeps the position. `ui/components/ScrollMemory` implements it: `rememberResetListState`/`rememberResetGridState` are `rememberSaveable` states keyed by their reset key, so a change re-creates the state **in the same composition** (the top is painted in the next frame, no effect tick) while a restore keeps the position. Survival across surfaces is Root's: the content area is wrapped in a `rememberSaveableStateHolder()` keyed by `"<slot tab>:<view>"` (`tab`, `settings`, `detail:<entryId>`, overlays) with `key(surface)` inside, so every tab, every detail-stack entry (identity per push, from `State.detailEntryIds`) and every overlay keeps its own saveable scroll state. A detail key carries the **composing slot's tab** (`detailSurfaceKey`) because a tab transition composes two slots and equal keys would crash, so a popped entry is dropped under every tab variant (`detailSurfaceKeys`). The provider must live inside `AnimatedContent`'s content lambda, and only the if/else chain is wrapped: the modals (sign-in, entry editor, share) stay outside it so their `remember`ed holders survive.
 - **Debug timing**: debug builds log each GraphQL operation's duration (`MichiDependencies.isDebug` → Ktor client; Android reads `FLAG_DEBUGGABLE`, iOS `Platform.isDebugBinary`).
 - **Load states**: `ui/components/LoadStateContainer` (spinner / retry error / pull-to-refresh content, plus an optional compact non-blocking refresh error) is shared by the detail screens and the dashboard; loading/error labels arrive as parameters so it stays feature-agnostic (the detail screens pass no refresh error). The genre page gates it on the holder's `pageLoaded` flag (it has no detail model to test for null).
-- **Detail poster grid**: `ui/components/DetailPosterGrid` is the one grid that lists media inside a detail page (studio works, genre works): token-sized `PosterCard` cells over the shared `MediaGridItem`/`MediaGridPage` (`core/model`, primitives + `CoverSizes` only), a full-span `header` slot each screen fills with its own items (studio: hero + "Works"; genre: only the Anime/Manga switch — its name lives in the toolbar, so no title item and no "Works" line), the empty label and the auto-pagination footer. A genre's catalog switch re-queries page 1 and clears the works; the 18+ gate matches Discover's (hidden pins `isAdult: false`, allowed omits it) and flipping the setting re-queries page 1 without leaving the page.
+- **Detail poster grid**: `ui/components/DetailPosterGrid` is the one grid that lists media inside a detail page (studio works, genre works): token-sized `PosterCard` cells over the shared `MediaGridItem` (`core/media/domain`, primitives + `CoverSizes` only), a full-span `header` slot each screen fills with its own items (studio: hero + "Works"; genre: only the Anime/Manga switch — its name lives in the toolbar, so no title item and no "Works" line), the empty label and the auto-pagination footer. A genre's catalog switch re-queries page 1 and clears the works; the 18+ gate matches Discover's (hidden pins `isAdult: false`, allowed omits it) and flipping the setting re-queries page 1 without leaving the page.
 - **Canonical genre link**: a genre is not an AniList entity, so its "open in AniList"/share URL is the catalog search filtered by genre (`…/search/{anime|manga}?genres=…`), percent-encoded through `discover/domain/genre/model/urlEncodeQueryValue()` (Ktor's `encodeURLParameter`, so non-ASCII goes through UTF-8) and following the Anime/Manga chip the user has selected.
 - **Information grid**: `mediaDetail/ui/components/MediaDetailInfoGrid` is the one panel grid (label above uppercase value; short entries two per row with an odd tail kept half width, `wideEntries` full width) used by media, character, staff and studio. Panels wrap it in `MediaDetailPanel` + `SectionHeader`.
 - **Detail cache**: the four detail holders share `core/util/DetailCache` (pure, insertion-order eviction approximating LRU, plus `update(key, transform)`). A toggle-favourite response updates **its own** cached snapshot through `update` and only touches the visible state while the holder still shows that id, so opening another destination mid-request never mixes snapshots.
-- **Rail paging**: every query that feeds a rail pages at a single `RailPageSize` (10, `core/network/domain`) — the same value is the `perPage` and the rail's item count, and "View all" starts at page 1 and pages with it (characters/staff/recommendations, character/staff media, dashboard sections). Full grids page at `GridPageSize` (30) instead: the studio media grid and the genre works grid use it for their queries and fill themselves with the auto-pagination footer. `Media.relations` accepts no pagination args in the AniList schema, so the media detail trims its relation node to exactly what the rail renders (id/format/status/season/seasonYear/startDate.year/title/cover).
-- **Sort sheet**: `ui/components/SortSheet` is the one sort picker (criterion group + order group, primitives in/callbacks out). The anime/manga lists map it to their holder (local sort); the studio and genre grids map it to `StudioDetailStateHolder`/`GenreDetailStateHolder`, whose `changeSort` re-queries page 1 with the derived AniList `MediaSort` (server order, no client sort). `UserListSort.toMediaSort(order, isAnime)` (`core/model`) is the single place that derives the API key; `DetailGridSortOptions` (`ui/components`) is the one criteria list both grids offer.
+- **Rail paging**: every query that feeds a rail pages at a single `RailPageSize` (10, `core/model`) — the same value is the `perPage` and the rail's item count, and "View all" starts at page 1 and pages with it (characters/staff/recommendations, character/staff media, dashboard sections). Full grids page at `GridPageSize` (30) instead: the studio media grid and the genre works grid use it for their queries and fill themselves with the auto-pagination footer. `Media.relations` accepts no pagination args in the AniList schema, so the media detail trims its relation node to exactly what the rail renders (id/format/status/season/seasonYear/startDate.year/title/cover).
+- **Sort sheet**: `ui/components/SortSheet` is the one sort picker (criterion group + order group, primitives in/callbacks out). The anime/manga lists map it to their holder (local sort); the studio and genre grids map it to `StudioDetailStateHolder`/`GenreDetailStateHolder`, whose `changeSort` re-queries page 1 with the derived AniList `MediaSort` (server order, no client sort). `UserListSort.toMediaSort(order, isAnime)` (`core/medialist/domain`) is the single place that derives the API key; `DetailGridSortOptions` (`ui/components`) is the one criteria list both grids offer.
 - **Auto-pagination footer**: `ui/components/LoadMoreFooter` + `LoadMoreKey` are shared by every auto-paging list/grid ("View all", the studio/genre grids). The last item is the footer; a `snapshotFlow` on the visible items loads the next page when its key shows up, `distinctUntilChanged` keeps it from repeating while a page is in flight and from looping when a page fails (the footer stays visible but the flow does not re-emit).
 - **Font scale cap**: dense cards (`MediaCoverCard` rows and `PosterCard` cards, via `ui/components/CardDensity`) cap the OS font scale at 1.3× so content degrades to ellipsis instead of clipping and cover badges never collide; rail titles reserve two lines so the row stays even. Full-scale text lives on the detail screens (unbounded layouts). Validate at 200% OS font size.
 - **Card pill priority**: in card bodies the action pills are measured first and pinned to the cover bottom (placed with `Arrangement.SpaceBetween`, like the lists); text slots are weighted (`weight(1f, fill = false)`) so overflow drops the last tertiary line (behind, `maxLines = 2`) instead of pushing the pills out.

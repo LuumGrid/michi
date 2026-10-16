@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab

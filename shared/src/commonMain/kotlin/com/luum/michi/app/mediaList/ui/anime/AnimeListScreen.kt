@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections

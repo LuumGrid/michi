@@ -4,7 +4,7 @@ import com.luum.michi.app.calendar.repository.CalendarRepositoryImpl
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.model.localMidnightEpoch
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.repository.AniListRateLimiter

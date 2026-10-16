@@ -8,9 +8,8 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.label
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection

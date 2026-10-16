@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind

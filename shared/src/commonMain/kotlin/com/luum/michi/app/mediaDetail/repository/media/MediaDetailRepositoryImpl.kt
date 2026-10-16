@@ -3,10 +3,10 @@ package com.luum.michi.app.mediaDetail.repository.media
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.model.parseMediaSeason
-import com.luum.michi.app.core.model.parseMediaWorkStatus
-import com.luum.michi.app.core.model.toTitleCase
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.media.domain.parseMediaSeason
+import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
+import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -23,8 +23,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.model.RailPageSize
 
 
 private const val MediaDetailQuery = """
@@ -202,8 +202,8 @@ private data class MediaRecommendationNodeDto(
 @Serializable
 private data class MediaRecommendationMediaDto(
     val id: Int,
-    val title: com.luum.michi.app.core.network.repository.dto.MediaTitleDto? = null,
-    val coverImage: com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto? = null,
+    val title: com.luum.michi.app.core.media.repository.dto.MediaTitleDto? = null,
+    val coverImage: com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto? = null,
     val format: String? = null,
     val status: String? = null,
     val season: String? = null,

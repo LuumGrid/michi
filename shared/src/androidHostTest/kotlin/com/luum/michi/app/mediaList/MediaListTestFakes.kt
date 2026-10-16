@@ -4,8 +4,8 @@ import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.storage.domain.SortPersistence
-import com.luum.michi.app.core.storage.domain.SortScope
+import com.luum.michi.app.core.medialist.domain.SortPersistence
+import com.luum.michi.app.core.medialist.domain.SortScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement

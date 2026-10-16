@@ -1,12 +1,12 @@
 package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

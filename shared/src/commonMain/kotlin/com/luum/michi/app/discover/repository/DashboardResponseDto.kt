@@ -1,6 +1,6 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

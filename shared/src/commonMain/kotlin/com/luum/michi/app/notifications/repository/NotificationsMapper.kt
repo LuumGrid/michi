@@ -1,6 +1,6 @@
 package com.luum.michi.app.notifications.repository
 
-import com.luum.michi.app.core.network.repository.dto.bestTitleOrNull
+import com.luum.michi.app.core.media.repository.bestTitleOrNull
 import com.luum.michi.app.core.model.NotificationBucket
 import com.luum.michi.app.core.model.apiTypes
 import com.luum.michi.app.core.model.notificationBucketFor
@@ -8,7 +8,7 @@ import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
 
 /** Reply types, shown under their own category and filter. Single definition:

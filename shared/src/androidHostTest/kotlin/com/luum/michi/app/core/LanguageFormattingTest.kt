@@ -4,7 +4,7 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.getLanguageStrings
-import com.luum.michi.app.core.model.MediaReleaseDateTime
+import com.luum.michi.app.core.media.domain.MediaReleaseDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

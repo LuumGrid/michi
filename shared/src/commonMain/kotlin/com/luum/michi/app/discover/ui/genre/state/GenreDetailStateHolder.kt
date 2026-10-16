@@ -3,12 +3,12 @@ package com.luum.michi.app.discover.ui.genre.state
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.core.model.MediaGridItem
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.toMediaSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.network.domain.NetworkError

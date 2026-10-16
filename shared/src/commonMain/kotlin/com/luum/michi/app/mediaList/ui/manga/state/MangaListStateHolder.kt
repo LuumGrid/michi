@@ -12,17 +12,17 @@ import com.luum.michi.app.mediaList.domain.manga.model.incrementedVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.toMediaListStatus
 import kotlinx.coroutines.CoroutineScope
 
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.MediaSeason
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.mediaList.domain.common.sectionCount
 import com.luum.michi.app.mediaList.domain.common.sectionEntries
 import com.luum.michi.app.mediaList.ui.common.state.ListProgressSaver
 import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.mediaList.ui.common.state.MediaListLoader
-import com.luum.michi.app.core.storage.domain.SortPersistence
-import com.luum.michi.app.core.storage.domain.SortScope
+import com.luum.michi.app.core.medialist.domain.SortPersistence
+import com.luum.michi.app.core.medialist.domain.SortScope
 
 internal class MangaListStateHolder(
     repository: MangaListRepository,

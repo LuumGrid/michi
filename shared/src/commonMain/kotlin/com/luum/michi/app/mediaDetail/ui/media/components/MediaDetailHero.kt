@@ -31,7 +31,7 @@ import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.components.CoverSize
-import com.luum.michi.app.core.model.toLocalMediaReleaseDateTime
+import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel

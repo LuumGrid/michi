@@ -13,7 +13,7 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
 /**

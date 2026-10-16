@@ -1,7 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.studio
 
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 

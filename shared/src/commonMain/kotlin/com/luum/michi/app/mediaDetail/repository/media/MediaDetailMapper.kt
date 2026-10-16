@@ -1,13 +1,13 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.network.repository.dto.format
-import com.luum.michi.app.core.network.repository.dto.toMillisOrNull
-import com.luum.michi.app.core.model.toTitleCase
-import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.parseMediaSeason
-import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.media.repository.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.media.repository.dto.format
+import com.luum.michi.app.core.media.repository.dto.toMillisOrNull
+import com.luum.michi.app.core.media.domain.toTitleCase
+import com.luum.michi.app.core.media.domain.label
+import com.luum.michi.app.core.media.domain.parseMediaSeason
+import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.common.stripHtml
@@ -26,7 +26,8 @@ import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
 
 internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
     val studioEdges = studios.toStudioEdges()

@@ -1,6 +1,6 @@
 package com.luum.michi.app.calendar.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import kotlinx.serialization.Serializable
 

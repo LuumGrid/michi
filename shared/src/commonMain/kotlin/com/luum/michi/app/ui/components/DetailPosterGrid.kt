@@ -17,7 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 

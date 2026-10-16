@@ -6,7 +6,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
-import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository

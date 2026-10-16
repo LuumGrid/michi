@@ -2,8 +2,8 @@ package com.luum.michi.app.core.medialist.repository
 
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
-import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
-import com.luum.michi.app.core.network.repository.dto.toMillisOrNull
+import com.luum.michi.app.core.media.repository.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.media.repository.dto.toMillisOrNull
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.medialist.domain.MediaListStatus

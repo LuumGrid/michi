@@ -15,7 +15,7 @@ import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import com.luum.michi.app.calendar.domain.model.airingCountdownLabel
 import com.luum.michi.app.calendar.domain.model.formatAiringTime
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.MediaCoverCard

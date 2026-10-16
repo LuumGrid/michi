@@ -3,10 +3,10 @@ package com.luum.michi.app.mediaDetail.domain.media.model
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaType
-import com.luum.michi.app.core.model.MediaWorkStatus
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.mediaDetail.domain.common.ExternalLink
 import com.luum.michi.app.core.model.Page

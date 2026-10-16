@@ -11,8 +11,8 @@ import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.mediaDetail.repository.character.CharacterDetailRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.core.auth.domain.AniListOAuthLauncher
-import com.luum.michi.app.core.navigation.domain.UrlOpener
-import com.luum.michi.app.core.navigation.domain.ShareLauncher
+import com.luum.michi.app.core.platform.domain.UrlOpener
+import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.core.navigation.domain.parseAniListMediaId
 import com.luum.michi.app.core.auth.domain.AniListTokenStorage
 import com.luum.michi.app.core.auth.domain.parseAniListOAuthCallback
@@ -25,8 +25,8 @@ import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.session.repository.SettingsStoreCachedViewerStore
 import com.luum.michi.app.core.storage.domain.SettingsStore
-import com.luum.michi.app.core.network.domain.AlwaysUnmeteredConnectivity
-import com.luum.michi.app.core.network.domain.Connectivity
+import com.luum.michi.app.core.platform.domain.AlwaysUnmeteredConnectivity
+import com.luum.michi.app.core.platform.domain.Connectivity
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.DashboardRepository

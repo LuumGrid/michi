@@ -9,10 +9,10 @@ import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
-import com.luum.michi.app.core.network.repository.dto.CharacterDto
-import com.luum.michi.app.core.network.repository.dto.MediaDto
-import com.luum.michi.app.core.network.repository.dto.StaffDto
-import com.luum.michi.app.core.network.repository.dto.StudioDto
+import com.luum.michi.app.core.person.repository.dto.CharacterDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
+import com.luum.michi.app.core.person.repository.dto.StaffDto
+import com.luum.michi.app.core.person.repository.dto.StudioDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson

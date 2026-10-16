@@ -2,8 +2,8 @@ package com.luum.michi.app.core
 
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.parseMediaSeason
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.parseMediaSeason
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

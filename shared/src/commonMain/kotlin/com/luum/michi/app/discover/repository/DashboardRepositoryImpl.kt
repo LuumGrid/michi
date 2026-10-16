@@ -4,12 +4,12 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
-import com.luum.michi.app.core.model.MediaSeasonYear
-import com.luum.michi.app.core.model.currentSeasonAndYear
-import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
+import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map

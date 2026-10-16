@@ -1,7 +1,7 @@
 package com.luum.michi.app.core.navigation.domain
 
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
 
 /**
  * Server-ordered grid surface (the studio and genre pages): the shared detail

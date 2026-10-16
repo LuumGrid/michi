@@ -2,10 +2,10 @@ package com.luum.michi.app.calendar.domain.model
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaSeasonYear
-import com.luum.michi.app.core.model.next
-import com.luum.michi.app.core.model.previous
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
+import com.luum.michi.app.core.media.domain.next
+import com.luum.michi.app.core.media.domain.previous
 
 /**
  * Season bucket for calendar entries, relative to [current] season.

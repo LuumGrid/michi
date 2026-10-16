@@ -1,8 +1,8 @@
 package com.luum.michi.app.core
 
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.toMediaSort
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.medialist.domain.toMediaSort
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

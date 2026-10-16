@@ -4,8 +4,8 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer

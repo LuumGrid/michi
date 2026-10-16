@@ -39,7 +39,7 @@ import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.ui.language.Strings
-import com.luum.michi.app.core.network.domain.RailPageSize
+import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem

@@ -4,10 +4,10 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import com.luum.michi.app.core.auth.repository.ChromeCustomTabsOAuthLauncher
 import com.luum.michi.app.core.auth.repository.SharedPreferencesAniListTokenStorage
-import com.luum.michi.app.core.navigation.repository.AndroidUrlOpener
-import com.luum.michi.app.core.navigation.repository.AndroidShareLauncher
+import com.luum.michi.app.core.platform.repository.AndroidUrlOpener
+import com.luum.michi.app.core.platform.repository.AndroidShareLauncher
 import com.luum.michi.app.core.storage.repository.SharedPreferencesSettingsStore
-import com.luum.michi.app.core.network.repository.AndroidConnectivity
+import com.luum.michi.app.core.platform.repository.AndroidConnectivity
 
 /**
  * Constructs the app's shared dependencies for Android. Called from

@@ -1,12 +1,12 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.parseMediaFormat
+import com.luum.michi.app.core.media.repository.dto.MediaDto
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.media.domain.label
+import com.luum.michi.app.core.media.domain.parseMediaFormat
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.model.ExploreResult
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toCoverSizes
 
 internal fun MediaDto.toExploreResult(strings: LanguageStrings): ExploreResult {
     val titleText = title.bestTitle()

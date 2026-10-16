@@ -1,14 +1,14 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
-import com.luum.michi.app.core.network.repository.dto.MediaCoverImageDto
-import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
-import com.luum.michi.app.core.network.repository.dto.MediaNextAiringEpisodeDto
-import com.luum.michi.app.core.network.repository.dto.MediaTitleDto
-import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
+import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
+import com.luum.michi.app.core.media.repository.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.media.repository.dto.MediaNextAiringEpisodeDto
+import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
+import com.luum.michi.app.core.media.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.network.repository.dto.PersonImageDto
-import com.luum.michi.app.core.network.repository.dto.PersonNameDto
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.PersonNameDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

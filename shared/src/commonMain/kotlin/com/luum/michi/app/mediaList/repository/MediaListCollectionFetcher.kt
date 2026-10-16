@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaList.repository
 
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult

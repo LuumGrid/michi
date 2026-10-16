@@ -1,14 +1,14 @@
 package com.luum.michi.app.calendar.repository
 
-import com.luum.michi.app.core.network.repository.dto.MediaExternalLinkDto
-import com.luum.michi.app.core.network.repository.dto.bestTitle
-import com.luum.michi.app.core.model.parseMediaFormat
-import com.luum.michi.app.core.model.parseMediaSeason
-import com.luum.michi.app.core.model.parseMediaWorkStatus
+import com.luum.michi.app.core.media.repository.dto.MediaExternalLinkDto
+import com.luum.michi.app.core.media.repository.bestTitle
+import com.luum.michi.app.core.media.domain.parseMediaFormat
+import com.luum.michi.app.core.media.domain.parseMediaSeason
+import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
 import com.luum.michi.app.calendar.domain.model.ReleaseItem
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
-import com.luum.michi.app.core.network.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toCoverSizes
 
 internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
     val media = media ?: return null

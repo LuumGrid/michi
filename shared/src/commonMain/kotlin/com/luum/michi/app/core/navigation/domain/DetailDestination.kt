@@ -1,6 +1,6 @@
 package com.luum.michi.app.core.navigation.domain
 
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 
 internal sealed interface DetailDestination {
     data class Media(val id: Int) : DetailDestination

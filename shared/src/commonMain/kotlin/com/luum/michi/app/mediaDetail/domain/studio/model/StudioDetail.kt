@@ -1,6 +1,6 @@
 package com.luum.michi.app.mediaDetail.domain.studio.model
 
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.model.Page
 
 internal data class StudioDetail(

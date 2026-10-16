@@ -1,9 +1,9 @@
 package com.luum.michi.app.calendar.domain.model
 
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaFormat
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.model.CoverSizes
 
 internal data class ReleaseItem(

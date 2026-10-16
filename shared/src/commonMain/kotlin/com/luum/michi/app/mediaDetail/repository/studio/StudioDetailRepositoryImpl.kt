@@ -2,9 +2,9 @@ package com.luum.michi.app.mediaDetail.repository.studio
 
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.network.repository.dto.MediaDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -12,7 +12,7 @@ import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.network.domain.requireNode
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.network.repository.toMediaGridItem
+import com.luum.michi.app.core.media.repository.toMediaGridItem
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
 import kotlinx.serialization.SerialName
@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.network.domain.GridPageSize
+import com.luum.michi.app.core.model.GridPageSize
 
 /** The grid node selection, shared by both studio queries (they used to carry a
  *  copy each). It is exactly the catalog node the shared grid mapper reads. */

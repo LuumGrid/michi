@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.UserListOrder
-import com.luum.michi.app.core.model.UserListSort
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.ui.language.Strings
 
 /**

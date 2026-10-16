@@ -13,10 +13,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.model.MediaSeasonYear
-import com.luum.michi.app.core.model.currentSeasonAndYear
-import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.next
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
+import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.label
+import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.discover.domain.model.DashboardCardStat
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind

@@ -1,8 +1,8 @@
 package com.luum.michi.app.mediaList.domain.manga.model
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.model.MediaSeason
-import com.luum.michi.app.core.model.MediaWorkStatus
+import com.luum.michi.app.core.media.domain.MediaFormat
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
 import com.luum.michi.app.core.model.CoverSizes

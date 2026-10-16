@@ -1,6 +1,6 @@
 package com.luum.michi.app.core.session.repository
 
-import com.luum.michi.app.core.network.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import com.luum.michi.app.core.session.domain.Viewer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

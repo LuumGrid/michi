@@ -11,7 +11,6 @@ import com.luum.michi.app.core.network.repository.createAniListHttpClient
 import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.session.domain.SessionState
-import com.luum.michi.app.core.session.domain.loadIfAuthenticated
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
@@ -74,11 +73,10 @@ class LiveAuthenticatedTest {
     fun gatedAnimeListLoads() {
         val stack = LiveStack(requireToken())
         runBlocking {
-            val viewerId = stack.bootstrapAuthenticated()
-            val loaded = loadIfAuthenticated(stack.sessionManager.state.value) { id ->
-                assertTrue(stack.animeListRepository.loadList(id) is NetworkResult.Success)
-            }
-            assertTrue(loaded)
+            stack.bootstrapAuthenticated()
+            val state = stack.sessionManager.state.value
+            assertTrue(state is SessionState.Authenticated, "expected Authenticated but was $state")
+            assertTrue(stack.animeListRepository.loadList(state.viewer.id) is NetworkResult.Success)
         }
     }
 
@@ -86,11 +84,10 @@ class LiveAuthenticatedTest {
     fun gatedMangaListLoads() {
         val stack = LiveStack(requireToken())
         runBlocking {
-            val viewerId = stack.bootstrapAuthenticated()
-            val loaded = loadIfAuthenticated(stack.sessionManager.state.value) { id ->
-                assertTrue(stack.mangaListRepository.loadList(id) is NetworkResult.Success)
-            }
-            assertTrue(loaded)
+            stack.bootstrapAuthenticated()
+            val state = stack.sessionManager.state.value
+            assertTrue(state is SessionState.Authenticated, "expected Authenticated but was $state")
+            assertTrue(stack.mangaListRepository.loadList(state.viewer.id) is NetworkResult.Success)
         }
     }
 
@@ -98,11 +95,10 @@ class LiveAuthenticatedTest {
     fun gatedProfileLoads() {
         val stack = LiveStack(requireToken())
         runBlocking {
-            val viewerId = stack.bootstrapAuthenticated()
-            val loaded = loadIfAuthenticated(stack.sessionManager.state.value) { id ->
-                assertTrue(stack.profileRepository.loadProfile(id) is NetworkResult.Success)
-            }
-            assertTrue(loaded)
+            stack.bootstrapAuthenticated()
+            val state = stack.sessionManager.state.value
+            assertTrue(state is SessionState.Authenticated, "expected Authenticated but was $state")
+            assertTrue(stack.profileRepository.loadProfile(state.viewer.id) is NetworkResult.Success)
         }
     }
 }

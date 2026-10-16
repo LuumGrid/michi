@@ -1,6 +1,6 @@
 package com.luum.michi.app.root
 
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.State

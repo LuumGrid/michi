@@ -1,6 +1,6 @@
 package com.luum.michi.app.core.language.domain
 
-import com.luum.michi.app.core.model.MediaReleaseDateTime
+import com.luum.michi.app.core.media.domain.MediaReleaseDateTime
 
 interface LanguageStrings {
     val languageLabel: String

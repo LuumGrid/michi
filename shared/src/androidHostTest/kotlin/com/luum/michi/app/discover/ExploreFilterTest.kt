@@ -1,15 +1,15 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.model.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.model.UserListSort
+import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory

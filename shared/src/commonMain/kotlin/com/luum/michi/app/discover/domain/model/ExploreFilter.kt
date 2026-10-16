@@ -1,9 +1,9 @@
 package com.luum.michi.app.discover.domain.model
 
-import com.luum.michi.app.core.model.MediaFormat
-import com.luum.michi.app.core.model.label
+import com.luum.michi.app.core.media.domain.MediaFormat
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.model.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.currentSeasonAndYear
 import com.luum.michi.app.core.model.FilterOption
 
 internal data class ExploreFormatOption(val value: String, val label: String)

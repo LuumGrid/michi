@@ -1,6 +1,6 @@
 package com.luum.michi.app.discover.domain.genre.model
 
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaType
 
 /**
  * Canonical AniList search page for a genre in one catalog. AniList has no

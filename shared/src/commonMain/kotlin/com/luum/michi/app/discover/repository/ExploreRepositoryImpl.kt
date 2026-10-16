@@ -1,16 +1,15 @@
 package com.luum.michi.app.discover.repository
 
-import com.luum.michi.app.core.model.MediaGridItem
-import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.core.network.repository.dto.CharacterDto
+import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.network.repository.dto.MediaSearchResponseDto
-import com.luum.michi.app.core.network.repository.dto.StaffDto
-import com.luum.michi.app.core.network.repository.dto.StudioDto
+import com.luum.michi.app.core.person.repository.dto.StaffDto
+import com.luum.michi.app.core.person.repository.dto.StudioDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
-import com.luum.michi.app.core.network.domain.GridPageSize
+import com.luum.michi.app.core.model.GridPageSize
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
@@ -24,8 +23,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.network.repository.toCoverSizes
-import com.luum.michi.app.core.network.repository.toMediaGridItem
+import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
+import com.luum.michi.app.core.media.repository.toMediaGridItem
 
 /**
  * One catalog query for both types: `$type` decides the API `type` and the year
