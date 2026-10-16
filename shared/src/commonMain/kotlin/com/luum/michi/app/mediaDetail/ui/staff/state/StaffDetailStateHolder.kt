@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.staff.state
 
+import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -37,7 +38,7 @@ internal class StaffDetailStateHolder(
     private val scope: CoroutineScope,
     // Read at request launch: a language change keeps the holder (and its cache).
     private val stringsProvider: () -> LanguageStrings,
-) {
+) : DetailHolder {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
     var detail: StaffDetail? by mutableStateOf(null)
@@ -80,7 +81,7 @@ internal class StaffDetailStateHolder(
         private set
 
     // ── favourite ──
-    var isFavourite: Boolean by mutableStateOf(false)
+    override var isFavourite: Boolean by mutableStateOf(false)
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
@@ -117,7 +118,7 @@ internal class StaffDetailStateHolder(
         fetchFirstPage(id, clearDetail = true, clearMedia = true)
     }
 
-    fun refresh() {
+    override fun refresh() {
         val id = currentStaffId ?: return
         // Invalidate cached entry so the page is re-fetched from network.
         detailCache.remove(id)
@@ -208,7 +209,7 @@ internal class StaffDetailStateHolder(
         }
     }
 
-    fun toggleFavourite() {
+    override fun toggleFavourite() {
         if (isTogglingFavourite) return
         val id = currentStaffId ?: return
         val previous = isFavourite
@@ -236,7 +237,7 @@ internal class StaffDetailStateHolder(
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
-    fun invalidateCache() {
+    override fun invalidateCache() {
         detailCache.clear()
     }
 

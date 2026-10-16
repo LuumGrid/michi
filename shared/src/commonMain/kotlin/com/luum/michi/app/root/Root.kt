@@ -83,7 +83,9 @@ import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHol
 import com.luum.michi.app.discover.ui.genre.GenreDetailScreen
 import com.luum.michi.app.discover.ui.genre.state.createGenreDetailStateHolder
 import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.navigation.domain.DetailListKind
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.navigation.domain.ShareLauncher
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
@@ -102,19 +104,12 @@ import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.state.State
-import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections
-import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
+import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.root.state.resolveStartDestination
+import com.luum.michi.app.root.state.startDestinationChoice
 import com.luum.michi.app.root.state.toDashboardMediaType
 import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
-import com.luum.michi.app.settings.domain.model.label
-import com.luum.michi.app.settings.ui.model.SettingsChoice
-import com.luum.michi.app.settings.ui.model.StartDestinationChoice
-import com.luum.michi.app.mediaList.domain.anime.model.label
-import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.root.state.detailSurfaceKey
 import com.luum.michi.app.root.state.detailSurfaceKeys
 import com.luum.michi.app.root.state.rememberState
@@ -383,34 +378,16 @@ internal fun Root(
     }
 
     // "Pestaña al abrir": the settings row stays feature-agnostic, so Root
-    // resolves the localized sub-choice options (settings never imports a
-    // feature) and the section ids are validated against the live lists.
-    val startTab = settingsState.startTab
-    val startSectionChoices = when (startTab) {
-        StartTabOption.DISCOVER ->
-            StartCatalogOption.entries.map { SettingsChoice(it.name, it.label(strings)) }
-        StartTabOption.ANIME ->
-            (listOf(AnimeListSection.ALL) + animeStatusSections(settingsState.splitCompletedAnime))
-                .map { SettingsChoice(it.name, it.label(strings)) }
-        StartTabOption.MANGA ->
-            (listOf(MangaListSection.ALL) + mangaStatusSections(settingsState.splitCompletedManga))
-                .map { SettingsChoice(it.name, it.label(strings)) }
-        StartTabOption.PROFILE -> emptyList()
-    }
-    // A stored id that no longer exists (split toggled off, enum renamed) is
-    // shown as the value it resolves to (ALL/first), never as a blank row.
-    val startSectionValue = when (startTab) {
-        StartTabOption.DISCOVER -> settingsState.startCatalogType.name
-        StartTabOption.ANIME -> settingsState.startAnimeSectionId
-        StartTabOption.MANGA -> settingsState.startMangaSectionId
-        StartTabOption.PROFILE -> ""
-    }.takeIf { value -> startSectionChoices.any { it.value == value } }
-        ?: startSectionChoices.firstOrNull()?.value.orEmpty()
-    val startDestinationChoice = StartDestinationChoice(
-        tab = startTab,
-        sectionTitle = strings.settingsStartSectionTitle.takeIf { startTab != StartTabOption.PROFILE },
-        sectionChoices = startSectionChoices,
-        sectionValue = startSectionValue,
+    // resolves the localized sub-choice (settings never imports a feature) and
+    // the section ids are validated against the live lists.
+    val startChoice = startDestinationChoice(
+        tab = settingsState.startTab,
+        catalogType = settingsState.startCatalogType,
+        animeSectionId = settingsState.startAnimeSectionId,
+        mangaSectionId = settingsState.startMangaSectionId,
+        splitCompletedAnime = settingsState.splitCompletedAnime,
+        splitCompletedManga = settingsState.splitCompletedManga,
+        strings = strings,
     )
     val onStartTabChange: (StartTabOption) -> Unit = { settingsState.startTab = it }
     val onStartSectionChange: (String) -> Unit = { value ->
@@ -480,6 +457,31 @@ internal fun Root(
             !settingsState.displayAdultContent,
         )
     }
+    // Every pushed detail page lives behind one contract, so refresh, cache
+    // invalidation and the favourite action are a single lookup instead of a
+    // five-branch `when` per call site.
+    val detailHolders: List<DetailHolder> = listOf(
+        mediaDetailHolder,
+        characterHolder,
+        staffHolder,
+        studioHolder,
+        genreHolder,
+    )
+    fun detailHolderFor(destination: DetailDestination?): DetailHolder? = when (destination) {
+        is DetailDestination.Media -> mediaDetailHolder
+        is DetailDestination.Character -> characterHolder
+        is DetailDestination.Staff -> staffHolder
+        is DetailDestination.Studio -> studioHolder
+        is DetailDestination.Genre -> genreHolder
+        is DetailDestination.DetailList -> null
+        null -> null
+    }
+    // Only the server-ordered grids (studio, genre) open the detail sort sheet.
+    fun gridSortHolderFor(destination: DetailDestination?): GridSortHolder? = when (destination) {
+        is DetailDestination.Studio -> studioHolder
+        is DetailDestination.Genre -> genreHolder
+        else -> null
+    }
     // 18+ gate: flipping it re-queries the open genre page (a no-op while no
     // genre is loaded), so the setting applies without leaving the page.
     LaunchedEffect(settingsState.displayAdultContent) {
@@ -493,20 +495,8 @@ internal fun Root(
         dashboardHolder.invalidate()
         // Every cached detail snapshot is re-localized: drop all of them so the
         // back stack never restores stale titles, then refresh the visible one.
-        mediaDetailHolder.invalidateCache()
-        characterHolder.invalidateCache()
-        staffHolder.invalidateCache()
-        studioHolder.invalidateCache()
-        genreHolder.invalidateCache()
-        when (state.currentDetail) {
-            is DetailDestination.Media -> mediaDetailHolder.refresh()
-            is DetailDestination.Character -> characterHolder.refresh()
-            is DetailDestination.Staff -> staffHolder.refresh()
-            is DetailDestination.Studio -> studioHolder.refresh()
-            is DetailDestination.Genre -> genreHolder.refresh()
-            is DetailDestination.DetailList -> {}
-            null -> {}
-        }
+        detailHolders.forEach { it.invalidateCache() }
+        detailHolderFor(state.currentDetail)?.refresh()
         // Always: the calendar rows are re-localized too (open or not).
         calendarHolder.invalidateEntries()
     }
@@ -563,16 +553,17 @@ internal fun Root(
             sortPersistence.clearSort(SortScope.ANIME)
             sortPersistence.clearSort(SortScope.MANGA)
         }
-        val animeInitial = resolveInitialSort(
-            saved = hydrateSort(sortPersistence, SortScope.ANIME).takeIf { persistSort },
-            defaultSort = defaultSort,
+        val sortTargets: List<Pair<SortScope, MediaListHolder<*, *>?>> = listOf(
+            SortScope.ANIME to animeHolder,
+            SortScope.MANGA to mangaHolder,
         )
-        animeHolder?.updateSort(animeInitial.option, animeInitial.order, persist = animeInitial.persist)
-        val mangaInitial = resolveInitialSort(
-            saved = hydrateSort(sortPersistence, SortScope.MANGA).takeIf { persistSort },
-            defaultSort = defaultSort,
-        )
-        mangaHolder?.updateSort(mangaInitial.option, mangaInitial.order, persist = mangaInitial.persist)
+        sortTargets.forEach { (scope, holder) ->
+            val initial = resolveInitialSort(
+                saved = hydrateSort(sortPersistence, scope).takeIf { persistSort },
+                defaultSort = defaultSort,
+            )
+            holder?.updateSort(initial.option, initial.order, persist = initial.persist)
+        }
     }
 
     // Editor save/delete land here: both lists re-fetch so the edited
@@ -604,18 +595,9 @@ internal fun Root(
     // offset so it stays glued to the toolbar when collapsing.
     val toolbarScroll = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val hideToolbarOnScroll = hidesToolbarOnScroll(tab, state)
-    // The heart reads the holder that owns the active destination: media
-    // keeps its flag on the detail snapshot, the other scopes expose it
-    // directly.
-    val isDetailFavourite = when (val destination = state.currentDetail) {
-        is DetailDestination.Media -> mediaDetailHolder.detail?.isFavourite == true
-        is DetailDestination.Character -> characterHolder.isFavourite
-        is DetailDestination.Staff -> staffHolder.isFavourite
-        is DetailDestination.Studio -> studioHolder.isFavourite
-        is DetailDestination.Genre -> false
-        is DetailDestination.DetailList -> false
-        null -> false
-    }
+    // The heart reads the holder that owns the active destination (media keeps
+    // its flag on the detail snapshot; a genre has no favourite).
+    val isDetailFavourite = detailHolderFor(state.currentDetail)?.isFavourite == true
     // Overflow menu target per active destination: title + canonical AniList
     // URL + share body. Null while the detail has not hydrated yet.
     val detailOverflow: DetailOverflow? = when (val destination = state.currentDetail) {
@@ -706,15 +688,7 @@ internal fun Root(
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
                         ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
-                        ACTION_FAVOURITE -> when (val destination = state.currentDetail) {
-                            is DetailDestination.Media -> mediaDetailHolder.toggleFavourite()
-                            is DetailDestination.Character -> characterHolder.toggleFavourite()
-                            is DetailDestination.Staff -> staffHolder.toggleFavourite()
-                            is DetailDestination.Studio -> studioHolder.toggleFavourite()
-                            is DetailDestination.Genre -> {}
-                            is DetailDestination.DetailList -> {}
-                            null -> {}
-                        }
+                        ACTION_FAVOURITE -> detailHolderFor(state.currentDetail)?.toggleFavourite()
                         ACTION_MORE -> state.openDetailMenu()
                     }
                 },
@@ -793,7 +767,7 @@ internal fun Root(
                                 onFontChange = onFontChange,
                                 surfaces = surfaces,
                                 onSurfacesChange = onSurfacesChange,
-                                startDestination = startDestinationChoice,
+                                startDestination = startChoice,
                                 onStartTabChange = onStartTabChange,
                                 onStartSectionChange = onStartSectionChange,
                                 viewer = viewer,
@@ -1156,26 +1130,21 @@ internal fun Root(
                     onDismiss = { state.closeEditor() },
                 )
             }
-            if (state.isDetailOpen && state.isDetailSortOpen && state.currentDetail is DetailDestination.Studio) {
-                // Shared sort sheet over the studio holder: picking a row
-                // re-queries the grid from page 1 (server order).
-                SortSheet(
-                    options = DetailGridSortOptions,
-                    selected = studioHolder.sortOption,
-                    onSelect = { studioHolder.changeSort(it, studioHolder.sortOrder) },
-                    order = studioHolder.sortOrder,
-                    onSelectOrder = { studioHolder.changeSort(studioHolder.sortOption, it) },
-                    onDismiss = { state.closeDetailSort() },
-                )
+            val gridSortHolder = if (state.isDetailOpen && state.isDetailSortOpen) {
+                gridSortHolderFor(state.currentDetail)
+            } else {
+                null
             }
-            if (state.isDetailOpen && state.isDetailSortOpen && state.currentDetail is DetailDestination.Genre) {
-                // Same sheet over the genre holder (server order).
+            if (gridSortHolder != null) {
+                // Shared sort sheet over the destination's grid holder (studio
+                // or genre): picking a row re-queries the grid from page 1
+                // (server order).
                 SortSheet(
                     options = DetailGridSortOptions,
-                    selected = genreHolder.sortOption,
-                    onSelect = { genreHolder.changeSort(it, genreHolder.sortOrder) },
-                    order = genreHolder.sortOrder,
-                    onSelectOrder = { genreHolder.changeSort(genreHolder.sortOption, it) },
+                    selected = gridSortHolder.sortOption,
+                    onSelect = { gridSortHolder.changeSort(it, gridSortHolder.sortOrder) },
+                    order = gridSortHolder.sortOrder,
+                    onSelectOrder = { gridSortHolder.changeSort(gridSortHolder.sortOption, it) },
                     onDismiss = { state.closeDetailSort() },
                 )
             }

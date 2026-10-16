@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.model.MediaGridItem
 import com.luum.michi.app.core.model.MediaType
+import com.luum.michi.app.core.navigation.domain.DetailHolder
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.toMediaSort
@@ -45,7 +47,7 @@ internal class GenreDetailStateHolder(
     private val repository: ExploreRepository,
     private val scope: CoroutineScope,
     hideAdult: Boolean,
-) {
+) : DetailHolder, GridSortHolder {
     // Snapshot-backed: the screen reads these directly and must recompose on
     // every load/pagination (plain vars would apply silently).
     var name: String by mutableStateOf("")
@@ -73,9 +75,9 @@ internal class GenreDetailStateHolder(
     var isLoadingMore: Boolean by mutableStateOf(false)
         private set
 
-    var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
+    override var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
         private set
-    var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
+    override var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
         private set
 
     private var hideAdultState: Boolean = hideAdult
@@ -110,7 +112,7 @@ internal class GenreDetailStateHolder(
         fetchFirstPage(clearMedia = true, showSpinner = true)
     }
 
-    fun refresh() {
+    override fun refresh() {
         if (name.isEmpty()) return
         // Keeps the works on screen while reloading (no flicker).
         fetchFirstPage(clearMedia = false, showSpinner = false)
@@ -139,7 +141,7 @@ internal class GenreDetailStateHolder(
      * new `MediaSort` (a local re-sort would only reorder the loaded page). No-op
      * when nothing changes, so re-picking the same row never fires a request.
      */
-    fun changeSort(option: UserListSort, order: UserListOrder) {
+    override fun changeSort(option: UserListSort, order: UserListOrder) {
         if (option == sortOption && order == sortOrder) return
         sortOption = option
         sortOrder = order
@@ -236,9 +238,14 @@ internal class GenreDetailStateHolder(
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
-    fun invalidateCache() {
+    override fun invalidateCache() {
         detailCache.clear()
     }
+
+    /** A genre is not a favouritable entity: nothing to report or toggle. */
+    override val isFavourite: Boolean get() = false
+
+    override fun toggleFavourite() = Unit
 
     /** Dismisses the compact action-error row. */
     fun clearActionError() {

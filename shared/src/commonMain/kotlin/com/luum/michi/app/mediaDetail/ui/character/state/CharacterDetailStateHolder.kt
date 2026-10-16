@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.character.state
 
+import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
@@ -27,7 +28,7 @@ internal class CharacterDetailStateHolder(
     private val scope: CoroutineScope,
     // Read at request launch: a language change keeps the holder (and its cache).
     private val stringsProvider: () -> LanguageStrings,
-) {
+) : DetailHolder {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
     var detail: CharacterDetail? by mutableStateOf(null)
@@ -59,7 +60,7 @@ internal class CharacterDetailStateHolder(
     /** Voice-actor language for the media edges; changing it re-fetches. */
     var voiceLanguage: String by mutableStateOf("JAPANESE")
         private set
-    var isFavourite: Boolean by mutableStateOf(false)
+    override var isFavourite: Boolean by mutableStateOf(false)
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
@@ -91,7 +92,7 @@ internal class CharacterDetailStateHolder(
         fetchFirstPage(id, clearDetail = true, clearMedia = true)
     }
 
-    fun refresh() {
+    override fun refresh() {
         val id = currentCharacterId ?: return
         // Invalidate cached entry so the page is re-fetched from network.
         detailCache.remove(id)
@@ -172,7 +173,7 @@ internal class CharacterDetailStateHolder(
         refresh()
     }
 
-    fun toggleFavourite() {
+    override fun toggleFavourite() {
         if (isTogglingFavourite) return
         val id = currentCharacterId ?: return
         val previous = isFavourite
@@ -200,7 +201,7 @@ internal class CharacterDetailStateHolder(
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
-    fun invalidateCache() {
+    override fun invalidateCache() {
         detailCache.clear()
     }
 

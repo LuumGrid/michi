@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.studio.state
 
+import com.luum.michi.app.core.navigation.domain.DetailHolder
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.core.model.UserListOrder
 import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.toMediaSort
@@ -29,7 +31,7 @@ private data class StudioDetailSnapshot(
 internal class StudioDetailStateHolder(
     private val repository: StudioDetailRepository,
     private val scope: CoroutineScope,
-) {
+) : DetailHolder, GridSortHolder {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
     var detail: StudioDetail? by mutableStateOf(null)
@@ -64,12 +66,12 @@ internal class StudioDetailStateHolder(
      * [changeSort]) instead of sorting a loaded page locally, so a studio with
      * hundreds of works shows the real top of the chosen criterion.
      */
-    var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
+    override var sortOption: UserListSort by mutableStateOf(DEFAULT_SORT_OPTION)
         private set
-    var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
+    override var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
         private set
 
-    var isFavourite: Boolean by mutableStateOf(false)
+    override var isFavourite: Boolean by mutableStateOf(false)
         private set
     var isTogglingFavourite: Boolean by mutableStateOf(false)
         private set
@@ -110,7 +112,7 @@ internal class StudioDetailStateHolder(
         fetchFirstPage(id, clearDetail = true, clearMedia = true)
     }
 
-    fun refresh() {
+    override fun refresh() {
         val id = currentStudioId ?: return
         // Keeps the works on screen while reloading (no flicker); only a new
         // studio or a new sort clears them.
@@ -122,7 +124,7 @@ internal class StudioDetailStateHolder(
      * new `MediaSort` (a local re-sort would only reorder the loaded page). No-op
      * when nothing changes, so re-picking the same row never fires a request.
      */
-    fun changeSort(option: UserListSort, order: UserListOrder) {
+    override fun changeSort(option: UserListSort, order: UserListOrder) {
         if (option == sortOption && order == sortOrder) return
         sortOption = option
         sortOrder = order
@@ -150,7 +152,7 @@ internal class StudioDetailStateHolder(
         }
     }
 
-    fun toggleFavourite() {
+    override fun toggleFavourite() {
         if (isTogglingFavourite) return
         val id = currentStudioId ?: return
         val previous = isFavourite
@@ -179,7 +181,7 @@ internal class StudioDetailStateHolder(
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
-    fun invalidateCache() {
+    override fun invalidateCache() {
         detailCache.clear()
     }
 

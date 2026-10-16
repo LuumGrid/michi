@@ -1,14 +1,18 @@
 package com.luum.michi.app.root
 
+import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.root.state.resolveStartDestination
+import com.luum.michi.app.root.state.startDestinationChoice
 import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * "Pestaña al abrir" resolution: pure, so it is tested without the UI. A guest
@@ -87,5 +91,61 @@ class StartDestinationTest {
             DashboardMediaType.MANGA,
             resolve(catalog = StartCatalogOption.MANGA).catalogType,
         )
+    }
+
+    // ── startDestinationChoice: the localized settings picker ──
+
+    private fun choice(
+        tab: StartTabOption = StartTabOption.ANIME,
+        catalog: StartCatalogOption = StartCatalogOption.ANIME,
+        animeSection: String = "ALL",
+        mangaSection: String = "ALL",
+        splitAnime: Boolean = true,
+        splitManga: Boolean = true,
+    ) = startDestinationChoice(
+        tab = tab,
+        catalogType = catalog,
+        animeSectionId = animeSection,
+        mangaSectionId = mangaSection,
+        splitCompletedAnime = splitAnime,
+        splitCompletedManga = splitManga,
+        strings = EnglishStrings,
+    )
+
+    @Test
+    fun anUnknownSectionIdShowsTheFirstOption() {
+        assertEquals("ALL", choice(animeSection = "NOT_A_SECTION").sectionValue)
+        assertEquals("ALL", choice(tab = StartTabOption.MANGA, mangaSection = "NOT_A_SECTION").sectionValue)
+    }
+
+    @Test
+    fun profileHasNoSubChoice() {
+        val profile = choice(tab = StartTabOption.PROFILE)
+
+        assertTrue(profile.sectionChoices.isEmpty())
+        assertEquals("", profile.sectionValue)
+        assertNull(profile.sectionTitle)
+    }
+
+    @Test
+    fun splitOffHidesThePerFormatSections() {
+        val animeSplit = choice(splitAnime = true).sectionChoices.map { it.value }
+        assertTrue("COMPLETED_TV" in animeSplit)
+        val animeMerged = choice(splitAnime = false).sectionChoices.map { it.value }
+        assertTrue("COMPLETED" in animeMerged)
+        assertTrue("COMPLETED_TV" !in animeMerged)
+
+        val mangaSplit = choice(tab = StartTabOption.MANGA, splitManga = true).sectionChoices.map { it.value }
+        assertTrue("COMPLETED_NOVEL" in mangaSplit)
+        val mangaMerged = choice(tab = StartTabOption.MANGA, splitManga = false).sectionChoices.map { it.value }
+        assertTrue("COMPLETED" in mangaMerged)
+        assertTrue("COMPLETED_NOVEL" !in mangaMerged)
+    }
+
+    @Test
+    fun aStoredPerFormatSectionIsKeptOnlyWhileSplitIsOn() {
+        assertEquals("COMPLETED_TV", choice(animeSection = "COMPLETED_TV", splitAnime = true).sectionValue)
+        // Same stored id, but the section no longer exists: show the fallback.
+        assertEquals("ALL", choice(animeSection = "COMPLETED_TV", splitAnime = false).sectionValue)
     }
 }

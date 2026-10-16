@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media.state
 
+import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -36,7 +37,7 @@ internal class MediaDetailStateHolder(
     // Read at request launch (not stored): a language change must not recreate
     // the holder and drop its cache, but a new request must use the new strings.
     private val stringsProvider: () -> LanguageStrings,
-) {
+) : DetailHolder {
     // Snapshot-backed: the detail screen reads these directly and must
     // recompose on every load/pagination (plain vars would apply silently).
     var detail: MediaDetail? by mutableStateOf(null)
@@ -149,7 +150,7 @@ internal class MediaDetailStateHolder(
         }
     }
 
-    fun refresh() {
+    override fun refresh() {
         val id = currentMediaId ?: return
         // Invalidate cached entry so next load() re-fetches from network.
         detailCache.remove(id)
@@ -250,7 +251,10 @@ internal class MediaDetailStateHolder(
         if (currentMediaId == mediaId && detail != null) refresh()
     }
 
-    fun toggleFavourite() {
+    /** The media keeps its flag on the detail snapshot (see [DetailHolder]). */
+    override val isFavourite: Boolean get() = detail?.isFavourite == true
+
+    override fun toggleFavourite() {
         val current = detail ?: return
         if (isTogglingFavourite) return
         val id = current.id
@@ -326,7 +330,7 @@ internal class MediaDetailStateHolder(
     }
 
     /** Drops every cached snapshot: a language change re-localizes all of them. */
-    fun invalidateCache() {
+    override fun invalidateCache() {
         detailCache.clear()
     }
 
