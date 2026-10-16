@@ -35,7 +35,7 @@ internal data class MangaListEntry(
     override val trending: Int = 0,
     override val priority: Int = 0,
     override val genres: List<String> = emptyList(),
-    val isAdult: Boolean = false,
+    override val isAdult: Boolean = false,
     override val season: MediaSeason? = null,
     override val seasonYear: Int? = null,
 ) : SortableMediaListEntry
@@ -43,13 +43,6 @@ internal data class MangaListEntry(
 internal fun MangaListEntry.chaptersProgressLabel(): String {
     val total = totalChapters?.toString() ?: "?"
     return "$chaptersProgress / $total"
-}
-
-/** Single formatted representation of the raw [MangaListEntry.score], derived at the point of use. */
-internal fun MangaListEntry.formattedScore(): String {
-    if (score <= 0.0) return "-"
-    if (score == score.toLong().toDouble()) return score.toLong().toString()
-    return ((score * 10).toLong() / 10.0).toString()
 }
 
 internal fun MangaListEntry.volumesProgressLabel(): String {

@@ -1,6 +1,8 @@
 package com.luum.michi.app.core.network.repository.dto
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.CalendarDateParts
+import com.luum.michi.app.core.model.calendarPartsToMillis
 import kotlinx.serialization.Serializable
 
 /** AniList `FuzzyDate` shape (year/month/day all optional). */
@@ -35,4 +37,12 @@ internal fun FuzzyDateDto?.format(strings: LanguageStrings, includeYear: Boolean
         monthName != null -> monthName
         else -> null
     }
+}
+
+/** Local-midnight millis for a complete FuzzyDate, or null when any part is missing. */
+internal fun FuzzyDateDto.toMillisOrNull(): Long? {
+    val y = year ?: return null
+    val m = month ?: return null
+    val d = day ?: return null
+    return calendarPartsToMillis(CalendarDateParts(y, m, d))
 }

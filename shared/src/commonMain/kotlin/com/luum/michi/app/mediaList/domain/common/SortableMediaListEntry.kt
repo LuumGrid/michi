@@ -28,6 +28,14 @@ internal interface SortableMediaListEntry {
     val genres: List<String>
     val seasonYear: Int?
     val format: MediaFormat
+    val isAdult: Boolean
+}
+
+/** Single formatted representation of the raw [score], shared by both lists. */
+internal fun SortableMediaListEntry.formattedScore(): String {
+    if (score <= 0.0) return "-"
+    if (score == score.toLong().toDouble()) return score.toLong().toString()
+    return ((score * 10).toLong() / 10.0).toString()
 }
 
 private val commonComparators: Map<UserListSort, Comparator<SortableMediaListEntry>> = mapOf(

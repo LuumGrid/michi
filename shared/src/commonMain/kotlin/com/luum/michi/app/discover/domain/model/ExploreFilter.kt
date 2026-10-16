@@ -16,14 +16,6 @@ internal fun ExploreCategory.filterLabel(strings: LanguageStrings): String = whe
     ExploreCategory.STUDIOS -> strings.studiosLabel
 }
 
-internal fun exploreGenres(): List<String> {
-    return listOf(
-        "Action", "Adventure", "Comedy", "Drama", "Fantasy",
-        "Horror", "Mecha", "Music", "Mystery", "Romance", "Sci-Fi",
-        "Slice of Life", "Sports", "Supernatural", "Thriller",
-    )
-}
-
 internal fun exploreFormats(strings: LanguageStrings): List<ExploreFormatOption> =
     MediaFormat.entries
         .filter { it != MediaFormat.UNKNOWN }

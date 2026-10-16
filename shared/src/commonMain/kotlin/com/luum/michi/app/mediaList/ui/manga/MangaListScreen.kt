@@ -32,7 +32,7 @@ import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.model.label
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
-import com.luum.michi.app.mediaList.domain.common.mediaListGenres
+import com.luum.michi.app.core.model.MediaGenres
 import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
 import com.luum.michi.app.mediaList.domain.common.mediaListYears
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
@@ -263,7 +263,7 @@ internal fun MangaListScreen(
             },
             expandedDecade = expandedDecade,
             onToggleDecade = { expandedDecade = if (it == expandedDecade) null else it },
-            genres = mediaListGenres(),
+            genres = MediaGenres,
             selectedGenres = holder.filterGenres,
             onToggleGenre = { genre ->
                 holder.updateListFilters(

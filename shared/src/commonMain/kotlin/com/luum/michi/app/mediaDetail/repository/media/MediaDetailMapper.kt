@@ -1,13 +1,11 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
-import com.luum.michi.app.core.network.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.network.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.core.network.repository.dto.format
+import com.luum.michi.app.core.network.repository.dto.toMillisOrNull
 import com.luum.michi.app.core.model.toTitleCase
-import com.luum.michi.app.core.model.CalendarDateParts
 import com.luum.michi.app.core.model.label
-import com.luum.michi.app.core.model.calendarPartsToMillis
 import com.luum.michi.app.core.model.parseMediaSeason
 import com.luum.michi.app.core.model.parseMediaWorkStatus
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -220,13 +218,6 @@ private fun MediaViewerListEntryDto.toViewerEntry(): MediaListViewerEntry = Medi
     startedAtMillis = startedAt?.toMillisOrNull(),
     completedAtMillis = completedAt?.toMillisOrNull(),
 )
-
-internal fun FuzzyDateDto.toMillisOrNull(): Long? {
-    val y = year ?: return null
-    val m = month ?: return null
-    val d = day ?: return null
-    return calendarPartsToMillis(CalendarDateParts(y, m, d))
-}
 
 private fun parseType(raw: String?): MediaDetailType = when (raw) {
     "ANIME" -> MediaDetailType.ANIME

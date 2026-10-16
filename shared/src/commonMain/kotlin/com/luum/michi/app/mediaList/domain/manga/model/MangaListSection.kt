@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaList.domain.manga.model
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.label
 
@@ -67,4 +68,29 @@ internal fun MangaListSection.label(strings: LanguageStrings): String = when (th
     MangaListSection.DROPPED -> strings.sectionDropped
     MangaListSection.PLANNING -> strings.sectionPlanning
     MangaListSection.REPEATING -> strings.sectionRepeating
+}
+
+/** Raw list status → section (split decides the per-format COMPLETED). */
+internal fun MediaListStatus.toMangaSection(format: MediaFormat, splitCompleted: Boolean): MangaListSection =
+    when (this) {
+        MediaListStatus.CURRENT -> MangaListSection.CURRENT
+        MediaListStatus.COMPLETED -> format.completedMangaSection(splitCompleted)
+        MediaListStatus.PAUSED -> MangaListSection.PAUSED
+        MediaListStatus.DROPPED -> MangaListSection.DROPPED
+        MediaListStatus.PLANNING -> MangaListSection.PLANNING
+        MediaListStatus.REPEATING -> MangaListSection.REPEATING
+    }
+
+/** Section → status, the inverse of [toMangaSection] (for a progress save). */
+internal fun MangaListSection.toMediaListStatus(): MediaListStatus = when (this) {
+    MangaListSection.ALL,
+    MangaListSection.CURRENT -> MediaListStatus.CURRENT
+    MangaListSection.COMPLETED,
+    MangaListSection.COMPLETED_MANGA,
+    MangaListSection.COMPLETED_NOVEL,
+    MangaListSection.COMPLETED_ONE_SHOT -> MediaListStatus.COMPLETED
+    MangaListSection.PAUSED -> MediaListStatus.PAUSED
+    MangaListSection.DROPPED -> MediaListStatus.DROPPED
+    MangaListSection.PLANNING -> MediaListStatus.PLANNING
+    MangaListSection.REPEATING -> MediaListStatus.REPEATING
 }

@@ -19,7 +19,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.behindLabel
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.chaptersProgressLabel
-import com.luum.michi.app.mediaList.domain.manga.model.formattedScore
+import com.luum.michi.app.mediaList.domain.common.formattedScore
 import com.luum.michi.app.mediaList.domain.manga.model.volumesProgressLabel
 import com.luum.michi.app.mediaList.ui.common.ProgressGroup
 import com.luum.michi.app.mediaList.ui.common.ScorePill

@@ -34,7 +34,7 @@ import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaDetail.repository.media.MediaDetailRepositoryImpl
-import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
+import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.notifications.repository.NotificationsRepositoryImpl
 import com.luum.michi.app.notifications.domain.NotificationsRepository

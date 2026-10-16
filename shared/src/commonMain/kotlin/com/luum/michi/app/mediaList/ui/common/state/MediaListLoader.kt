@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaList.domain.common
+package com.luum.michi.app.mediaList.ui.common.state
 
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError

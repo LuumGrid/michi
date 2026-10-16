@@ -35,7 +35,7 @@ internal data class AnimeListEntry(
     val nextAiringAt: Long = 0L,
     val nextEpisodeNumber: Int? = null,
     override val genres: List<String> = emptyList(),
-    val isAdult: Boolean = false,
+    override val isAdult: Boolean = false,
     override val season: MediaSeason? = null,
     override val seasonYear: Int? = null,
 ) : SortableMediaListEntry
@@ -43,13 +43,6 @@ internal data class AnimeListEntry(
 internal fun AnimeListEntry.progressLabel(): String {
     val total = totalEpisodes?.toString() ?: "?"
     return "$progress / $total"
-}
-
-/** Single formatted representation of the raw [AnimeListEntry.score], derived at the point of use. */
-internal fun AnimeListEntry.formattedScore(): String {
-    if (score <= 0.0) return "-"
-    if (score == score.toLong().toDouble()) return score.toLong().toString()
-    return ((score * 10).toLong() / 10.0).toString()
 }
 
 internal fun AnimeListEntry.progressRatio(): Float {

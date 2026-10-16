@@ -6,7 +6,9 @@ import com.luum.michi.app.core.network.repository.dto.bestTitle
 import com.luum.michi.app.mediaList.repository.toComparableInt
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
-import com.luum.michi.app.mediaList.domain.manga.model.completedMangaSection
+import com.luum.michi.app.mediaList.domain.manga.model.toMangaSection
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.mediaList.domain.manga.model.isVolumeBased
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
@@ -55,13 +57,8 @@ private fun mapMangaStatus(
     status: String?,
     format: MediaFormat,
     splitCompleted: Boolean,
-): MangaListSection = when (status?.uppercase()) {
-    "CURRENT" -> MangaListSection.CURRENT
-    "COMPLETED" -> format.completedMangaSection(splitCompleted)
-    "PAUSED" -> MangaListSection.PAUSED
-    "DROPPED" -> MangaListSection.DROPPED
-    "PLANNING" -> MangaListSection.PLANNING
-    "REPEATING" -> MangaListSection.REPEATING
-    else -> MangaListSection.CURRENT
-}
+): MangaListSection =
+    // Unknown/missing status keeps the old fallback (CURRENT).
+    (parseMediaListStatus(status?.uppercase()) ?: MediaListStatus.CURRENT)
+        .toMangaSection(format, splitCompleted)
 

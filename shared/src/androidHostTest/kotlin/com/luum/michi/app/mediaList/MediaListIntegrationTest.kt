@@ -11,7 +11,7 @@ import com.luum.michi.app.core.model.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SortScope
-import com.luum.michi.app.mediaDetail.repository.media.MediaListEntryRepositoryImpl
+import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.incremented
@@ -227,6 +227,32 @@ class MediaListIntegrationTest {
         // Never reverts to the stale tap-time copy (5): the server has 7.
         assertEquals(7, holder.entries.first { it.id == 101 }.progress, "kept the confirmed value")
         assertEquals(1, entries.progressCalls, "B did not re-send")
+    }
+
+    @Test
+    fun aSecondTapJustAsTheFirstSaveEndsIsNotLost() {
+        val graphQL = FakeGraphQL(listOf(animeCollection()))
+        val dispatcher = DeferredDispatcher()
+        val entries = GatedEntryRepository()
+        val holder = AnimeListStateHolder(
+            AnimeListRepositoryImpl(graphQL),
+            entries,
+            CoroutineScope(dispatcher),
+        )
+        holder.load(7)
+        dispatcher.runAll()
+        assertEquals(5, holder.entries.first { it.id == 101 }.progress)
+
+        holder.incrementProgress(holder.entries.first { it.id == 101 }) // tap A
+        dispatcher.runAll() // A captures sent = 6 and holds at the gate
+        entries.gate.complete(Unit) // the first save just finished
+        // Tap B lands now, before A's cleanup runs. A's cleanup must not drop
+        // the confirmed base and swallow B's +1.
+        holder.incrementProgress(holder.entries.first { it.id == 101 })
+        dispatcher.runAll()
+
+        assertEquals(2, entries.progressCalls, "both taps are saved")
+        assertEquals(7, holder.entries.first { it.id == 101 }.progress)
     }
 
     @Test

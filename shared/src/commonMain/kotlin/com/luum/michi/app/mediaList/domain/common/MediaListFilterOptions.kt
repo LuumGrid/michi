@@ -7,13 +7,6 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.currentSeasonAndYear
 import com.luum.michi.app.core.model.FilterOption
 
-/** Static genre list, mirrored from Explore (kept local: features must not import each other). */
-internal fun mediaListGenres(): List<String> = listOf(
-    "Action", "Adventure", "Comedy", "Drama", "Fantasy",
-    "Horror", "Mecha", "Music", "Mystery", "Romance", "Sci-Fi",
-    "Slice of Life", "Sports", "Supernatural", "Thriller",
-)
-
 /**
  * Selectable years: next year first (covers next season falling in January),
  * then every year down to [OLDEST_FILTER_YEAR] — no curated jumps, so no

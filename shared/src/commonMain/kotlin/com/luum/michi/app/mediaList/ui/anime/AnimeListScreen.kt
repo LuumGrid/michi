@@ -35,7 +35,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
-import com.luum.michi.app.mediaList.domain.common.mediaListGenres
+import com.luum.michi.app.core.model.MediaGenres
 import com.luum.michi.app.mediaList.domain.common.mediaListSeasonOptions
 import com.luum.michi.app.mediaList.domain.common.mediaListYears
 import com.luum.michi.app.mediaList.ui.anime.components.AnimeListEntryContent
@@ -266,7 +266,7 @@ internal fun AnimeListScreen(
             },
             expandedDecade = expandedDecade,
             onToggleDecade = { expandedDecade = if (it == expandedDecade) null else it },
-            genres = mediaListGenres(),
+            genres = MediaGenres,
             selectedGenres = holder.filterGenres,
             onToggleGenre = { genre ->
                 holder.updateListFilters(

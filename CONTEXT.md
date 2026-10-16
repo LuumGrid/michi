@@ -70,16 +70,18 @@ mediaList/
   domain/
     anime/              AnimeListRepository + model/ (entry, section, `completedSection()`)
     manga/              MangaListRepository + model/ (entry, section, `isVolumeBased()`)
-    common/             shared list machinery (MediaListLoader, `matchesMediaListFilters`, sorting)
+    common/             shared list machinery (`SortableMediaListEntry`, `matchesMediaListFilters`, `sectionEntries`/`sectionCount`, sorting)
   repository/
-    anime/              `toAnimeListEntry` mappers, AnimeListRepositoryImpl (own GraphQL query)
-    manga/              `toMangaListEntry` mappers, MangaListRepositoryImpl (own GraphQL query)
+    anime/              `toAnimeListEntry` mapper, AnimeListRepositoryImpl (thin wrapper)
+    manga/              `toMangaListEntry` mapper, MangaListRepositoryImpl (thin wrapper)
+    MediaListCollectionFetcher.kt  one `MediaListCollection` query (`$type: MediaType`) + fetch, shared by both impls
   ui/
+    common/state/       MediaListLoader + ListProgressSaver (shared fetch/cache + optimistic `+1`)
     anime/state/        AnimeListStateHolder
     manga/state/        MangaListStateHolder
 ```
 
-`anime/` and `manga/` never import each other directly. Genuinely different things stay split: media formats, list sections (anime splits COMPLETED by format, manga doesn't), GraphQL queries, and progress-increment logic (one counter vs chapters+volumes).
+`anime/` and `manga/` never import each other directly. Genuinely different things stay split: media formats, list sections (anime splits COMPLETED by format, manga doesn't), the entries' progress shape, and the progress/airing sort comparators; the collection query, the loader/saver and the rail assembly are shared.
 
 `mediaDetail/` is the third feature-group, same pattern, for detail scopes (`media/`, `character/`, `studio/` and `staff/` sub-scopes, each with the same `loadDetail`-shaped contract):
 
@@ -91,7 +93,7 @@ mediaDetail/
     studio/             StudioDetailRepository + model/
     staff/              StaffDetailRepository + model/
   repository/
-    media/              `toDomain` mappers, MediaDetailRepositoryImpl, MediaListEntryRepositoryImpl (own GraphQL queries)
+    media/              `toDomain` mappers, MediaDetailRepositoryImpl (own GraphQL query)
     character/          CharacterDetailRepositoryImpl (own GraphQL query)
     studio/             StudioDetailRepositoryImpl (own GraphQL query, reuses the shared grid node selection)
     staff/              StaffDetailRepositoryImpl (own GraphQL query)
@@ -146,9 +148,9 @@ core/
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
   navigation/domain/            routes, back-handler contracts, url-opening + sharing (`UrlOpener`, `ShareLauncher`), AniList deep-link parsing (`parseAniListMediaId`); platform openers/launchers in `repository/`
   favourite/domain|repository/  one favourite toggle for every entity type (media/person/studio)
-  medialist/domain/             list-status contracts shared by list features
+  medialist/domain|repository/  list-status contracts + `MediaListEntryRepositoryImpl` (save/progress/favourite/delete), shared by lists and detail
   model/                        neutral domain vocabulary (MediaFormat, MediaSeason, dates,
-                                sort, FilterOption, compact count, MediaGridItem/MediaGridPage) — cross-concept, belongs to no feature
+                                sort, FilterOption, compact count, MediaGenres, MediaGridItem/MediaGridPage) — cross-concept, belongs to no feature
   util/                         pure helpers (HTML stripping, URL parsing/host normalization, …)
 ```
 
@@ -187,8 +189,8 @@ com.luum.michi.app
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
     navigation/domain/        routes, back-handler contracts, url-opening + sharing (`UrlOpener`, `ShareLauncher`), deep-link parsing (`parseAniListMediaId`)
     favourite/domain|repository/ one favourite toggle for every entity type
-    medialist/domain/         list-status contracts
-    model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort)
+    medialist/domain|repository/ list-status contracts + `MediaListEntryRepositoryImpl`
+    model/                    neutral domain vocabulary (MediaFormat, MediaSeason, dates, sort, MediaGenres, MediaGridItem/MediaGridPage)
     util/                     pure helpers (HTML stripping, URL parsing/host normalization)
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)

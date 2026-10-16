@@ -12,13 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.behindLabel
 import com.luum.michi.app.mediaList.domain.anime.model.canIncrement
-import com.luum.michi.app.mediaList.domain.anime.model.formattedScore
+import com.luum.michi.app.mediaList.domain.common.formattedScore
 import com.luum.michi.app.mediaList.domain.anime.model.progressLabel
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
 import com.luum.michi.app.mediaList.ui.common.ProgressGroup

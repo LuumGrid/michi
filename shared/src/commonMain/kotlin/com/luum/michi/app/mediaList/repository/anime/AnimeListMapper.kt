@@ -2,7 +2,9 @@ package com.luum.michi.app.mediaList.repository.anime
 
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
-import com.luum.michi.app.mediaList.domain.anime.model.completedSection
+import com.luum.michi.app.mediaList.domain.anime.model.toAnimeSection
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.core.model.MediaFormat
 import com.luum.michi.app.core.model.parseMediaFormat
 import com.luum.michi.app.core.model.parseMediaSeason
@@ -51,14 +53,7 @@ internal fun MediaListEntryDto.toAnimeListEntry(
     )
 }
 
-private fun mapAnimeStatus(status: String?, format: MediaFormat, splitCompleted: Boolean): AnimeListSection {
-    return when (status?.uppercase()) {
-        "CURRENT" -> AnimeListSection.WATCHING
-        "COMPLETED" -> if (splitCompleted) format.completedSection() else AnimeListSection.COMPLETED
-        "PAUSED" -> AnimeListSection.PAUSED
-        "DROPPED" -> AnimeListSection.DROPPED
-        "PLANNING" -> AnimeListSection.PLANNING
-        "REPEATING" -> AnimeListSection.REWATCHING
-        else -> AnimeListSection.WATCHING
-    }
-}
+private fun mapAnimeStatus(status: String?, format: MediaFormat, splitCompleted: Boolean): AnimeListSection =
+    // Unknown/missing status keeps the old fallback (CURRENT → WATCHING).
+    (parseMediaListStatus(status?.uppercase()) ?: MediaListStatus.CURRENT)
+        .toAnimeSection(format, splitCompleted)
