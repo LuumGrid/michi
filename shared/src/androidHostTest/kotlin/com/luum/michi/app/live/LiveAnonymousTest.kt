@@ -90,7 +90,7 @@ class LiveAnonymousTest {
         }
         assumeNotForbidden("exploreSearches", result)
         assertTrue(result is NetworkResult.Success)
-        assertTrue(result.value.results.isNotEmpty())
+        assertTrue(result.value.items.isNotEmpty())
     }
 
     @Test

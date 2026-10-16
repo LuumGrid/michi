@@ -29,7 +29,7 @@ private fun exploreWired(
 ): ExploreStateHolder = ExploreStateHolder(
     repository = ExploreRepositoryImpl(graphQL),
     scope = CoroutineScope(Dispatchers.Unconfined),
-    strings = EnglishStrings,
+    stringsProvider = { EnglishStrings },
 ).apply {
     this.category = category
     this.hideAdult = hideAdult

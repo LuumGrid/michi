@@ -5,7 +5,7 @@ import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.discover.domain.model.ExplorePage
+import com.luum.michi.app.discover.domain.model.ExploreResult
 
 internal interface ExploreRepository {
     /**
@@ -26,7 +26,7 @@ internal interface ExploreRepository {
         onList: Boolean? = null,
         hideAdult: Boolean = true,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage>
+    ): NetworkResult<Page<ExploreResult>>
 
     /**
      * The same catalog query shaped as a poster grid (studio works, genre
@@ -45,19 +45,19 @@ internal interface ExploreRepository {
         page: Int = 1,
         perPage: Int = 30,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage>
+    ): NetworkResult<Page<ExploreResult>>
 
     suspend fun searchStaff(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage>
+    ): NetworkResult<Page<ExploreResult>>
 
     suspend fun searchStudios(
         query: String?,
         page: Int = 1,
         perPage: Int = 30,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage>
+    ): NetworkResult<Page<ExploreResult>>
 }

@@ -217,7 +217,7 @@ com.luum.michi.app
     util/                     pure helpers with no feature owner (DetailCache, URL parsing/host normalization)
   ui/
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
-    state/                  PagedList (shared paginated list: Compose state + append/dedup/cancel rules, used by the detail + genre holders)
+    state/                  PagedList (shared paginated list: Compose state + append/dedup/cancel rules, used by the detail, genre and explore holders)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
     theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle, ThemeProvider
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)

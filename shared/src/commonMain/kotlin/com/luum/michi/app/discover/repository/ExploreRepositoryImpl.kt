@@ -15,7 +15,6 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.discover.domain.model.ExplorePage
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -90,7 +89,7 @@ query MediaCatalog(
 private const val CharacterSearchQuery = """
 query CharacterSearch(${'$'}search: String, ${'$'}sort: [CharacterSort], ${'$'}page: Int!, ${'$'}perPage: Int!) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
-    pageInfo { hasNextPage }
+    pageInfo { hasNextPage currentPage }
     characters(search: ${'$'}search, sort: ${'$'}sort) {
       id
       name { userPreferred full first last }
@@ -103,7 +102,7 @@ query CharacterSearch(${'$'}search: String, ${'$'}sort: [CharacterSort], ${'$'}p
 private const val StaffSearchQuery = """
 query StaffSearch(${'$'}search: String, ${'$'}sort: [StaffSort], ${'$'}page: Int!, ${'$'}perPage: Int!) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
-    pageInfo { hasNextPage }
+    pageInfo { hasNextPage currentPage }
     staff(search: ${'$'}search, sort: ${'$'}sort) {
       id
       name { userPreferred full first last }
@@ -116,7 +115,7 @@ query StaffSearch(${'$'}search: String, ${'$'}sort: [StaffSort], ${'$'}page: Int
 private const val StudioSearchQuery = """
 query StudioSearch(${'$'}search: String, ${'$'}sort: [StudioSort], ${'$'}page: Int!, ${'$'}perPage: Int!) {
   Page(page: ${'$'}page, perPage: ${'$'}perPage) {
-    pageInfo { hasNextPage }
+    pageInfo { hasNextPage currentPage }
     studios(search: ${'$'}search, sort: ${'$'}sort) {
       id
       name
@@ -145,7 +144,7 @@ internal class ExploreRepositoryImpl(
         onList: Boolean?,
         hideAdult: Boolean,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> {
+    ): NetworkResult<Page<ExploreResult>> {
         val request = AniListGraphQLRequest(
             query = MediaCatalogQuery,
             variables = JsonObject(
@@ -169,9 +168,10 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            ExplorePage(
-                results = response.page?.media.orEmpty().map { it.toExploreResult(strings) },
+            Page(
+                items = response.page?.media.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
+                currentPage = response.page?.pageInfo?.currentPage ?: page,
             )
         }
     }
@@ -219,7 +219,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> {
+    ): NetworkResult<Page<ExploreResult>> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -239,9 +239,10 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(CharacterSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            ExplorePage(
-                results = response.page?.characters.orEmpty().map { it.toExploreResult(strings) },
+            Page(
+                items = response.page?.characters.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
+                currentPage = response.page?.pageInfo?.currentPage ?: page,
             )
         }
     }
@@ -251,7 +252,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> {
+    ): NetworkResult<Page<ExploreResult>> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -271,9 +272,10 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(StaffSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            ExplorePage(
-                results = response.page?.staff.orEmpty().map { it.toExploreResult(strings) },
+            Page(
+                items = response.page?.staff.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
+                currentPage = response.page?.pageInfo?.currentPage ?: page,
             )
         }
     }
@@ -283,7 +285,7 @@ internal class ExploreRepositoryImpl(
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> {
+    ): NetworkResult<Page<ExploreResult>> {
         val variables = buildMap<String, JsonElement> {
             if (!query.isNullOrBlank()) {
                 put("search", JsonPrimitive(query))
@@ -303,9 +305,10 @@ internal class ExploreRepositoryImpl(
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(StudioSearchResponseDto.serializer(), dataJson)
         }.map { response ->
-            ExplorePage(
-                results = response.page?.studios.orEmpty().map { it.toExploreResult(strings) },
+            Page(
+                items = response.page?.studios.orEmpty().map { it.toExploreResult(strings) },
                 hasNextPage = response.page?.pageInfo?.hasNextPage == true,
+                currentPage = response.page?.pageInfo?.currentPage ?: page,
             )
         }
     }

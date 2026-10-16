@@ -13,7 +13,7 @@ import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
-import com.luum.michi.app.discover.domain.model.ExplorePage
+import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +49,8 @@ private data class CatalogCall(
 private class FakeExploreRepository : ExploreRepository {
     val catalogCalls = mutableListOf<CatalogCall>()
     val mangaCalls = mutableListOf<CatalogCall>()
-    private fun empty() = NetworkResult.Success(ExplorePage(emptyList(), false))
+    private fun empty(): NetworkResult<Page<ExploreResult>> =
+        NetworkResult.Success(Page(emptyList(), false, 1))
 
     override suspend fun searchMedia(
         type: MediaType,
@@ -64,7 +65,7 @@ private class FakeExploreRepository : ExploreRepository {
         onList: Boolean?,
         hideAdult: Boolean,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> {
+    ): NetworkResult<Page<ExploreResult>> {
         val call = CatalogCall(query, genres, formats, year, sort, season)
         if (type == MediaType.MANGA) mangaCalls += call else catalogCalls += call
         return empty()
@@ -110,7 +111,7 @@ class ExploreFilterTest {
     @Test
     fun applyPresetForwardsUserCase() = runBlocking {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), EnglishStrings)
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
         holder.applyPreset(
             category = ExploreCategory.ANIME,
             sortOption = UserListSort.TRENDING,
@@ -131,7 +132,7 @@ class ExploreFilterTest {
     @Test
     fun updateFiltersForwardsGenresFormatsAndYear() {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), EnglishStrings)
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
         holder.updateFilters(
             newCategory = ExploreCategory.ANIME,
             newSeason = null,
@@ -159,7 +160,7 @@ class ExploreFilterTest {
     @Test
     fun mangaSearchIgnoresSeason() = runBlocking {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), EnglishStrings)
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
         holder.applyPreset(ExploreCategory.MANGA, UserListSort.TRENDING, year = 2025)
         assertEquals(1, repo.mangaCalls.size)
         assertEquals(2025, repo.mangaCalls.single().year)

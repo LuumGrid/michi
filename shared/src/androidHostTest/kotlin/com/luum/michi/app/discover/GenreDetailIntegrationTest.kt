@@ -8,7 +8,7 @@ import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.ExploreRepository
-import com.luum.michi.app.discover.domain.model.ExplorePage
+import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +62,7 @@ private open class FakeGenreExploreRepository : ExploreRepository {
         onList: Boolean?,
         hideAdult: Boolean,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
 
     override suspend fun searchMediaGrid(
         type: MediaType,
@@ -77,21 +77,21 @@ private open class FakeGenreExploreRepository : ExploreRepository {
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
 
     override suspend fun searchStaff(
         query: String?,
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
 
     override suspend fun searchStudios(
         query: String?,
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<ExplorePage> = NetworkResult.Success(ExplorePage(emptyList(), false))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
 }
 
 /**
