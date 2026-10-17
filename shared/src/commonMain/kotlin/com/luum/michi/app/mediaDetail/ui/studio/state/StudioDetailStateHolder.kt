@@ -41,8 +41,7 @@ internal class StudioDetailStateHolder(
     override var sortOrder: UserListOrder by mutableStateOf(DEFAULT_SORT_ORDER)
         private set
 
-    /** Derived from the visible detail: no separate flag can drift from it. */
-    override val isFavourite: Boolean get() = detail?.isFavourite == true
+    override fun isFavouriteOf(detail: StudioDetail): Boolean = detail.isFavourite
 
     /** The AniList `MediaSort` key the current selection maps to. */
     private fun apiSort(): String = sortOption.toMediaSort(sortOrder, isAnime = true)

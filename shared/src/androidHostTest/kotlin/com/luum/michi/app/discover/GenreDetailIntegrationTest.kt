@@ -390,6 +390,31 @@ class GenreDetailIntegrationTest {
             scope.cancel()
         }
     }
+
+    @Test
+    fun restoringFromCacheWhilePageOneIsInFlightStopsTheSpinner() {
+        val repository = CancelSurvivingGenreRepository()
+        val holder = holderWired(repository) // Unconfined
+
+        val bGate = repository.expect(listOf(1))
+        holder.load("B", MediaType.ANIME)
+        bGate.complete(Unit)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        val aGate = repository.expect(listOf(2))
+        holder.load("A", MediaType.ANIME) // page 1 in flight
+        assertTrue(holder.isLoading)
+
+        // B comes from the cache: the in-flight A is cancelled without a
+        // relaunch, and the restore turns the spinner off itself.
+        holder.load("B", MediaType.ANIME)
+        assertFalse(holder.isLoading, "the cache restore owns the spinner")
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        aGate.complete(Unit) // A's late page must not land
+        assertFalse(holder.isLoading)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+    }
 }
 
 /**

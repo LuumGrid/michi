@@ -9,10 +9,8 @@ import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.ui.state.LatestRequest
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
 internal val EmptyStats = ProfileStats(
@@ -39,7 +37,7 @@ internal class ProfileStateHolder(
     /** Last user a load was started for: [refresh] retries this one even if it
      *  failed (a failed switch must not make refresh reload the previous user). */
     private var requestedUserId: Int? = null
-    private var loadJob: Job? = null
+    private val loadRequest = LatestRequest()
 
     val stats: ProfileStats get() = statsState
     val favorites: ProfileFavorites get() = favoritesState
@@ -59,10 +57,6 @@ internal class ProfileStateHolder(
             statsState = EmptyStats
             favoritesState = ProfileFavorites.EMPTY
         }
-        // Newest load wins: cancel the previous request so a slower (stale)
-        // response cannot overwrite newer data. Only the current request writes
-        // state and owns the spinners.
-        loadJob?.cancel()
         // "Has data" keys on a successful load, not on the stats being non-zero:
         // a real account with everything at 0 is still loaded data.
         val isRefresh = forceRefresh && hasDataFor(userId)
@@ -70,32 +64,27 @@ internal class ProfileStateHolder(
         refreshingState = false
         if (isRefresh) refreshingState = true else loadingState = true
         errorState = null
-        // LAZY then start, like PagedList.request: the job is stored before the
-        // body runs, so the identity check is valid on an eagerly dispatched scope.
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                when (val result = repository.loadProfile(userId)) {
-                    is NetworkResult.Success -> if (loadJob === coroutineContext[Job]) {
-                        statsState = result.value.stats
-                        favoritesState = result.value.favorites
-                        lastLoaded = timeMark.markNow()
-                        lastUserId = userId
-                    }
-                    is NetworkResult.Failure -> if (loadJob === coroutineContext[Job]) {
-                        errorState = result.error
-                    }
+        // Newest load wins: a slower (stale) response cannot overwrite newer
+        // data, and only the current request writes state and owns the spinners.
+        loadRequest.launch(
+            scope = scope,
+            onSettled = {
+                loadingState = false
+                refreshingState = false
+            },
+        ) { isCurrent ->
+            when (val result = repository.loadProfile(userId)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    statsState = result.value.stats
+                    favoritesState = result.value.favorites
+                    lastLoaded = timeMark.markNow()
+                    lastUserId = userId
                 }
-            } finally {
-                // Only the current request owns the spinners: a cancelled load
-                // must not turn off the one now in flight.
-                if (loadJob === coroutineContext[Job]) {
-                    loadingState = false
-                    refreshingState = false
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    errorState = result.error
                 }
             }
         }
-        loadJob = request
-        request.start()
     }
 
     fun refresh() {

@@ -37,6 +37,9 @@ internal abstract class DetailStateHolderBase<D, S>(
     var actionError: NetworkError? by mutableStateOf(null)
         protected set
 
+    /** Whether the entity on screen is favourited (derived, never a flag). */
+    final override val isFavourite: Boolean get() = detail?.let(::isFavouriteOf) == true
+
     private var currentId: Int? = null
     private var currentJob: Job? = null
 
@@ -196,6 +199,9 @@ internal abstract class DetailStateHolderBase<D, S>(
 
     /** Whether a cached snapshot can still be restored (character: same cast). */
     protected open fun isSnapshotValid(snapshot: S): Boolean = true
+
+    /** The favourite flag of [detail] (each scope reads its own model). */
+    protected abstract fun isFavouriteOf(detail: D): Boolean
 
     /** The network call behind page 1 (each scope builds its own arguments). */
     protected abstract suspend fun fetchDetail(id: Int): NetworkResult<D>

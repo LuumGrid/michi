@@ -7,9 +7,6 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /**
  * One paginated list shared by the detail holders (media characters/staff/
@@ -36,7 +33,7 @@ internal class PagedList<T>(
     var isLoadingMore: Boolean by mutableStateOf(false)
         private set
 
-    private var job: Job? = null
+    private val pageRequest = LatestRequest()
 
     /** A page has been set/loaded: [loadMore] advances instead of starting at 1. */
     private var started = false
@@ -64,8 +61,7 @@ internal class PagedList<T>(
 
     /** Cancels a page in flight and drops its spinner (never appends it). */
     fun cancel() {
-        job?.cancel()
-        job = null
+        pageRequest.cancel()
         isLoadingMore = false
     }
 
@@ -120,18 +116,10 @@ internal class PagedList<T>(
     /**
      * Runs a request and owns the spinner. Only the request the list still tracks
      * clears [isLoadingMore] — a holder that swapped entity without a
-     * cancel/clear must not leave it stuck. Launched LAZY and then started so the
-     * job is stored before the body runs: the identity check is always valid even
-     * on an eagerly-dispatched scope.
+     * cancel/clear must not leave it stuck.
      */
     private fun request(scope: CoroutineScope, block: suspend () -> Unit) {
         isLoadingMore = true
-        job?.cancel()
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            block()
-            if (job === coroutineContext[Job]) isLoadingMore = false
-        }
-        job = request
-        request.start()
+        pageRequest.launch(scope, onSettled = { isLoadingMore = false }) { _ -> block() }
     }
 }

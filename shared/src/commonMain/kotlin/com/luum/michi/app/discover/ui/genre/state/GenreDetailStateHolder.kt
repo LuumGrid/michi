@@ -15,11 +15,9 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /** Cache key: one snapshot per genre + catalog + 18+ gate, so a cached snapshot
  *  can never be restored under a gate it was not fetched with. */
@@ -76,7 +74,7 @@ internal class GenreDetailStateHolder(
         private set
 
     private var hideAdultState: Boolean = hideAdult
-    private var currentJob: Job? = null
+    private val firstPageRequest = LatestRequest()
 
     private val detailCache = DetailCache<GenreKey, GenreSnapshot>(maxSize = 5)
 
@@ -90,7 +88,7 @@ internal class GenreDetailStateHolder(
         this.name = name
         this.type = type
         if (cached != null) {
-            currentJob?.cancel()
+            firstPageRequest.cancel()
             // A page in flight belongs to what was on screen: never let it
             // append to the snapshot we are restoring (set cancels it).
             restore(cached)
@@ -119,7 +117,7 @@ internal class GenreDetailStateHolder(
         val cached = detailCache.get(GenreKey(name, type, hideAdultState))
         this.type = type
         if (cached != null) {
-            currentJob?.cancel()
+            firstPageRequest.cancel()
             restore(cached)
             return
         }
@@ -171,7 +169,6 @@ internal class GenreDetailStateHolder(
      * response replaces them. [showSpinner] drops back to the first-load state.
      */
     private fun fetchFirstPage(clearMedia: Boolean, showSpinner: Boolean) {
-        currentJob?.cancel()
         // The new list starts at page 1: an in-flight page (old sort, or another
         // catalog) is dropped instead of merging into it.
         media.cancel()
@@ -180,29 +177,23 @@ internal class GenreDetailStateHolder(
         error = null
         actionError = null
         isLoading = true
-        // LAZY then start: the job is stored before the body runs, so the
-        // identity check is valid on an eagerly dispatched scope, and a
-        // cancelled request can never write its stale page or clear the spinner
-        // of the one that replaced it.
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                when (val result = loadPage(1)) {
-                    is NetworkResult.Success -> if (currentJob === coroutineContext[Job]) {
-                        media.set(result.value)
-                        pageLoaded = true
-                        cacheSnapshot()
-                    }
-                    is NetworkResult.Failure -> if (currentJob === coroutineContext[Job]) {
-                        error = result.error
-                    }
+        // Only the current request writes its page or owns the spinner; a
+        // replaced request that survives cancellation never lands.
+        firstPageRequest.launch(
+            scope = scope,
+            onSettled = { isLoading = false },
+        ) { isCurrent ->
+            when (val result = loadPage(1)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    media.set(result.value)
+                    pageLoaded = true
+                    cacheSnapshot()
                 }
-            } finally {
-                // Only the current request owns the spinner.
-                if (currentJob === coroutineContext[Job]) isLoading = false
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    error = result.error
+                }
             }
         }
-        currentJob = request
-        request.start()
     }
 
     /** One grid page for the current genre + catalog + sort + gate. */

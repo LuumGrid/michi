@@ -47,8 +47,7 @@ internal class MediaDetailStateHolder(
     // on the refresh path.
     private var reloadRecommendationsAfterRefresh = false
 
-    /** The media keeps its flag on the visible detail (derived, never a flag). */
-    override val isFavourite: Boolean get() = detail?.isFavourite == true
+    override fun isFavouriteOf(detail: MediaDetail): Boolean = detail.isFavourite
 
     override fun refresh() {
         // Cancelling the pagination would drop the initial recommendations fetch;

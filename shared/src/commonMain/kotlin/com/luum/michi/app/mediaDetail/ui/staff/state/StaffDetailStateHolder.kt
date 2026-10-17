@@ -38,8 +38,7 @@ internal class StaffDetailStateHolder(
     // The same character in two works is two rows: dedupe by (character, work).
     val characters = PagedList<StaffCharacterItem> { a, b -> (a + b).distinctBy { it.characterId to it.mediaId } }
 
-    /** Derived from the visible detail: no separate flag can drift from it. */
-    override val isFavourite: Boolean get() = detail?.isFavourite == true
+    override fun isFavouriteOf(detail: StaffDetail): Boolean = detail.isFavourite
 
     /** Loads the next page of the MEDIA (roles) list only. */
     fun loadMoreMedia() {

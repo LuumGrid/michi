@@ -8,11 +8,9 @@ import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /**
  * Paginated state for the "see more" favourites grid screen. All five categories
@@ -35,7 +33,7 @@ internal class ProfileFavoritesGridStateHolder(
 
     private var loadedUserId: Int? = null
     private var loadedCategory: ProfileFavoritesCategory? = null
-    private var loadJob: Job? = null
+    private val loadRequest = LatestRequest()
 
     val items: List<ProfileFavorite> get() = paginated.items
     val isLoading: Boolean get() = loadingState
@@ -54,35 +52,28 @@ internal class ProfileFavoritesGridStateHolder(
         if (loadedUserId == userId && loadedCategory == category) return
         loadedUserId = userId
         loadedCategory = category
-        loadJob?.cancel()
         generation++
         paginated.clear()
         errorState = null
         actionErrorState = null
         loadingState = true
-        // LAZY then start, so the identity check below is valid on an eagerly
-        // dispatched scope.
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                when (val result = repository.loadFavoritesPage(userId, category, page = 1)) {
-                    is NetworkResult.Success -> if (loadJob === coroutineContext[Job]) {
-                        paginated.set(result.value)
-                    }
-                    is NetworkResult.Failure -> if (loadJob === coroutineContext[Job]) {
-                        errorState = result.error
-                        // A failed first page leaves nothing to page from: forget the
-                        // markers so a retry via load() is not swallowed by the early-return.
-                        loadedUserId = null
-                        loadedCategory = null
-                    }
+        loadRequest.launch(
+            scope = scope,
+            onSettled = { loadingState = false },
+        ) { isCurrent ->
+            when (val result = repository.loadFavoritesPage(userId, category, page = 1)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    paginated.set(result.value)
                 }
-            } finally {
-                // Only the current request owns the spinner.
-                if (loadJob === coroutineContext[Job]) loadingState = false
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    errorState = result.error
+                    // A failed first page leaves nothing to page from: forget the
+                    // markers so a retry via load() is not swallowed by the early-return.
+                    loadedUserId = null
+                    loadedCategory = null
+                }
             }
         }
-        loadJob = request
-        request.start()
     }
 
     fun loadMore() {

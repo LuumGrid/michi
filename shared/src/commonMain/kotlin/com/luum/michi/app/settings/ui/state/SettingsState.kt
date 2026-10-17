@@ -22,8 +22,8 @@ import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.parseScoreFormat
 import com.luum.michi.app.settings.domain.model.parseTitleLanguage
+import com.luum.michi.app.ui.state.LatestRequest
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -242,8 +242,8 @@ internal class SettingsState(
     /** True after the first successful load. Plain var: no UI reads it, only gating. */
     private var hasLoaded = false
 
-    /** In-flight load, if any. Same Job idiom as saveJob. */
-    private var loadJob: Job? = null
+    /** In-flight load, if any. */
+    private val loadRequest = LatestRequest()
 
     // Runs after every pref + list above, so hydrateFromStore() sees them all.
     init {
@@ -259,34 +259,27 @@ internal class SettingsState(
      */
     fun refresh(force: Boolean = false) {
         if (!canSync || (!force && hasLoaded)) return
-        if (!force && loadJob?.isActive == true) return
-        loadJob?.cancel()
+        if (!force && loadRequest.isActive) return
         isRefreshing = true
         // Snapshot before the request: a field the user edits while this load is
         // in flight is kept instead of being clobbered by the server value.
         val before = currentData()
-        // LAZY then start, like the shared holders: the job is stored before the
-        // body runs, so the identity check is valid on an eagerly dispatched
-        // scope and a cancelled load can never stop the spinner of the load now
-        // in flight (nor write a stale error/snapshot over it).
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                when (val result = repository.loadSettings()) {
-                    is NetworkResult.Success -> if (loadJob === coroutineContext[Job]) {
-                        applyLoaded(result.value, before)
-                        hasLoaded = true
-                    }
-                    is NetworkResult.Failure -> if (loadJob === coroutineContext[Job]) {
-                        error = result.error
-                    }
+        // Only the current request settles or writes: a superseded load can never
+        // stop the spinner of the load now in flight (nor write a stale snapshot).
+        loadRequest.launch(
+            scope = scope,
+            onSettled = { isRefreshing = false },
+        ) { isCurrent ->
+            when (val result = repository.loadSettings()) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    applyLoaded(result.value, before)
+                    hasLoaded = true
                 }
-            } finally {
-                // Only the current request owns the spinner.
-                if (loadJob === coroutineContext[Job]) isRefreshing = false
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    error = result.error
+                }
             }
         }
-        loadJob = request
-        request.start()
     }
 
     /**

@@ -10,11 +10,9 @@ import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.notifications.domain.NotificationsRepository
 import com.luum.michi.app.notifications.domain.model.AppNotification
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
+import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 internal class NotificationsStateHolder(
     private val repository: NotificationsRepository,
@@ -25,7 +23,7 @@ internal class NotificationsStateHolder(
 
     /** Bumped on every (re)load: a page or first page from the previous one never lands. */
     private var generation = 0
-    private var currentJob: Job? = null
+    private val loadRequest = LatestRequest()
 
     val notifications: List<AppNotification> get() = paginated.items
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
@@ -52,33 +50,25 @@ internal class NotificationsStateHolder(
      * if AniList reports the pre-reset value (the query asks it on page 1 always).
      */
     fun load(resetCount: Boolean = false) {
-        currentJob?.cancel()
         invalidate()
         isLoading = true
         error = null
         actionError = null
         val filter = selectedFilter
-        // LAZY then start, like PagedList.request: the job is stored before the
-        // body runs, so the identity check is valid even on an eager scope.
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                when (val result = repository.loadNotifications(page = 1, resetCount = resetCount, filter = filter)) {
-                    is NetworkResult.Success -> if (currentJob === coroutineContext[Job]) {
-                        val page = result.value
-                        paginated.set(Page(page.notifications, page.hasNextPage, 1))
-                        unreadCount = if (resetCount) 0 else page.unreadCount ?: unreadCount
-                        error = null
-                    }
-                    is NetworkResult.Failure -> if (currentJob === coroutineContext[Job]) error = result.error
+        loadRequest.launch(
+            scope = scope,
+            onSettled = { isLoading = false },
+        ) { isCurrent ->
+            when (val result = repository.loadNotifications(page = 1, resetCount = resetCount, filter = filter)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    val page = result.value
+                    paginated.set(Page(page.notifications, page.hasNextPage, 1))
+                    unreadCount = if (resetCount) 0 else page.unreadCount ?: unreadCount
+                    error = null
                 }
-            } finally {
-                // Only the current load owns the spinner: a cancelled one must not
-                // turn off the load now in flight.
-                if (currentJob === coroutineContext[Job]) isLoading = false
+                is NetworkResult.Failure -> if (isCurrent()) error = result.error
             }
         }
-        currentJob = request
-        request.start()
     }
 
     fun loadMore() {

@@ -7,9 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.ui.state.LatestRequest
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
 /**
@@ -45,11 +44,8 @@ internal class MediaListLoader<T>(
      */
     var onReplaced: (() -> Unit)? = null
 
-    private var loadJob: Job? = null
+    private val loadRequest = LatestRequest()
     private var inFlightUserId: Int? = null
-    // Bumped per launch so a cancelled load never writes its entries/error nor
-    // clears the indicators of the load that replaced it.
-    private var loadGeneration = 0
 
     val entries: List<T> get() = entriesBacking
     val isLoading: Boolean get() = loadingState
@@ -61,39 +57,34 @@ internal class MediaListLoader<T>(
         if (!forceRefresh && lastUserId == userId && mark != null
             && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && entriesBacking.isNotEmpty()
         ) return
-        val inFlight = loadJob
-        if (inFlight?.isActive == true) {
-            // Same request already running: join it (existing behaviour). A
-            // forced reload or a different user supersedes it — cancel and
-            // relaunch, so a stale response can never win.
-            if (inFlightUserId == userId && !forceRefresh) return
-            inFlight.cancel()
-        }
+        // Same request already running: join it. A forced reload or a different
+        // user supersedes it — the helper cancels and relaunches.
+        if (loadRequest.isActive && inFlightUserId == userId && !forceRefresh) return
         val isRefresh = forceRefresh && entriesBacking.isNotEmpty()
         loadingState = !isRefresh
         refreshingState = isRefresh
         errorState = null
         inFlightUserId = userId
-        val gen = ++loadGeneration
-        loadJob = scope.launch {
-            try {
-                when (val result = fetch(userId)) {
-                    is NetworkResult.Success -> if (gen == loadGeneration) {
-                        entriesBacking.clear()
-                        entriesBacking.addAll(result.value)
-                        lastLoaded = timeMark.markNow()
-                        lastUserId = userId
-                        onReplaced?.invoke()
-                    }
-                    is NetworkResult.Failure -> if (gen == loadGeneration) {
-                        errorState = result.error
-                    }
+        // Only the current load writes its entries/error and owns the
+        // indicators; a superseded one never lands.
+        loadRequest.launch(
+            scope = scope,
+            onSettled = {
+                loadingState = false
+                refreshingState = false
+                inFlightUserId = null
+            },
+        ) { isCurrent ->
+            when (val result = fetch(userId)) {
+                is NetworkResult.Success -> if (isCurrent()) {
+                    entriesBacking.clear()
+                    entriesBacking.addAll(result.value)
+                    lastLoaded = timeMark.markNow()
+                    lastUserId = userId
+                    onReplaced?.invoke()
                 }
-            } finally {
-                if (gen == loadGeneration) {
-                    loadingState = false
-                    refreshingState = false
-                    inFlightUserId = null
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    errorState = result.error
                 }
             }
         }

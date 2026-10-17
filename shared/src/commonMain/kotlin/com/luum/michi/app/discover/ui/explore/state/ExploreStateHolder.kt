@@ -1,7 +1,6 @@
 package com.luum.michi.app.discover.ui.explore.state
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,6 +19,7 @@ import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
 
 internal class ExploreStateHolder(
@@ -87,7 +87,7 @@ internal class ExploreStateHolder(
      *  field, preservando filtros. */
     fun enterBlankSearch() {
         searchJob?.cancel()
-        loadJob?.cancel()
+        loadRequest.cancel()
         query = ""
         invalidateSearch()
         paginated.clear()
@@ -120,7 +120,7 @@ internal class ExploreStateHolder(
     }
 
     private var searchJob: Job? = null
-    private var loadJob: Job? = null
+    private val loadRequest = LatestRequest()
 
     /** Igual que updateFilters + updateSort, pero sin debounce: para navegación
      *  programática ("Ver todo" desde Dashboard), donde la carga debe verse
@@ -176,38 +176,26 @@ internal class ExploreStateHolder(
     }
 
     fun load() {
-        // Newest load wins: cancel the previous request so a slower (stale)
-        // response cannot overwrite newer results. A plain `if (loadingState)
-        // return` guard would break the debounced callers above, which preset
-        // loadingState before their 300ms delay.
-        loadJob?.cancel()
+        // Newest load wins: a slower (stale) response cannot overwrite newer
+        // results; the helper cancels the previous request. A plain `if
+        // (loadingState) return` guard would break the debounced callers above,
+        // which preset loadingState before their 300ms delay.
         invalidateSearch()
         loadingState = true
         errorState = null
         actionErrorState = null
-        // LAZY then start, like PagedList.request: the job is stored before the
-        // body runs, so the identity check below is valid even on an eagerly
-        // dispatched scope.
-        val request = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                val result = fetchPage(1)
-                if (loadJob === coroutineContext[Job]) {
-                    when (result) {
-                        is NetworkResult.Success -> paginated.set(result.value)
-                        is NetworkResult.Failure -> {
-                            errorState = result.error
-                            paginated.clear()
-                        }
-                    }
+        loadRequest.launch(
+            scope = scope,
+            onSettled = { loadingState = false },
+        ) { isCurrent ->
+            when (val result = fetchPage(1)) {
+                is NetworkResult.Success -> if (isCurrent()) paginated.set(result.value)
+                is NetworkResult.Failure -> if (isCurrent()) {
+                    errorState = result.error
+                    paginated.clear()
                 }
-            } finally {
-                // Only the current request owns the spinner: a cancelled load
-                // must not turn off the one now in flight.
-                if (loadJob === coroutineContext[Job]) loadingState = false
             }
         }
-        loadJob = request
-        request.start()
     }
 
     fun loadMore() {

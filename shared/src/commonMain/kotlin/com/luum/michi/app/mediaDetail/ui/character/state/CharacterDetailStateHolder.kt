@@ -33,8 +33,7 @@ internal class CharacterDetailStateHolder(
     /** Appearances grid (one row per media). */
     val media = PagedList<CharacterMediaItem> { a, b -> (a + b).distinctBy { it.mediaId } }
 
-    /** Derived from the visible detail: no separate flag can drift from it. */
-    override val isFavourite: Boolean get() = detail?.isFavourite == true
+    override fun isFavouriteOf(detail: CharacterDetail): Boolean = detail.isFavourite
 
     fun loadMore() {
         val id = currentDetailId ?: return
