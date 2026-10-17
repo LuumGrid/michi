@@ -62,10 +62,14 @@ internal class StaffDetailStateHolder(
     val characters = PagedList<StaffCharacterItem> { a, b -> (a + b).distinctBy { it.characterId to it.mediaId } }
 
     // ── favourite ──
-    override var isFavourite: Boolean by mutableStateOf(false)
-        private set
-    var isTogglingFavourite: Boolean by mutableStateOf(false)
-        private set
+    /** Derived from the visible detail: no separate flag can drift from it. */
+    override val isFavourite: Boolean get() = detail?.isFavourite == true
+
+    // Per id: a toggle in flight for one staff member must not disable (or
+    // reflect on) another one's heart.
+    private var favouriteInFlightId: Int? by mutableStateOf(null)
+    val isTogglingFavourite: Boolean
+        get() = favouriteInFlightId != null && favouriteInFlightId == currentStaffId
 
     fun load(id: Int) {
         if (currentStaffId == id && (detail != null || isLoading)) return
@@ -79,7 +83,6 @@ internal class StaffDetailStateHolder(
             detail = cached.detail
             media.set(cached.media)
             characters.set(cached.characters)
-            isFavourite = cached.detail.isFavourite
             error = null
             actionError = null
             isLoading = false
@@ -150,7 +153,6 @@ internal class StaffDetailStateHolder(
                     detail = value
                     media.set(value.media)
                     characters.set(value.characters)
-                    isFavourite = value.isFavourite
                     cacheSnapshot(id)
                 }
                 is NetworkResult.Failure -> error = result.error
@@ -160,29 +162,39 @@ internal class StaffDetailStateHolder(
     }
 
     override fun toggleFavourite() {
-        if (isTogglingFavourite) return
         val id = currentStaffId ?: return
-        val previous = isFavourite
+        val current = detail ?: return
+        if (favouriteInFlightId == id) return
+        val previous = current.isFavourite
         val target = !previous
-        isFavourite = target
-        isTogglingFavourite = true
+        favouriteInFlightId = id
+        // Optimistic: the visible detail and its cached snapshot both flip now,
+        // so a revisit from the cache never restores the stale value.
+        detail = current.copy(isFavourite = target)
+        detailCache.update(id) { snapshot ->
+            snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
+        }
         scope.launch {
             when (val result = repository.toggleFavourite(id)) {
                 is NetworkResult.Success -> {
-                    // The cached snapshot of THIS staff member gets the new
-                    // value; the visible state follows only while this holder
-                    // still shows it (the user may have opened another one).
                     detailCache.update(id) { snapshot ->
                         snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
                     }
                     if (currentStaffId == id) detail = detail?.copy(isFavourite = target)
                 }
-                is NetworkResult.Failure -> if (currentStaffId == id) {
-                    isFavourite = previous
-                    actionError = result.error
+                is NetworkResult.Failure -> {
+                    // Revert both copies of THIS staff member's value; the visible
+                    // page and its error only while it is still the current one.
+                    detailCache.update(id) { snapshot ->
+                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = previous))
+                    }
+                    if (currentStaffId == id) {
+                        detail = detail?.copy(isFavourite = previous)
+                        actionError = result.error
+                    }
                 }
             }
-            isTogglingFavourite = false
+            if (favouriteInFlightId == id) favouriteInFlightId = null
         }
     }
 

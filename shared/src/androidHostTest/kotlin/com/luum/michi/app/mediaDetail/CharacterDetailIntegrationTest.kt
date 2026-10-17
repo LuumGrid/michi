@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaDetail
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -232,5 +234,111 @@ class CharacterDetailFavouriteCacheTest {
         assertFalse(holder.isFavourite, "the late response does not touch the visible one")
         holder.load(1)
         assertTrue(holder.isFavourite, "the first character's snapshot kept the toggle")
+    }
+}
+
+/**
+ * Double whose detail loads (per id) and favourite toggle can be held, so the
+ * intermediate frames of "toggle A, open B, come back to A" are observable.
+ */
+private class FavouriteStateCharacterRepository : CharacterDetailRepository {
+    val toggleGate = CompletableDeferred<Unit>()
+    var toggleFails = false
+    private val detailGates = mutableMapOf<Int, CompletableDeferred<Unit>>()
+    private val favourites = mutableMapOf<Int, Boolean>()
+
+    fun gateDetail(id: Int) {
+        detailGates[id] = CompletableDeferred()
+    }
+
+    fun releaseDetail(id: Int) {
+        detailGates.remove(id)?.complete(Unit)
+    }
+
+    fun releaseToggle() = toggleGate.complete(Unit)
+
+    override suspend fun loadDetail(
+        id: Int,
+        voiceLanguage: String,
+        strings: LanguageStrings,
+    ): NetworkResult<CharacterDetail> {
+        detailGates[id]?.await()
+        return NetworkResult.Success(characterDetail(id, isFavourite = favourites[id] ?: false))
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        voiceLanguage: String,
+    ): NetworkResult<Page<CharacterMediaItem>> =
+        NetworkResult.Success(Page(emptyList(), hasNextPage = false, currentPage = page))
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        toggleGate.await()
+        if (toggleFails) return NetworkResult.Failure(NetworkError.Http(500, null))
+        favourites[id] = !(favourites[id] ?: false)
+        return NetworkResult.Success(Unit)
+    }
+}
+
+/**
+ * The heart is derived from the visible detail (never a drifting flag) and the
+ * toggle guard is per id, so opening another character mid-toggle never borrows
+ * the first one's heart nor stays disabled.
+ */
+class CharacterDetailFavouriteStateTest {
+
+    @Test
+    fun openingAnotherCharacterWhileOneLoadsNeverShowsTheFirstHeart() {
+        val repository = FavouriteStateCharacterRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.toggleFavourite() // A optimistically true, held at the toggle gate
+        assertTrue(holder.isFavourite)
+
+        repository.gateDetail(2)
+        holder.load(2) // B: detail cleared, its load in flight
+
+        assertFalse(holder.isFavourite, "B must not borrow A's heart while it loads")
+        assertFalse(holder.isTogglingFavourite, "A's in-flight toggle belongs to A, not B")
+
+        repository.releaseDetail(2)
+        assertFalse(holder.isFavourite)
+    }
+
+    @Test
+    fun anOptimisticToggleIsInTheCacheWhenAIsReopened() {
+        val repository = FavouriteStateCharacterRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.toggleFavourite() // held
+        holder.load(2)
+        holder.load(1) // back from cache, still before the response
+
+        assertTrue(holder.isFavourite, "the cached A already shows the new value")
+
+        repository.releaseToggle() // success
+
+        assertTrue(holder.isFavourite, "A keeps the new value")
+    }
+
+    @Test
+    fun aFailedToggleRevertsAWhenItIsReopened() {
+        val repository = FavouriteStateCharacterRepository().apply { toggleFails = true }
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.toggleFavourite() // held
+        holder.load(2)
+        holder.load(1) // back from cache, still before the response
+
+        assertTrue(holder.isFavourite, "the optimistic value is visible")
+
+        repository.releaseToggle() // fails while A is the visible one
+
+        assertFalse(holder.isFavourite, "a failed toggle returns A to its original value")
+        assertIs<NetworkError.Http>(holder.actionError)
     }
 }

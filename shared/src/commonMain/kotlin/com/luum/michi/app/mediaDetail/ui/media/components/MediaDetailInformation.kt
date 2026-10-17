@@ -45,6 +45,33 @@ import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 
 /**
+ * Whether the information panel has anything to paint: any identity field, any
+ * wide title/synonym, or a studio/producer. Shared by the panel and by the
+ * screen's item gate so the two can never disagree on whether the block exists.
+ */
+internal fun MediaDetail.hasInformation(isManga: Boolean): Boolean {
+    val hasEntry = format != null ||
+        status != null ||
+        (if (isManga) chapters != null || volumes != null else episodes != null) ||
+        duration != null ||
+        season != null ||
+        startedLabel != null ||
+        endedLabel != null ||
+        source != null
+    val hasWide = !titleRomaji.isNullOrBlank() ||
+        !titleNative.isNullOrBlank() ||
+        synonyms.any { it.isNotBlank() }
+    return hasEntry || hasWide || studios.isNotEmpty() || producers.isNotEmpty()
+}
+
+/**
+ * The trailer's openable URL, or null when there is no trailer or its site is
+ * unresolvable. Shared by the screen's item gate and [MediaDetailVideos] so the
+ * card is never emitted for a trailer that would paint nothing.
+ */
+internal fun MediaDetail.trailerUrl(): String? = trailer?.videoUrl()
+
+/**
  * Framed information panel: a two-column grid of the short identity fields
  * (type, status, counts, runtime, season, dates, source) with the long ones
  * (titles, synonyms) full width below, then tappable studio chips. Style-
@@ -81,12 +108,7 @@ internal fun MediaDetailInformationPanel(
             .takeIf { it.isNotEmpty() }
             ?.let { add(MediaDetailInfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
     }
-    if (
-        entries.isEmpty() &&
-        wideEntries.isEmpty() &&
-        detail.studios.isEmpty() &&
-        detail.producers.isEmpty()
-    ) {
+    if (!detail.hasInformation(isManga)) {
         return
     }
     MediaDetailPanel {
@@ -182,10 +204,9 @@ internal fun MediaDetailVideos(
     strings: LanguageStrings,
     onOpenUrl: (String) -> Unit,
 ) {
-    val trailer = detail.trailer ?: return
-    // An unresolvable trailer (unknown site) has nothing to open: skip the card
-    // instead of painting an inert one.
-    val url = trailer.videoUrl() ?: return
+    // No trailer, or an unresolvable site: nothing to open, so paint nothing
+    // instead of an inert card (kept in sync with the screen's item gate).
+    val url = detail.trailerUrl() ?: return
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(
             title = strings.mediaDetailVideosTitle,
@@ -200,9 +221,10 @@ internal fun MediaDetailVideos(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onOpenUrl(url) },
         ) {
-            if (!trailer.thumbnailUrl.isNullOrBlank()) {
+            val thumbnail = detail.trailer?.thumbnailUrl
+            if (!thumbnail.isNullOrBlank()) {
                 SubcomposeAsyncImage(
-                    model = trailer.thumbnailUrl,
+                    model = thumbnail,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     loading = {},

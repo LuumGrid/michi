@@ -144,6 +144,21 @@ class MediaEntryEditorIntegrationTest {
     }
 
     @Test
+    fun newEntryWithCompletionOverrideFillsTotalsAndStampsTheEnd() {
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            viewerEntry = null,
+            initialStatusOverride = MediaListStatus.COMPLETED,
+        )
+
+        editor.load()
+
+        assertEquals(MediaListStatus.COMPLETED, editor.status)
+        assertEquals(editor.maxProgress, editor.progress, "COMPLETED fills progress to the total")
+        assertEquals(TODAY, editor.completedAtMillis, "COMPLETED stamps the end date")
+    }
+
+    @Test
     fun saveSendsVariablesAndInvokesSaved() {
         val saveAck = buildJsonObject {
             put("SaveMediaListEntry", buildJsonObject { put("id", 7) })

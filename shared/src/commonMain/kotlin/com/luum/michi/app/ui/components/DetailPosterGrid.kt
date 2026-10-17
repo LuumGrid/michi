@@ -36,6 +36,10 @@ internal fun DetailPosterGrid(
     hasNextPage: Boolean,
     isLoading: Boolean,
     isLoadingMore: Boolean,
+    // Current page of the backing PagedList: the auto-paging effect keys on it
+    // (not on items.size) so a fully-deduped page still advances the load, while
+    // a failed page never does (no retry loop).
+    loadedPage: Int,
     onLoadMore: () -> Unit,
     onOpenMedia: (Int) -> Unit,
     emptyLabel: String,
@@ -49,7 +53,7 @@ internal fun DetailPosterGrid(
     // while the user keeps scrolling and loads the next page then. The flow is
     // distinct, so a failed page (footer still visible) never loops.
     if (hasNextPage) {
-        LaunchedEffect(gridState, items.size) {
+        LaunchedEffect(gridState, loadedPage) {
             snapshotFlow {
                 gridState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
             }

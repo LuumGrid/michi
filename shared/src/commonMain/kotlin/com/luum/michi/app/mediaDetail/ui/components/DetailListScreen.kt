@@ -57,6 +57,10 @@ internal fun DetailListScreen(
     bottomPadding: Dp = 0.dp,
     hasMore: Boolean = false,
     isLoadingMore: Boolean = false,
+    // Current page of the backing PagedList. The auto-paging effect keys on it
+    // (not on items.size): a page that dedupes to nothing must still re-trigger
+    // the load, while a failed page never advances it (so it cannot loop).
+    loadedPage: Int,
     onLoadMore: (() -> Unit)? = null,
     // Page-load failure of the parent holder, shown as a compact dismissible row.
     actionError: String? = null,
@@ -79,6 +83,7 @@ internal fun DetailListScreen(
                 bottomPadding = bottomPadding,
                 paged = paged,
                 isLoadingMore = isLoadingMore,
+                loadedPage = loadedPage,
                 onLoadMore = onLoadMore,
                 modifier = Modifier.weight(1f),
             )
@@ -88,6 +93,7 @@ internal fun DetailListScreen(
                 bottomPadding = bottomPadding,
                 paged = paged,
                 isLoadingMore = isLoadingMore,
+                loadedPage = loadedPage,
                 onLoadMore = onLoadMore,
                 modifier = Modifier.weight(1f),
             )
@@ -102,13 +108,14 @@ private fun RowsList(
     bottomPadding: Dp,
     paged: Boolean,
     isLoadingMore: Boolean,
+    loadedPage: Int,
     onLoadMore: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     val currentOnLoadMore by rememberUpdatedState(onLoadMore)
     if (paged) {
-        LaunchedEffect(listState, items.size) {
+        LaunchedEffect(listState, loadedPage) {
             snapshotFlow {
                 listState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
             }
@@ -165,13 +172,14 @@ private fun GridList(
     bottomPadding: Dp,
     paged: Boolean,
     isLoadingMore: Boolean,
+    loadedPage: Int,
     onLoadMore: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyGridState()
     val currentOnLoadMore by rememberUpdatedState(onLoadMore)
     if (paged) {
-        LaunchedEffect(gridState, items.size) {
+        LaunchedEffect(gridState, loadedPage) {
             snapshotFlow {
                 gridState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
             }

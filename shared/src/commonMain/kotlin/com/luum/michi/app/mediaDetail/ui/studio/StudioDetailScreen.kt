@@ -74,6 +74,7 @@ private fun StudioDetailGrid(
         hasNextPage = holder.media.hasNextPage,
         isLoading = holder.isLoading,
         isLoadingMore = holder.media.isLoadingMore,
+        loadedPage = holder.media.currentPage,
         onLoadMore = { holder.loadMore() },
         onOpenMedia = onOpenMedia,
         emptyLabel = strings.mediaDetailNoMediaLabel,

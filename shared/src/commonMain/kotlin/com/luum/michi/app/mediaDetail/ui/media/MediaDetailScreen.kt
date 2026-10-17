@@ -29,6 +29,8 @@ import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailInformation
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailNextEpisodeBand
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailTags
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
+import com.luum.michi.app.mediaDetail.ui.media.components.hasInformation
+import com.luum.michi.app.mediaDetail.ui.media.components.trailerUrl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.RailPageSize
@@ -141,20 +143,22 @@ private fun MediaDetailContent(
                 )
             }
         }
-        item(key = "information") {
-            MediaDetailInformationPanel(
-                detail = detail,
-                strings = strings,
-                isManga = isManga,
-                onOpenStudio = onOpenStudio,
-            )
+        if (detail.hasInformation(isManga)) {
+            item(key = "information") {
+                MediaDetailInformationPanel(
+                    detail = detail,
+                    strings = strings,
+                    isManga = isManga,
+                    onOpenStudio = onOpenStudio,
+                )
+            }
         }
         if (detail.genres.isNotEmpty()) {
             item(key = "genres") {
                 MediaDetailGenres(detail = detail, strings = strings, onOpenGenre = onOpenGenre)
             }
         }
-        if (detail.characters.items.isNotEmpty()) {
+        if (holder.characters.items.isNotEmpty()) {
             item(key = "characters") {
                 MediaRail(
                     title = strings.mediaDetailCharactersTitle,
@@ -179,7 +183,7 @@ private fun MediaDetailContent(
                 )
             }
         }
-        if (detail.trailer != null) {
+        if (detail.trailerUrl() != null) {
             item(key = "videos") {
                 MediaDetailVideos(detail = detail, strings = strings, onOpenUrl = onOpenUrl)
             }

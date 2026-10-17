@@ -67,6 +67,31 @@ class PagedListTest {
     }
 
     @Test
+    fun aFullyDuplicatedPageStillAdvancesTheCurrentPage() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val list = PagedList<Int> { a, b -> (a + b).distinct() }
+            list.set(Page(listOf(1), hasNextPage = true, currentPage = 1))
+
+            // The whole page duplicates what is already loaded: items.size does
+            // not change, but currentPage must advance — it is the signal the
+            // auto-paging effect keys on to ask for the next page.
+            list.loadMore(
+                scope = scope,
+                isCurrent = { true },
+                fetch = { NetworkResult.Success(Page(listOf(1), hasNextPage = false, currentPage = 2)) },
+            )
+            dispatcher.runAll()
+
+            assertEquals(listOf(1), list.items, "the duplicate page adds nothing")
+            assertEquals(2, list.currentPage, "but the page counter advances")
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
     fun aFailureCallsOnErrorAndDropsTheSpinner() {
         val dispatcher = DeferredDispatcher()
         val scope = CoroutineScope(dispatcher)

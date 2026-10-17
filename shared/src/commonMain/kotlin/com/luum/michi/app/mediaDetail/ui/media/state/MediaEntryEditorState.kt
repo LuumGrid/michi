@@ -143,10 +143,16 @@ internal class MediaEntryEditorState(
                             updateStatus(initialStatusOverride)
                         }
                     } else {
-                        status = initialStatusOverride ?: MediaListStatus.PLANNING
+                        status = MediaListStatus.PLANNING
                         progress = initialProgressOverride ?: 0
                         advancedScoreValues = List(advancedScoringNames.size) { 0f }
+                        // Baseline is the untouched default (a new entry is always
+                        // dirty); the override then flows through the same
+                        // automation as picking it in the sheet, so COMPLETED
+                        // fills the totals and stamps the end date and CURRENT
+                        // stamps the start date.
                         baseline = snapshot()
+                        initialStatusOverride?.let { updateStatus(it) }
                     }
                 }
                 is NetworkResult.Failure -> loadError = result.error
@@ -292,6 +298,12 @@ internal class MediaEntryEditorState(
             }
             isDeleting = false
         }
+    }
+
+    /** Clears the last save/delete error (e.g. before opening the delete confirm,
+     *  so a previous save failure never shows up on the delete sheet). */
+    fun clearError() {
+        error = null
     }
 }
 

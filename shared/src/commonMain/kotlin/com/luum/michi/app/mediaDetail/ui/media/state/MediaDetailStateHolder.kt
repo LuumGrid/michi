@@ -44,8 +44,11 @@ internal class MediaDetailStateHolder(
         private set
     var error: NetworkError? by mutableStateOf(null)
         private set
-    var isTogglingFavourite: Boolean by mutableStateOf(false)
-        private set
+    // Per id: a toggle in flight for one media must not disable (or reflect on)
+    // another one's heart.
+    private var favouriteInFlightId: Int? by mutableStateOf(null)
+    val isTogglingFavourite: Boolean
+        get() = favouriteInFlightId != null && favouriteInFlightId == currentMediaId
     /** Non-blocking action failure (a page load or a favourite toggle): shown as
      *  a compact row while the content stays visible, never as the load error. */
     var actionError: NetworkError? by mutableStateOf(null)
@@ -204,10 +207,10 @@ internal class MediaDetailStateHolder(
 
     override fun toggleFavourite() {
         val current = detail ?: return
-        if (isTogglingFavourite) return
         val id = current.id
+        if (favouriteInFlightId == id) return
         val target = !current.isFavourite
-        isTogglingFavourite = true
+        favouriteInFlightId = id
         scope.launch {
             when (val result = entryRepository.toggleFavourite(id, current.type == MediaDetailType.MANGA)) {
                 is NetworkResult.Success -> {
@@ -223,7 +226,7 @@ internal class MediaDetailStateHolder(
                 }
                 is NetworkResult.Failure -> if (currentMediaId == id) actionError = result.error
             }
-            isTogglingFavourite = false
+            if (favouriteInFlightId == id) favouriteInFlightId = null
         }
     }
 

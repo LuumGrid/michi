@@ -17,8 +17,12 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaTrailer
+import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
+import com.luum.michi.app.mediaDetail.ui.media.components.hasInformation
+import com.luum.michi.app.mediaDetail.ui.media.components.trailerUrl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -444,5 +448,66 @@ class MediaDetailFavouriteCacheTest {
         assertFalse(holder.detail?.isFavourite == true, "the visible media is untouched")
         holder.load(1)
         assertTrue(holder.detail?.isFavourite == true, "the first media's snapshot kept the toggle")
+    }
+}
+
+/** The pure gates the screen uses to emit the information and videos items. */
+class MediaDetailInformationTest {
+
+    private fun withoutInformation(detail: MediaDetail) = detail.copy(
+        format = null,
+        status = null,
+        episodes = null,
+        chapters = null,
+        volumes = null,
+        duration = null,
+        season = null,
+        startedLabel = null,
+        endedLabel = null,
+        source = null,
+        studios = emptyList(),
+        producers = emptyList(),
+        titleRomaji = null,
+        titleNative = null,
+        synonyms = emptyList(),
+    )
+
+    @Test
+    fun hasInformationIsFalseOnlyWhenNothingWouldPaint() {
+        val empty = withoutInformation(sampleDetail(1))
+
+        assertFalse(empty.hasInformation(isManga = false))
+        assertFalse(empty.hasInformation(isManga = true))
+    }
+
+    @Test
+    fun hasInformationIsTrueForAnyPaintableGroup() {
+        // An anime identity field.
+        assertTrue(sampleDetail(1).hasInformation(isManga = false))
+        // A manga-only count.
+        assertTrue(
+            sampleDetail(1).copy(episodes = null, format = null, status = null, chapters = 5)
+                .hasInformation(isManga = true),
+        )
+        // A wide title.
+        assertTrue(
+            withoutInformation(sampleDetail(1)).copy(titleNative = "日本語")
+                .hasInformation(isManga = false),
+        )
+        // A studio chip.
+        assertTrue(
+            withoutInformation(sampleDetail(1)).copy(studios = listOf(StudioRef(1, "Bones")))
+                .hasInformation(isManga = false),
+        )
+    }
+
+    @Test
+    fun trailerUrlIsNullForMissingOrUnresolvableTrailers() {
+        assertNull(sampleDetail(1).trailerUrl())
+        assertNull(sampleDetail(1).copy(trailer = MediaTrailer("abc", "vimeo", null)).trailerUrl())
+        assertEquals(
+            "https://youtu.be/abc",
+            sampleDetail(1).copy(trailer = MediaTrailer("abc", "youtube", null)).trailerUrl(),
+        )
     }
 }

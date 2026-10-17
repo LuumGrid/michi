@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -27,9 +28,11 @@ import com.luum.michi.app.ui.icons.AppIcons
 
 /**
  * Label + editable value with suffix and round −/+ steppers (progress,
- * score, repeat, priority): the AL-chan editor row. The draft lives here —
- * Done commits (or reverts on unparsable input) and steppers clear it, so
- * the field always returns to the truth.
+ * score, repeat, priority): the AL-chan editor row. Every keystroke commits the
+ * draft to the editor (callers ignore unparsable input and clamp), so the
+ * editor state always holds the last valid value — pressing Save without Done
+ * never saves a stale number. Losing focus drops the draft so the field shows
+ * the real clamped value; Done does the same and closes the keyboard.
  */
 @Composable
 internal fun EditorCounterField(
@@ -46,7 +49,6 @@ internal fun EditorCounterField(
     var draft by remember { mutableStateOf<String?>(null) }
     val focusManager = LocalFocusManager.current
     fun commitDraft() {
-        draft?.let(onCommit)
         draft = null
         focusManager.clearFocus()
     }
@@ -63,7 +65,10 @@ internal fun EditorCounterField(
         ) {
             SheetTextField(
                 value = draft ?: displayValue,
-                onValueChange = { draft = it },
+                onValueChange = { value ->
+                    draft = value
+                    onCommit(value)
+                },
                 suffix = suffix,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
@@ -73,6 +78,10 @@ internal fun EditorCounterField(
                     onDone = { commitDraft() },
                 ),
                 modifier = Modifier.weight(1f),
+                // On blur, drop the draft so the field shows the clamped truth.
+                textFieldModifier = Modifier.onFocusChanged { focusState ->
+                    if (!focusState.isFocused) draft = null
+                },
             )
             Spacer(modifier = Modifier.width(8.dp))
             GlassCircleButton(

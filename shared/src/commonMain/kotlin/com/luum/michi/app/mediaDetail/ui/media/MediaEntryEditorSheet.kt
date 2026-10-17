@@ -97,7 +97,12 @@ internal fun MediaEntryEditorSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             GlassButton(
                                 label = strings.mediaDetailEditorDeleteAction,
-                                onClick = { confirmDelete = true },
+                                onClick = {
+                                    // A previous save failure must not show up on
+                                    // the delete confirmation sheet.
+                                    editor.clearError()
+                                    confirmDelete = true
+                                },
                                 enabled = !busy,
                                 contentColor = MaterialTheme.colorScheme.error,
                             )
@@ -183,6 +188,17 @@ internal fun MediaEntryEditorSheet(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // The failed delete stays on THIS sheet (the editor's own error is
+            // painted behind it): same compact style as the editor's. The button
+            // above retries, and delete() clears the error when it starts.
+            editor.error?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = strings.networkErrorMessage(error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
 

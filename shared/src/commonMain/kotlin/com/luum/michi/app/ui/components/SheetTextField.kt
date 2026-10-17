@@ -37,6 +37,9 @@ internal fun SheetTextField(
     enabled: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    // Extra modifiers for the inner text field (e.g. `onFocusChanged`); the
+    // outer `modifier` styles the container Surface.
+    textFieldModifier: Modifier = Modifier,
 ) {
     val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
@@ -50,6 +53,7 @@ internal fun SheetTextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
+                .then(textFieldModifier)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             enabled = enabled,
             singleLine = minLines == 1 && maxLines == 1,
