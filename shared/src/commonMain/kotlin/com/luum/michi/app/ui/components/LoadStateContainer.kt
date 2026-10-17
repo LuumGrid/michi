@@ -1,14 +1,10 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,11 +17,12 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.icons.AppIcons
 
 /**
- * Loading / error / content switch shared by the detail screens and the
+ * Loading / error / empty / content switch shared by the detail screens and the
  * dashboard. Spinner + [loadingLabel] while there is nothing to show yet, a
- * retry [MessagePanel] ([errorTitle]) when the first load failed, and the
- * pull-to-refresh wrapped [content] once [hasContent]. Labels arrive as
- * parameters so this stays feature-agnostic.
+ * retry [MessagePanel] ([errorTitle]) when the first load failed, [empty] when
+ * the load finished with nothing and no error, and the pull-to-refresh wrapped
+ * [content] once [hasContent]. Labels arrive as parameters so this stays
+ * feature-agnostic.
  *
  * [refreshError] adds a compact, non-blocking line above the content when a
  * refresh failed while there is already something to show; callers that do not
@@ -47,24 +44,13 @@ internal fun LoadStateContainer(
     actionError: String? = null,
     dismissLabel: String? = null,
     onDismissActionError: (() -> Unit)? = null,
+    // Painted when there is nothing to show, nothing loading and no error (an
+    // "empty" result). Null paints nothing.
+    empty: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     when {
-        !hasContent && isLoading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = loadingLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
+        !hasContent && isLoading -> LoadingPanel(label = loadingLabel, modifier = modifier)
         !hasContent && errorMessage != null -> {
             MessagePanel(
                 title = errorTitle,
@@ -96,6 +82,7 @@ internal fun LoadStateContainer(
                 }
             }
         }
+        else -> empty?.invoke()
     }
 }
 

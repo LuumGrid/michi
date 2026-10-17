@@ -10,9 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** Lazy key of the auto-pagination footer: a list/grid observes it to page. */
-internal const val LoadMoreKey = "load-more-footer"
-
 /**
  * Full-width spinner footer shared by the auto-paginating lists and grids
  * ("View all", the studio grid). It paints nothing while no page is in flight,

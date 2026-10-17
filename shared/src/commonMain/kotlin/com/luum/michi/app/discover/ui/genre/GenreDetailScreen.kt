@@ -13,6 +13,7 @@ import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadStateContainer
+import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -49,13 +50,13 @@ internal fun GenreDetailScreen(
         onDismissActionError = { holder.clearActionError() },
     ) {
         DetailPosterGrid(
-            items = holder.media.items,
-            hasNextPage = holder.media.hasNextPage,
+            items = holder.media.items.map { it.toPosterItem() },
+            onSelect = onOpenMedia,
             isLoading = holder.isLoading,
             isLoadingMore = holder.media.isLoadingMore,
+            hasNextPage = holder.media.hasNextPage,
             loadedPage = holder.media.currentPage,
             onLoadMore = { holder.loadMore() },
-            onOpenMedia = onOpenMedia,
             emptyLabel = strings.mediaDetailNoMediaLabel,
             // Scroll rule: a catalog or sort change returns the grid to the top.
             resetKey = listOf(holder.type, holder.sortOption, holder.sortOrder),

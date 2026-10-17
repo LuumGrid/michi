@@ -1,29 +1,22 @@
 package com.luum.michi.app.mediaList.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -41,6 +34,7 @@ import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.MediaCoverCard
+import com.luum.michi.app.ui.components.LoadingPanel
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.RefreshErrorRow
@@ -170,20 +164,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
         }
         when {
             holder.isLoading && !hasLoadedEntries -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = strings.listsLoadingLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
+                LoadingPanel(label = strings.listsLoadingLabel)
             }
             errorMessage != null && !hasLoadedEntries -> {
                 MessagePanel(
@@ -202,8 +183,6 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                     title = if (noMatch) strings.searchNoResultsLabel else strings.listsEmptyLabel,
                     message = null,
                     icon = if (noMatch) AppIcons.Search else emptyIcon,
-                    actionLabel = null,
-                    onAction = {},
                 )
             }
             else -> {

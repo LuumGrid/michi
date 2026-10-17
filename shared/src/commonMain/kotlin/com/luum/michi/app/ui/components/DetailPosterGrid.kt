@@ -8,61 +8,48 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.core.media.domain.MediaGridItem
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 
 /**
- * The one poster grid of a detail page that lists media (studio works, genre
- * works): a token-sized cell per [MediaGridItem] that pages itself when its
- * footer scrolls into view. [header] paints the page's own full-span items above
- * the grid (a hero, a title, chip rows) so each screen keeps its own header
- * without forking the grid; a page that wants no "Works" section header simply
- * does not add one. [resetKey] is the holder state that must send the grid back
- * to the top (a sort change, a catalog switch).
+ * The one poster grid of a detail page (studio works, genre works, the "View
+ * all" people grids): token-sized cells over [MediaRailItem] that page
+ * themselves when the footer scrolls into view. [header] paints the page's own
+ * full-span items above the grid (a hero, chip rows) so each screen keeps its
+ * own header without forking the grid; [resetKey] is the holder state that must
+ * send the grid back to the top (a sort change, a catalog switch). [emptyLabel]
+ * null paints no empty row (the caller has its own empty handling).
  */
 @Composable
 internal fun DetailPosterGrid(
-    items: List<MediaGridItem>,
-    hasNextPage: Boolean,
+    items: List<MediaRailItem>,
+    onSelect: (Int) -> Unit,
     isLoading: Boolean,
     isLoadingMore: Boolean,
+    hasNextPage: Boolean,
     // Current page of the backing PagedList: the auto-paging effect keys on it
     // (not on items.size) so a fully-deduped page still advances the load, while
     // a failed page never does (no retry loop).
     loadedPage: Int,
     onLoadMore: () -> Unit,
-    onOpenMedia: (Int) -> Unit,
-    emptyLabel: String,
-    resetKey: Any?,
+    emptyLabel: String?,
     modifier: Modifier = Modifier,
+    resetKey: Any? = null,
     bottomPadding: Dp = 0.dp,
     header: (LazyGridScope.() -> Unit)? = null,
 ) {
     val gridState = rememberResetGridState(resetKey)
-    // Auto-pagination: the footer is the last item, so it scrolls into view
-    // while the user keeps scrolling and loads the next page then. The flow is
-    // distinct, so a failed page (footer still visible) never loops.
-    if (hasNextPage) {
-        LaunchedEffect(gridState, loadedPage) {
-            snapshotFlow {
-                gridState.layoutInfo.visibleItemsInfo.any { it.key == LoadMoreKey }
-            }
-                .distinctUntilChanged()
-                .filter { it }
-                .collect { onLoadMore() }
-        }
-    }
-
+    LoadMoreEffect(
+        state = gridState,
+        enabled = hasNextPage,
+        loadedPage = loadedPage,
+        onLoadMore = onLoadMore,
+    )
     GridCoverSizeProvider { coverSize ->
         LazyVerticalGrid(
             // Cells are exactly a standard poster (the token the provider picked
@@ -81,7 +68,7 @@ internal fun DetailPosterGrid(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             header?.invoke(this)
-            if (items.isEmpty() && !isLoading) {
+            if (items.isEmpty() && !isLoading && emptyLabel != null) {
                 item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = emptyLabel,
@@ -91,18 +78,21 @@ internal fun DetailPosterGrid(
                     )
                 }
             } else {
-                items(items = items, key = { it.mediaId }) { item ->
+                itemsIndexed(
+                    items = items,
+                    // Index-suffixed: the same media can appear more than once
+                    // (a staff/character with multiple roles in one title), and
+                    // a bare id would make duplicate lazy keys and crash.
+                    key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+                ) { _, item ->
                     PosterCard(
-                        cover = item.cover,
+                        cover = item.image,
                         title = item.title,
                         size = coverSize,
-                        onClick = { onOpenMedia(item.mediaId) },
-                        subtitle = item.genres.take(2).joinToString(" · ").ifBlank { null },
-                        placeholderHex = item.paletteHex,
-                        stats = listOfNotNull(
-                            scoreBadge(item.averageScore),
-                            favouritesBadge(item.favourites),
-                        ),
+                        onClick = { onSelect(item.id) },
+                        subtitle = item.subtitle,
+                        placeholderHex = item.placeholderHex,
+                        stats = item.stats,
                         // A grid cell lets the subtitle hug the title.
                         reserveTitleLines = false,
                     )

@@ -14,6 +14,7 @@ import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -70,17 +71,17 @@ private fun StudioDetailGrid(
     modifier: Modifier = Modifier,
 ) {
     DetailPosterGrid(
-        items = holder.media.items,
-        hasNextPage = holder.media.hasNextPage,
+        items = holder.media.items.map { it.toPosterItem() },
+        onSelect = onOpenMedia,
         isLoading = holder.isLoading,
         isLoadingMore = holder.media.isLoadingMore,
+        hasNextPage = holder.media.hasNextPage,
         loadedPage = holder.media.currentPage,
         onLoadMore = { holder.loadMore() },
-        onOpenMedia = onOpenMedia,
         emptyLabel = strings.mediaDetailNoMediaLabel,
+        modifier = modifier,
         // Scroll rule: a sort change returns the grid to the top.
         resetKey = listOf(holder.sortOption, holder.sortOrder),
-        modifier = modifier,
         bottomPadding = bottomPadding,
         header = {
             item(key = "hero", span = { GridItemSpan(maxLineSpan) }) {

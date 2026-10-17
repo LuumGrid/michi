@@ -1031,8 +1031,6 @@ internal fun Root(
                                 title = strings.searchNoResultsLabel,
                                 message = null,
                                 icon = AppIcons.Search,
-                                actionLabel = null,
-                                onAction = {},
                             )
                         } else if (activeTab == TabSection.DISCOVER) {
                             // Discover dashboard: public catalog, guests included.
@@ -1064,8 +1062,6 @@ internal fun Root(
                                 title = activeTab.label(strings),
                                 message = null,
                                 icon = tabItem.icon,
-                                actionLabel = null,
-                                onAction = {},
                             )
                         }
                     }

@@ -104,54 +104,51 @@ private fun DashboardContent(
             selected = holder.mediaType,
             onSelect = holder::selectType,
         )
-        if (sections.isEmpty() && !holder.isLoading && errorMessage == null) {
+        LoadStateContainer(
+            hasContent = sections.isNotEmpty(),
+            isLoading = holder.isLoading || holder.isRefreshing,
+            errorMessage = errorMessage,
+            loadingLabel = strings.discoverLoadingLabel,
+            errorTitle = strings.discoverErrorLabel,
+            retryLabel = strings.retryAction,
+            onRetry = onRetry,
+            // With content already on screen, a failed refresh is a compact
+            // line above the rails, not a full-page error.
+            refreshError = if (sections.isNotEmpty()) errorMessage else null,
+            modifier = Modifier.fillMaxSize(),
             // Loaded, but every rail came back empty.
-            MessagePanel(
-                title = strings.discoverEmptyLabel,
-                message = null,
-                icon = AppIcons.Search,
-                actionLabel = null,
-                onAction = {},
-            )
-        } else {
-            LoadStateContainer(
-                hasContent = sections.isNotEmpty(),
-                isLoading = holder.isLoading || holder.isRefreshing,
-                errorMessage = errorMessage,
-                loadingLabel = strings.discoverLoadingLabel,
-                errorTitle = strings.discoverErrorLabel,
-                retryLabel = strings.retryAction,
-                onRetry = onRetry,
-                // With content already on screen, a failed refresh is a compact
-                // line above the rails, not a full-page error.
-                refreshError = if (sections.isNotEmpty()) errorMessage else null,
-                modifier = Modifier.fillMaxSize(),
+            empty = {
+                MessagePanel(
+                    title = strings.discoverEmptyLabel,
+                    message = null,
+                    icon = AppIcons.Search,
+                )
+            },
+        ) {
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(
+                    top = 8.dp,
+                    bottom = 16.dp + bottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(
-                        top = 8.dp,
-                        bottom = 16.dp + bottomPadding,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    items(
-                        items = sections,
-                        key = { it.first },
-                    ) { (kind, media) ->
-                        // Rails stay edge-to-edge (card vs edge-to-edge rule):
-                        // a rail boxed in a card clips on the rounded corners.
-                        MediaRail(
-                            title = kind.title(strings, current, next),
-                            items = media.mapNotNull { it.toRailItem(kind) },
-                            onSelect = onOpenMedia,
-                            size = if (kind.isFeatured) {
-                                CoverSize.Featured
-                            } else {
-                                CoverSize.Rail
-                            },
-                        )
-                    }
+                items(
+                    items = sections,
+                    key = { it.first },
+                ) { (kind, media) ->
+                    // Rails stay edge-to-edge (card vs edge-to-edge rule):
+                    // a rail boxed in a card clips on the rounded corners.
+                    MediaRail(
+                        title = kind.title(strings, current, next),
+                        items = media.mapNotNull { it.toRailItem(kind) },
+                        onSelect = onOpenMedia,
+                        size = if (kind.isFeatured) {
+                            CoverSize.Featured
+                        } else {
+                            CoverSize.Rail
+                        },
+                    )
                 }
             }
         }

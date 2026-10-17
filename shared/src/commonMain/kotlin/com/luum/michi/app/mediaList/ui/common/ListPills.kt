@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,6 +20,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.luum.michi.app.ui.components.PillEndShape
+import com.luum.michi.app.ui.components.PillShape
 import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.icons.AppIcons
 
@@ -38,7 +39,7 @@ internal fun ScorePill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = PillShape,
         color = MaterialTheme.colorScheme.surface,
         border = flatBorder(),
     ) {
@@ -83,7 +84,7 @@ internal fun ProgressGroup(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(24.dp),
+        shape = PillShape,
         color = MaterialTheme.colorScheme.surface,
         border = flatBorder(),
         modifier = modifier,
@@ -105,7 +106,7 @@ internal fun ProgressGroup(
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp))
+                        .clip(PillEndShape)
                         .background(
                             if (enabled) {
                                 MaterialTheme.colorScheme.primaryContainer

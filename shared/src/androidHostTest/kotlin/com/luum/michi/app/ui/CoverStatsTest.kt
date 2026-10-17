@@ -1,8 +1,10 @@
 package com.luum.michi.app.ui
 
+import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.ui.components.favouritesBadge
 import com.luum.michi.app.ui.components.popularityBadge
 import com.luum.michi.app.ui.components.scoreBadge
+import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.icons.AppIcons
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,5 +36,49 @@ class CoverStatsTest {
         assertNull(scoreBadge(null))
         assertNull(popularityBadge(null))
         assertNull(favouritesBadge(null))
+    }
+
+    @Test
+    fun toPosterItemKeepsTwoGenresStatsAndPlaceholder() {
+        val item = MediaGridItem(
+            mediaId = 7,
+            title = "Work",
+            cover = null,
+            paletteHex = "#123456",
+            format = "TV",
+            year = 2020,
+            averageScore = 85,
+            viewerStatus = null,
+            favourites = 1800,
+            genres = listOf("Action", "Comedy", "Drama"),
+        )
+
+        val poster = item.toPosterItem()
+
+        assertEquals(7, poster.id)
+        assertEquals("Work", poster.title)
+        assertEquals("Action · Comedy", poster.subtitle, "only the first two genres")
+        assertEquals("#123456", poster.placeholderHex)
+        assertEquals(listOf("85%", "1.8K"), poster.stats.map { it.value })
+    }
+
+    @Test
+    fun toPosterItemWithoutGenresOrStatsPaintsNoSubtitleOrBadges() {
+        val item = MediaGridItem(
+            mediaId = 8,
+            title = "Bare",
+            cover = null,
+            paletteHex = null,
+            format = null,
+            year = null,
+            averageScore = null,
+            viewerStatus = null,
+        )
+
+        val poster = item.toPosterItem()
+
+        assertNull(poster.subtitle)
+        assertEquals(emptyList(), poster.stats)
+        assertNull(poster.placeholderHex)
     }
 }

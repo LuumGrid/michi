@@ -39,9 +39,6 @@ internal val GlassCircle: Shape = CircleShape
 /** Shared translucency for every glass surface (bars and buttons alike). */
 private const val GLASS_ALPHA = 0.88f
 
-/** Floating elevation for large surfaces (bars, pills): full shadow. */
-internal val GlassElevation = 32.dp
-
 /**
  * Compact elevation for small surfaces (48dp circles): still reads as
  * floating, but the smaller shadow fraction bleeds less through the

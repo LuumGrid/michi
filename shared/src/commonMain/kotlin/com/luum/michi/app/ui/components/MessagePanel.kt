@@ -28,8 +28,8 @@ internal fun MessagePanel(
     title: String,
     message: String?,
     icon: ImageVector,
-    actionLabel: String?,
-    onAction: () -> Unit,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -60,7 +60,7 @@ internal fun MessagePanel(
                 textAlign = TextAlign.Center,
             )
         }
-        if (actionLabel != null) {
+        if (actionLabel != null && onAction != null) {
             Spacer(modifier = Modifier.height(16.dp))
             PrimaryButton(
                 label = actionLabel,
