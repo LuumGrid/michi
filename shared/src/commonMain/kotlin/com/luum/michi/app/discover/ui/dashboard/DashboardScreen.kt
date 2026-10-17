@@ -23,8 +23,7 @@ import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.model.cardStats
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.CatalogChipRail
 import com.luum.michi.app.ui.components.CoverStat
 import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.LoadStateContainer
@@ -96,13 +95,12 @@ private fun DashboardContent(
         if (sections.isNotEmpty()) holder.preloadOther()
     }
     Column(modifier = modifier.fillMaxSize()) {
-        ChipRail(
-            tabs = listOf(
-                ChipTab(DashboardMediaType.ANIME, strings.animeLabel),
-                ChipTab(DashboardMediaType.MANGA, strings.mangaLabel),
-            ),
+        CatalogChipRail(
+            anime = DashboardMediaType.ANIME,
+            manga = DashboardMediaType.MANGA,
             selected = holder.mediaType,
             onSelect = holder::selectType,
+            strings = strings,
         )
         LoadStateContainer(
             hasContent = sections.isNotEmpty(),

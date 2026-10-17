@@ -10,7 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.ui.components.PrimaryButton
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.theme.brandColor
 
 /**
@@ -42,9 +43,10 @@ internal fun AuthServiceButtons(
     if (isConfigured) {
         services.forEach { service ->
             val brand = service.brandHex?.let { brandColor(it) }
-            PrimaryButton(
+            AppButton(
                 label = service.label,
                 onClick = service.onLogin,
+                emphasis = ButtonEmphasis.Primary,
                 leadingIcon = service.icon,
                 containerColor = brand,
                 contentColor = if (brand != null) Color.White else null,

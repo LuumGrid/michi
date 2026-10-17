@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.catalogMetaLine
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
@@ -104,8 +105,9 @@ internal fun MangaListScreen(
 
 /** Manga meta line: format + year + work status (no airing data for manga). */
 private fun mangaEntryMeta(entry: MangaListEntry, strings: LanguageStrings): String =
-    listOfNotNull(
-        entry.format.label(strings.formatUnknownLabel),
-        entry.seasonYear?.toString(),
-        entry.mediaStatus?.label(strings, isManga = true),
-    ).joinToString(" · ")
+    catalogMetaLine(
+        format = entry.format.label(strings.formatUnknownLabel),
+        season = null,
+        year = entry.seasonYear,
+        status = entry.mediaStatus?.label(strings, isManga = true),
+    )

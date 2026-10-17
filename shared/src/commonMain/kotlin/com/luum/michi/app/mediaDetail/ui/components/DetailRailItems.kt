@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.catalogMetaLine
 import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.media.domain.label as coreModelLabel
@@ -92,11 +93,9 @@ private fun catalogMeta(
     status: MediaWorkStatus?,
     strings: LanguageStrings,
     isManga: Boolean,
-): String? {
-    val seasonYear = season?.let { s ->
-        year?.let { "${s.coreModelLabel(strings)} $it" } ?: s.coreModelLabel(strings)
-    } ?: year?.toString()
-    return listOfNotNull(format, seasonYear, status?.coreModelLabel(strings, isManga))
-        .joinToString(" · ")
-        .ifBlank { null }
-}
+): String? = catalogMetaLine(
+    format = format,
+    season = season?.coreModelLabel(strings),
+    year = year,
+    status = status?.coreModelLabel(strings, isManga),
+).ifBlank { null }

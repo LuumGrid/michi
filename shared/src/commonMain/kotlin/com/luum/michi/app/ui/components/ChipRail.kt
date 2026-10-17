@@ -2,22 +2,15 @@ package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 
 /**
  * Generic chip rail: section pills for the lists, year pills in filter
@@ -66,20 +59,15 @@ internal fun <T> ChipRail(
             items = tabs,
             key = { "${it.label}·${it.value}" },
         ) { tab ->
-            val isSelected = interactive && tab.value == selected
             if (interactive) {
-                Surface(
+                ChipPill(
+                    label = tab.label,
+                    selected = tab.value == selected,
                     onClick = { onSelect(tab.value) },
-                    shape = PillShape,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        toolContainerColor()
-                    },
-                    border = if (isSelected) null else toolBorder(),
-                ) {
-                    ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
-                }
+                    compact = compact,
+                    iconUrl = tab.iconUrl,
+                    count = tab.count,
+                )
             } else {
                 FlatChip(
                     label = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
@@ -108,42 +96,6 @@ internal fun FlatChip(label: String, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-        )
-    }
-}
-
-@Composable
-private fun <T> ChipPillContent(tab: ChipTab<T>, compact: Boolean, isSelected: Boolean) {
-    Row(
-        modifier = Modifier.padding(
-            horizontal = 16.dp,
-            vertical = if (compact) 6.dp else 10.dp,
-        ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (!tab.iconUrl.isNullOrBlank()) {
-            SubcomposeAsyncImage(
-                model = tab.iconUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                loading = {},
-                error = {},
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-        }
-        Text(
-            text = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
-            style = if (compact) {
-                MaterialTheme.typography.bodyMedium
-            } else {
-                MaterialTheme.typography.labelLarge
-            },
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
         )
     }
 }

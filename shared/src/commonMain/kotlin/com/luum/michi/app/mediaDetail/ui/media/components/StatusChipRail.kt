@@ -3,18 +3,12 @@ package com.luum.michi.app.mediaDetail.ui.media.components
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
-import com.luum.michi.app.ui.components.PillShape
-import com.luum.michi.app.ui.components.toolBorder
-import com.luum.michi.app.ui.components.toolContainerColor
+import com.luum.michi.app.ui.components.ChipPill
 
 /**
  * Single-select status chips in a horizontal rail (the editor goes rail,
@@ -37,28 +31,11 @@ internal fun StatusChipRail(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         options.forEachIndexed { index, option ->
-            val isSelected = option == selected
-            Surface(
+            ChipPill(
+                label = labels[index],
+                selected = option == selected,
                 onClick = { onSelect(option) },
-                shape = PillShape,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    toolContainerColor()
-                },
-                border = if (isSelected) null else toolBorder(),
-            ) {
-                Text(
-                    text = labels[index],
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                )
-            }
+            )
         }
     }
 }

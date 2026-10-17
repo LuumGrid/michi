@@ -10,8 +10,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
-import com.luum.michi.app.ui.components.ChipRail
-import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.CatalogChipRail
 import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.toPosterItem
@@ -68,13 +67,12 @@ internal fun GenreDetailScreen(
                     // The catalog switch is the grid's only header: the genre
                     // name already reads in the toolbar, so no title item and no
                     // "Works" line.
-                    ChipRail(
-                        tabs = listOf(
-                            ChipTab(value = MediaType.ANIME, label = strings.animeLabel),
-                            ChipTab(value = MediaType.MANGA, label = strings.mangaLabel),
-                        ),
+                    CatalogChipRail(
+                        anime = MediaType.ANIME,
+                        manga = MediaType.MANGA,
                         selected = holder.type,
                         onSelect = { holder.changeType(it) },
+                        strings = strings,
                     )
                 }
             },

@@ -54,8 +54,9 @@ import com.luum.michi.app.ui.components.OptionList
 import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.PullRefresh
+import com.luum.michi.app.ui.components.AppButton
 import com.luum.michi.app.ui.components.Avatar
-import com.luum.michi.app.ui.components.GlassButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
@@ -430,18 +431,17 @@ internal fun SettingsScreen(
 
     if (startSectionSheet) {
         val sectionTitle = startDestination.sectionTitle
-        if (sectionTitle != null) {
-            val selectedChoice = startDestination.sectionChoices
-                .firstOrNull { it.value == startDestination.sectionValue }
-                ?: startDestination.sectionChoices.first()
+        val choices = startDestination.sectionChoices
+        if (sectionTitle != null && choices.isNotEmpty()) {
             PickerSheet(
                 title = sectionTitle,
                 dismissLabel = strings.dismissAction,
                 onDismiss = { startSectionSheet = false },
-                options = startDestination.sectionChoices,
-                selected = selectedChoice,
+                options = choices,
+                selected = choices.first(),
                 label = { it.label },
                 onSelect = { onStartSectionChange(it.value) },
+                isSelected = { it.value == startDestination.sectionValue },
             )
         }
     }
@@ -575,13 +575,14 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { signOutConfirmSheet = false },
             footer = {
-                GlassButton(
+                AppButton(
                     label = strings.settingsSignOutConfirmAction,
                     onClick = {
                         signOutConfirmSheet = false
                         accountSheet = false
                         onLogout()
                     },
+                    emphasis = ButtonEmphasis.Secondary,
                     containerColor = null,
                     contentColor = MaterialTheme.colorScheme.error,
                 )

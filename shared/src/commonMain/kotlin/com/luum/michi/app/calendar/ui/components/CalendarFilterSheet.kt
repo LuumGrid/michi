@@ -2,6 +2,7 @@ package com.luum.michi.app.calendar.ui.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -9,7 +10,8 @@ import com.luum.michi.app.calendar.domain.model.CalendarSeasonFilter
 import com.luum.michi.app.calendar.domain.model.CalendarStatusFilter
 import com.luum.michi.app.calendar.domain.model.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.ui.components.GhostButton
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionList
 import com.luum.michi.app.ui.language.Strings
@@ -36,9 +38,11 @@ internal fun CalendarFilterSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         footer = {
-            GhostButton(
+            AppButton(
                 label = strings.filterResetAction,
                 onClick = onReset,
+                emphasis = ButtonEmphasis.Secondary,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
     ) {

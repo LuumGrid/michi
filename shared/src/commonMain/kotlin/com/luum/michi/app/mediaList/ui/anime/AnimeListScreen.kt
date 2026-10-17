@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.catalogMetaLine
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
@@ -100,14 +101,10 @@ internal fun AnimeListScreen(
 }
 
 /** Anime meta line: format + season/year + work status. */
-private fun animeEntryMeta(entry: AnimeListEntry, strings: LanguageStrings): String {
-    val seasonYear = entry.season?.let { season ->
-        val year = entry.seasonYear?.toString()
-        if (year != null) "${season.label(strings)} $year" else season.label(strings)
-    } ?: entry.seasonYear?.toString()
-    return listOfNotNull(
-        entry.format.label(strings.formatUnknownLabel),
-        seasonYear,
-        entry.mediaStatus?.label(strings, isManga = false),
-    ).joinToString(" · ")
-}
+private fun animeEntryMeta(entry: AnimeListEntry, strings: LanguageStrings): String =
+    catalogMetaLine(
+        format = entry.format.label(strings.formatUnknownLabel),
+        season = entry.season?.label(strings),
+        year = entry.seasonYear,
+        status = entry.mediaStatus?.label(strings, isManga = false),
+    )

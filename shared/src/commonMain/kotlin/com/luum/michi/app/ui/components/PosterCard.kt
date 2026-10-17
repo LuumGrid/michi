@@ -1,11 +1,8 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -14,14 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.ui.rememberCoverUrl
-import com.luum.michi.app.ui.theme.brandColor
 
 /**
  * The one poster card of the app: a portrait cover (token-sized) + up to two
@@ -57,44 +49,30 @@ internal fun PosterCard(
                 .width(size.width)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         ) {
-            Box(
-                modifier = Modifier
-                    .coverSize(size)
-                    .clip(CoverShape)
-                    .background(
-                        placeholderHex?.let { brandColor(it) }
-                            ?: MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-            ) {
-                val url = rememberCoverUrl(cover, size)
-                if (!url.isNullOrBlank()) {
-                    SubcomposeAsyncImage(
-                        model = url,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        loading = {},
-                        error = {},
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-                // First badge top-start, second top-end (max two by design).
-                stats.getOrNull(0)?.let {
-                    CoverStatBadge(
-                        stat = it,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(4.dp),
-                    )
-                }
-                stats.getOrNull(1)?.let {
-                    CoverStatBadge(
-                        stat = it,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp),
-                    )
-                }
-            }
+            CoverImage(
+                cover = cover,
+                size = size,
+                placeholderHex = placeholderHex,
+                overlay = {
+                    // First badge top-start, second top-end (max two by design).
+                    stats.getOrNull(0)?.let {
+                        CoverStatBadge(
+                            stat = it,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(4.dp),
+                        )
+                    }
+                    stats.getOrNull(1)?.let {
+                        CoverStatBadge(
+                            stat = it,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp),
+                        )
+                    }
+                },
+            )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = title,

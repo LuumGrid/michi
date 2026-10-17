@@ -24,13 +24,13 @@ import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.mediaDetail.ui.media.components.EditorCounterField
 import com.luum.michi.app.mediaDetail.ui.media.components.StatusChipRail
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.DatePickerField
-import com.luum.michi.app.ui.components.GlassButton
 import com.luum.michi.app.ui.components.SheetTextField
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.PrimaryButton
 import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.icons.AppIcons
@@ -91,7 +91,7 @@ internal fun MediaEntryEditorSheet(
             if (!editor.isLoadingDetail && editor.data != null) {
                 if (editor.isExisting) {
                     Box(modifier = Modifier.weight(1f)) {
-                        GlassButton(
+                        AppButton(
                             label = strings.mediaDetailEditorDeleteAction,
                             onClick = {
                                 // A previous save failure must not show up on
@@ -99,15 +99,17 @@ internal fun MediaEntryEditorSheet(
                                 editor.clearError()
                                 confirmDelete = true
                             },
+                            emphasis = ButtonEmphasis.Secondary,
                             enabled = !busy,
                             contentColor = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
                 Box(modifier = Modifier.weight(1f)) {
-                    PrimaryButton(
+                    AppButton(
                         label = strings.saveAction,
                         onClick = { editor.save(onSaved) },
+                        emphasis = ButtonEmphasis.Primary,
                         enabled = !busy && editor.isDirty,
                     )
                 }
@@ -162,7 +164,7 @@ internal fun MediaEntryEditorSheet(
             onDismiss = { confirmDelete = false },
             footer = {
                 Box(modifier = Modifier.weight(1f)) {
-                    GlassButton(
+                    AppButton(
                         label = strings.confirmDeleteAction,
                         onClick = {
                             editor.delete {
@@ -170,6 +172,7 @@ internal fun MediaEntryEditorSheet(
                                 onDeleted()
                             }
                         },
+                        emphasis = ButtonEmphasis.Secondary,
                         enabled = !busy,
                         contentColor = MaterialTheme.colorScheme.error,
                     )
@@ -202,18 +205,20 @@ internal fun MediaEntryEditorSheet(
             onDismiss = { confirmDiscard = false },
             footer = {
                 Box(modifier = Modifier.weight(1f)) {
-                    GlassButton(
+                    AppButton(
                         label = strings.keepEditingAction,
                         onClick = { confirmDiscard = false },
+                        emphasis = ButtonEmphasis.Secondary,
                     )
                 }
                 Box(modifier = Modifier.weight(1f)) {
-                    GlassButton(
+                    AppButton(
                         label = strings.discardChangesConfirmAction,
                         onClick = {
                             confirmDiscard = false
                             onDismiss()
                         },
+                        emphasis = ButtonEmphasis.Secondary,
                         contentColor = MaterialTheme.colorScheme.error,
                     )
                 }

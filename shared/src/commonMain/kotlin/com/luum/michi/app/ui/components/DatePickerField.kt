@@ -53,9 +53,11 @@ internal fun DatePickerField(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        GhostButton(
+        AppButton(
             label = buttonLabel ?: millis?.let { formatDateLabel(it, strings) } ?: strings.selectDateAction,
             onClick = { showPicker = true },
+            emphasis = ButtonEmphasis.Secondary,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     if (showPicker) {

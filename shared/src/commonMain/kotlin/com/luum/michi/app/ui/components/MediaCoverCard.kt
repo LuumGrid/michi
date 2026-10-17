@@ -1,8 +1,6 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -18,13 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.model.CoverSizes
-import com.luum.michi.app.ui.rememberCoverUrl
 
 /**
  * Shared cover row: portrait cover + title + optional subtitle + caller-owned
@@ -77,10 +71,7 @@ internal fun MediaCoverCard(
             ) {
                 // Both dimensions come from the token; the row height derives
                 // from it, so the cover and the card can never drift apart.
-                MediaCoverImage(
-                    cover = cover,
-                    modifier = Modifier.coverSize(CoverSize.List),
-                )
+                CoverImage(cover = cover, size = CoverSize.List)
                 Spacer(modifier = Modifier.width(12.dp))
                 // Header top-anchored, slot filling the rest: bottom pills
                 // terminate flush with the cover bottom. Bounded by the fixed Row
@@ -127,39 +118,3 @@ internal fun MediaCoverCard(
 
 /** List-row height so its cover is exactly [CoverSize.List] plus the row padding. */
 private val CardHeight = CoverSize.List.height + 24.dp
-
-@Composable
-private fun MediaCoverImage(
-    cover: CoverSizes?,
-    modifier: Modifier = Modifier,
-) {
-    val url = rememberCoverUrl(cover, CoverSize.List)
-    if (url.isNullOrBlank()) {
-        Box(
-            modifier = modifier
-                .clip(CoverShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-        )
-    } else {
-        SubcomposeAsyncImage(
-            model = url,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                )
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                )
-            },
-            modifier = modifier.clip(CoverShape),
-        )
-    }
-}

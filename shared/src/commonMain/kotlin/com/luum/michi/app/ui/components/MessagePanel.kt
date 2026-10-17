@@ -62,9 +62,10 @@ internal fun MessagePanel(
         }
         if (actionLabel != null && onAction != null) {
             Spacer(modifier = Modifier.height(16.dp))
-            PrimaryButton(
+            AppButton(
                 label = actionLabel,
                 onClick = onAction,
+                emphasis = ButtonEmphasis.Primary,
             )
         }
     }

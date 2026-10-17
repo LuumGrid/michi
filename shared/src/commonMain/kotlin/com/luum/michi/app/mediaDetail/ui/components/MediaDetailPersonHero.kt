@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -15,26 +14,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.compactCount
-import com.luum.michi.app.ui.components.CoverShape
+import com.luum.michi.app.ui.components.CoverImage
 import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.FlatChip
-import com.luum.michi.app.ui.components.coverSize
-import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.rememberCoverUrl
 
 /**
  * Shared person hero (character/staff/studio). With a portrait it is a row —
@@ -113,24 +106,11 @@ private fun MediaDetailPageTitle(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PersonPortrait(image: CoverSizes?) {
-    Surface(
-        shape = CoverShape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = flatBorder(),
-        modifier = Modifier.coverSize(CoverSize.Featured),
-    ) {
-        val url = rememberCoverUrl(image, CoverSize.Featured)
-        if (!url.isNullOrBlank()) {
-            SubcomposeAsyncImage(
-                model = url,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                loading = {},
-                error = {},
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-    }
+    CoverImage(
+        cover = image,
+        size = CoverSize.Featured,
+        bordered = true,
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

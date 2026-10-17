@@ -28,18 +28,17 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.compactCount
+import com.luum.michi.app.ui.components.CoverImage
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.core.media.domain.airingCountdown
 import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
-import com.luum.michi.app.ui.components.CoverShape
 import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.rememberCoverUrl
-import com.luum.michi.app.ui.components.coverSize
 
 /**
  * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover is
@@ -67,24 +66,11 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                 paletteHex = detail.paletteHex,
                 modifier = Modifier.fillMaxSize(),
             )
-            Surface(
-                shape = CoverShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = flatBorder(),
-                modifier = Modifier.coverSize(CoverSize.Featured),
-            ) {
-                val image = rememberCoverUrl(detail.cover, CoverSize.Featured)
-                if (!image.isNullOrBlank()) {
-                    SubcomposeAsyncImage(
-                        model = image,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        loading = {},
-                        error = {},
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
+            CoverImage(
+                cover = detail.cover,
+                size = CoverSize.Featured,
+                bordered = true,
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
         Column(
@@ -200,12 +186,7 @@ internal fun MediaDetailHeroStats(detail: MediaDetail, strings: LanguageStrings)
 @Composable
 internal fun MediaDetailNextEpisodeBand(detail: MediaDetail, strings: LanguageStrings) {
     val next = detail.upcomingNextEpisode() ?: return
-    val seconds = next.timeUntilAiringSeconds ?: 0L
-    val countdown = strings.airingCountdownLabel(
-        days = (seconds / 86_400).toInt(),
-        hours = ((seconds % 86_400) / 3_600).toInt(),
-        minutes = ((seconds % 3_600) / 60).toInt(),
-    )
+    val countdown = airingCountdown(strings, next.timeUntilAiringSeconds ?: 0L) ?: return
     Column(
         modifier = Modifier
             .fillMaxWidth()

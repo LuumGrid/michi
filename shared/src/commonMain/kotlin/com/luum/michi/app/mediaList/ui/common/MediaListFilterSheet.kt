@@ -17,7 +17,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.FilterOption
-import com.luum.michi.app.ui.components.GhostButton
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.ModalSheet
@@ -60,9 +61,11 @@ internal fun MediaListFilterSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         footer = {
-            GhostButton(
+            AppButton(
                 label = strings.filterResetAction,
                 onClick = onReset,
+                emphasis = ButtonEmphasis.Secondary,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
     ) {

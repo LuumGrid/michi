@@ -15,7 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.ui.components.GhostButton
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.ToolbarAction
@@ -78,9 +79,11 @@ internal fun AuthModal(
             configMissingLabel = configMissingLabel,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        GhostButton(
+        AppButton(
             label = guestLabel,
             onClick = onDismiss,
+            emphasis = ButtonEmphasis.Secondary,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 

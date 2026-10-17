@@ -12,9 +12,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.calendar.domain.CalendarEntry
 import com.luum.michi.app.calendar.domain.model.StreamingPlatform
-import com.luum.michi.app.calendar.domain.model.airingCountdownLabel
 import com.luum.michi.app.calendar.domain.model.formatAiringTime
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.airingCountdown
+import com.luum.michi.app.core.media.domain.catalogMetaLine
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
@@ -41,20 +42,13 @@ internal fun CalendarReleaseRow(
     modifier: Modifier = Modifier,
 ) {
     val item = entry.item
-    val seasonYear = item.season?.let { season ->
-        val year = item.seasonYear?.toString()
-        if (year != null) "${season.label(strings)} $year" else season.label(strings)
-    } ?: item.seasonYear?.toString()
-    val meta = listOfNotNull(
-        item.format?.label(strings.formatUnknownLabel),
-        seasonYear,
-        item.mediaStatus?.label(strings, isManga = false),
-    ).joinToString(" · ")
-    val countdown = airingCountdownLabel(
-        strings = strings,
-        airingAtEpochSeconds = item.airingAtEpoch,
-        nowEpochSeconds = nowEpochSeconds,
+    val meta = catalogMetaLine(
+        format = item.format?.label(strings.formatUnknownLabel),
+        season = item.season?.label(strings),
+        year = item.seasonYear,
+        status = item.mediaStatus?.label(strings, isManga = false),
     )
+    val countdown = airingCountdown(strings, item.airingAtEpoch - nowEpochSeconds)
     val episodeLine = buildString {
         append(strings.calendarEpisodeLabel(item.episode))
         append(" - ")
