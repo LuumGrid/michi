@@ -23,8 +23,9 @@ import androidx.compose.ui.unit.dp
  * [trailing] to replace the checkbox (e.g. checkbox + expand chevron on
  * accordion rows). Whole row is selectable so accessibility services
  * announce the selected state; the checkbox is display-only
- * (null onCheckedChange). Set [divider]=false on the first row of each
- * [OptionGroup].
+ * (null onCheckedChange). [role] defaults to a radio (single-select); a
+ * multi-select caller passes [Role.Checkbox]. Set [divider]=false on the
+ * first row of each [OptionGroup].
  */
 @Composable
 internal fun OptionRow(
@@ -35,6 +36,7 @@ internal fun OptionRow(
     divider: Boolean = true,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    role: Role = Role.RadioButton,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
@@ -43,7 +45,7 @@ internal fun OptionRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+                .selectable(selected = selected, onClick = onClick, role = role)
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -59,6 +61,9 @@ internal fun OptionRow(
             if (trailing != null) {
                 trailing()
             } else {
+                // Same 12dp gap the multi-select filter rows use, so a checkbox
+                // sits in the same place whatever the row kind.
+                Spacer(modifier = Modifier.width(12.dp))
                 Checkbox(
                     checked = selected,
                     onCheckedChange = null,

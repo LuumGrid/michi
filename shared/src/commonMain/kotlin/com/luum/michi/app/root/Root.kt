@@ -114,8 +114,8 @@ import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.components.ActionRow
 import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionRow
 import com.luum.michi.app.ui.components.SearchScrim
 import com.luum.michi.app.ui.components.SortSheet
 import com.luum.michi.app.ui.components.TabBar
@@ -1144,24 +1144,20 @@ internal fun Root(
                     onDismiss = { state.closeDetailMenu() },
                 ) {
                     OptionGroup(title = null) {
-                        OptionRow(
+                        ActionRow(
                             label = strings.mediaDetailOpenInAniListAction,
-                            selected = false,
                             onClick = {
                                 state.closeDetailMenu()
                                 urlOpener.open(detailMenu.url)
                             },
                             divider = false,
-                            trailing = {},
                         )
-                        OptionRow(
+                        ActionRow(
                             label = strings.mediaDetailShareAction,
-                            selected = false,
                             onClick = {
                                 state.closeDetailMenu()
                                 shareLauncher.share(text = detailMenu.shareText, subject = detailMenu.title)
                             },
-                            trailing = {},
                         )
                     }
                 }

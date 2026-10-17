@@ -217,7 +217,7 @@ object SpanishStrings : LanguageStrings {
     override val settingsInformationSection = "Información"
     override val settingsThemeTitle = "Tema"
     override val settingsStyleTitle = "Estilo de color"
-    override val settingsSurfaceTitle = "Estilo de superficie"
+    override val settingsSurfaceTitle = "Estilo flotante"
     override val settingsImageQualityTitle = "Calidad de imágenes"
     override val settingsStartTabTitle = "Pestaña al abrir"
     override val settingsStartSectionTitle = "Sección al abrir"

@@ -17,12 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,12 +50,13 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
+import com.luum.michi.app.ui.components.OptionList
 import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.GlassButton
-import com.luum.michi.app.ui.components.SheetActionBar
-import com.luum.michi.app.ui.components.OptionRow
+import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.theme.AppFont
@@ -70,6 +68,7 @@ import com.luum.michi.app.ui.theme.ThemeType
 import com.luum.michi.app.ui.theme.displayName
 import com.luum.michi.app.ui.theme.fontFamilyFor
 import com.luum.michi.app.ui.theme.paletteDisplayName
+import com.luum.michi.app.ui.theme.paletteIdOf
 import com.luum.michi.app.ui.theme.PaletteStyles
 import com.luum.michi.app.ui.theme.paletteStyleDisplayName
 import com.materialkolor.PaletteStyle
@@ -217,7 +216,7 @@ internal fun SettingsScreen(
                             value = settingsState.staffNameLanguage.label(strings),
                             onClick = { staffNameLanguageSheet = true },
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.settingsAdultContentTitle,
                             subtitle = strings.settingsAdultContentSubtitle,
                             checked = settingsState.displayAdultContent,
@@ -238,25 +237,25 @@ internal fun SettingsScreen(
                             onClick = { sortSheet = true },
                             divider = false,
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.settingsSplitCompletedAnimeTitle,
                             subtitle = strings.settingsSplitCompletedAnimeSubtitle,
                             checked = settingsState.splitCompletedAnime,
                             onCheckedChange = { settingsState.splitCompletedAnime = it },
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.settingsSplitCompletedMangaTitle,
                             subtitle = strings.settingsSplitCompletedMangaSubtitle,
                             checked = settingsState.splitCompletedManga,
                             onCheckedChange = { settingsState.splitCompletedManga = it },
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.settingsAdvancedScoringTitle,
                             subtitle = strings.settingsAdvancedScoringSubtitle,
                             checked = settingsState.advancedScoring,
                             onCheckedChange = { settingsState.advancedScoring = it },
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.settingsPersistSortTitle,
                             subtitle = strings.settingsPersistSortSubtitle,
                             checked = settingsState.persistListSort,
@@ -266,7 +265,7 @@ internal fun SettingsScreen(
                 }
                 item {
                     OptionGroup(title = strings.notificationsSection) {
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.notificationsAiringTitle,
                             subtitle = null,
                             checked = settingsState.notifications.airing,
@@ -276,7 +275,7 @@ internal fun SettingsScreen(
                             },
                             divider = false,
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.notificationsMessagesTitle,
                             subtitle = null,
                             checked = settingsState.notifications.messages,
@@ -285,7 +284,7 @@ internal fun SettingsScreen(
                                     settingsState.notifications.copy(messages = it)
                             },
                         )
-                        SettingsToggleRow(
+                        ToggleRow(
                             title = strings.notificationsMediaTitle,
                             subtitle = null,
                             checked = settingsState.notifications.media,
@@ -330,24 +329,15 @@ internal fun SettingsScreen(
     }
 
     if (languageSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.languageLabel,
             dismissLabel = strings.dismissAction,
             onDismiss = { languageSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                AppLanguage.available.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.displayName,
-                        selected = option == language,
-                        onClick = {
-                            onLanguageChange(option)
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = AppLanguage.available,
+            selected = language,
+            label = { it.displayName },
+            onSelect = { onLanguageChange(it) },
+        )
     }
 
     if (themeSheet) {
@@ -371,218 +361,137 @@ internal fun SettingsScreen(
     }
 
     if (fontSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.themeFontSection,
             dismissLabel = strings.dismissAction,
             onDismiss = { fontSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                AppFont.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.displayName,
-                        selected = option == font,
-                        onClick = {
-                            onFontChange(option)
-                        },
-                        divider = index > 0,
-                        leading = {
-                            Text(
-                                text = "Ag",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontFamily = fontFamilyFor(option),
-                                ),
-                            )
-                        },
-                    )
-                }
-            }
-        }
+            options = AppFont.entries,
+            selected = font,
+            label = { it.displayName },
+            onSelect = { onFontChange(it) },
+            leading = { option ->
+                Text(
+                    text = "Ag",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = fontFamilyFor(option),
+                    ),
+                )
+            },
+        )
     }
 
     if (surfaceSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsSurfaceTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { surfaceSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                SurfaceStyle.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == surfaces,
-                        onClick = {
-                            onSurfacesChange(option)
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = SurfaceStyle.entries,
+            selected = surfaces,
+            label = { it.label(strings) },
+            onSelect = { onSurfacesChange(it) },
+        )
     }
 
     if (styleSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsStyleTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { styleSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                PaletteStyles.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = paletteStyleDisplayName(option),
-                        selected = option == themeStyle,
-                        onClick = {
-                            onThemeStyleChange(option)
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = PaletteStyles,
+            selected = themeStyle,
+            label = { paletteStyleDisplayName(it) },
+            onSelect = { onThemeStyleChange(it) },
+        )
     }
 
     if (imageQualitySheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsImageQualityTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { imageQualitySheet = false },
-        ) {
-            OptionGroup(title = null) {
-                ImageQuality.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = imageQualityLabel(option, strings),
-                        selected = option == settingsState.imageQuality,
-                        onClick = { settingsState.imageQuality = option },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = ImageQuality.entries,
+            selected = settingsState.imageQuality,
+            label = { imageQualityLabel(it, strings) },
+            onSelect = { settingsState.imageQuality = it },
+        )
     }
 
     if (startTabSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsStartTabTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { startTabSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                StartTabOption.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == startDestination.tab,
-                        onClick = { onStartTabChange(option) },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = StartTabOption.entries,
+            selected = startDestination.tab,
+            label = { it.label(strings) },
+            onSelect = { onStartTabChange(it) },
+        )
     }
 
     if (startSectionSheet) {
         val sectionTitle = startDestination.sectionTitle
         if (sectionTitle != null) {
-            ModalSheet(
+            val selectedChoice = startDestination.sectionChoices
+                .firstOrNull { it.value == startDestination.sectionValue }
+                ?: startDestination.sectionChoices.first()
+            PickerSheet(
                 title = sectionTitle,
                 dismissLabel = strings.dismissAction,
                 onDismiss = { startSectionSheet = false },
-            ) {
-                OptionGroup(title = null) {
-                    startDestination.sectionChoices.forEachIndexed { index, choice ->
-                        OptionRow(
-                            label = choice.label,
-                            selected = choice.value == startDestination.sectionValue,
-                            onClick = { onStartSectionChange(choice.value) },
-                            divider = index > 0,
-                        )
-                    }
-                }
-            }
+                options = startDestination.sectionChoices,
+                selected = selectedChoice,
+                label = { it.label },
+                onSelect = { onStartSectionChange(it.value) },
+            )
         }
     }
 
     if (titleLanguageSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsTitleLanguageTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { titleLanguageSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                TitleLanguage.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == settingsState.titleLanguage,
-                        onClick = {
-                            settingsState.titleLanguage = option
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = TitleLanguage.entries,
+            selected = settingsState.titleLanguage,
+            label = { it.label(strings) },
+            onSelect = { settingsState.titleLanguage = it },
+        )
     }
 
     if (staffNameLanguageSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsStaffNameTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { staffNameLanguageSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                StaffNameLanguage.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == settingsState.staffNameLanguage,
-                        onClick = {
-                            settingsState.staffNameLanguage = option
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = StaffNameLanguage.entries,
+            selected = settingsState.staffNameLanguage,
+            label = { it.label(strings) },
+            onSelect = { settingsState.staffNameLanguage = it },
+        )
     }
 
     if (scoreFormatSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsScoreFormatTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { scoreFormatSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                ScoreFormat.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == settingsState.scoreFormat,
-                        onClick = {
-                            settingsState.scoreFormat = option
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = ScoreFormat.entries,
+            selected = settingsState.scoreFormat,
+            label = { it.label(strings) },
+            onSelect = { settingsState.scoreFormat = it },
+        )
     }
 
     if (sortSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.settingsListSortTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { sortSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                ListSort.entries.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.label(strings),
-                        selected = option == settingsState.listSort,
-                        onClick = {
-                            settingsState.listSort = option
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = ListSort.entries,
+            selected = settingsState.listSort,
+            label = { it.label(strings) },
+            onSelect = { settingsState.listSort = it },
+        )
     }
 
     if (aboutSheet) {
@@ -666,18 +575,16 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { signOutConfirmSheet = false },
             footer = {
-                SheetActionBar {
-                    GlassButton(
-                        label = strings.settingsSignOutConfirmAction,
-                        onClick = {
-                            signOutConfirmSheet = false
-                            accountSheet = false
-                            onLogout()
-                        },
-                        containerColor = null,
-                        contentColor = MaterialTheme.colorScheme.error,
-                    )
-                }
+                GlassButton(
+                    label = strings.settingsSignOutConfirmAction,
+                    onClick = {
+                        signOutConfirmSheet = false
+                        accountSheet = false
+                        onLogout()
+                    },
+                    containerColor = null,
+                    contentColor = MaterialTheme.colorScheme.error,
+                )
             },
         ) {
             Text(
@@ -697,21 +604,14 @@ private fun ThemeModeSection(
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
 ) {
-    OptionGroup(
+    OptionList(
+        options = ThemeType.entries,
+        selected = themeType,
+        label = { it.label(strings) },
+        onSelect = { onThemeTypeChange(it) },
         title = strings.themeModeSection,
         modifier = modifier,
-    ) {
-        ThemeType.entries.forEachIndexed { index, option ->
-            OptionRow(
-                label = option.label(strings),
-                selected = option == themeType,
-                onClick = {
-                    onThemeTypeChange(option)
-                },
-                divider = index > 0,
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -721,29 +621,24 @@ private fun ThemePaletteSection(
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
 ) {
-    OptionGroup(
+    OptionList(
+        options = ThemePalettes.map { it.second },
+        selected = palette,
+        label = { paletteDisplayName(it) },
+        onSelect = { onPaletteChange(it) },
         title = strings.themePaletteSection,
         modifier = modifier,
-    ) {
-        ThemePalettes.forEachIndexed { index, (name, option) ->
-            OptionRow(
-                label = name,
-                selected = option::class == palette::class,
-                onClick = {
-                    onPaletteChange(option)
-                },
-                divider = index > 0,
-                leading = {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .background(option.seed),
-                    )
-                },
+        // Palette classes have no equals: compare by persisted id instead.
+        isSelected = { paletteIdOf(it) == paletteIdOf(palette) },
+        leading = { option ->
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(option.seed),
             )
-        }
-    }
+        },
+    )
 }
 
 /** Session card, first in Settings (identity before prefs). Plain [OptionGroup]:
@@ -804,52 +699,6 @@ private fun initialsFor(name: String): String {
     val first = parts.first().first().uppercaseChar()
     val second = parts.getOrNull(1)?.first()?.uppercaseChar()
     return if (second != null) "$first$second" else "$first"
-}
-
-/** Inline toggle row: title + optional subtitle with a trailing Switch. */
-@Composable
-private fun SettingsToggleRow(
-    title: String,
-    subtitle: String?,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    divider: Boolean = true,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (divider) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .toggleable(
-                    value = checked,
-                    onValueChange = onCheckedChange,
-                    role = Role.Switch,
-                )
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Switch(
-                checked = checked,
-                onCheckedChange = null,
-            )
-        }
-    }
 }
 
 /** Inline error with retry, shown only when the last load/save failed. Same frame

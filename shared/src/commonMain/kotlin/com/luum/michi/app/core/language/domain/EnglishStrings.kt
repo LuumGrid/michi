@@ -215,7 +215,7 @@ object EnglishStrings : LanguageStrings {
     override val settingsInformationSection = "Information"
     override val settingsThemeTitle = "Theme"
     override val settingsStyleTitle = "Color style"
-    override val settingsSurfaceTitle = "Surface style"
+    override val settingsSurfaceTitle = "Floating style"
     override val settingsImageQualityTitle = "Image quality"
     override val settingsStartTabTitle = "Start tab"
     override val settingsStartSectionTitle = "Start section"

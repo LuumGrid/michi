@@ -11,9 +11,7 @@ import com.luum.michi.app.calendar.domain.model.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.ui.components.GhostButton
 import com.luum.michi.app.ui.components.ModalSheet
-import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionRow
-import com.luum.michi.app.ui.components.SheetActionBar
+import com.luum.michi.app.ui.components.OptionList
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -38,34 +36,26 @@ internal fun CalendarFilterSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         footer = {
-            SheetActionBar {
-                GhostButton(
-                    label = strings.filterResetAction,
-                    onClick = onReset,
-                )
-            }
+            GhostButton(
+                label = strings.filterResetAction,
+                onClick = onReset,
+            )
         },
     ) {
-        OptionGroup(title = strings.seasonLabel) {
-            CalendarSeasonFilter.entries.forEachIndexed { index, option ->
-                OptionRow(
-                    label = option.label(strings),
-                    selected = option == season,
-                    onClick = { onSelectSeason(option) },
-                    divider = index != 0,
-                )
-            }
-        }
+        OptionList(
+            options = CalendarSeasonFilter.entries,
+            selected = season,
+            label = { it.label(strings) },
+            onSelect = { onSelectSeason(it) },
+            title = strings.seasonLabel,
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        OptionGroup(title = strings.statusLabel) {
-            CalendarStatusFilter.entries.forEachIndexed { index, option ->
-                OptionRow(
-                    label = option.label(strings),
-                    selected = option == status,
-                    onClick = { onSelectStatus(option) },
-                    divider = index != 0,
-                )
-            }
-        }
+        OptionList(
+            options = CalendarStatusFilter.entries,
+            selected = status,
+            label = { it.label(strings) },
+            onSelect = { onSelectStatus(it) },
+            title = strings.statusLabel,
+        )
     }
 }

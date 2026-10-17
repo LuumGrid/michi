@@ -3,9 +3,7 @@ package com.luum.michi.app.mediaDetail.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.ui.components.ModalSheet
-import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionRow
+import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.TrailingPill
 import com.luum.michi.app.ui.icons.AppIcons
 
@@ -45,7 +43,7 @@ internal fun MediaDetailVoiceLanguagePill(
     )
 }
 
-/** Single-select voice-language sheet (`OptionGroup` + `OptionRow`, like the settings pickers). */
+/** Single-select voice-language sheet (the shared [PickerSheet] with an [OptionList]). */
 @Composable
 internal fun MediaDetailVoiceLanguageSheet(
     selected: String,
@@ -53,20 +51,14 @@ internal fun MediaDetailVoiceLanguageSheet(
     onDismiss: () -> Unit,
     strings: LanguageStrings,
 ) {
-    ModalSheet(
+    val options = voiceLanguageOptions(strings)
+    PickerSheet(
         title = strings.mediaDetailVoiceLanguageLabel,
         dismissLabel = strings.dismissAction,
         onDismiss = onDismiss,
-    ) {
-        OptionGroup(title = null) {
-            voiceLanguageOptions(strings).forEachIndexed { index, option ->
-                OptionRow(
-                    label = option.label,
-                    selected = option.value == selected,
-                    onClick = { onSelect(option.value) },
-                    divider = index != 0,
-                )
-            }
-        }
-    }
+        options = options,
+        selected = options.firstOrNull { it.value == selected } ?: options.first(),
+        label = { it.label },
+        onSelect = { onSelect(it.value) },
+    )
 }

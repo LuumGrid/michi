@@ -17,8 +17,7 @@ import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.ui.components.GhostButton
 import com.luum.michi.app.ui.components.ModalSheet
-import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionRow
+import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
@@ -86,24 +85,15 @@ internal fun AuthModal(
     }
 
     if (languageSheet) {
-        ModalSheet(
+        PickerSheet(
             title = strings.languageLabel,
             dismissLabel = strings.dismissAction,
             onDismiss = { languageSheet = false },
-        ) {
-            OptionGroup(title = null) {
-                AppLanguage.available.forEachIndexed { index, option ->
-                    OptionRow(
-                        label = option.displayName,
-                        selected = option == language,
-                        onClick = {
-                            onLanguageChange(option)
-                        },
-                        divider = index > 0,
-                    )
-                }
-            }
-        }
+            options = AppLanguage.available,
+            selected = language,
+            label = { it.displayName },
+            onSelect = { onLanguageChange(it) },
+        )
     }
 }
 

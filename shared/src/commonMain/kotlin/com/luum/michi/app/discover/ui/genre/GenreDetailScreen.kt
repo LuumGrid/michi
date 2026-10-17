@@ -2,6 +2,7 @@ package com.luum.michi.app.discover.ui.genre
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,8 +50,9 @@ internal fun GenreDetailScreen(
         dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
     ) {
+        val posterItems = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
         DetailPosterGrid(
-            items = holder.media.items.map { it.toPosterItem() },
+            items = posterItems,
             onSelect = onOpenMedia,
             isLoading = holder.isLoading,
             isLoadingMore = holder.media.isLoadingMore,

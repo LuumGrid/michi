@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.FilterOption
@@ -22,7 +23,6 @@ import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.OptionRow
-import com.luum.michi.app.ui.components.SheetActionBar
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -60,12 +60,10 @@ internal fun MediaListFilterSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         footer = {
-            SheetActionBar {
-                GhostButton(
-                    label = strings.filterResetAction,
-                    onClick = onReset,
-                )
-            }
+            GhostButton(
+                label = strings.filterResetAction,
+                onClick = onReset,
+            )
         },
     ) {
         OptionGroup(title = strings.seasonLabel) {
@@ -141,22 +139,24 @@ internal fun MediaListFilterSheet(
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = strings.exploreFilterGenreLabel) {
             genres.forEachIndexed { index, genre ->
-                FilterCheckRow(
+                OptionRow(
                     label = genre,
-                    checked = genre in selectedGenres,
-                    onToggle = { onToggleGenre(genre) },
+                    selected = genre in selectedGenres,
+                    onClick = { onToggleGenre(genre) },
                     divider = index != 0,
+                    role = Role.Checkbox,
                 )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = strings.formatLabel) {
             formatOptions.forEachIndexed { index, option ->
-                FilterCheckRow(
+                OptionRow(
                     label = option.label,
-                    checked = option.id in selectedFormatIds,
-                    onToggle = { onToggleFormat(option.id) },
+                    selected = option.id in selectedFormatIds,
+                    onClick = { onToggleFormat(option.id) },
                     divider = index != 0,
+                    role = Role.Checkbox,
                 )
             }
         }

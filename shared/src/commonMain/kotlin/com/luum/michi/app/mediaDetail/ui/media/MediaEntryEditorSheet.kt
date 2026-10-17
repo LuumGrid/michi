@@ -23,7 +23,6 @@ import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.mediaDetail.ui.media.components.EditorCounterField
 import com.luum.michi.app.mediaDetail.ui.media.components.StatusChipRail
-import com.luum.michi.app.mediaDetail.ui.media.components.EditorToggleRow
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
 import com.luum.michi.app.ui.components.DatePickerField
 import com.luum.michi.app.ui.components.GlassButton
@@ -32,7 +31,7 @@ import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.PrimaryButton
-import com.luum.michi.app.ui.components.SheetActionBar
+import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
@@ -90,29 +89,27 @@ internal fun MediaEntryEditorSheet(
         },
         footer = {
             if (!editor.isLoadingDetail && editor.data != null) {
-                SheetActionBar {
-                    if (editor.isExisting) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            GlassButton(
-                                label = strings.mediaDetailEditorDeleteAction,
-                                onClick = {
-                                    // A previous save failure must not show up on
-                                    // the delete confirmation sheet.
-                                    editor.clearError()
-                                    confirmDelete = true
-                                },
-                                enabled = !busy,
-                                contentColor = MaterialTheme.colorScheme.error,
-                            )
-                        }
-                    }
+                if (editor.isExisting) {
                     Box(modifier = Modifier.weight(1f)) {
-                        PrimaryButton(
-                            label = strings.saveAction,
-                            onClick = { editor.save(onSaved) },
-                            enabled = !busy && editor.isDirty,
+                        GlassButton(
+                            label = strings.mediaDetailEditorDeleteAction,
+                            onClick = {
+                                // A previous save failure must not show up on
+                                // the delete confirmation sheet.
+                                editor.clearError()
+                                confirmDelete = true
+                            },
+                            enabled = !busy,
+                            contentColor = MaterialTheme.colorScheme.error,
                         )
                     }
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    PrimaryButton(
+                        label = strings.saveAction,
+                        onClick = { editor.save(onSaved) },
+                        enabled = !busy && editor.isDirty,
+                    )
                 }
             }
         },
@@ -164,20 +161,18 @@ internal fun MediaEntryEditorSheet(
             dismissLabel = strings.dismissAction,
             onDismiss = { confirmDelete = false },
             footer = {
-                SheetActionBar {
-                    Box(modifier = Modifier.weight(1f)) {
-                        GlassButton(
-                            label = strings.confirmDeleteAction,
-                            onClick = {
-                                editor.delete {
-                                    confirmDelete = false
-                                    onDeleted()
-                                }
-                            },
-                            enabled = !busy,
-                            contentColor = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                Box(modifier = Modifier.weight(1f)) {
+                    GlassButton(
+                        label = strings.confirmDeleteAction,
+                        onClick = {
+                            editor.delete {
+                                confirmDelete = false
+                                onDeleted()
+                            }
+                        },
+                        enabled = !busy,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
                 }
             },
         ) {
@@ -206,23 +201,21 @@ internal fun MediaEntryEditorSheet(
             dismissLabel = strings.dismissAction,
             onDismiss = { confirmDiscard = false },
             footer = {
-                SheetActionBar {
-                    Box(modifier = Modifier.weight(1f)) {
-                        GlassButton(
-                            label = strings.keepEditingAction,
-                            onClick = { confirmDiscard = false },
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        GlassButton(
-                            label = strings.discardChangesConfirmAction,
-                            onClick = {
-                                confirmDiscard = false
-                                onDismiss()
-                            },
-                            contentColor = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                Box(modifier = Modifier.weight(1f)) {
+                    GlassButton(
+                        label = strings.keepEditingAction,
+                        onClick = { confirmDiscard = false },
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    GlassButton(
+                        label = strings.discardChangesConfirmAction,
+                        onClick = {
+                            confirmDiscard = false
+                            onDismiss()
+                        },
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
                 }
             },
         ) {
@@ -382,13 +375,13 @@ private fun EditorBody(
         )
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = null) {
-            EditorToggleRow(
+            ToggleRow(
                 title = strings.privateLabel,
                 checked = editor.isPrivate,
                 onCheckedChange = { editor.updatePrivate(it) },
                 divider = false,
             )
-            EditorToggleRow(
+            ToggleRow(
                 title = strings.hiddenFromStatusListsLabel,
                 checked = editor.hiddenFromStatusLists,
                 onCheckedChange = { editor.updateHiddenFromStatusLists(it) },

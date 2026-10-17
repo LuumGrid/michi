@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaDetail.ui.studio
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -70,8 +71,9 @@ private fun StudioDetailGrid(
     onOpenMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val posterItems = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
     DetailPosterGrid(
-        items = holder.media.items.map { it.toPosterItem() },
+        items = posterItems,
         onSelect = onOpenMedia,
         isLoading = holder.isLoading,
         isLoadingMore = holder.media.isLoadingMore,

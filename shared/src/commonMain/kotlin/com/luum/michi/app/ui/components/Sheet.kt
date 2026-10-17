@@ -1,8 +1,11 @@
 package com.luum.michi.app.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,12 +27,11 @@ import com.luum.michi.app.ui.icons.AppIcons
 
 /**
  * Generic bottom sheet: [Toolbar] header (title + X, no status-bar insets)
- * over a scrollable caller-owned interior, plus an optional fixed [footer]
- * (e.g. [SheetActionBar]) pinned below the scroll — existing callers pass
- * nothing and render exactly as before. Dismiss via the X, the native
- * handle, tap-outside or system back. Used by language/theme pickers today;
- * filters and editors tomorrow. Takes only primitives + slots, so no
- * feature model leaks in.
+ * over a scrollable caller-owned interior, plus an optional fixed [footer] row
+ * pinned below the scroll — existing callers pass nothing and render exactly as
+ * before. Dismiss via the X, the native handle, tap-outside or system back.
+ * Used by language/theme pickers today; filters and editors tomorrow. Takes only
+ * primitives + slots, so no feature model leaks in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +40,9 @@ internal fun ModalSheet(
     dismissLabel: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    footer: (@Composable () -> Unit)? = null,
+    // Fixed action row: content laid out in a spaced [Row] (side-by-side
+    // buttons use `Modifier.weight(1f)`).
+    footer: (@Composable RowScope.() -> Unit)? = null,
     // Extra header actions ahead of the fixed X (e.g. the language switch
     // on the sign-in sheet). Empty everywhere else — existing callers
     // render exactly as before.
@@ -112,13 +116,14 @@ internal fun ModalSheet(
                 content()
             }
             if (footer != null) {
-                Box(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 24.dp, end = 24.dp, top = 12.dp),
-                ) {
-                    footer()
-                }
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = footer,
+                )
             }
         }
     }
