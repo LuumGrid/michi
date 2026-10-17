@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,14 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -37,9 +32,8 @@ import androidx.compose.ui.unit.dp
  * Faux glass on purpose — no backdrop-blur dependency; tune alphas on device.
  *
  * iOS-style grouping: a lone action is a [GlassCircle], adjacent same-side
- * actions merge into one capsule ([GlassShape]).
+ * actions merge into one capsule ([PillShape]).
  */
-internal val GlassShape = RoundedCornerShape(24.dp)
 internal val GlassCircle: Shape = CircleShape
 
 /** Shared translucency for every glass surface (bars and buttons alike). */
@@ -66,18 +60,25 @@ internal fun glassBorder(): BorderStroke =
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
     )
 
-internal fun Modifier.glass(shape: Shape, elevation: Dp = 8.dp): Modifier =
-    this
-        .shadow(elevation = elevation, shape = shape)
-        .clip(shape)
-
-internal fun Modifier.glass(): Modifier = glass(GlassShape)
-
-internal fun Modifier.glassPadding(top: Boolean): Modifier =
-    if (top) {
-        padding(start = 16.dp, top = 8.dp, end = 16.dp)
+/**
+ * Recipe for a floating tool (Toolbar/TabBar, buttons, interactive chips,
+ * trailing pills): glass under [SurfaceStyle.GLASS], flat otherwise. Tools never
+ * branch themselves.
+ */
+@Composable
+internal fun toolContainerColor(): Color =
+    if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
+        glassContainerColor()
     } else {
-        padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+        solidContainerColor()
+    }
+
+@Composable
+internal fun toolBorder(): BorderStroke =
+    if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
+        glassBorder()
+    } else {
+        flatBorder()
     }
 
 /**
@@ -90,19 +91,14 @@ internal fun GlassCapsule(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         shape = GlassCircle,
-        color = if (glass) {
-            glassContainerColor()
-        } else {
-            solidContainerColor()
-        },
-        border = if (glass) glassBorder() else solidBorder(),
+        color = toolContainerColor(),
+        border = toolBorder(),
         // Elevation straight on the Surface (never a chained .shadow()):
         // the offscreen layer of Modifier.shadow seals translucent fills.
         shadowElevation = GlassElevationCompact,
-        modifier = modifier.clip(GlassCircle),
+        modifier = modifier,
     ) {
         content()
     }
@@ -122,19 +118,14 @@ internal fun GlassCircleButton(
     badgeCount: Int? = null,
     enabled: Boolean = true,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         shape = GlassCircle,
-        color = if (glass) {
-            glassContainerColor()
-        } else {
-            solidContainerColor()
-        },
-        border = if (glass) glassBorder() else solidBorder(),
+        color = toolContainerColor(),
+        border = toolBorder(),
         // Elevation straight on the Surface (never a chained .shadow()):
         // the offscreen layer of Modifier.shadow seals translucent fills.
         shadowElevation = GlassElevationCompact,
-        modifier = modifier.clip(GlassCircle),
+        modifier = modifier,
     ) {
         IconButton(onClick = onClick, enabled = enabled) {
             if (badgeCount != null && badgeCount > 0) {
@@ -152,8 +143,8 @@ internal fun GlassCircleButton(
  * Glass pill button: same recipe as the floating bars (translucent
  * container + border + soft shadow), so buttons and bars speak one style.
  * [containerColor] lets a brand tint the glass (kept at [GLASS_ALPHA]),
- * null means neutral glass. The shadow comes from [glass], not M3 elevation.
- * Fixed [GLASS_BUTTON_HEIGHT] so pills match the 48dp toolbar tools.
+ * null means neutral glass. Fixed [GLASS_BUTTON_HEIGHT] so pills match the 48dp
+ * toolbar tools.
  */
 internal val GLASS_BUTTON_HEIGHT = 48.dp
 
@@ -166,7 +157,7 @@ internal fun GlassButton(
     leadingIcon: ImageVector? = null,
     containerColor: Color? = null,
     contentColor: Color? = null,
-    shape: Shape = GlassShape,
+    shape: Shape = PillShape,
 ) {
     val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     val container = if (glass) {
@@ -179,7 +170,7 @@ internal fun GlassButton(
         onClick = onClick,
         enabled = enabled,
         shape = shape,
-        border = if (glass) glassBorder() else solidBorder(),
+        border = toolBorder(),
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = content,
@@ -194,8 +185,7 @@ internal fun GlassButton(
         contentPadding = PaddingValues(horizontal = 24.dp),
         modifier = modifier
             .fillMaxWidth()
-            .height(GLASS_BUTTON_HEIGHT)
-            .clip(shape),
+            .height(GLASS_BUTTON_HEIGHT),
     ) {
         if (leadingIcon != null) {
             Icon(

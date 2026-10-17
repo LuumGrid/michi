@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,7 +60,7 @@ internal fun PosterCard(
             Box(
                 modifier = Modifier
                     .coverSize(size)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(CoverShape)
                     .background(
                         placeholderHex?.let { brandColor(it) }
                             ?: MaterialTheme.colorScheme.surfaceVariant,

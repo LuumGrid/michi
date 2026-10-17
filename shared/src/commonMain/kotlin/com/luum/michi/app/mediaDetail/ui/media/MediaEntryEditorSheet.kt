@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -134,7 +132,7 @@ internal fun MediaEntryEditorSheet(
                 MessagePanel(
                     title = strings.mediaDetailErrorLabel,
                     message = editor.loadError?.let { strings.networkErrorMessage(it) },
-                    icon = Icons.Filled.Warning,
+                    icon = AppIcons.Warning,
                     actionLabel = strings.retryAction,
                     onAction = { editor.load() },
                 )

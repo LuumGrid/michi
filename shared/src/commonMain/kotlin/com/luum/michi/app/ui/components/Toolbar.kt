@@ -10,7 +10,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -22,19 +21,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Toolbar navigation slot. Leading edge only: standard back affordance
@@ -81,9 +73,6 @@ internal data class ToolbarSearch(
  * - search: full-width glass [SearchField] pill with back-to-cancel on the
  *   left and clear-X on the right; system back must also map to [onSearchClose].
  *
- * Collapses on scroll via [scrollBehavior] (wired by `root` only for
- * explicitly opted-in surfaces; null keeps it pinned).
- *
  * Only primitives cross this boundary; results/scrim are drawn by `root`.
  *
  * Set [applyWindowInsets] = false when hosting inside a sheet: the status-bar
@@ -104,7 +93,6 @@ internal fun Toolbar(
     onSearchSubmit: () -> Unit,
     onSearchClose: () -> Unit,
     modifier: Modifier = Modifier,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
     applyWindowInsets: Boolean = true,
 ) {
     val insets = if (applyWindowInsets) {
@@ -131,7 +119,6 @@ internal fun Toolbar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(insets)
-                    .toolbarCollapse(scrollBehavior)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -182,18 +169,12 @@ internal fun Toolbar(
                                 badgeCount = action.badgeCount,
                             )
                         } else {
-                            val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
                             Surface(
-                                shape = GlassShape,
-                                color = if (glass) {
-                                    glassContainerColor()
-                                } else {
-                                    solidContainerColor()
-                                },
-                                border = if (glass) glassBorder() else solidBorder(),
+                                shape = PillShape,
+                                color = toolContainerColor(),
+                                border = toolBorder(),
                                 // Elevation straight on the Surface (never a chained .shadow()).
                                 shadowElevation = 8.dp,
-                                modifier = Modifier.clip(GlassShape),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     run.forEach { action ->
@@ -212,7 +193,6 @@ internal fun Toolbar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(insets)
-                    .toolbarCollapse(scrollBehavior)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -223,22 +203,12 @@ internal fun Toolbar(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Surface(
-                    shape = GlassShape,
-                    color = if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
-                        glassContainerColor()
-                    } else {
-                        solidContainerColor()
-                    },
-                    border = if (SurfaceStyleProvider.current == SurfaceStyle.GLASS) {
-                        glassBorder()
-                    } else {
-                        solidBorder()
-                    },
+                    shape = PillShape,
+                    color = toolContainerColor(),
+                    border = toolBorder(),
                     // Elevation straight on the Surface (never a chained .shadow()).
                     shadowElevation = 8.dp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(GlassShape),
+                    modifier = Modifier.weight(1f),
                 ) {
                     // Chevron circle mirroring the search action position plus
                     // the expanding text pill (the clear-X lives bare inside
@@ -259,11 +229,6 @@ internal fun Toolbar(
 }
 
 /**
- * Manual enter-always collapse shared by both toolbar states: reports its
- * own height as the scroll limit and offsets by the shared behavior.
- * Read inside composition so scroll updates recompose.
- */
-/**
  * Consecutive runs sharing the same non-null [ToolbarAction.group]. Null
  * never merges: every ungrouped action is its own run (lone circle).
  * Each run renders as one floating piece: lone circle or merged capsule.
@@ -279,16 +244,6 @@ private fun actionRuns(actions: List<ToolbarAction>): List<List<ToolbarAction>> 
         }
     }
     return runs
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-private fun Modifier.toolbarCollapse(scrollBehavior: TopAppBarScrollBehavior?): Modifier {
-    val offsetPx = scrollBehavior?.state?.heightOffset?.roundToInt() ?: 0
-    return this
-        .onSizeChanged { size ->
-            scrollBehavior?.state?.heightOffsetLimit = -size.height.toFloat()
-        }
-        .offset { IntOffset(x = 0, y = offsetPx) }
 }
 
 @Composable

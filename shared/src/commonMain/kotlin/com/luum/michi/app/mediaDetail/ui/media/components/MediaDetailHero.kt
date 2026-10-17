@@ -1,6 +1,5 @@
 package com.luum.michi.app.mediaDetail.ui.media.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -35,10 +33,9 @@ import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
-import com.luum.michi.app.ui.components.glassBorder
-import com.luum.michi.app.ui.components.solidBorder
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
+import com.luum.michi.app.ui.components.CoverShape
+import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.rememberCoverUrl
@@ -53,7 +50,6 @@ import com.luum.michi.app.ui.components.coverSize
  */
 @Composable
 internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     val meta = listOfNotNull(detail.format, detail.season, detail.workStatusLabel(strings)).joinToString(" · ")
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -72,10 +68,9 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                 modifier = Modifier.fillMaxSize(),
             )
             Surface(
-                shape = RoundedCornerShape(16.dp),
+                shape = CoverShape,
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                border = if (glass) glassBorder() else solidBorder(),
-                shadowElevation = 8.dp,
+                border = flatBorder(),
                 modifier = Modifier.coverSize(CoverSize.Featured),
             ) {
                 val image = rememberCoverUrl(detail.cover, CoverSize.Featured)
@@ -218,8 +213,8 @@ internal fun MediaDetailNextEpisodeBand(detail: MediaDetail, strings: LanguageSt
     ) {
         Surface(
             color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shape = PanelShape,
+            border = flatBorder(),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(

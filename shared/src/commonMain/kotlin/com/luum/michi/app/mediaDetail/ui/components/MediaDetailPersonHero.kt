@@ -1,6 +1,5 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,9 +28,11 @@ import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.core.model.compactCount
+import com.luum.michi.app.ui.components.CoverShape
 import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.FlatChip
 import com.luum.michi.app.ui.components.coverSize
+import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.rememberCoverUrl
 
@@ -114,9 +114,9 @@ private fun MediaDetailPageTitle(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun PersonPortrait(image: CoverSizes?) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = CoverShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = flatBorder(),
         modifier = Modifier.coverSize(CoverSize.Featured),
     ) {
         val url = rememberCoverUrl(image, CoverSize.Featured)

@@ -13,11 +13,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -31,8 +29,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.IntOffset
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.CalendarScreen
 import com.luum.michi.app.calendar.ui.state.createCalendarStateHolder
@@ -144,7 +140,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlin.math.roundToInt
 
 /**
  * Slim app orchestrator: owns the [State], derives the topbar per tab and
@@ -595,11 +590,6 @@ internal fun Root(
     val isSmileyFormat: Boolean = editorScoreFormat == ScoreFormat.POINT_3_SMILEYS
     val formatSmiley: (Float) -> String = { formatScoreValue(ScoreFormat.POINT_3_SMILEYS, it) }
 
-    // Pinned by default: the toolbar only hides on scroll for surfaces that
-    // explicitly opt in via [hidesToolbarOnScroll]. The veil rides the same
-    // offset so it stays glued to the toolbar when collapsing.
-    val toolbarScroll = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val hideToolbarOnScroll = hidesToolbarOnScroll(tab, state)
     // The heart reads the holder that owns the active destination (media keeps
     // its flag on the detail snapshot; a genre has no favourite).
     val isDetailFavourite = detailHolderFor(state.currentDetail)?.isFavourite == true
@@ -629,24 +619,10 @@ internal fun Root(
         is DetailDestination.DetailList -> null
         null -> null
     }
-    val veilOffsetPx = if (hideToolbarOnScroll) {
-        toolbarScroll.state.heightOffset.roundToInt()
-    } else {
-        0
-    }
 
     Scaffold(
-        modifier = if (hideToolbarOnScroll) {
-            Modifier.nestedScroll(toolbarScroll.nestedScrollConnection)
-        } else {
-            Modifier
-        },
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset { IntOffset(x = 0, y = veilOffsetPx) },
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 TopEdgeFade(modifier = Modifier.matchParentSize())
                 Toolbar(
                 title = detailToolbarTitle(state.currentDetail, strings)
@@ -706,7 +682,6 @@ internal fun Root(
                 },
                 onSearchSubmit = {},
                 onSearchClose = { state.applyBackStep() },
-                scrollBehavior = toolbarScroll.takeIf { hideToolbarOnScroll },
             )
             }
         },
@@ -1420,13 +1395,6 @@ internal fun toolbarActions(
         }
     }
 }
-
-/**
- * Explicit opt-in per surface: the toolbar stays pinned unless a surface
- * asks to hide it on scroll (like action groups: explicit, never by
- * omission). No surface opts in yet; the first long list will add its case.
- */
-private fun hidesToolbarOnScroll(tab: TabSection, state: State): Boolean = false
 
 /**
  * A child scope per state holder, derived from Root's `rememberCoroutineScope`

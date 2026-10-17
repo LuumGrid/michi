@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.media.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -43,6 +44,8 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.flatBorder
 
 /**
  * Whether the information panel has anything to paint: any identity field, any
@@ -217,9 +220,14 @@ internal fun MediaDetailVideos(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(PanelShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable { onOpenUrl(url) },
+                .border(flatBorder(), PanelShape)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = strings.mediaDetailVideosTitle,
+                    onClick = { onOpenUrl(url) },
+                ),
         ) {
             val thumbnail = detail.trailer?.thumbnailUrl
             if (!thumbnail.isNullOrBlank()) {

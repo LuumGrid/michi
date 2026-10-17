@@ -1,16 +1,16 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.flatBorder
 
 /**
  * Framed panel shared by the detail information sections (media info,
@@ -29,9 +29,9 @@ internal fun MediaDetailPanel(
             .padding(horizontal = 16.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = PanelShape,
             color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            border = flatBorder(),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(

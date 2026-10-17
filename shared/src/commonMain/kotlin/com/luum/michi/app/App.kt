@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -292,7 +290,7 @@ fun App(
                                 // Unknown maps to the same copy as the title; hiding
                                 // it avoids showing the same line twice.
                                 message = detail?.takeIf { it != strings.errorUnknownLabel },
-                                icon = Icons.Filled.Warning,
+                                icon = AppIcons.Warning,
                                 actionLabel = strings.retryAction,
                                 onAction = {
                                     scope.launch { dependencies.sessionManager.bootstrap() }

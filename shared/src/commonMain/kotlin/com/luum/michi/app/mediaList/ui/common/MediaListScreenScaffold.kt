@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -191,7 +189,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                 MessagePanel(
                     title = strings.listsErrorLabel,
                     message = errorMessage,
-                    icon = Icons.Filled.Warning,
+                    icon = AppIcons.Warning,
                     actionLabel = strings.retryAction,
                     onAction = onRetry,
                 )

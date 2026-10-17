@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
@@ -55,7 +53,7 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.OptionGroupShape
+import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.GlassButton
@@ -855,8 +853,8 @@ private fun SettingsToggleRow(
 }
 
 /** Inline error with retry, shown only when the last load/save failed. Same frame
- * language as [OptionGroup] (20dp + 1dp border) with the border in error and no
- * fill, so a failed sync reads as an error while aligning with the groups. */
+ * language as [OptionGroup] ([PanelShape] + 1dp border) with the border in error
+ * and no fill, so a failed sync reads as an error while aligning with the groups. */
 @Composable
 private fun SettingsErrorRow(
     message: String,
@@ -869,7 +867,7 @@ private fun SettingsErrorRow(
     Surface(
         onClick = onRetry,
         modifier = modifier.fillMaxWidth(),
-        shape = OptionGroupShape,
+        shape = PanelShape,
         border = BorderStroke(
             width = 1.dp,
             color = LocalWarning.current,
@@ -883,7 +881,7 @@ private fun SettingsErrorRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Filled.Warning,
+                imageVector = AppIcons.Warning,
                 contentDescription = null,
                 tint = LocalWarning.current,
                 modifier = Modifier.size(20.dp),

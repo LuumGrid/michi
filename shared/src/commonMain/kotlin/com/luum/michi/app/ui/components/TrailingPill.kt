@@ -14,14 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Compact trailing control pill (a rail's "View all", the voice-language
- * selector): label with optional leading/trailing glyphs. Inline surface, so it
- * takes the glass *recipe* (translucent color + border, no shadow) like the
- * other detail pills.
+ * selector): label with optional leading/trailing glyphs. It is a tool, so it
+ * takes the tool recipe (glass under GLASS, flat `surface` otherwise).
  */
 @Composable
 internal fun TrailingPill(
@@ -31,16 +28,11 @@ internal fun TrailingPill(
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
         onClick = onClick,
-        shape = GlassShape,
-        color = if (glass) {
-            glassContainerColor()
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
-        border = if (glass) glassBorder() else solidBorder(),
+        shape = PillShape,
+        color = toolContainerColor(),
+        border = toolBorder(),
         modifier = modifier,
     ) {
         Row(

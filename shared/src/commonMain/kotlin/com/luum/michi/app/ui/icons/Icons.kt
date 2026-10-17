@@ -1,5 +1,7 @@
 package com.luum.michi.app.ui.icons
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.luum.michi.app.ui.icons.generated.Anilist
 import com.luum.michi.app.ui.icons.generated.AnimeRounded
@@ -166,4 +168,8 @@ internal object AppIcons {
     /** Bell: opens the notifications overlay (trigger lives in profile). */
     val Notifications: ImageVector
         get() = IconPack.NotificationsRounded
+
+    /** Filled warning triangle: error panels and inline error rows. */
+    val Warning: ImageVector
+        get() = Icons.Filled.Warning
 }

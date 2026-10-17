@@ -1,6 +1,5 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,8 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
  * Generic chip rail: section pills for the lists, year pills in filter
@@ -70,23 +67,16 @@ internal fun <T> ChipRail(
             key = { "${it.label}·${it.value}" },
         ) { tab ->
             val isSelected = interactive && tab.value == selected
-            val glass = interactive && SurfaceStyleProvider.current == SurfaceStyle.GLASS
-            val color = when {
-                isSelected -> MaterialTheme.colorScheme.primaryContainer
-                glass -> glassContainerColor()
-                else -> MaterialTheme.colorScheme.surface
-            }
-            val border = when {
-                isSelected -> null
-                glass -> glassBorder()
-                else -> BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-            }
             if (interactive) {
                 Surface(
                     onClick = { onSelect(tab.value) },
-                    shape = GlassShape,
-                    color = color,
-                    border = border,
+                    shape = PillShape,
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        toolContainerColor()
+                    },
+                    border = if (isSelected) null else toolBorder(),
                 ) {
                     ChipPillContent(tab = tab, compact = compact, isSelected = isSelected)
                 }
@@ -108,9 +98,9 @@ internal fun <T> ChipRail(
 @Composable
 internal fun FlatChip(label: String, modifier: Modifier = Modifier) {
     Surface(
-        shape = GlassShape,
+        shape = PillShape,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
+        border = flatBorder(),
         modifier = modifier,
     ) {
         Text(

@@ -16,14 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.SurfaceStyleProvider
 
 /**
- * Sheet text input with both surface recipes inline: same metrics,
- * decoration and behavior in both branches — only the container recipe
- * varies (translucent + glass border + shadow vs opaque + outline).
- * Callers (editor counters, notes) never branch themselves.
+ * Sheet text input (notes, counters): content, always flat
+ * (`surface` + [flatBorder], [PanelShape]) whatever the surface style — a field
+ * inside a sheet is not a floating tool.
  */
 @Composable
 internal fun SheetTextField(
@@ -41,12 +38,11 @@ internal fun SheetTextField(
     // outer `modifier` styles the container Surface.
     textFieldModifier: Modifier = Modifier,
 ) {
-    val glass = SurfaceStyleProvider.current == SurfaceStyle.GLASS
     Surface(
-        shape = GlassShape,
-        color = if (glass) glassContainerColor() else solidContainerColor(),
-        border = if (glass) glassBorder() else solidBorder(),
-        modifier = if (glass) modifier.glass(GlassShape) else modifier,
+        shape = PanelShape,
+        color = solidContainerColor(),
+        border = flatBorder(),
+        modifier = modifier,
     ) {
         BasicTextField(
             value = value,

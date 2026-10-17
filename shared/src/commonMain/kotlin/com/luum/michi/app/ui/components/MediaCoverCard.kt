@@ -1,6 +1,5 @@
 package com.luum.michi.app.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,11 +61,8 @@ internal fun MediaCoverCard(
         Surface(
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            ),
+            shape = PanelShape,
+            border = flatBorder(),
             color = MaterialTheme.colorScheme.surface,
         ) {
             // Fixed row height: bounded, so the text column distributes with
@@ -142,7 +137,7 @@ private fun MediaCoverImage(
     if (url.isNullOrBlank()) {
         Box(
             modifier = modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(CoverShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         )
     } else {
@@ -164,7 +159,7 @@ private fun MediaCoverImage(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
             },
-            modifier = modifier.clip(RoundedCornerShape(12.dp)),
+            modifier = modifier.clip(CoverShape),
         )
     }
 }

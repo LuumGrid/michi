@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import com.materialkolor.PaletteStyle
 
 /** Theme selection types. SYSTEM follows the OS; LIGHT/DARK force a scheme. */
@@ -35,13 +36,15 @@ internal fun Theme(
     content: @Composable () -> Unit,
 ) {
     val dark = type.resolveDarkTheme(isSystemInDarkTheme())
+    val scheme = remember(palette, dark, style) { palette.scheme(dark, style) }
+    val warning = remember(dark) { warningScheme(dark).primary }
     CompositionLocalProvider(
         LocalThemeColors provides palette,
-        LocalWarning provides warningScheme(dark).primary,
+        LocalWarning provides warning,
         LocalSurfaceStyle provides surfaces,
     ) {
         MaterialTheme(
-            colorScheme = palette.scheme(dark, style),
+            colorScheme = scheme,
             typography = appTypography(font),
             content = content,
         )
