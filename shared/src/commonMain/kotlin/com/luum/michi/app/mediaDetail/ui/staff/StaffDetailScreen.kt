@@ -1,11 +1,5 @@
 package com.luum.michi.app.mediaDetail.ui.staff
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -13,21 +7,19 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
+import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
+import com.luum.michi.app.mediaDetail.ui.components.DetailPageColumn
+import com.luum.michi.app.mediaDetail.ui.components.InfoPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
-import com.luum.michi.app.ui.components.SectionHeader
-import com.luum.michi.app.ui.components.LoadStateContainer
+import com.luum.michi.app.mediaDetail.ui.components.addInfo
+import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
+import com.luum.michi.app.mediaDetail.ui.components.personBiography
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.RailPageSize
-import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
-import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 
 /**
  * Staff detail page: person hero (portrait + identity, with the occupations as
@@ -48,19 +40,15 @@ internal fun StaffDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    LoadStateContainer(
+    DetailLoadState(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
-        loadingLabel = strings.mediaDetailLoadingLabel,
-        errorTitle = strings.mediaDetailErrorLabel,
-        retryLabel = strings.retryAction,
+        error = holder.error,
+        actionError = holder.actionError,
         onRetry = onRetry,
-        modifier = modifier,
-        refreshError = if (detail != null) holder.error?.let { strings.networkErrorMessage(it) } else null,
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
+        strings = strings,
+        modifier = modifier,
     ) {
         if (detail != null) {
             StaffDetailContent(
@@ -89,11 +77,7 @@ private fun StaffDetailContent(
     onViewAll: (DetailListKind) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
+    DetailPageColumn(bottomPadding = bottomPadding, modifier = modifier) {
         item(key = "hero") {
             MediaDetailPersonHero(
                 name = detail.name,
@@ -105,25 +89,14 @@ private fun StaffDetailContent(
                 chips = staffChips(detail),
             )
         }
-        if (detail.descriptionPlain.isNotBlank() || detail.stats.isNotEmpty()) {
-            item(key = "description") {
-                MediaDetailExpandableText(
-                    title = strings.mediaDetailBiographyTitle,
-                    text = detail.descriptionPlain,
-                    strings = strings,
-                    stats = detail.stats,
-                )
-            }
-        }
-        if (detail.links.isNotEmpty()) {
-            item(key = "links") {
-                MediaDetailLinkSection(
-                    links = detail.links.map { it.toLinkItem(strings) },
-                    title = strings.mediaDetailExternalLinksTitle,
-                    onOpenUrl = onOpenUrl,
-                )
-            }
-        }
+        personBiography(
+            title = strings.mediaDetailBiographyTitle,
+            text = detail.descriptionPlain,
+            stats = detail.stats,
+            links = detail.links,
+            strings = strings,
+            onOpenUrl = onOpenUrl,
+        )
         // The cells are built here so an empty panel is not emitted at all: an
         // item with nothing to paint still leaves its spacing behind (the gap
         // after the links on a staff member with no biography).
@@ -131,22 +104,20 @@ private fun StaffDetailContent(
             "$start–${detail.yearsActiveEnd ?: strings.yearsActivePresent}"
         }
         val informationEntries = buildList {
-            detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
-            detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
-            detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
-            detail.death?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailDeathLabel, it)) }
+            addInfo(strings.mediaDetailGenderLabel, detail.gender)
+            addInfo(strings.mediaDetailAgeLabel, detail.age)
+            addInfo(strings.mediaDetailBirthdayLabel, detail.birthday)
+            addInfo(strings.mediaDetailDeathLabel, detail.death)
             yearsActive?.let { add(MediaDetailInfoEntry(strings.mediaDetailYearsActiveLabel, it)) }
-            detail.homeTown?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailHometownLabel, it)) }
-            detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
+            addInfo(strings.mediaDetailHometownLabel, detail.homeTown)
+            addInfo(strings.mediaDetailBloodTypeLabel, detail.bloodType)
         }
-        val informationWideEntries = detail.alternativeNames
-            .filter { it.isNotBlank() }
-            .takeIf { it.isNotEmpty() }
-            ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
-            .orEmpty()
+        val informationWideEntries = listOfNotNull(
+            alternativeNamesEntry(detail.alternativeNames, strings.mediaDetailAlternativeNamesLabel),
+        )
         if (informationEntries.isNotEmpty() || informationWideEntries.isNotEmpty()) {
             item(key = "information") {
-                StaffInformationPanel(
+                InfoPanel(
                     entries = informationEntries,
                     wideEntries = informationWideEntries,
                     strings = strings,
@@ -187,19 +158,6 @@ private fun staffChips(detail: StaffDetail): List<String> =
             ?.filter { it.isNotBlank() }
             ?.forEach { add(it) }
     }
-
-@Composable
-private fun StaffInformationPanel(
-    entries: List<MediaDetailInfoEntry>,
-    wideEntries: List<MediaDetailInfoEntry>,
-    strings: LanguageStrings,
-) {
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailInformationTitle)
-        Spacer(modifier = Modifier.height(8.dp))
-        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
-    }
-}
 
 @Composable
 private fun RolesSection(

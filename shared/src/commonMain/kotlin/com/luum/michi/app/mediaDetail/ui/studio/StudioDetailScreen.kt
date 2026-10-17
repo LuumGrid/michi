@@ -8,12 +8,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
+import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.components.DetailPosterGrid
-import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
@@ -36,19 +35,15 @@ internal fun StudioDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    LoadStateContainer(
+    DetailLoadState(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
-        loadingLabel = strings.mediaDetailLoadingLabel,
-        errorTitle = strings.mediaDetailErrorLabel,
-        retryLabel = strings.retryAction,
+        error = holder.error,
+        actionError = holder.actionError,
         onRetry = onRetry,
-        modifier = modifier,
-        refreshError = if (detail != null) holder.error?.let { strings.networkErrorMessage(it) } else null,
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
+        strings = strings,
+        modifier = modifier,
     ) {
         if (detail != null) {
             StudioDetailGrid(

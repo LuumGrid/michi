@@ -1,15 +1,11 @@
 package com.luum.michi.app.mediaDetail.ui.character
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,13 +20,14 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterDetail
 import com.luum.michi.app.mediaDetail.domain.character.model.CharacterMediaItem
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
+import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
+import com.luum.michi.app.mediaDetail.ui.components.DetailPageColumn
+import com.luum.michi.app.mediaDetail.ui.components.InfoPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
+import com.luum.michi.app.mediaDetail.ui.components.addInfo
+import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
+import com.luum.michi.app.mediaDetail.ui.components.personBiography
 import com.luum.michi.app.ui.components.SectionHeader
-import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
 import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageOptions
@@ -40,9 +37,6 @@ import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.RailPageSize
-import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkSection
-import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 
 /**
  * Character detail page: person hero (portrait + identity, with the roles as
@@ -63,19 +57,15 @@ internal fun CharacterDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    LoadStateContainer(
+    DetailLoadState(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
-        loadingLabel = strings.mediaDetailLoadingLabel,
-        errorTitle = strings.mediaDetailErrorLabel,
-        retryLabel = strings.retryAction,
+        error = holder.error,
+        actionError = holder.actionError,
         onRetry = onRetry,
-        modifier = modifier,
-        refreshError = if (detail != null) holder.error?.let { strings.networkErrorMessage(it) } else null,
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
+        strings = strings,
+        modifier = modifier,
     ) {
         if (detail != null) {
             CharacterDetailContent(
@@ -105,11 +95,7 @@ private fun CharacterDetailContent(
     modifier: Modifier = Modifier,
 ) {
     var isVoiceLanguageOpen by remember { mutableStateOf(false) }
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
+    DetailPageColumn(bottomPadding = bottomPadding, modifier = modifier) {
         item(key = "hero") {
             MediaDetailPersonHero(
                 name = detail.name,
@@ -121,41 +107,28 @@ private fun CharacterDetailContent(
                 chips = characterChips(detail, strings),
             )
         }
-        if (detail.descriptionPlain.isNotBlank() || detail.stats.isNotEmpty()) {
-            item(key = "description") {
-                MediaDetailExpandableText(
-                    title = strings.mediaDetailCharacterDescriptionTitle,
-                    text = detail.descriptionPlain,
-                    strings = strings,
-                    stats = detail.stats,
-                )
-            }
-        }
-        if (detail.links.isNotEmpty()) {
-            item(key = "links") {
-                MediaDetailLinkSection(
-                    links = detail.links.map { it.toLinkItem(strings) },
-                    title = strings.mediaDetailExternalLinksTitle,
-                    onOpenUrl = onOpenUrl,
-                )
-            }
-        }
+        personBiography(
+            title = strings.mediaDetailCharacterDescriptionTitle,
+            text = detail.descriptionPlain,
+            stats = detail.stats,
+            links = detail.links,
+            strings = strings,
+            onOpenUrl = onOpenUrl,
+        )
         // The cells are built here so an empty panel is not emitted at all: an
         // item with nothing to paint still leaves its spacing behind.
         val informationEntries = buildList {
-            detail.gender?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailGenderLabel, it)) }
-            detail.age?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailAgeLabel, it)) }
-            detail.bloodType?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBloodTypeLabel, it)) }
-            detail.birthday?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailBirthdayLabel, it)) }
+            addInfo(strings.mediaDetailGenderLabel, detail.gender)
+            addInfo(strings.mediaDetailAgeLabel, detail.age)
+            addInfo(strings.mediaDetailBloodTypeLabel, detail.bloodType)
+            addInfo(strings.mediaDetailBirthdayLabel, detail.birthday)
         }
-        val informationWideEntries = detail.alternativeNames
-            .filter { it.isNotBlank() }
-            .takeIf { it.isNotEmpty() }
-            ?.let { listOf(MediaDetailInfoEntry(strings.mediaDetailAlternativeNamesLabel, it.joinToString(", "))) }
-            .orEmpty()
+        val informationWideEntries = listOfNotNull(
+            alternativeNamesEntry(detail.alternativeNames, strings.mediaDetailAlternativeNamesLabel),
+        )
         if (informationEntries.isNotEmpty() || informationWideEntries.isNotEmpty()) {
             item(key = "information") {
-                CharacterInformationPanel(
+                InfoPanel(
                     entries = informationEntries,
                     wideEntries = informationWideEntries,
                     strings = strings,
@@ -209,19 +182,6 @@ private fun characterChips(detail: CharacterDetail, strings: LanguageStrings): L
             .distinct()
             .forEach { add(it) }
     }
-
-@Composable
-private fun CharacterInformationPanel(
-    entries: List<MediaDetailInfoEntry>,
-    wideEntries: List<MediaDetailInfoEntry>,
-    strings: LanguageStrings,
-) {
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailInformationTitle)
-        Spacer(modifier = Modifier.height(8.dp))
-        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
-    }
-}
 
 @Composable
 private fun VoiceActorsSection(

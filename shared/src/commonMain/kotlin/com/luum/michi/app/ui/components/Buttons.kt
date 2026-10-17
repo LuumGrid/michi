@@ -27,6 +27,9 @@ internal enum class ButtonEmphasis {
     Secondary,
 }
 
+/** Fixed pill height so buttons match the 48dp toolbar tools. */
+private val GLASS_BUTTON_HEIGHT = 48.dp
+
 /**
  * The one app button. [ButtonEmphasis.Secondary] is the floating tool recipe
  * (translucent glass under GLASS, flat `surface` otherwise); [Primary] is an
@@ -47,49 +50,55 @@ internal fun AppButton(
     contentColor: Color? = null,
     shape: Shape = PillShape,
 ) {
-    when (emphasis) {
-        ButtonEmphasis.Secondary -> GlassButton(
-            label = label,
-            onClick = onClick,
-            modifier = modifier,
-            enabled = enabled,
-            leadingIcon = leadingIcon,
-            containerColor = containerColor,
-            contentColor = contentColor,
-            shape = shape,
-        )
-        ButtonEmphasis.Primary -> {
-            val container = containerColor ?: MaterialTheme.colorScheme.primaryContainer
-            val content = contentColor ?: MaterialTheme.colorScheme.onPrimaryContainer
-            Button(
-                onClick = onClick,
-                enabled = enabled,
-                shape = shape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = container,
-                    contentColor = content,
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 8.dp,
-                    pressedElevation = 0.dp,
-                    disabledElevation = 0.dp,
-                ),
-                contentPadding = PaddingValues(horizontal = 24.dp),
-                modifier = modifier
-                    .fillMaxWidth()
-                    .height(GLASS_BUTTON_HEIGHT),
-            ) {
-                if (leadingIcon != null) {
-                    Icon(
-                        imageVector = leadingIcon,
-                        contentDescription = null,
-                        tint = content,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(text = label)
-            }
-        }
+    val content = contentColor ?: when (emphasis) {
+        ButtonEmphasis.Primary -> MaterialTheme.colorScheme.onPrimaryContainer
+        ButtonEmphasis.Secondary -> MaterialTheme.colorScheme.onSurface
     }
+    val container = when (emphasis) {
+        ButtonEmphasis.Primary -> containerColor ?: MaterialTheme.colorScheme.primaryContainer
+        ButtonEmphasis.Secondary -> toolContainerColor(containerColor)
+    }
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shape = shape,
+        // Secondary is the tool recipe (bordered); Primary is a flat opaque fill.
+        border = if (emphasis == ButtonEmphasis.Secondary) toolBorder() else null,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = container,
+            contentColor = content,
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            // Elevation on the Button itself (never a chained .shadow()):
+            // the offscreen layer of Modifier.shadow seals translucent fills.
+            defaultElevation = 8.dp,
+            pressedElevation = 0.dp,
+            disabledElevation = 0.dp,
+        ),
+        contentPadding = PaddingValues(horizontal = 24.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(GLASS_BUTTON_HEIGHT),
+    ) {
+        ButtonLabel(label = label, leadingIcon = leadingIcon, contentColor = content)
+    }
+}
+
+/** Shared pill content: optional 20dp leading icon + label, same in both branches. */
+@Composable
+private fun ButtonLabel(
+    label: String,
+    leadingIcon: ImageVector?,
+    contentColor: Color,
+) {
+    if (leadingIcon != null) {
+        Icon(
+            imageVector = leadingIcon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+    }
+    Text(text = label)
 }

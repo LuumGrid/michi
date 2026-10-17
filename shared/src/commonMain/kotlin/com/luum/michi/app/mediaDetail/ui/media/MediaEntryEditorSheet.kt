@@ -262,43 +262,34 @@ private fun EditorBody(
             onSelect = { editor.updateStatus(it) },
         )
         Spacer(modifier = Modifier.height(16.dp))
-            if (editor.isManga) {
-                EditorCounterField(
-                    label = strings.chaptersLabel,
-                    displayValue = editor.progress.toString(),
-                    suffix = editor.maxProgress?.let { "/$it" },
-                    onCommit = { raw ->
-                        raw.toIntOrNull()?.let { editor.updateProgress(it) }
-                    },
-                    onDecrement = { editor.updateProgress(editor.progress - 1) },
-                    onIncrement = { editor.incrementProgress() },
-                    decrementEnabled = editor.progress > 0,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                EditorCounterField(
-                    label = strings.volumesLabel,
-                    displayValue = editor.progressVolumes.toString(),
-                    suffix = editor.maxProgressVolumes?.let { "/$it" },
-                    onCommit = { raw ->
-                        raw.toIntOrNull()?.let { editor.updateProgressVolumes(it) }
-                    },
-                    onDecrement = { editor.updateProgressVolumes(editor.progressVolumes - 1) },
-                    onIncrement = { editor.incrementProgressVolumes() },
-                    decrementEnabled = editor.progressVolumes > 0,
-                )
-            } else {
-                EditorCounterField(
-                    label = strings.mediaDetailEpisodesLabel,
-                    displayValue = editor.progress.toString(),
-                    suffix = editor.maxProgress?.let { "/$it" },
-                    onCommit = { raw ->
-                        raw.toIntOrNull()?.let { editor.updateProgress(it) }
-                    },
-                    onDecrement = { editor.updateProgress(editor.progress - 1) },
-                    onIncrement = { editor.incrementProgress() },
-                    decrementEnabled = editor.progress > 0,
-                )
-            }
+        if (editor.isManga) {
+            IntCounterField(
+                label = strings.chaptersLabel,
+                value = editor.progress,
+                max = editor.maxProgress,
+                onSet = { editor.updateProgress(it) },
+                onDecrement = { editor.updateProgress(editor.progress - 1) },
+                onIncrement = { editor.incrementProgress() },
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            IntCounterField(
+                label = strings.volumesLabel,
+                value = editor.progressVolumes,
+                max = editor.maxProgressVolumes,
+                onSet = { editor.updateProgressVolumes(it) },
+                onDecrement = { editor.updateProgressVolumes(editor.progressVolumes - 1) },
+                onIncrement = { editor.incrementProgressVolumes() },
+            )
+        } else {
+            IntCounterField(
+                label = strings.mediaDetailEpisodesLabel,
+                value = editor.progress,
+                max = editor.maxProgress,
+                onSet = { editor.updateProgress(it) },
+                onDecrement = { editor.updateProgress(editor.progress - 1) },
+                onIncrement = { editor.incrementProgress() },
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         EditorCounterField(
             label = strings.scoreLabel,
@@ -354,28 +345,22 @@ private fun EditorBody(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        EditorCounterField(
+        IntCounterField(
             label = strings.repeatLabel,
-            displayValue = editor.repeat.toString(),
-            suffix = null,
-            onCommit = { raw ->
-                raw.toIntOrNull()?.let { editor.updateRepeat(it) }
-            },
+            value = editor.repeat,
+            max = null,
+            onSet = { editor.updateRepeat(it) },
             onDecrement = { editor.decrementRepeat() },
             onIncrement = { editor.incrementRepeat() },
-            decrementEnabled = editor.repeat > 0,
         )
         Spacer(modifier = Modifier.height(16.dp))
-        EditorCounterField(
+        IntCounterField(
             label = strings.priorityLabel,
-            displayValue = editor.priority.toString(),
-            suffix = null,
-            onCommit = { raw ->
-                raw.toIntOrNull()?.let { editor.updatePriority(it) }
-            },
+            value = editor.priority,
+            max = null,
+            onSet = { editor.updatePriority(it) },
             onDecrement = { editor.decrementPriority() },
             onIncrement = { editor.incrementPriority() },
-            decrementEnabled = editor.priority > 0,
             incrementEnabled = editor.priority < 5,
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -407,6 +392,34 @@ private fun EditorBody(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+/**
+ * Integer [EditorCounterField]: the value as-is, `"/max"` when there is a max,
+ * the draft parsed as an int (ignored when it is not a number) and the − stepper
+ * off at zero. The callbacks stay the editor's own (increment/decrement), only
+ * the wiring is shared.
+ */
+@Composable
+private fun IntCounterField(
+    label: String,
+    value: Int,
+    max: Int?,
+    onSet: (Int) -> Unit,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
+    incrementEnabled: Boolean = true,
+) {
+    EditorCounterField(
+        label = label,
+        displayValue = value.toString(),
+        suffix = max?.let { "/$it" },
+        onCommit = { raw -> raw.toIntOrNull()?.let(onSet) },
+        onDecrement = onDecrement,
+        onIncrement = onIncrement,
+        decrementEnabled = value > 0,
+        incrementEnabled = incrementEnabled,
+    )
 }
 
 private const val ACTION_FAVOURITE = "favourite"

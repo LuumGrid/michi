@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -38,9 +37,10 @@ import com.luum.michi.app.mediaDetail.domain.media.model.toMediaType
 
 import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
+import com.luum.michi.app.mediaDetail.ui.components.InfoPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoGrid
-import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPanel
+import com.luum.michi.app.mediaDetail.ui.components.addInfo
+import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
@@ -104,31 +104,30 @@ internal fun MediaDetailInformationPanel(
         detail.source?.let { add(MediaDetailInfoEntry(strings.mediaDetailSourceLabel, it)) }
     }
     val wideEntries = buildList {
-        detail.titleRomaji?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailRomajiLabel, it)) }
-        detail.titleNative?.takeIf { it.isNotBlank() }?.let { add(MediaDetailInfoEntry(strings.mediaDetailNativeLabel, it)) }
-        detail.synonyms
-            .filter { it.isNotBlank() }
-            .takeIf { it.isNotEmpty() }
-            ?.let { add(MediaDetailInfoEntry(strings.mediaDetailSynonymsLabel, it.joinToString(", "))) }
+        addInfo(strings.mediaDetailRomajiLabel, detail.titleRomaji)
+        addInfo(strings.mediaDetailNativeLabel, detail.titleNative)
+        alternativeNamesEntry(detail.synonyms, strings.mediaDetailSynonymsLabel)?.let { add(it) }
     }
     if (!detail.hasInformation(isManga)) {
         return
     }
-    MediaDetailPanel {
-        SectionHeader(strings.mediaDetailInformationTitle)
-        Spacer(modifier = Modifier.height(12.dp))
-        MediaDetailInfoGrid(entries = entries, wideEntries = wideEntries)
-        StudioChipGroup(
-            label = strings.mediaDetailStudiosLabel,
-            studios = detail.studios,
-            onOpenStudio = onOpenStudio,
-        )
-        StudioChipGroup(
-            label = strings.mediaDetailProducersLabel,
-            studios = detail.producers,
-            onOpenStudio = onOpenStudio,
-        )
-    }
+    InfoPanel(
+        entries = entries,
+        wideEntries = wideEntries,
+        strings = strings,
+        footer = {
+            StudioChipGroup(
+                label = strings.mediaDetailStudiosLabel,
+                studios = detail.studios,
+                onOpenStudio = onOpenStudio,
+            )
+            StudioChipGroup(
+                label = strings.mediaDetailProducersLabel,
+                studios = detail.producers,
+                onOpenStudio = onOpenStudio,
+            )
+        },
+    )
 }
 
 /** One labelled row of interactive studio chips; an empty list paints nothing. */

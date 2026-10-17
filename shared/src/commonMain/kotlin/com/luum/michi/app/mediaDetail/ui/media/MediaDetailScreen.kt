@@ -1,9 +1,5 @@
 package com.luum.michi.app.mediaDetail.ui.media
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -15,11 +11,12 @@ import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
+import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
+import com.luum.michi.app.mediaDetail.ui.components.DetailPageColumn
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkGroup
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkPanel
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
-import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailGenres
@@ -34,7 +31,6 @@ import com.luum.michi.app.mediaDetail.ui.media.components.trailerUrl
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.RailPageSize
-import com.luum.michi.app.core.language.domain.networkErrorMessage
 
 /**
  * Full media detail page. Section order: hero → next-episode band → quick stats
@@ -62,19 +58,15 @@ internal fun MediaDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val detail = holder.detail
-    LoadStateContainer(
+    DetailLoadState(
         hasContent = detail != null,
         isLoading = holder.isLoading,
-        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
-        loadingLabel = strings.mediaDetailLoadingLabel,
-        errorTitle = strings.mediaDetailErrorLabel,
-        retryLabel = strings.retryAction,
+        error = holder.error,
+        actionError = holder.actionError,
         onRetry = onRetry,
-        modifier = modifier,
-        refreshError = if (detail != null) holder.error?.let { strings.networkErrorMessage(it) } else null,
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
+        strings = strings,
+        modifier = modifier,
     ) {
         if (detail != null) {
             MediaDetailContent(
@@ -120,11 +112,7 @@ private fun MediaDetailContent(
         MediaDetailLinkGroup(strings.mediaDetailStreamingLinksTitle, streamingLinks.map { it.toLinkItem(strings) }),
         MediaDetailLinkGroup(strings.mediaDetailExternalLinksTitle, otherLinks.map { it.toLinkItem(strings) }),
     )
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
+    DetailPageColumn(bottomPadding = bottomPadding, modifier = modifier) {
         item(key = "hero") { MediaDetailHero(detail = detail, strings = strings) }
         if (detail.upcomingNextEpisode() != null) {
             item(key = "next-episode") {
