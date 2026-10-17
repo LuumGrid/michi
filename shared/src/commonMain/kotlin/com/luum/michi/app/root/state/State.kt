@@ -165,7 +165,12 @@ internal class State(
         }
     }
 
-    fun openMedia(id: Int) = push(DetailDestination.Media(id))
+    fun openMedia(id: Int) {
+        // A detail supersedes the settings surface (a deep link can arrive
+        // while Settings is open): close it so the detail is actually visible.
+        closeSettings()
+        push(DetailDestination.Media(id))
+    }
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))

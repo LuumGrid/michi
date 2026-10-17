@@ -160,21 +160,7 @@ import kotlin.math.roundToInt
 internal fun Root(
     settingsState: SettingsState,
     viewer: Viewer? = null,
-    // The "Pestaña al abrir" setting seeds the shell state once (startup only):
-    // a later settings change never moves the user. A guest can only land on
-    // DISCOVER (the other tabs need a session) and a section id that no longer
-    // exists (split-completed off) falls back to ALL.
-    state: State = rememberState(
-        startDestination = resolveStartDestination(
-            startTab = settingsState.startTab,
-            startCatalogType = settingsState.startCatalogType,
-            animeSectionId = settingsState.startAnimeSectionId,
-            mangaSectionId = settingsState.startMangaSectionId,
-            splitCompletedAnime = settingsState.splitCompletedAnime,
-            splitCompletedManga = settingsState.splitCompletedManga,
-            isGuest = viewer == null,
-        ),
-    ),
+    providedState: State? = null,
     strings: LanguageStrings = Strings.current,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
@@ -210,6 +196,25 @@ internal fun Root(
     deepLinkMediaId: Int? = null,
     onDeepLinkHandled: () -> Unit = {},
 ) {
+    // The "Pestaña al abrir" setting seeds the shell state once (startup only):
+    // a later settings change never moves the user. A guest can only land on
+    // DISCOVER (the other tabs need a session) and a section id that no longer
+    // exists (split-completed off) falls back to ALL. Resolved once here (not
+    // in a default argument), so Root's recompositions never re-read the six
+    // settings.
+    val state = providedState ?: rememberState(
+        startDestination = remember {
+            resolveStartDestination(
+                startTab = settingsState.startTab,
+                startCatalogType = settingsState.startCatalogType,
+                animeSectionId = settingsState.startAnimeSectionId,
+                mangaSectionId = settingsState.startMangaSectionId,
+                splitCompletedAnime = settingsState.splitCompletedAnime,
+                splitCompletedManga = settingsState.splitCompletedManga,
+                isGuest = viewer == null,
+            )
+        },
+    )
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
     val search = searchTab?.let {
@@ -324,9 +329,9 @@ internal fun Root(
     // a confirmed language change (syncedGeneration) forces one reload so cards
     // stop showing stale titles. A list that is not visible reloads when it
     // opens, via its pending flag.
-    var lastSyncedGeneration by remember { mutableStateOf(settingsState.syncedGeneration) }
-    var pendingAnimeReload by remember { mutableStateOf(false) }
-    var pendingMangaReload by remember { mutableStateOf(false) }
+    var lastSyncedGeneration by remember(settingsState) { mutableStateOf(settingsState.syncedGeneration) }
+    var pendingAnimeReload by remember(settingsState) { mutableStateOf(false) }
+    var pendingMangaReload by remember(settingsState) { mutableStateOf(false) }
     LaunchedEffect(
         tab,
         viewerId,
@@ -687,8 +692,12 @@ internal fun Root(
                         }
                         ACTION_CALENDAR -> state.openCalendar()
                         ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
-                        ACTION_EDIT -> mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
-                        ACTION_FAVOURITE -> detailHolderFor(state.currentDetail)?.toggleFavourite()
+                        ACTION_EDIT -> if (viewerId != null) {
+                            mediaDetailHolder.detail?.id?.let { state.openEditor(it) }
+                        }
+                        ACTION_FAVOURITE -> if (viewerId != null) {
+                            detailHolderFor(state.currentDetail)?.toggleFavourite()
+                        }
                         ACTION_MORE -> state.openDetailMenu()
                     }
                 },
@@ -773,6 +782,7 @@ internal fun Root(
                                 viewer = viewer,
                                 onLogin = { state.openSignIn() },
                                 onLogout = onLogout,
+                                bottomPadding = padding.calculateBottomPadding(),
                             )
                         } else if (state.isDetailOpen) {
                             // Detail page over the current tab (tab bar hidden):
@@ -1268,8 +1278,7 @@ private const val ACTION_MORE = "more"
 /** Shared capsule group for the list tools (reference: one capsule, lone search). */
 private const val GROUP_LIST_TOOLS = "list-tools"
 
-@Composable
-private fun toolbarActions(
+internal fun toolbarActions(
     tab: TabSection,
     isSearching: Boolean,
     isSettingsOpen: Boolean,
@@ -1305,6 +1314,11 @@ private fun toolbarActions(
             icon = AppIcons.More,
             contentDescription = strings.moreAction,
         )
+        // A guest has no list entry to edit and no session to favourite with:
+        // only the overflow, plus the sort a studio/genre grid owns.
+        if (isGuest) {
+            return if (isGenreDetail || isStudioDetail) listOf(sort, more) else listOf(more)
+        }
         // Media adds the editor pencil, studio and genre their media sort; the
         // other scopes have no list entry. All open the overflow (AniList link +
         // share). A genre has no entity to favourite, so it skips the heart.

@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.MichiBuildConfig
 import com.luum.michi.app.core.language.domain.AppLanguage
@@ -102,6 +103,7 @@ internal fun SettingsScreen(
     viewer: Viewer?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    bottomPadding: Dp,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
@@ -124,7 +126,14 @@ internal fun SettingsScreen(
     val listContent: @Composable () -> Unit = {
         LazyColumn(
             modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                // Clears the floating tab bar / navigation insets, like every
+                // other list (never a hardcoded per-feature value).
+                bottom = 16.dp + bottomPadding,
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {

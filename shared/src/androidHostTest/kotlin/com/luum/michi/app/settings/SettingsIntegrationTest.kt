@@ -1,5 +1,7 @@
 package com.luum.michi.app.settings
 
+import com.luum.michi.app.DeferredDispatcher
+import com.luum.michi.app.FakeGraphQL
 import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -14,6 +16,7 @@ import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.ui.state.SettingsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -324,6 +327,46 @@ class SettingsIntegrationTest {
             assertEquals(false, state.isRefreshing)
         } finally {
             tearDown()
+        }
+    }
+
+    /**
+     * A forced refresh cancels the load in flight; the cancelled load's `finally`
+     * must not turn off the spinner of the new one. The [DeferredDispatcher]
+     * orders the cancellation and the new dispatch deterministically.
+     */
+    @Test
+    fun forcedRefreshKeepsTheSpinnerUntilTheNewLoadFinishes() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(listOf(viewerPage, viewerPage)).apply {
+                gate = CompletableDeferred()
+            }
+            val state = SettingsState(
+                repository = SettingsRepositoryImpl(client),
+                store = FakeSettingsStore(),
+                scope = scope,
+            )
+
+            state.refresh()
+            dispatcher.runAll()
+            assertTrue(state.isRefreshing, "the first load owns the spinner")
+
+            state.refresh(force = true)
+            dispatcher.runAll()
+            assertTrue(
+                state.isRefreshing,
+                "a cancelled load must not stop the spinner of the load now in flight",
+            )
+
+            client.gate!!.complete(Unit)
+            dispatcher.runAll()
+
+            assertEquals(false, state.isRefreshing)
+            assertEquals(2, client.calls)
+        } finally {
+            scope.cancel()
         }
     }
 
