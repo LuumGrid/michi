@@ -47,8 +47,8 @@ internal class MediaListLoader<T>(
 
     private var loadJob: Job? = null
     private var inFlightUserId: Int? = null
-    // Bumped per launch so a cancelled load's `finally` never clears the
-    // indicators of the load that replaced it.
+    // Bumped per launch so a cancelled load never writes its entries/error nor
+    // clears the indicators of the load that replaced it.
     private var loadGeneration = 0
 
     val entries: List<T> get() = entriesBacking
@@ -78,14 +78,14 @@ internal class MediaListLoader<T>(
         loadJob = scope.launch {
             try {
                 when (val result = fetch(userId)) {
-                    is NetworkResult.Success -> {
+                    is NetworkResult.Success -> if (gen == loadGeneration) {
                         entriesBacking.clear()
                         entriesBacking.addAll(result.value)
                         lastLoaded = timeMark.markNow()
                         lastUserId = userId
                         onReplaced?.invoke()
                     }
-                    is NetworkResult.Failure -> {
+                    is NetworkResult.Failure -> if (gen == loadGeneration) {
                         errorState = result.error
                     }
                 }

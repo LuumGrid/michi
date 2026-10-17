@@ -36,7 +36,7 @@ internal interface SortableMediaListEntry {
 }
 
 /** Single formatted representation of the raw [score], shared by both lists. */
-internal fun SortableMediaListEntry.formattedScore(): String {
+internal fun formattedScore(score: Double): String {
     if (score <= 0.0) return "-"
     if (score == score.toLong().toDouble()) return score.toLong().toString()
     return ((score * 10).toLong() / 10.0).toString()

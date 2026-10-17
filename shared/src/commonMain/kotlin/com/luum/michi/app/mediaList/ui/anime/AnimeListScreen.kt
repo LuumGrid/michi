@@ -15,6 +15,7 @@ import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
 import com.luum.michi.app.mediaList.ui.anime.components.AnimeListEntryContent
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenScaffold
+import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -27,38 +28,21 @@ internal fun AnimeListScreen(
     holder: AnimeListStateHolder,
     selected: AnimeListSection,
     onSelectSection: (AnimeListSection) -> Unit,
-    onRetry: () -> Unit,
+    onReload: () -> Unit,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
     // Scaffold bottom threaded from Root: the last item clears the floating
     // TabBar with the same 16dp rhythm the first item keeps under the rail.
     bottomPadding: Dp = 0.dp,
     isRefreshing: Boolean = false,
-    onRefresh: () -> Unit = {},
-    // In-context search: filters the current section by title (bestTitle
-    // only — v1 limitation). Empty query shows the section untouched.
-    query: String = "",
+    settings: MediaListScreenSettings = MediaListScreenSettings(),
     // List tools (toolbar filter/sort): Root owns the open flags so the
     // toolbar back affordance and system back close the sheets.
     isFilterOpen: Boolean = false,
     onDismissFilter: () -> Unit = {},
     isSortOpen: Boolean = false,
     onDismissSort: () -> Unit = {},
-    // Mirrors the Settings persist toggle: when on, sort changes are
-    // remembered per tab across restarts (filters never persist).
-    sortPersist: Boolean = false,
-    // Mirrors the Settings split toggle: merged COMPLETED when off,
-    // per-format sections when on.
-    splitCompleted: Boolean = true,
-    // Global 18+ setting (inverted): hidden entries never reach the
-    // list, but rail counts stay raw (see holder.countInSection).
-    hideAdult: Boolean = false,
-    // Smiley score format: the card pill shows the glyph instead of
-    // star + number (translated in Root; settings never crosses here).
-    isSmileyFormat: Boolean = false,
-    formatSmiley: (Float) -> String = { "" },
-    // Card tap opens media detail, pencil opens the entry editor (both
-    // dormant until their surfaces land; intents already exist in State).
+    // Card tap opens media detail, pencil opens the entry editor.
     onOpenDetail: (Int) -> Unit = {},
     onEditEntry: (Int) -> Unit = {},
 ) {
@@ -66,7 +50,7 @@ internal fun AnimeListScreen(
         holder = holder,
         selected = selected,
         onSelectSection = onSelectSection,
-        onRetry = onRetry,
+        onReload = onReload,
         allSection = AnimeListSection.ALL,
         statusSections = ::animeStatusSections,
         sectionLabel = { section, s -> section.label(s) },
@@ -78,23 +62,19 @@ internal fun AnimeListScreen(
                 entry = entry,
                 onIncrement = { holder.incrementProgress(entry) },
                 strings = strings,
-                isSmileyFormat = isSmileyFormat,
-                formatSmiley = formatSmiley,
+                isSmileyFormat = settings.isSmileyFormat,
+                formatSmiley = settings.formatSmiley,
             )
         },
+        settings = settings,
         strings = strings,
         modifier = modifier,
         bottomPadding = bottomPadding,
         isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        query = query,
         isFilterOpen = isFilterOpen,
         onDismissFilter = onDismissFilter,
         isSortOpen = isSortOpen,
         onDismissSort = onDismissSort,
-        sortPersist = sortPersist,
-        splitCompleted = splitCompleted,
-        hideAdult = hideAdult,
         onOpenDetail = onOpenDetail,
         onEditEntry = onEditEntry,
     )

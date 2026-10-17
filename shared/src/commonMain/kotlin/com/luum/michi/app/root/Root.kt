@@ -97,6 +97,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.platform.domain.UrlOpener
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
+import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
 import com.luum.michi.app.root.state.State
@@ -588,7 +589,47 @@ internal fun Root(
     // Card smiley pill: translated here so settings types never cross
     // into mediaList (same rule as the editor score lambdas).
     val isSmileyFormat: Boolean = editorScoreFormat == ScoreFormat.POINT_3_SMILEYS
-    val formatSmiley: (Float) -> String = { formatScoreValue(ScoreFormat.POINT_3_SMILEYS, it) }
+    val formatSmiley: (Float) -> String = remember {
+        { value: Float -> formatScoreValue(ScoreFormat.POINT_3_SMILEYS, value) }
+    }
+
+    // View settings per tab, built once (the lambda above is remembered, so the
+    // data-class equals stays stable). The sheet open flags stay out: they flip
+    // on every open/close and are not "how the list looks".
+    val animeListSettings = remember(
+        tabQuery,
+        persistSort,
+        settingsState.splitCompletedAnime,
+        settingsState.displayAdultContent,
+        isSmileyFormat,
+        formatSmiley,
+    ) {
+        MediaListScreenSettings(
+            query = tabQuery,
+            sortPersist = persistSort,
+            splitCompleted = settingsState.splitCompletedAnime,
+            hideAdult = !settingsState.displayAdultContent,
+            isSmileyFormat = isSmileyFormat,
+            formatSmiley = formatSmiley,
+        )
+    }
+    val mangaListSettings = remember(
+        tabQuery,
+        persistSort,
+        settingsState.splitCompletedManga,
+        settingsState.displayAdultContent,
+        isSmileyFormat,
+        formatSmiley,
+    ) {
+        MediaListScreenSettings(
+            query = tabQuery,
+            sortPersist = persistSort,
+            splitCompleted = settingsState.splitCompletedManga,
+            hideAdult = !settingsState.displayAdultContent,
+            isSmileyFormat = isSmileyFormat,
+            formatSmiley = formatSmiley,
+        )
+    }
 
     // The heart reads the holder that owns the active destination (media keeps
     // its flag on the detail snapshot; a genre has no favourite).
@@ -962,7 +1003,7 @@ internal fun Root(
                                 holder = animeHolder,
                                 selected = state.selectedAnimeSection,
                                 onSelectSection = { state.selectedAnimeSection = it },
-                                onRetry = {
+                                onReload = {
                                     animeHolder.load(
                                         viewerId,
                                         forceRefresh = true,
@@ -971,23 +1012,11 @@ internal fun Root(
                                 },
                                 bottomPadding = padding.calculateBottomPadding(),
                                 isRefreshing = animeHolder.isRefreshing,
-                                onRefresh = {
-                                    animeHolder.load(
-                                        viewerId,
-                                        forceRefresh = true,
-                                        splitCompleted = settingsState.splitCompletedAnime,
-                                    )
-                                },
-                                query = tabQuery,
+                                settings = animeListSettings,
                                 isFilterOpen = state.isSectionFilterOpen,
                                 onDismissFilter = { state.closeSectionFilter() },
                                 isSortOpen = state.isListSortOpen,
                                 onDismissSort = { state.closeListSort() },
-                                sortPersist = persistSort,
-                                splitCompleted = settingsState.splitCompletedAnime,
-                                hideAdult = !settingsState.displayAdultContent,
-                                isSmileyFormat = isSmileyFormat,
-                                formatSmiley = formatSmiley,
                                 onOpenDetail = { state.openMedia(it) },
                                 onEditEntry = { state.openEditor(it) },
                             )
@@ -996,7 +1025,7 @@ internal fun Root(
                                 holder = mangaHolder,
                                 selected = state.selectedMangaSection,
                                 onSelectSection = { state.selectedMangaSection = it },
-                                onRetry = {
+                                onReload = {
                                     mangaHolder.load(
                                         viewerId,
                                         forceRefresh = true,
@@ -1005,23 +1034,11 @@ internal fun Root(
                                 },
                                 bottomPadding = padding.calculateBottomPadding(),
                                 isRefreshing = mangaHolder.isRefreshing,
-                                onRefresh = {
-                                    mangaHolder.load(
-                                        viewerId,
-                                        forceRefresh = true,
-                                        splitCompleted = settingsState.splitCompletedManga,
-                                    )
-                                },
-                                query = tabQuery,
+                                settings = mangaListSettings,
                                 isFilterOpen = state.isSectionFilterOpen,
                                 onDismissFilter = { state.closeSectionFilter() },
                                 isSortOpen = state.isListSortOpen,
                                 onDismissSort = { state.closeListSort() },
-                                sortPersist = persistSort,
-                                splitCompleted = settingsState.splitCompletedManga,
-                                hideAdult = !settingsState.displayAdultContent,
-                                isSmileyFormat = isSmileyFormat,
-                                formatSmiley = formatSmiley,
                                 onOpenDetail = { state.openMedia(it) },
                                 onEditEntry = { state.openEditor(it) },
                             )

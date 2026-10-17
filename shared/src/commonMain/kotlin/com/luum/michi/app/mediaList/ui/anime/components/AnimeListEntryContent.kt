@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,11 +16,10 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.behindLabel
 import com.luum.michi.app.mediaList.domain.anime.model.canIncrement
-import com.luum.michi.app.mediaList.domain.common.formattedScore
 import com.luum.michi.app.mediaList.domain.anime.model.progressLabel
 import com.luum.michi.app.mediaList.domain.anime.model.releaseLabel
+import com.luum.michi.app.mediaList.ui.common.EntryScorePill
 import com.luum.michi.app.mediaList.ui.common.ProgressGroup
-import com.luum.michi.app.mediaList.ui.common.ScorePill
 
 /**
  * Anime entry body for [MediaCoverCard]: title and note stay top-anchored
@@ -77,15 +75,11 @@ internal fun ColumnScope.AnimeListEntryContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (entry.score > 0.0) {
-                if (isSmileyFormat) {
-                    ScorePill(score = formatSmiley(entry.score.toFloat()), icon = null)
-                } else {
-                    ScorePill(score = entry.formattedScore())
-                }
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+            EntryScorePill(
+                score = entry.score,
+                isSmileyFormat = isSmileyFormat,
+                formatSmiley = formatSmiley,
+            )
             ProgressGroup(
                 progress = entry.progressLabel(),
                 action = strings.listsIncrementEpisodeAction,

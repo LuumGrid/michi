@@ -14,6 +14,7 @@ import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.medialist.domain.SortScope
 import com.luum.michi.app.core.medialist.repository.MediaListEntryRepositoryImpl
+import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.incremented
@@ -33,6 +34,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -675,5 +678,87 @@ class MediaListIntegrationTest {
             listOf(101),
             holder.entriesInSection(AnimeListSection.WATCHING, hideAdult = true).map { it.id },
         )
+    }
+}
+
+/** Entry with only the fields the loader generation tests need. */
+private fun lateAnimeEntry(id: Int) = AnimeListEntry(
+    id = id,
+    title = "Media $id",
+    format = MediaFormat.TV,
+    status = AnimeListSection.WATCHING,
+    progress = 0,
+    totalEpisodes = 12,
+    score = 0.0,
+    nextEpisodeRelease = null,
+    paletteHex = null,
+)
+
+/**
+ * Repo whose fetch ignores cancellation and answers only when its own gate
+ * completes: a load cancelled by a forced reload still tries to write, which the
+ * MediaListLoader generation guard must drop.
+ */
+private class LateAnimeRepository : AnimeListRepository {
+    val gateA = CompletableDeferred<Unit>()
+    val gateB = CompletableDeferred<Unit>()
+    var failA = false
+    private var calls = 0
+
+    override suspend fun loadList(userId: Int, splitCompleted: Boolean): NetworkResult<List<AnimeListEntry>> {
+        val call = ++calls
+        val gate = if (call == 1) gateA else gateB
+        // Non-cancellable wait: cancelling the coroutine leaves it suspended
+        // until the gate completes (a fetch that ignores cancellation).
+        suspendCoroutine<Unit> { cont -> gate.invokeOnCompletion { cont.resume(Unit) } }
+        return when {
+            call == 1 && failA -> NetworkResult.Failure(NetworkError.Http(500, null))
+            call == 1 -> NetworkResult.Success(listOf(lateAnimeEntry(101)))
+            else -> NetworkResult.Success(listOf(lateAnimeEntry(102)))
+        }
+    }
+}
+
+private fun lateWired(repository: AnimeListRepository) = AnimeListStateHolder(
+    repository = repository,
+    entryRepository = GatedEntryRepository(),
+    scope = CoroutineScope(Dispatchers.Unconfined),
+)
+
+/**
+ * The loader's generation guard: a load cancelled by a forced reload must not
+ * write its entries or its error even when its fetch ignores cancellation and
+ * answers late.
+ */
+class MediaListLoaderGenerationTest {
+
+    @Test
+    fun aCancelledLoadNeverOverwritesTheForcedLoadsEntries() {
+        val repository = LateAnimeRepository()
+        val holder = lateWired(repository)
+
+        holder.load(7) // A, held at gateA
+        holder.load(7, forceRefresh = true) // B forced, cancels A
+
+        repository.gateB.complete(Unit) // B lands first
+        repository.gateA.complete(Unit) // A's late response lands afterwards
+
+        assertEquals(listOf(102), holder.entries.map { it.id }, "A's entries must not win")
+        assertNull(holder.error)
+    }
+
+    @Test
+    fun aCancelledLoadNeverOverwritesTheForcedLoadsError() {
+        val repository = LateAnimeRepository().apply { failA = true }
+        val holder = lateWired(repository)
+
+        holder.load(7) // A (fails late), held at gateA
+        holder.load(7, forceRefresh = true) // B forced
+
+        repository.gateB.complete(Unit) // B succeeds
+        repository.gateA.complete(Unit) // A's late failure lands afterwards
+
+        assertNull(holder.error, "A's error must not win")
+        assertEquals(listOf(102), holder.entries.map { it.id })
     }
 }

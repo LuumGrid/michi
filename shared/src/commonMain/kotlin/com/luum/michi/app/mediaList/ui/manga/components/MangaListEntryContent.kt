@@ -19,10 +19,9 @@ import com.luum.michi.app.mediaList.domain.manga.model.behindLabel
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementChapters
 import com.luum.michi.app.mediaList.domain.manga.model.canIncrementVolumes
 import com.luum.michi.app.mediaList.domain.manga.model.chaptersProgressLabel
-import com.luum.michi.app.mediaList.domain.common.formattedScore
 import com.luum.michi.app.mediaList.domain.manga.model.volumesProgressLabel
+import com.luum.michi.app.mediaList.ui.common.EntryScorePill
 import com.luum.michi.app.mediaList.ui.common.ProgressGroup
-import com.luum.michi.app.mediaList.ui.common.ScorePill
 
 /**
  * Manga entry body for [MediaCoverCard]: mirrors the anime body. One capsule
@@ -64,15 +63,11 @@ internal fun ColumnScope.MangaListEntryContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (entry.score > 0.0) {
-                if (isSmileyFormat) {
-                    ScorePill(score = formatSmiley(entry.score.toFloat()), icon = null)
-                } else {
-                    ScorePill(score = entry.formattedScore())
-                }
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+            EntryScorePill(
+                score = entry.score,
+                isSmileyFormat = isSmileyFormat,
+                formatSmiley = formatSmiley,
+            )
             if (entry.tracksByVolume) {
                 ProgressGroup(
                     progress = entry.volumesProgressLabel(),

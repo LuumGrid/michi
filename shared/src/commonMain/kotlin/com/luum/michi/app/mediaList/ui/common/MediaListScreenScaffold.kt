@@ -72,7 +72,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
     holder: MediaListHolder<T, S>,
     selected: S,
     onSelectSection: (S) -> Unit,
-    onRetry: () -> Unit,
+    onReload: () -> Unit,
     allSection: S,
     statusSections: (Boolean) -> List<S>,
     sectionLabel: (S, LanguageStrings) -> String,
@@ -80,35 +80,24 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
     meta: (T, LanguageStrings) -> String,
     formatOptions: (LanguageStrings) -> List<FilterOption>,
     cardContent: @Composable ColumnScope.(T) -> Unit,
+    settings: MediaListScreenSettings = MediaListScreenSettings(),
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
     // Scaffold bottom threaded from Root: the last item clears the floating
     // TabBar with the same 16dp rhythm the first item keeps under the rail.
     bottomPadding: Dp = 0.dp,
     isRefreshing: Boolean = false,
-    onRefresh: () -> Unit = {},
-    // In-context search: filters the current section by title (all variants).
-    query: String = "",
     // List tools (toolbar filter/sort): Root owns the open flags so the
     // toolbar back affordance and system back close the sheets.
     isFilterOpen: Boolean = false,
     onDismissFilter: () -> Unit = {},
     isSortOpen: Boolean = false,
     onDismissSort: () -> Unit = {},
-    // Mirrors the Settings persist toggle: when on, sort changes are
-    // remembered per tab across restarts (filters never persist).
-    sortPersist: Boolean = false,
-    // Mirrors the Settings split toggle: merged COMPLETED when off,
-    // per-format sections when on.
-    splitCompleted: Boolean = true,
-    // Global 18+ setting (inverted): hidden entries never reach the list, but
-    // rail counts stay raw (see holder.countInSection).
-    hideAdult: Boolean = false,
     // Card tap opens media detail, pencil opens the entry editor.
     onOpenDetail: (Int) -> Unit = {},
     onEditEntry: (Int) -> Unit = {},
 ) {
-    val sections = listOf(allSection) + statusSections(splitCompleted)
+    val sections = listOf(allSection) + statusSections(settings.splitCompleted)
     // Toggling split can strand the selection on a gone section (e.g.
     // COMPLETED_TV with split off): fall back to ALL without churning state.
     val effectiveSelected = if (selected in sections) selected else allSection
@@ -133,8 +122,8 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             count = holder.countInSection(section),
         )
     }
-    val trimmedQuery = query.trim()
-    val entries = holder.entriesInSection(effectiveSelected, hideAdult).let { sectionEntries ->
+    val trimmedQuery = settings.query.trim()
+    val entries = holder.entriesInSection(effectiveSelected, settings.hideAdult).let { sectionEntries ->
         if (trimmedQuery.isEmpty()) {
             sectionEntries
         } else {
@@ -159,7 +148,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             RefreshErrorRow(
                 message = errorMessage,
                 retryLabel = strings.retryAction,
-                onRetry = onRetry,
+                onRetry = onReload,
             )
         }
         when {
@@ -172,7 +161,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                     message = errorMessage,
                     icon = AppIcons.Warning,
                     actionLabel = strings.retryAction,
-                    onAction = onRetry,
+                    onAction = onReload,
                 )
             }
             entries.isEmpty() -> {
@@ -195,7 +184,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                 }
                 PullRefresh(
                     isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
+                    onRefresh = onReload,
                 ) {
                     LazyColumn(
                         state = listState,
@@ -306,11 +295,11 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             options = UserListSort.entries,
             selected = holder.currentSortOption,
             onSelect = { option ->
-                holder.updateSort(option, holder.currentSortOrder, persist = sortPersist)
+                holder.updateSort(option, holder.currentSortOrder, persist = settings.sortPersist)
             },
             order = holder.currentSortOrder,
             onSelectOrder = { order ->
-                holder.updateSort(holder.currentSortOption, order, persist = sortPersist)
+                holder.updateSort(holder.currentSortOption, order, persist = settings.sortPersist)
             },
             onDismiss = onDismissSort,
         )
