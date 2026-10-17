@@ -70,7 +70,14 @@ internal class DashboardStateHolder(
     /** Cache generation; a change means "reload when the screen is visible". */
     val generation: Int get() = generationState
 
-    val isLoading: Boolean get() = loading[mediaType] == true
+    val isLoading: Boolean get() = loading[mediaType] == true ||
+        // A type that has neither a feed nor an error counts as loading: the
+        // screen shows the spinner until its first load resolves, instead of
+        // the empty panel on the frame before the load effect fires (or after
+        // invalidate() dropped the feed). Every visible type's path launches a
+        // load, so this never sticks: see load()/selectType()/setHideAdult()
+        // and the failure surfacing below for a selected-but-invisible preload.
+        (feeds[mediaType] == null && errors[mediaType] == null)
     val isRefreshing: Boolean get() = refreshing[mediaType] == true
 
     /** Error of the selected type only: an Anime failure never shows on Manga. */
@@ -205,7 +212,13 @@ internal class DashboardStateHolder(
                         }
                     }
                     is NetworkResult.Failure ->
-                        if (visible && launchGeneration == generation && gate == hideAdultState) {
+                        if (launchGeneration == generation && gate == hideAdultState &&
+                            // Surface the error when the request was launched visible
+                            // OR when its type became the visible one while in flight
+                            // (a selection joining a preload must not leave the type
+                            // with no feed, no error and no reload).
+                            (visible || mediaType == type)
+                        ) {
                             errors[type] = result.error
                         }
                 }

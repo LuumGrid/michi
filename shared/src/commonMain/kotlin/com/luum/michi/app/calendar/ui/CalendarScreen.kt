@@ -47,6 +47,7 @@ import com.luum.michi.app.calendar.ui.components.CalendarDateBar
 import com.luum.michi.app.ui.components.DatePickerField
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.PullRefresh
+import com.luum.michi.app.ui.components.RefreshErrorRow
 import com.luum.michi.app.ui.components.TabFadeMs
 import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.components.rememberResetListState
@@ -98,22 +99,39 @@ internal fun CalendarScreen(
         holder.startTicking()
         onStopOrDispose { holder.stopTicking() }
     }
-    // Scroll rule: changing the day returns the list to the top.
-    val listState = rememberResetListState(selected)
+    // Scroll rule: changing the day, the season filter or the status filter
+    // returns the list to the top.
+    val listState = rememberResetListState(
+        calendarResetKey(selected, holder.seasonFilter, holder.statusFilter),
+    )
+    // One zone for the whole screen: the same one the holder buckets days with,
+    // so the date bar, the picker bounds and the row times never disagree.
+    val zone = holder.timeZone
     val minBucket = holder.minDayBucket
     val maxBucket = holder.maxDayBucket
-    val selectableDates = remember(minBucket, maxBucket) {
+    val selectableDates = remember(minBucket, maxBucket, zone) {
         object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val bucket = utcTimeMillis.millisToBucket()
+                val bucket = utcTimeMillis.millisToBucket(zone)
                 return bucket in minBucket..maxBucket
             }
         }
     }
+    val hasLoadedDay = holder.hasLoadedSelectedDay
+    val errorMessage = holder.error?.let { strings.networkErrorMessage(it) }
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // With the selected day already loaded, a failed refresh is a compact
+            // retry line, never a full-page error that hides the day.
+            if (errorMessage != null && hasLoadedDay) {
+                RefreshErrorRow(
+                    message = errorMessage,
+                    retryLabel = strings.retryAction,
+                    onRetry = onRetry,
+                )
+            }
             when {
-                holder.isLoading && items.isEmpty() -> {
+                holder.isLoading && !hasLoadedDay -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
@@ -129,10 +147,10 @@ internal fun CalendarScreen(
                         }
                     }
                 }
-                holder.error != null && items.isEmpty() -> {
+                holder.error != null && !hasLoadedDay -> {
                     MessagePanel(
                         title = strings.listsErrorLabel,
-                        message = holder.error?.let { strings.networkErrorMessage(it) },
+                        message = errorMessage,
                         icon = Icons.Filled.Warning,
                         actionLabel = strings.retryAction,
                         onAction = onRetry,
@@ -206,9 +224,9 @@ internal fun CalendarScreen(
                 ) {
                     DatePickerField(
                         millis = current.bucketToMillis(),
-                        onConfirm = { holder.selectDay(it.millisToBucket()) },
+                        onConfirm = { holder.selectDay(it.millisToBucket(zone)) },
                         onClear = { holder.selectDay(holder.todayBucket) },
-                        buttonLabel = dateButtonLabel(current, holder.todayBucket, strings),
+                        buttonLabel = dateButtonLabel(current, holder.todayBucket, strings, zone),
                         selectableDates = selectableDates,
                         strings = strings,
                         // Trims the date pill to sit even with the circles.
@@ -239,13 +257,27 @@ internal fun CalendarScreen(
 /** Date bar clearance: TabBar-sized capsule + its 24dp margin, above the tab-bar pad. */
 private val BottomBarClearance = 96.dp
 
+/**
+ * Scroll reset key (app-wide scroll rule): changing the day, the season filter
+ * or the status filter returns the list to the top. Pure, for testability.
+ */
+internal fun calendarResetKey(
+    selected: Long?,
+    season: CalendarSeasonFilter,
+    status: CalendarStatusFilter,
+): List<Any?> = listOf(selected, season, status)
+
 private fun Long.bucketToMillis(): Long = this * 1000
 
-private fun Long.millisToBucket(): Long =
-    utcMillisToLocalMidnightBucket(this, TimeZone.currentSystemDefault())
+private fun Long.millisToBucket(zone: TimeZone): Long =
+    utcMillisToLocalMidnightBucket(this, zone)
 
-private fun dateButtonLabel(bucket: Long, todayBucket: Long, strings: LanguageStrings): String {
-    val zone = TimeZone.currentSystemDefault()
+private fun dateButtonLabel(
+    bucket: Long,
+    todayBucket: Long,
+    strings: LanguageStrings,
+    zone: TimeZone,
+): String {
     val date = Instant.fromEpochSeconds(bucket).toLocalDateTime(zone).date
     val today = Instant.fromEpochSeconds(todayBucket).toLocalDateTime(zone).date
     val prefix = when (today.daysUntil(date)) {

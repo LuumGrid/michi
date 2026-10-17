@@ -10,6 +10,7 @@ import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
 import com.luum.michi.app.settings.FakeSettingsStore
 import com.luum.michi.app.FakeGraphQL
+import com.luum.michi.app.DeferredDispatcher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -738,5 +739,72 @@ class DashboardIntegrationTest {
         wired(graphQL)
 
         assertEquals(0, graphQL.calls, "creating the holder must not fire a request")
+    }
+
+    @Test
+    fun aNeverLoadedTypeCountsAsLoadingAndInvalidateRestoresThat() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(trendingAnime = listOf(mediaJson(2, "B"))),
+            ),
+        )
+        // DeferredDispatcher: a real dispatcher on which the request does not run
+        // inline, so the mid-load frame is observable.
+        val dispatcher = DeferredDispatcher()
+        val holder = createDashboardStateHolder(
+            repository = DashboardRepositoryImpl(graphQL),
+            cache = InMemoryDashboardFeedCache(),
+            scope = CoroutineScope(dispatcher),
+            hideAdult = true,
+        ) { EnglishStrings }
+
+        assertTrue(
+            holder.isLoading,
+            "a fresh holder has no feed and no error: the first frame is loading, not empty",
+        )
+
+        holder.load()
+        dispatcher.runAll()
+        assertFalse(holder.isLoading)
+
+        holder.invalidate() // language change drops the feed
+        assertTrue(holder.isLoading, "the frame before the recompose-triggered load is loading again")
+
+        holder.load() // the screen composes again
+        dispatcher.runAll()
+        assertFalse(holder.isLoading, "the spinner goes off once the reload lands")
+        assertEquals(listOf(2), holder.sections[DashboardSectionKind.TRENDING_ANIME]?.map { it.id })
+    }
+
+    @Test
+    fun aFailedPreloadSelectedByTheUserSurfacesTheError() {
+        val graphQL = FakeGraphQL(
+            listOf(
+                dashboardJson(trendingAnime = listOf(mediaJson(1, "A"))),
+                dashboardJson(newReleasesManga = listOf(mediaJson(2, "M", format = "MANGA"))),
+            ),
+            failureAt = 1,
+        )
+        val holder = wired(graphQL)
+        holder.load() // anime, call 0
+
+        graphQL.gate = CompletableDeferred()
+        holder.preloadOther() // manga preload in flight (call 1, will fail)
+        val gate = graphQL.gate!!
+        holder.selectType(DashboardMediaType.MANGA) // joins the doomed preload
+
+        graphQL.gate = null
+        gate.complete(Unit)
+
+        assertEquals(2, graphQL.calls, "the select joined the preload instead of firing again")
+        assertTrue(
+            holder.error != null,
+            "a failed preload must surface once its type is the visible one",
+        )
+        assertFalse(
+            holder.isLoading,
+            "there is an error to show, so the type is not stuck on the spinner",
+        )
     }
 }

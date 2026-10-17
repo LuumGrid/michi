@@ -300,6 +300,32 @@ class MediaListIntegrationTest {
     }
 
     @Test
+    fun aTtlSkippedLoadKeepsTheProgressActionError() {
+        // One collection page only: a second fetch would blow up, so passing
+        // proves the second load() never hit the network.
+        val graphQL = FakeGraphQL(listOf(animeCollection(), emptyUpdateAck), failureAt = 1)
+        val (holder) = animeWired(graphQL)
+
+        holder.load(7)
+        val watching = holder.entriesInSection(AnimeListSection.WATCHING).single()
+        holder.incrementProgress(watching) // the +1 save fails
+        assertEquals(2, graphQL.calls)
+        assertIs<NetworkError.Http>(holder.actionError)
+        assertEquals(5, holder.entriesInSection(AnimeListSection.WATCHING).single().progress)
+
+        // Root calls load() on every tab switch; within the TTL nothing is
+        // replaced, so the +1 error and rollback state must survive.
+        holder.load(7)
+
+        assertEquals(2, graphQL.calls, "a TTL-skipped load must not fetch")
+        assertIs<NetworkError.Http>(
+            holder.actionError,
+            "a TTL-skipped load must not clear the +1 error (nor its rollback state)",
+        )
+        assertEquals(5, holder.entriesInSection(AnimeListSection.WATCHING).single().progress)
+    }
+
+    @Test
     fun saveProgressOmitsChaptersForNovels() {
         val graphQL = FakeGraphQL(listOf(mangaCollection(), emptyUpdateAck))
         val (holder) = mangaWired(graphQL)

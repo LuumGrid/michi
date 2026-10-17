@@ -25,6 +25,8 @@ internal class ProfileFavoritesGridStateHolder(
 ) {
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
+    /** Non-blocking failure of a page load: the loaded page stays on screen. */
+    private var actionErrorState by mutableStateOf<NetworkError?>(null)
 
     private val paginated = PagedList<ProfileFavorite> { a, b -> (a + b).distinctBy { it.id } }
 
@@ -40,6 +42,13 @@ internal class ProfileFavoritesGridStateHolder(
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
     val hasNextPage: Boolean get() = paginated.hasNextPage
     val error: NetworkError? get() = errorState
+    /** A failed page load (2+): a compact dismissible row, never the blocking
+     *  first-page error. */
+    val actionError: NetworkError? get() = actionErrorState
+
+    fun clearActionError() {
+        actionErrorState = null
+    }
 
     fun load(userId: Int, category: ProfileFavoritesCategory) {
         if (loadedUserId == userId && loadedCategory == category) return
@@ -49,6 +58,7 @@ internal class ProfileFavoritesGridStateHolder(
         generation++
         paginated.clear()
         errorState = null
+        actionErrorState = null
         loadingState = true
         // LAZY then start, so the identity check below is valid on an eagerly
         // dispatched scope.
@@ -85,7 +95,8 @@ internal class ProfileFavoritesGridStateHolder(
             scope = scope,
             isCurrent = { generation == currentGeneration },
             fetch = { page -> repository.loadFavoritesPage(userId, category, page) },
-            onError = { errorState = it },
+            onLoaded = { actionErrorState = null },
+            onError = { actionErrorState = it },
         )
     }
 }

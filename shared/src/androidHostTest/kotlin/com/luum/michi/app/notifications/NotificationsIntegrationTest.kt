@@ -24,6 +24,7 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** One notification node as the API shapes it (only the fields a test needs). */
@@ -346,5 +347,34 @@ class NotificationsIntegrationTest {
     private fun <T> successValue(result: NetworkResult<T>): T = when (result) {
         is NetworkResult.Success -> result.value
         is NetworkResult.Failure -> throw AssertionError("expected Success but was $result")
+    }
+
+    @Test
+    fun aFailedLoadMoreGoesToActionErrorNotTheBlockingError() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(
+                listOf(notificationPage(listOf(node(1, "AIRING")), hasNextPage = true)),
+                failureAt = 1,
+            )
+            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
+
+            holder.load()
+            dispatcher.runAll()
+            assertEquals(listOf(1), idsOf(holder))
+            assertTrue(holder.hasNextPage)
+
+            holder.loadMore() // page 2 fails
+            dispatcher.runAll()
+
+            assertNull(holder.error, "a failed page must not blank the loaded feed")
+            assertTrue(holder.actionError != null)
+
+            holder.clearActionError()
+            assertNull(holder.actionError)
+        } finally {
+            scope.cancel()
+        }
     }
 }

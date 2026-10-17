@@ -17,6 +17,7 @@ import com.luum.michi.app.core.util.DetailCache
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -179,17 +180,29 @@ internal class GenreDetailStateHolder(
         error = null
         actionError = null
         isLoading = true
-        currentJob = scope.launch {
-            when (val result = loadPage(1)) {
-                is NetworkResult.Success -> {
-                    media.set(result.value)
-                    pageLoaded = true
-                    cacheSnapshot()
+        // LAZY then start: the job is stored before the body runs, so the
+        // identity check is valid on an eagerly dispatched scope, and a
+        // cancelled request can never write its stale page or clear the spinner
+        // of the one that replaced it.
+        val request = scope.launch(start = CoroutineStart.LAZY) {
+            try {
+                when (val result = loadPage(1)) {
+                    is NetworkResult.Success -> if (currentJob === coroutineContext[Job]) {
+                        media.set(result.value)
+                        pageLoaded = true
+                        cacheSnapshot()
+                    }
+                    is NetworkResult.Failure -> if (currentJob === coroutineContext[Job]) {
+                        error = result.error
+                    }
                 }
-                is NetworkResult.Failure -> error = result.error
+            } finally {
+                // Only the current request owns the spinner.
+                if (currentJob === coroutineContext[Job]) isLoading = false
             }
-            isLoading = false
         }
+        currentJob = request
+        request.start()
     }
 
     /** One grid page for the current genre + catalog + sort + gate. */

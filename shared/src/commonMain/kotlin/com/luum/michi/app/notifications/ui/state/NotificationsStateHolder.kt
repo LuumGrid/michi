@@ -35,6 +35,9 @@ internal class NotificationsStateHolder(
         private set
     var error by mutableStateOf<NetworkError?>(null)
         private set
+    /** Non-blocking failure of a page load: the loaded feed stays on screen. */
+    var actionError by mutableStateOf<NetworkError?>(null)
+        private set
     var unreadCount by mutableStateOf(0)
         private set
     var selectedFilter by mutableStateOf(NotificationFilter.ALL)
@@ -53,6 +56,7 @@ internal class NotificationsStateHolder(
         invalidate()
         isLoading = true
         error = null
+        actionError = null
         val filter = selectedFilter
         // LAZY then start, like PagedList.request: the job is stored before the
         // body runs, so the identity check is valid even on an eager scope.
@@ -89,8 +93,14 @@ internal class NotificationsStateHolder(
                 repository.loadNotifications(page = page, resetCount = false, filter = filter)
                     .map { Page(it.notifications, it.hasNextPage, page) }
             },
-            onError = { error = it },
+            onLoaded = { actionError = null },
+            onError = { actionError = it },
         )
+    }
+
+    /** Dismisses the compact action-error row. */
+    fun clearActionError() {
+        actionError = null
     }
 
     /**

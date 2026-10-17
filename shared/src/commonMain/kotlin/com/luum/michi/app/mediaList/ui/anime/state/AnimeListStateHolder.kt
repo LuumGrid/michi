@@ -47,6 +47,13 @@ internal class AnimeListStateHolder(
         onSaved = onEntrySaved,
     )
 
+    // A reload replaces every entry: a stale confirmed value (or a `+1` error)
+    // must not survive it. Wired to a real replacement only, so a tab switch
+    // that loads nothing (TTL/join) never wipes the in-flight rollback.
+    init {
+        loader.onReplaced = { progressSaver.onReload() }
+    }
+
     // Snapshot-backed so filter/sort sheets recompose the list on every
     // intent (plain vars would apply silently until the next load).
     override var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
@@ -89,8 +96,6 @@ internal class AnimeListStateHolder(
     }
 
     fun load(userId: Int, forceRefresh: Boolean = false, splitCompleted: Boolean = true) {
-        // A reload replaces every entry: a stale confirmed value must not survive it.
-        progressSaver.onReload()
         // Split flips re-map every entry: bypass the TTL so the toggle
         // applies immediately instead of on the next cold load. The fetch
         // reads lastSplitCompleted at execution, so entries always match it.

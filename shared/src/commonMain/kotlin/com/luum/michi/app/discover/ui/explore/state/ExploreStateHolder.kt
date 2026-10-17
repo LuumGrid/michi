@@ -45,6 +45,8 @@ internal class ExploreStateHolder(
 
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
+    /** Non-blocking failure of a page load, shown as a compact row. */
+    private var actionErrorState by mutableStateOf<NetworkError?>(null)
 
     /** Pages of the current search: append/dedup/cancel live in [PagedList]. A
      *  new search invalidates its in-flight page with [generation]. */
@@ -58,6 +60,13 @@ internal class ExploreStateHolder(
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
     val hasNextPage: Boolean get() = paginated.hasNextPage
     val error: NetworkError? get() = errorState
+    /** A failed page load (2+): it must not replace the loaded results with the
+     *  blocking error panel. Dismissible. */
+    val actionError: NetworkError? get() = actionErrorState
+
+    fun clearActionError() {
+        actionErrorState = null
+    }
 
     /** Orden in-app espejo de las listas: solo TITLE/AVERAGE_SCORE/FAVORITES
      *  tienen dato local en ExploreResult; el resto lo ordena el servidor
@@ -83,6 +92,7 @@ internal class ExploreStateHolder(
         invalidateSearch()
         paginated.clear()
         errorState = null
+        actionErrorState = null
         loadingState = false
         focusSearchRequested = true
     }
@@ -174,6 +184,7 @@ internal class ExploreStateHolder(
         invalidateSearch()
         loadingState = true
         errorState = null
+        actionErrorState = null
         // LAZY then start, like PagedList.request: the job is stored before the
         // body runs, so the identity check below is valid even on an eagerly
         // dispatched scope.
@@ -208,7 +219,8 @@ internal class ExploreStateHolder(
             scope = scope,
             isCurrent = { generation == currentGeneration },
             fetch = { page -> fetchPage(page) },
-            onError = { errorState = it },
+            onLoaded = { actionErrorState = null },
+            onError = { actionErrorState = it },
         )
     }
 

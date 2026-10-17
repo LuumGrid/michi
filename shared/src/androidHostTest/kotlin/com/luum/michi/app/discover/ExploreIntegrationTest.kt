@@ -15,11 +15,22 @@ import kotlinx.serialization.json.putJsonArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private val emptyExplorePage = buildJsonObject {
     put("Page", buildJsonObject {
         put("pageInfo", buildJsonObject { put("hasNextPage", false) })
+        putJsonArray("media") {}
+    })
+}
+
+private val explorePageWithNext = buildJsonObject {
+    put("Page", buildJsonObject {
+        put("pageInfo", buildJsonObject {
+            put("hasNextPage", true)
+            put("currentPage", 1)
+        })
         putJsonArray("media") {}
     })
 }
@@ -114,5 +125,25 @@ class ExploreIntegrationTest {
         )
         assertTrue(result is NetworkResult.Success)
         assertTrue(result.value.items.single().cover == null, "a studio has no image")
+    }
+
+    @Test
+    fun aFailedLoadMoreGoesToActionErrorNotTheBlockingError() {
+        val graphQL = FakeGraphQL(listOf(explorePageWithNext), failureAt = 1)
+        val holder = exploreWired(graphQL, hideAdult = true)
+
+        holder.load()
+        assertTrue(holder.hasNextPage)
+
+        holder.loadMore() // page 2 fails
+
+        assertNull(
+            holder.error,
+            "a failed page must not replace the loaded results with the blocking error panel",
+        )
+        assertTrue(holder.actionError != null)
+
+        holder.clearActionError()
+        assertNull(holder.actionError)
     }
 }

@@ -83,6 +83,9 @@ internal class CalendarStateHolder(
         }
 
     val hasLoadedDays: Boolean get() = cacheState.isNotEmpty()
+    /** True once the selected day's slice has been fetched (even if empty), so a
+     *  failed refresh of a visible day is a compact error, not a blocking one. */
+    val hasLoadedSelectedDay: Boolean get() = cacheState.containsKey(selectedDayBucket)
     val isLoading: Boolean get() = selectedDayBucket in loadingBucketsState
     val error: NetworkError? get() = errorState
 

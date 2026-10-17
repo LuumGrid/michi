@@ -32,6 +32,8 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.model.FilterOption
 import com.luum.michi.app.core.media.domain.MediaGenres
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.media.domain.parseMediaSeason
 import com.luum.michi.app.mediaList.domain.common.SortableMediaListEntry
@@ -48,6 +50,22 @@ import com.luum.michi.app.ui.components.SortSheet
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
+
+/**
+ * Scroll reset key (app-wide scroll rule): changing what is shown — section,
+ * sort or a filter — returns the list to the top. The search query is
+ * deliberately excluded: typing must never jump. Pure, so the key composition
+ * is testable without composition.
+ */
+internal fun mediaListResetKey(
+    selected: Any?,
+    sortOption: UserListSort,
+    sortOrder: UserListOrder,
+    season: MediaSeason?,
+    genres: List<String>,
+    formats: List<String>,
+    year: Int?,
+): List<Any?> = listOf(selected, sortOption, sortOrder, season, genres, formats, year)
 
 /**
  * The one list screen: section rail + entry cards, shared by the anime and
@@ -102,9 +120,20 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
     // Toggling split can strand the selection on a gone section (e.g.
     // COMPLETED_TV with split off): fall back to ALL without churning state.
     val effectiveSelected = if (selected in sections) selected else allSection
-    // Scroll rule: a section chip change returns to the top; the position is
-    // kept on refresh, on sheet open/close and when coming back from a detail.
-    val listState = rememberResetListState(effectiveSelected)
+    // Scroll rule: changing the section, the sort or a filter returns to the
+    // top; the search query is not part of the key, so typing never jumps; and
+    // refresh, sheet open/close or coming back from a detail keeps the position.
+    val listState = rememberResetListState(
+        mediaListResetKey(
+            selected = effectiveSelected,
+            sortOption = holder.currentSortOption,
+            sortOrder = holder.currentSortOrder,
+            season = holder.filterSeason,
+            genres = holder.filterGenres,
+            formats = holder.filterFormats,
+            year = holder.filterYear,
+        ),
+    )
     val tabs = sections.map { section ->
         ChipTab(
             value = section,
@@ -122,14 +151,27 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             }
         }
     }
+    // "Nothing loaded" is about the loaded list, not the filtered view: a query
+    // (or a sheet filter) that empties the view is not a load failure.
+    val hasLoadedEntries = holder.entries.isNotEmpty()
+    val errorMessage = holder.error?.let { strings.networkErrorMessage(it) }
     Column(modifier = modifier.fillMaxSize()) {
         ChipRail(
             tabs = tabs,
             selected = effectiveSelected,
             onSelect = onSelectSection,
         )
+        // With content already loaded, a failed refresh is a compact retry line
+        // above the list, never a full-page error that hides the entries.
+        if (errorMessage != null && hasLoadedEntries) {
+            RefreshErrorRow(
+                message = errorMessage,
+                retryLabel = strings.retryAction,
+                onRetry = onRetry,
+            )
+        }
         when {
-            holder.isLoading && entries.isEmpty() -> {
+            holder.isLoading && !hasLoadedEntries -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
@@ -145,10 +187,10 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                     }
                 }
             }
-            holder.error != null && entries.isEmpty() -> {
+            errorMessage != null && !hasLoadedEntries -> {
                 MessagePanel(
                     title = strings.listsErrorLabel,
-                    message = holder.error?.let { strings.networkErrorMessage(it) },
+                    message = errorMessage,
                     icon = Icons.Filled.Warning,
                     actionLabel = strings.retryAction,
                     onAction = onRetry,

@@ -49,8 +49,8 @@ internal class ProfileStateHolder(
 
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
-        if (!forceRefresh && lastUserId == userId && mark != null
-            && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && statsState != EmptyStats
+        if (!forceRefresh && hasDataFor(userId) && mark != null
+            && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL
         ) return
         requestedUserId = userId
         // Switching user must never show the previous user's data while the new
@@ -63,7 +63,9 @@ internal class ProfileStateHolder(
         // response cannot overwrite newer data. Only the current request writes
         // state and owns the spinners.
         loadJob?.cancel()
-        val isRefresh = forceRefresh && statsState != EmptyStats
+        // "Has data" keys on a successful load, not on the stats being non-zero:
+        // a real account with everything at 0 is still loaded data.
+        val isRefresh = forceRefresh && hasDataFor(userId)
         loadingState = false
         refreshingState = false
         if (isRefresh) refreshingState = true else loadingState = true
@@ -99,6 +101,9 @@ internal class ProfileStateHolder(
     fun refresh() {
         requestedUserId?.let { load(it, forceRefresh = true) }
     }
+
+    /** True once a load for [userId] succeeded (even with all-zero stats). */
+    private fun hasDataFor(userId: Int): Boolean = lastUserId == userId && lastLoaded != null
 }
 
 /** Pure-logic factory (placeholder for UI wiring). */

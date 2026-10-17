@@ -280,4 +280,62 @@ class ProfileIntegrationTest {
         holder.loadMore()
         assertEquals(listOf("A", "B", "C"), holder.items.map { it.name })
     }
+
+    @Test
+    fun aZeroStatsProfileRespectsTheTtl() {
+        // A real account with everything at 0 is still loaded data: it must not
+        // look "empty" and refetch on every load.
+        val zeroProfile = buildJsonObject {
+            put("User", buildJsonObject {
+                put("statistics", buildJsonObject {
+                    put("anime", buildJsonObject { put("count", 0) })
+                    put("manga", buildJsonObject { put("count", 0) })
+                })
+            })
+            put("followers", buildJsonObject { put("pageInfo", buildJsonObject { put("total", 0) }) })
+            put("following", buildJsonObject { put("pageInfo", buildJsonObject { put("total", 0) }) })
+        }
+        val graphQL = FakeProfileGraphQL(listOf(zeroProfile))
+        val holder = ProfileStateHolder(
+            ProfileRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+
+        holder.load(1)
+        assertEquals(0, holder.stats.animeCount)
+
+        holder.load(1)
+
+        assertEquals(1, graphQL.calls, "an all-zero profile is cached data, so the TTL holds")
+        assertFalse(holder.isLoading)
+
+        // A forced refresh keeps the page (refresh spinner), not a full-page load.
+        graphQL.gate = CompletableDeferred()
+        holder.refresh()
+        assertTrue(holder.isRefreshing)
+        assertFalse(holder.isLoading, "an all-zero profile is not a first load")
+        graphQL.gate!!.complete(Unit)
+    }
+
+    @Test
+    fun aFailedGridPageGoesToActionErrorNotTheBlockingError() {
+        val graphQL = FakeProfileGraphQL(
+            listOf(favouritesPage("anime", "anime-1", hasNextPage = true)),
+            failureAt = 1,
+        )
+        val holder = ProfileFavoritesGridStateHolder(
+            ProfileRepositoryImpl(graphQL),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        holder.load(1, ProfileFavoritesCategory.ANIME)
+        assertTrue(holder.hasNextPage)
+
+        holder.loadMore() // page 2 fails
+
+        assertNull(holder.error, "a failed page must not replace the loaded grid with the error panel")
+        assertTrue(holder.actionError != null)
+
+        holder.clearActionError()
+        assertNull(holder.actionError)
+    }
 }

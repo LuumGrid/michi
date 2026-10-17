@@ -38,6 +38,13 @@ internal class MediaListLoader<T>(
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
     private var lastUserId: Int? = null
 
+    /**
+     * Fired when a successful load replaces the entries (never on a TTL skip or
+     * a join of an in-flight request). The list's `+1` rollback/error reset runs
+     * off this, so a tab switch that loads nothing must not wipe it.
+     */
+    var onReplaced: (() -> Unit)? = null
+
     private var loadJob: Job? = null
     private var inFlightUserId: Int? = null
     // Bumped per launch so a cancelled load's `finally` never clears the
@@ -76,6 +83,7 @@ internal class MediaListLoader<T>(
                         entriesBacking.addAll(result.value)
                         lastLoaded = timeMark.markNow()
                         lastUserId = userId
+                        onReplaced?.invoke()
                     }
                     is NetworkResult.Failure -> {
                         errorState = result.error

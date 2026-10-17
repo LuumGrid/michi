@@ -1,5 +1,6 @@
 package com.luum.michi.app.discover
 
+import com.luum.michi.app.DeferredDispatcher
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.MediaGridItem
@@ -10,9 +11,11 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -351,6 +354,42 @@ class GenreDetailIntegrationTest {
 
         assertEquals(2, repository.calls)
     }
+
+    @Test
+    fun aCancelledFirstPageDoesNotStopTheCurrentSpinner() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        val repository = CancelSurvivingGenreRepository()
+        val holder = GenreDetailStateHolder(repository, scope, hideAdult = true)
+        val firstGate = repository.expect(listOf(1))
+        val secondGate = repository.expect(listOf(2))
+
+        try {
+            holder.load("Action", MediaType.ANIME) // job 1
+            dispatcher.runAll()
+            assertTrue(holder.isLoading)
+
+            // A sort change cancels job 1 and starts job 2.
+            holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+            dispatcher.runAll()
+
+            // The cancelled job survives cancellation (non-cooperative repo) and
+            // tries to write: only job 2 may own the grid and the spinner.
+            firstGate.complete(Unit)
+            dispatcher.runAll()
+
+            assertTrue(holder.isLoading, "the stale job must not clear the current spinner")
+            assertTrue(holder.media.items.isEmpty(), "nor write its stale page")
+
+            secondGate.complete(Unit)
+            dispatcher.runAll()
+
+            assertFalse(holder.isLoading)
+            assertEquals(listOf(2), holder.media.items.map { it.mediaId })
+        } finally {
+            scope.cancel()
+        }
+    }
 }
 
 /**
@@ -405,5 +444,39 @@ private class GatedGenreRepository : FakeGenreExploreRepository() {
     ): NetworkResult<Page<MediaGridItem>> {
         if (gated) gate.await()
         return NetworkResult.Success(gridPage(pageOne, hasNextPage = false, currentPage = 1))
+    }
+}
+
+/**
+ * Page-1 double that survives cancellation (a non-cooperative repo): a cancelled
+ * request keeps going and returns, so the holder's job-identity check is what
+ * stops the stale write. `expect` pre-registers one gate + payload per call.
+ */
+private class CancelSurvivingGenreRepository : FakeGenreExploreRepository() {
+    private val gates = mutableListOf<CompletableDeferred<Unit>>()
+    private val payloads = mutableListOf<List<Int>>()
+    private var calls = 0
+
+    fun expect(items: List<Int>): CompletableDeferred<Unit> {
+        val gate = CompletableDeferred<Unit>()
+        gates += gate
+        payloads += items
+        return gate
+    }
+
+    override suspend fun searchMediaGrid(
+        type: MediaType,
+        genres: List<String>,
+        page: Int,
+        sort: String,
+        hideAdult: Boolean,
+    ): NetworkResult<Page<MediaGridItem>> {
+        val index = calls++
+        try {
+            gates[index].await()
+        } catch (_: CancellationException) {
+            // Keep going: simulate a client that maps a cancellation to a value.
+        }
+        return NetworkResult.Success(gridPage(payloads[index], hasNextPage = false, currentPage = 1))
     }
 }
