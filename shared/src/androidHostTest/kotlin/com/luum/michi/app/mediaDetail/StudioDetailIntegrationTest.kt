@@ -3,6 +3,7 @@ package com.luum.michi.app.mediaDetail
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
@@ -52,6 +53,7 @@ private fun studioDetail(
  */
 private class RecordingStudioRepository(
     private val mediaPages: Map<Int, Page<MediaGridItem>> = emptyMap(),
+    var failDetail: Boolean = false,
 ) : StudioDetailRepository {
     var detailCalls = 0
         private set
@@ -64,6 +66,7 @@ private class RecordingStudioRepository(
     override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
         detailCalls++
         lastSort = sort
+        if (failDetail) return NetworkResult.Failure(NetworkError.Http(500, null))
         return NetworkResult.Success(
             studioDetail(
                 id = id,
@@ -280,6 +283,27 @@ class StudioDetailIntegrationTest {
         repository.release()
 
         assertEquals(listOf(9), holder.media.items.map { it.mediaId }, "the response replaces them")
+    }
+
+    @Test
+    fun refreshDropsTheStaleCacheEntry() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(1 to Page(listOf(studioMediaItem(1)), false, 1)),
+        )
+        val holder = holderWired(repository)
+        holder.load(1) // caches studio 1
+
+        // The refresh fails: its cache entry must be gone, or a later visit would
+        // restore the stale snapshot instead of re-fetching.
+        repository.failDetail = true
+        holder.refresh()
+        repository.failDetail = false
+
+        holder.load(2)
+        holder.load(1)
+
+        assertEquals(4, repository.detailCalls, "the old snapshot is not restored")
+        assertEquals(1, holder.detail?.id)
     }
 
     @Test

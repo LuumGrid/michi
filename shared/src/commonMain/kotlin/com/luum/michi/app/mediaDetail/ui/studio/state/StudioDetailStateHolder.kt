@@ -1,27 +1,23 @@
 package com.luum.michi.app.mediaDetail.ui.studio.state
 
-import com.luum.michi.app.core.medialist.domain.UserListOrder
-import com.luum.michi.app.core.medialist.domain.UserListSort
-import com.luum.michi.app.core.medialist.domain.toMediaSort
-import com.luum.michi.app.core.network.domain.NetworkError
-import com.luum.michi.app.core.util.DetailCache
-import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.core.navigation.domain.DetailHolder
-import com.luum.michi.app.core.navigation.domain.GridSortHolder
-import com.luum.michi.app.core.media.domain.MediaGridItem
-import com.luum.michi.app.core.model.Page
-import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
-import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
-import com.luum.michi.app.ui.state.PagedList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.medialist.domain.toMediaSort
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.navigation.domain.GridSortHolder
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
+import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
+import com.luum.michi.app.mediaDetail.ui.state.DetailStateHolderBase
+import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /** Snapshot stored in the LRU cache for fast back-navigation. */
-private data class StudioDetailSnapshot(
+internal data class StudioDetailSnapshot(
     val detail: StudioDetail,
     val media: Page<MediaGridItem>,
     val sortOption: UserListSort,
@@ -30,24 +26,8 @@ private data class StudioDetailSnapshot(
 
 internal class StudioDetailStateHolder(
     private val repository: StudioDetailRepository,
-    private val scope: CoroutineScope,
-) : DetailHolder, GridSortHolder {
-    // Snapshot-backed: the detail screen reads these directly and must
-    // recompose on every load/pagination (plain vars would apply silently).
-    var detail: StudioDetail? by mutableStateOf(null)
-        private set
-    var isLoading: Boolean by mutableStateOf(false)
-        private set
-    var error: NetworkError? by mutableStateOf(null)
-        private set
-    /** Non-blocking action failure (page load / favourite), shown as a compact row. */
-    var actionError: NetworkError? by mutableStateOf(null)
-        private set
-
-    private var currentStudioId: Int? = null
-    private var currentJob: Job? = null
-
-    private val detailCache = DetailCache<Int, StudioDetailSnapshot>(maxSize = 5)
+    scope: CoroutineScope,
+) : DetailStateHolderBase<StudioDetail, StudioDetailSnapshot>(scope), GridSortHolder {
 
     /**
      * Works grid. Server order: the grid re-queries from page 1 on a change
@@ -64,48 +44,8 @@ internal class StudioDetailStateHolder(
     /** Derived from the visible detail: no separate flag can drift from it. */
     override val isFavourite: Boolean get() = detail?.isFavourite == true
 
-    // Per id: a toggle in flight for one studio must not disable (or reflect on)
-    // another one's heart.
-    private var favouriteInFlightId: Int? by mutableStateOf(null)
-    val isTogglingFavourite: Boolean
-        get() = favouriteInFlightId != null && favouriteInFlightId == currentStudioId
-
     /** The AniList `MediaSort` key the current selection maps to. */
     private fun apiSort(): String = sortOption.toMediaSort(sortOrder, isAnime = true)
-
-    fun load(id: Int) {
-        if (currentStudioId == id && (detail != null || isLoading)) return
-
-        val cached = detailCache.get(id)
-        if (cached != null) {
-            currentStudioId = id
-            currentJob?.cancel()
-            // A page in flight belongs to what was on screen: never let it
-            // append to the snapshot we are restoring (set cancels it).
-            detail = cached.detail
-            media.set(cached.media)
-            sortOption = cached.sortOption
-            sortOrder = cached.sortOrder
-            error = null
-            actionError = null
-            isLoading = false
-            return
-        }
-
-        currentStudioId = id
-        // No cached snapshot: a studio always opens on the default order (the
-        // user's last selection is per-studio, restored from the cache above).
-        sortOption = DEFAULT_SORT_OPTION
-        sortOrder = DEFAULT_SORT_ORDER
-        fetchFirstPage(id, clearDetail = true, clearMedia = true)
-    }
-
-    override fun refresh() {
-        val id = currentStudioId ?: return
-        // Keeps the works on screen while reloading (no flicker); only a new
-        // studio or a new sort clears them.
-        fetchFirstPage(id, clearDetail = false, clearMedia = false)
-    }
 
     /**
      * Sort change: the server orders, so the grid re-queries from page 1 with the
@@ -116,113 +56,65 @@ internal class StudioDetailStateHolder(
         if (option == sortOption && order == sortOrder) return
         sortOption = option
         sortOrder = order
-        val id = currentStudioId ?: return
-        fetchFirstPage(id, clearDetail = false, clearMedia = true)
+        val id = currentDetailId ?: return
+        fetchFirstPage(id, clearDetail = false, clearLists = true)
     }
 
     fun loadMore() {
-        val id = currentStudioId ?: return
+        val id = currentDetailId ?: return
         media.loadMore(
             scope = scope,
-            isCurrent = { currentStudioId == id },
+            isCurrent = { currentDetailId == id },
             fetch = { page -> repository.loadMediaPage(id, page, apiSort()) },
-            onLoaded = {
-                actionError = null
-                cacheSnapshot(id)
-            },
-            onError = { actionError = it },
+            onLoaded = { pageLoaded(id) },
+            onError = { pageError(it) },
         )
     }
 
-    override fun toggleFavourite() {
-        val id = currentStudioId ?: return
-        val current = detail ?: return
-        if (favouriteInFlightId == id) return
-        val previous = current.isFavourite
-        val target = !previous
-        favouriteInFlightId = id
-        // Optimistic: the visible detail and its cached snapshot both flip now,
-        // so a revisit from the cache never restores the stale value.
-        detail = current.copy(isFavourite = target)
-        detailCache.update(id) { snapshot ->
-            snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
-        }
-        scope.launch {
-            when (val result = repository.toggleFavourite(id)) {
-                is NetworkResult.Success -> {
-                    detailCache.update(id) { snapshot ->
-                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = target))
-                    }
-                    if (currentStudioId == id) detail = detail?.copy(isFavourite = target)
-                }
-                is NetworkResult.Failure -> {
-                    // Revert both copies of THIS studio's value; the visible page
-                    // and its error only while it is still the current one.
-                    detailCache.update(id) { snapshot ->
-                        snapshot.copy(detail = snapshot.detail.copy(isFavourite = previous))
-                    }
-                    if (currentStudioId == id) {
-                        detail = detail?.copy(isFavourite = previous)
-                        actionError = result.error
-                    }
-                }
-            }
-            if (favouriteInFlightId == id) favouriteInFlightId = null
-        }
+    override suspend fun fetchDetail(id: Int): NetworkResult<StudioDetail> =
+        repository.loadDetail(id, apiSort())
+
+    override fun onDetailLoaded(detail: StudioDetail) {
+        media.set(detail.media)
     }
 
-    /** Drops every cached snapshot: a language change re-localizes all of them. */
-    override fun invalidateCache() {
-        detailCache.clear()
-    }
-
-    /** Dismisses the compact action-error row. */
-    fun clearActionError() {
-        actionError = null
-    }
-
-    /**
-     * Fetches page 1 with the current sort; the single network path of the
-     * holder. [clearMedia] empties the loaded works — a new studio or a new sort
-     * invalidates them, while a refresh keeps them on screen until the response
-     * replaces them.
-     */
-    private fun fetchFirstPage(id: Int, clearDetail: Boolean, clearMedia: Boolean) {
-        currentJob?.cancel()
-        // The new list starts at page 1: an in-flight page (old sort, or another
-        // studio) is dropped instead of merging into it or overwriting the page.
+    override fun cancelPages() {
         media.cancel()
-        if (clearDetail) detail = null
-        if (clearMedia) media.clear()
-        error = null
-        actionError = null
-        isLoading = true
-        currentJob = scope.launch {
-            when (val result = repository.loadDetail(id, apiSort())) {
-                is NetworkResult.Success -> {
-                    val value = result.value
-                    detail = value
-                    media.set(value.media)
-                    cacheSnapshot(id)
-                }
-                is NetworkResult.Failure -> error = result.error
-            }
-            isLoading = false
-        }
     }
 
-    private fun cacheSnapshot(id: Int) {
-        val value = detail ?: return
-        detailCache.put(
-            id,
-            StudioDetailSnapshot(
-                detail = value,
-                media = media.snapshot(),
-                sortOption = sortOption,
-                sortOrder = sortOrder,
-            ),
-        )
+    override fun clearPages() {
+        media.clear()
     }
+
+    override fun onCacheMiss(id: Int) {
+        // No cached snapshot: a studio always opens on the default order (the
+        // user's last selection is per-studio, restored from the cache).
+        sortOption = DEFAULT_SORT_OPTION
+        sortOrder = DEFAULT_SORT_ORDER
+    }
+
+    override fun snapshot(detail: StudioDetail): StudioDetailSnapshot = StudioDetailSnapshot(
+        detail = detail,
+        media = media.snapshot(),
+        sortOption = sortOption,
+        sortOrder = sortOrder,
+    )
+
+    override fun restore(snapshot: StudioDetailSnapshot) {
+        detail = snapshot.detail
+        media.set(snapshot.media)
+        sortOption = snapshot.sortOption
+        sortOrder = snapshot.sortOrder
+    }
+
+    override fun withFavourite(detail: StudioDetail, value: Boolean): StudioDetail =
+        detail.copy(isFavourite = value)
+
+    override fun snapshotWithFavourite(snapshot: StudioDetailSnapshot, value: Boolean): StudioDetailSnapshot =
+        snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
+
+    override suspend fun requestToggleFavourite(id: Int, detail: StudioDetail): NetworkResult<Unit> =
+        repository.toggleFavourite(id)
 }
 
 private val DEFAULT_SORT_OPTION = UserListSort.RELEASE_DATE

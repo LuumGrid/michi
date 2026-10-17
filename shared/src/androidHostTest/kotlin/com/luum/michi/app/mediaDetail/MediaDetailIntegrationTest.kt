@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -248,12 +249,18 @@ private fun viewerEntry(progress: Int, status: MediaListStatus? = MediaListStatu
     completedAtMillis = null,
 )
 
-private class GatedEntryRepository : MediaListEntryRepository by NoopEntryRepository {
+private class GatedEntryRepository(
+    private val fail: Boolean = false,
+) : MediaListEntryRepository by NoopEntryRepository {
     val gate = CompletableDeferred<Unit>()
 
     override suspend fun toggleFavourite(mediaId: Int, isManga: Boolean): NetworkResult<Unit> {
         gate.await()
-        return NetworkResult.Success(Unit)
+        return if (fail) {
+            NetworkResult.Failure(NetworkError.Http(500, null))
+        } else {
+            NetworkResult.Success(Unit)
+        }
     }
 }
 
@@ -448,6 +455,70 @@ class MediaDetailFavouriteCacheTest {
         assertFalse(holder.detail?.isFavourite == true, "the visible media is untouched")
         holder.load(1)
         assertTrue(holder.detail?.isFavourite == true, "the first media's snapshot kept the toggle")
+    }
+}
+
+/**
+ * Media's favourite is optimistic like the other three scopes: the heart flips
+ * before the repository answers, a failure reverts the visible page and its
+ * cached snapshot, and a late failure never touches a media opened meanwhile.
+ */
+class MediaDetailOptimisticFavouriteTest {
+
+    @Test
+    fun theHeartFlipsBeforeTheRepositoryAnswers() {
+        val entryRepository = GatedEntryRepository()
+        val holder = holderWired(RecordingDetailRepository(), entryRepository)
+
+        holder.load(1)
+        assertFalse(holder.detail?.isFavourite == true)
+
+        holder.toggleFavourite()
+
+        assertTrue(holder.detail?.isFavourite == true, "optimistic, before the gate")
+        assertTrue(holder.isTogglingFavourite)
+
+        entryRepository.gate.complete(Unit)
+
+        assertTrue(holder.detail?.isFavourite == true, "the success keeps the new value")
+        assertFalse(holder.isTogglingFavourite)
+    }
+
+    @Test
+    fun aFailedToggleRevertsTheDetailAndTheCache() {
+        val entryRepository = GatedEntryRepository(fail = true)
+        val holder = holderWired(RecordingDetailRepository(), entryRepository)
+
+        holder.load(1)
+        holder.toggleFavourite()
+        assertTrue(holder.detail?.isFavourite == true, "optimistic")
+
+        entryRepository.gate.complete(Unit)
+
+        assertFalse(holder.detail?.isFavourite == true, "the failure reverts the visible page")
+        assertIs<NetworkError.Http>(holder.actionError)
+
+        holder.load(2)
+        holder.load(1)
+        assertFalse(holder.detail?.isFavourite == true, "the cached snapshot is reverted too")
+    }
+
+    @Test
+    fun aFailedToggleAfterOpeningAnotherMediaLeavesTheVisibleOneAlone() {
+        val entryRepository = GatedEntryRepository(fail = true)
+        val holder = holderWired(RecordingDetailRepository(), entryRepository)
+
+        holder.load(1)
+        holder.toggleFavourite() // A optimistic true, held at the gate
+        holder.load(2) // the user opens B meanwhile
+
+        entryRepository.gate.complete(Unit) // A's failure lands
+
+        assertFalse(holder.detail?.isFavourite == true, "B is untouched")
+        assertNull(holder.actionError, "the failure belongs to A, not the visible B")
+
+        holder.load(1)
+        assertFalse(holder.detail?.isFavourite == true, "A reverted in its own cache")
     }
 }
 
