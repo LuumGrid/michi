@@ -61,7 +61,6 @@ internal fun OptionGroup(
             } else {
                 MaterialTheme.colorScheme.surface
             },
-            modifier = modifier,
         ) {
             Column(
                 modifier = Modifier
