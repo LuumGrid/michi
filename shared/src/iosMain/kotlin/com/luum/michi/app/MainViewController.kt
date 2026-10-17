@@ -35,6 +35,7 @@ private object IosMichiDependencies {
      * `MainViewController()` is invoked, so repeated calls neither leak the
      * previous CoroutineScope + HttpClient nor re-trigger bootstrap.
      */
+    @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
     fun getOrCreate(): MichiDependencies =
         current ?: MichiDependencies(
             tokenStorage = NSUserDefaultsAniListTokenStorage(),

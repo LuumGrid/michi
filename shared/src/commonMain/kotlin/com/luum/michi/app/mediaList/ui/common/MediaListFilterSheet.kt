@@ -95,7 +95,8 @@ internal fun MediaListFilterSheet(
             }
             yearTabs.filter { it.value != null }
                 .groupBy { it.value!! / 10 * 10 }
-                .toSortedMap(compareByDescending { it })
+                .entries
+                .sortedByDescending { it.key }
                 .forEach { (decade, tabs) ->
                     val expanded = decade == expandedDecade
                     val decadeSelected = tabs.any { it.value == selectedYear }
