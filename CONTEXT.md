@@ -194,7 +194,8 @@ package-level, enforced by the dependency rules above.
 com.luum.michi.app
   App.kt
   root/
-    Root.kt                 slim orchestrator (toolbar + tabs + content router)
+    Root.kt                 slim orchestrator (surface routing + Scaffold only)
+    root/ is split into RootHolders (holder creation), RootEffects (every LaunchedEffect, in order), RootToolbar, RootDetailHost, RootModals and RootTabs; Root.kt only orchestrates.
     AuthModal.kt            on-demand sign-in modal + language picker (MAL appends to AuthServices)
     state/State.kt          BackStep, State, rememberState (+ isSettingsOpen flag, no profile routes)
   core/
