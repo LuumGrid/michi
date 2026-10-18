@@ -1,12 +1,13 @@
 package com.luum.michi.app.notifications.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -18,7 +19,6 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.label
-import com.luum.michi.app.notifications.ui.components.NotificationRow
 import com.luum.michi.app.notifications.ui.model.dispatch
 import com.luum.michi.app.notifications.ui.model.toRowItem
 import com.luum.michi.app.notifications.ui.state.NotificationsStateHolder
@@ -28,6 +28,7 @@ import com.luum.michi.app.ui.components.LoadMoreEffect
 import com.luum.michi.app.ui.components.LoadMoreFooter
 import com.luum.michi.app.ui.components.LoadMoreKey
 import com.luum.michi.app.ui.components.LoadStateContainer
+import com.luum.michi.app.ui.components.MediaCoverCard
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
@@ -124,16 +125,23 @@ private fun NotificationsContent(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp + bottomPadding),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = 24.dp + bottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                itemsIndexed(
+                items(
                     items = items,
-                    key = { _, item -> item.id },
-                ) { index, item ->
-                    NotificationRow(
-                        item = item,
+                    key = { item -> item.id },
+                ) { item ->
+                    MediaCoverCard(
+                        cover = item.image,
+                        title = item.text,
+                        subtitle = item.time,
                         onClick = { item.target.dispatch(onOpenMedia, onOpenUrl) },
-                        divider = index > 0,
                     )
                 }
                 if (holder.hasNextPage) {

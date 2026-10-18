@@ -315,7 +315,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 - `notifications/` is flat: `domain/` (+`model/`) owns `NotificationsRepository`/`NotificationsPage` and the `AppNotification`/`NotificationCategory`/`NotificationTarget`/`NotificationFilter` vocabulary; `repository/` owns the impl, the DTO and the mapper (type → category, target URLs built in one place); `ui/` owns `NotificationsScreen`, the row component, the `ui/model` presentation helpers and `NotificationsStateHolder`.
 - **Page, not sheet** (`RootOverlay.Notifications`, BELOW_DETAIL): `Root` renders it like the calendar (tab bar hidden), the toolbar carries the title ("Notificaciones") and only back, and a media notification pushes its detail **above** the page, so back returns to the feed with its position. PROFILE's toolbar entry is the bell: a lone circle on the left, with `ToolbarAction.badge` while `unreadCount > 0`, session-only; the gear sits beside it as its own circle.
-- **Opening is reading**: `NotificationsStateHolder.onOpen()` resets the server count (`load(resetCount = true)`) unless the feed is already read **and** fresh (5-minute TTL): then 0 requests. Filter changes and pulls reload page 1. Tapping routes by `NotificationTarget` (media → detail, web → `UrlOpener`); rows show a cover or an actor avatar, the category text (never an empty string) and a relative time up to 7 days, then the shared readable date.
+- **Opening is reading**: `NotificationsStateHolder.onOpen()` resets the server count (`load(resetCount = true)`) unless the feed is already read **and** fresh (5-minute TTL): then 0 requests. Filter changes and pulls reload page 1. Tapping routes by `NotificationTarget` (media → detail, web → `UrlOpener`); each row is a `MediaCoverCard` (cover + the category text, never empty + the relative time), the same list row as the anime/manga lists, the calendar and the "View all" lists — no person/avatar special-casing. The relative time runs up to 7 days, then the shared readable date.
 - The unread dot is owned by the notifications holder (fed by the profile), so a cold start shows the last known value and a page open zeroes it.
 
 ## Settings Layout
@@ -333,6 +333,18 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 - **Pickers** open `ui/components/PickerSheet` (a `ModalSheet` holding one `OptionList` = `OptionGroup` + `OptionRow`s). Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `AppPalette` for the palette and `AppPaletteStyle` for the style). The theme picker has two sections (mode + palette) so it uses `ModalSheet` + two `OptionList`; the sort and calendar-filter sheets do the same, and `OptionRow(role = Checkbox)` covers multi-select groups. `ui/components/ActionRow` is the button-role menu row (the detail overflow).
 - **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font, surfaces and the global MaterialKolor `PaletteStyle` as their own rows — same pickers the auth modal's theme sheet had. Style names travel raw ("Tonal spot", "Monochrome", …) like palette names. Writes persist to the store; the auth modal keeps only its language picker.
 - Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
+
+## UI checklist (antes de cerrar un sprint)
+
+Reglas rápidas; cada una apunta a su componente. Si algo no encaja, se arregla el componente compartido, no se inventa uno nuevo.
+
+- **Listas**: toda lista de elementos con imagen es `ui/components/MediaCoverCard`; toda cuadrícula, `ui/components/DetailPosterGrid` + `PosterCard`; las filas sin imagen, `OptionGroup` + `SettingsRow`. Nunca una fila propia.
+- **Imágenes y radios**: las imágenes solo con `ui/components/CoverImage` y tamaños de `ui/components/CoverMetrics` (`CoverSize`); los radios solo desde `ui/components/Shapes.kt` (`CoverShape`/`PanelShape`/`PillShape`), nunca un `RoundedCornerShape(n.dp)` suelto.
+- **Vidrio vs plano**: vidrio (`toolContainerColor()`/`toolBorder()`) solo para herramientas flotantes (Toolbar, TabBar, botones, chips interactivos, `TrailingPill`); el contenido (tarjetas, paneles, grupos, campos) es plano (`solidContainerColor()`/`flatBorder()`).
+- **Estados**: carga/error/vacío con `ui/components/LoadStateContainer` (`waitingLabel` incluido) y textos propios de la pantalla; el footer de paginación es `LoadMoreFooter`/`LoadMoreEffect`.
+- **Títulos**: las páginas sin hero llevan el título en el toolbar (`root/RootToolbar`), no en el contenido.
+- **Textos**: ningún texto visible fuera de `core/language/domain/LanguageStrings` (unidades incluidas); nada de literales en los composables.
+- **Padding**: `bottomPadding` llega desde `Root` (`padding.calculateBottomPadding()`) a toda lista; nunca un valor por feature.
 
 ## UI Decisions
 

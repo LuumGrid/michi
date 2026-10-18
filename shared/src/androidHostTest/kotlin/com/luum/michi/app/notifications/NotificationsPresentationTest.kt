@@ -16,10 +16,19 @@ class NotificationsPresentationTest {
 
     @Test
     fun relativeTimeRunsToSevenDaysThenTheReadableDate() {
-        assertEquals("now", notificationTimeLabel(Now, Now - 30, EnglishStrings))
-        assertEquals("2min ago", notificationTimeLabel(Now, Now - 120, EnglishStrings))
-        assertEquals("3h ago", notificationTimeLabel(Now, Now - 3 * 3_600, EnglishStrings))
-        assertEquals("2d ago", notificationTimeLabel(Now, Now - 2 * 86_400, EnglishStrings))
+        assertEquals(EnglishStrings.timeJustNowLabel, notificationTimeLabel(Now, Now - 30, EnglishStrings))
+        assertEquals(
+            EnglishStrings.timeMinutesAgoLabel(2),
+            notificationTimeLabel(Now, Now - 120, EnglishStrings),
+        )
+        assertEquals(
+            EnglishStrings.timeHoursAgoLabel(3),
+            notificationTimeLabel(Now, Now - 3 * 3_600, EnglishStrings),
+        )
+        assertEquals(
+            EnglishStrings.timeDaysAgoLabel(2),
+            notificationTimeLabel(Now, Now - 2 * 86_400, EnglishStrings),
+        )
 
         val old = Now - 10 * 86_400
         assertEquals(

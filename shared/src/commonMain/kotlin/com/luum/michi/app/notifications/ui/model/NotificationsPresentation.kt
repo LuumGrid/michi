@@ -11,9 +11,6 @@ import com.luum.michi.app.notifications.domain.model.NotificationTarget
 internal data class NotificationRowItem(
     val id: Int,
     val image: CoverSizes?,
-    /** The image is the actor's avatar (not a media cover): draw it as a person. */
-    val isPerson: Boolean,
-    val initials: String,
     val text: String,
     val time: String,
     val target: NotificationTarget,
@@ -25,16 +22,10 @@ internal fun AppNotification.toRowItem(
 ): NotificationRowItem = NotificationRowItem(
     id = id,
     image = image,
-    isPerson = isPersonCategory(),
-    initials = userName?.trim()?.take(1)?.uppercase().orEmpty(),
     text = notificationText(strings),
     time = notificationTimeLabel(nowEpochSeconds, createdAtEpochSeconds, strings),
     target = target,
 )
-
-/** A media cover is only carried by the airing and media-change notifications. */
-private fun AppNotification.isPersonCategory(): Boolean =
-    category != NotificationCategory.AIRING && category != NotificationCategory.MEDIA_CHANGE
 
 /**
  * The row's main line. Every branch falls back to a generic label so a missing
@@ -84,9 +75,9 @@ internal fun notificationTimeLabel(
     val age = (nowEpochSeconds - createdEpochSeconds).coerceAtLeast(0)
     return when {
         age < 60 -> strings.timeJustNowLabel
-        age < 3_600 -> strings.timeAgoLabel("${age / 60}min")
-        age < 86_400 -> strings.timeAgoLabel("${age / 3_600}h")
-        age < 7 * 86_400 -> strings.timeAgoLabel("${age / 86_400}d")
+        age < 3_600 -> strings.timeMinutesAgoLabel((age / 60).toInt())
+        age < 86_400 -> strings.timeHoursAgoLabel((age / 3_600).toInt())
+        age < 7 * 86_400 -> strings.timeDaysAgoLabel((age / 86_400).toInt())
         else -> strings.notificationDateLabel(createdEpochSeconds.toLocalMediaReleaseDateTime())
     }
 }

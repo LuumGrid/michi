@@ -338,7 +338,9 @@ interface LanguageStrings {
     val notificationsErrorLabel: String
     val notificationsLoadingLabel: String
     val timeJustNowLabel: String
-    fun timeAgoLabel(value: String): String
+    fun timeMinutesAgoLabel(minutes: Int): String
+    fun timeHoursAgoLabel(hours: Int): String
+    fun timeDaysAgoLabel(days: Int): String
     val notificationFilterAll: String
     val notificationFilterAiring: String
     val notificationFilterReplies: String
