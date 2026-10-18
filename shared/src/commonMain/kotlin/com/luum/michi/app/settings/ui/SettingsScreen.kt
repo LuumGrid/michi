@@ -61,17 +61,13 @@ import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.AppPalette
+import com.luum.michi.app.ui.theme.AppPaletteStyle
 import com.luum.michi.app.ui.theme.LocalWarning
 import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.ThemeColors
-import com.luum.michi.app.ui.theme.ThemePalettes
 import com.luum.michi.app.ui.theme.ThemeType
 import com.luum.michi.app.ui.theme.displayName
 import com.luum.michi.app.ui.theme.fontFamilyFor
-import com.luum.michi.app.ui.theme.paletteDisplayName
-import com.luum.michi.app.ui.theme.paletteIdOf
-import com.luum.michi.app.ui.theme.PaletteStyles
-import com.luum.michi.app.ui.theme.paletteStyleDisplayName
 
 /**
  * App settings. Root owns the toolbar (back + title, no actions);
@@ -124,7 +120,7 @@ internal fun SettingsScreen(
                     )
                     SettingsRow(
                         label = strings.settingsThemeTitle,
-                        value = "${settingsState.themeType.label(strings)} · ${paletteDisplayName(settingsState.palette)}",
+                        value = "${settingsState.themeType.label(strings)} · ${settingsState.palette.displayName}",
                         onClick = { openSheet = SettingsSheet.Theme },
                     )
                     SettingsRow(
@@ -139,7 +135,7 @@ internal fun SettingsScreen(
                     )
                     SettingsRow(
                         label = strings.settingsStyleTitle,
-                        value = paletteStyleDisplayName(settingsState.themeStyle),
+                        value = settingsState.themeStyle.displayName,
                         onClick = { openSheet = SettingsSheet.Style },
                     )
                     SettingsRow(
@@ -370,9 +366,9 @@ internal fun SettingsScreen(
             title = strings.settingsStyleTitle,
             dismissLabel = strings.dismissAction,
             onDismiss = { openSheet = null },
-            options = PaletteStyles,
+            options = AppPaletteStyle.entries,
             selected = settingsState.themeStyle,
-            label = { paletteStyleDisplayName(it) },
+            label = { it.displayName },
             onSelect = { settingsState.themeStyle = it },
         )
     }
@@ -589,20 +585,18 @@ private fun ThemeModeSection(
 
 @Composable
 private fun ThemePaletteSection(
-    palette: ThemeColors,
-    onPaletteChange: (ThemeColors) -> Unit,
+    palette: AppPalette,
+    onPaletteChange: (AppPalette) -> Unit,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
 ) {
     OptionList(
-        options = ThemePalettes.map { it.second },
+        options = AppPalette.entries,
         selected = palette,
-        label = { paletteDisplayName(it) },
+        label = { it.displayName },
         onSelect = { onPaletteChange(it) },
         title = strings.themePaletteSection,
         modifier = modifier,
-        // Palette classes have no equals: compare by persisted id instead.
-        isSelected = { paletteIdOf(it) == paletteIdOf(palette) },
         leading = { option ->
             Box(
                 modifier = Modifier

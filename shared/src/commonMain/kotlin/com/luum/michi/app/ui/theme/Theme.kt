@@ -5,7 +5,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import com.materialkolor.PaletteStyle
 
 /** Theme selection types. SYSTEM follows the OS; LIGHT/DARK force a scheme. */
 internal enum class ThemeType {
@@ -22,21 +21,21 @@ internal fun ThemeType.resolveDarkTheme(systemDark: Boolean): Boolean = when (th
 
 /**
  * Global app theme. Every screen — current placeholders and future feature
- * `ui/` surfaces — renders inside this theme. The active [ThemeColors]
- * class is mapped to Material3.
+ * `ui/` surfaces — renders inside this theme. The active [AppPalette]
+ * entry is mapped to Material3.
  * Typography is [appTypography] over the [AppFont] catalog (bundled).
  */
 @Composable
 internal fun Theme(
-    palette: ThemeColors = DefaultTheme(),
+    palette: AppPalette = AppPalette.DEFAULT,
     type: ThemeType = ThemeType.SYSTEM,
     font: AppFont = AppFont.JAKARTA,
     surfaces: SurfaceStyle = SurfaceStyle.GLASS,
-    style: PaletteStyle = PaletteStyle.TonalSpot,
+    style: AppPaletteStyle = AppPaletteStyle.TONAL_SPOT,
     content: @Composable () -> Unit,
 ) {
     val dark = type.resolveDarkTheme(isSystemInDarkTheme())
-    val scheme = remember(palette, dark, style) { palette.scheme(dark, style) }
+    val scheme = remember(palette, dark, style) { palette.scheme(dark, style.materialStyle) }
     val warning = remember(dark) { warningScheme(dark).primary }
     CompositionLocalProvider(
         LocalWarning provides warning,

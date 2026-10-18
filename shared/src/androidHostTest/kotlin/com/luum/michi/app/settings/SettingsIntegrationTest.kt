@@ -16,11 +16,10 @@ import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.theme.AppFont
-import com.luum.michi.app.ui.theme.OceanTheme
+import com.luum.michi.app.ui.theme.AppPalette
+import com.luum.michi.app.ui.theme.AppPaletteStyle
 import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.ThemeType
-import com.luum.michi.app.ui.theme.paletteIdOf
-import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
@@ -431,8 +430,8 @@ class SettingsIntegrationTest {
             state.imageQuality = ImageQuality.LOW
             state.persistListSort = false
             state.language = AppLanguage.available.first { it.code == "es" }
-            state.palette = OceanTheme()
-            state.themeStyle = PaletteStyle.Vibrant
+            state.palette = AppPalette.OCEAN
+            state.themeStyle = AppPaletteStyle.VIBRANT
             state.themeType = ThemeType.DARK
             state.font = AppFont.MANROPE
             state.surfaces = SurfaceStyle.SOLID
@@ -473,8 +472,8 @@ class SettingsIntegrationTest {
 
             // App appearance prefs are local-only too: logout never resets them.
             assertEquals("es", state.language.code)
-            assertEquals("ocean", paletteIdOf(state.palette))
-            assertEquals(PaletteStyle.Vibrant, state.themeStyle)
+            assertEquals(AppPalette.OCEAN, state.palette)
+            assertEquals(AppPaletteStyle.VIBRANT, state.themeStyle)
             assertEquals(ThemeType.DARK, state.themeType)
             assertEquals(AppFont.MANROPE, state.font)
             assertEquals(SurfaceStyle.SOLID, state.surfaces)
@@ -504,8 +503,8 @@ class SettingsIntegrationTest {
             val state = stateWith(ScriptedSettingsGraphQL(emptyList()), store)
 
             assertEquals("es", state.language.code)
-            assertEquals("ocean", paletteIdOf(state.palette))
-            assertEquals(PaletteStyle.Vibrant, state.themeStyle)
+            assertEquals(AppPalette.OCEAN, state.palette)
+            assertEquals(AppPaletteStyle.VIBRANT, state.themeStyle)
             assertEquals(ThemeType.DARK, state.themeType)
             assertEquals(AppFont.MANROPE, state.font)
             assertEquals(SurfaceStyle.SOLID, state.surfaces)
@@ -520,8 +519,8 @@ class SettingsIntegrationTest {
         try {
             val absent = stateWith(ScriptedSettingsGraphQL(emptyList()), FakeSettingsStore())
             assertEquals(AppLanguage.default, absent.language)
-            assertEquals("default", paletteIdOf(absent.palette))
-            assertEquals(PaletteStyle.TonalSpot, absent.themeStyle)
+            assertEquals(AppPalette.DEFAULT, absent.palette)
+            assertEquals(AppPaletteStyle.TONAL_SPOT, absent.themeStyle)
             assertEquals(ThemeType.SYSTEM, absent.themeType)
             assertEquals(AppFont.JAKARTA, absent.font)
             assertEquals(SurfaceStyle.GLASS, absent.surfaces)
@@ -537,8 +536,8 @@ class SettingsIntegrationTest {
             val state = stateWith(ScriptedSettingsGraphQL(emptyList()), corrupt)
 
             assertEquals(AppLanguage.default, state.language)
-            assertEquals("default", paletteIdOf(state.palette))
-            assertEquals(PaletteStyle.TonalSpot, state.themeStyle)
+            assertEquals(AppPalette.DEFAULT, state.palette)
+            assertEquals(AppPaletteStyle.TONAL_SPOT, state.themeStyle)
             assertEquals(ThemeType.SYSTEM, state.themeType)
             assertEquals(AppFont.JAKARTA, state.font)
             assertEquals(SurfaceStyle.GLASS, state.surfaces)
@@ -557,10 +556,10 @@ class SettingsIntegrationTest {
             state.language = AppLanguage.available.first { it.code == "es" }
             assertEquals("es", store.getString(SettingsStoreKeys.Language))
 
-            state.palette = OceanTheme()
+            state.palette = AppPalette.OCEAN
             assertEquals("ocean", store.getString(SettingsStoreKeys.ThemePalette))
 
-            state.themeStyle = PaletteStyle.Vibrant
+            state.themeStyle = AppPaletteStyle.VIBRANT
             assertEquals("vibrant", store.getString(SettingsStoreKeys.ThemeStyle))
 
             state.themeType = ThemeType.DARK

@@ -179,7 +179,7 @@ ui/
   components/   shared composables (Toolbar, TabBar, SearchField, MessagePanel, ChipRail, DatePickerField, DetailPosterGrid, …) — no layer prefix, package disambiguates
   icons/        shared toolbar primitives (AppIcons: Search, Back, Clear)
   language/     LanguageProvider (CompositionLocal) + searchHintFor()
-  theme/        Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle
+  theme/        Theme, AppPalette seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + AppPaletteStyle (global style)
 ```
 
 UI is 100% shared Compose Multiplatform in the `shared` module — no native
@@ -229,7 +229,7 @@ com.luum.michi.app
     components/             reusable app chrome and UI primitives (shared composables, no prefix)
     state/                  PagedList (shared paginated list: Compose state + append/dedup/cancel rules, used by the detail, genre and explore holders)
     language/               LanguageProvider (CompositionLocal) + searchHintFor()
-    theme/                  Theme, ThemeColors seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + global PaletteStyle
+    theme/                  Theme, AppPalette seeds (Default/Ocean/Sakura/Forest/Amber/Violet/Mono) + AppPaletteStyle (global style)
   profile/                domain(+model)/repository(+mappers)/ui/state holders (no screens yet)
   calendar/               domain(+model)/repository/ui/state holder + CalendarScreen overlay (`CalendarDateBar` at TabBar-identical 24dp with deferred entrance + `CalendarReleaseRow` with shared `ChipRail` platform chips that open urls via `UrlOpener`, + filter sheet, per-day queries with session cache, UTC-safe picker)
   discover/               domain(+model)/repository/ui per dashboard+explore+genre state holders (dashboard renders the DISCOVER tab: type-scoped Anime/Manga rails keyed by `DashboardSectionKind`; Explore search UI pending, Explore honors `hideAdult`; genre is the shared catalog query filtered by name)
@@ -309,7 +309,7 @@ State holders do NOT load automatically inside constructor `remember` blocks:
 
 - **Inline toggles** (shared `ui/components/ToggleRow`: title + optional subtitle + display-only `Switch`): 18+ content, split completed anime/manga, advanced scoring, plus the 3 notification prefs (airing, messages, media). The entry editor's private/hidden flags use the same row.
 - **"Pestaña al abrir"** (General, local-only, never synced): the start tab (`StartTabOption`, default DISCOVER) plus a dependent **"Sección al abrir"** row that only shows when the tab has one — Anime/Manga list sections (`AnimeListSection`/`MangaListSection`, default ALL) or the Dashboard's Anime/Manga catalog type (`StartCatalogOption`, default ANIME); PROFILE has none. `settings` stores opaque ids (the feature enums' names) because it never imports a feature; `Root` supplies the localized options through the pure `startDestinationChoice(...)` (`StartDestinationChoice`) and `resolveStartDestination` maps the stored value to the startup state, falling back to DISCOVER for a guest and to ALL for a section id that no longer exists (split-completed off / renamed). Both share the typed `animeStartSections`/`mangaStartSections` helpers, so the picker and the resolution never disagree on what a valid id is. It applies at startup only — changing it never moves the user mid-session.
-- **Pickers** open `ui/components/PickerSheet` (a `ModalSheet` holding one `OptionList` = `OptionGroup` + `OptionRow`s). Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `ThemeColors` via the shared palette list and `PaletteStyle` via the style list). The theme picker has two sections (mode + palette) so it uses `ModalSheet` + two `OptionList`; the sort and calendar-filter sheets do the same, and `OptionRow(role = Checkbox)` covers multi-select groups. `ui/components/ActionRow` is the button-role menu row (the detail overflow).
+- **Pickers** open `ui/components/PickerSheet` (a `ModalSheet` holding one `OptionList` = `OptionGroup` + `OptionRow`s). Enums: `AppLanguage`, `ThemeType`, `AppFont`, `SurfaceStyle`, `TitleLanguage`, `ScoreFormat`, `ListSort` (plus `AppPalette` for the palette and `AppPaletteStyle` for the style). The theme picker has two sections (mode + palette) so it uses `ModalSheet` + two `OptionList`; the sort and calendar-filter sheets do the same, and `OptionRow(role = Checkbox)` covers multi-select groups. `ui/components/ActionRow` is the button-role menu row (the detail overflow).
 - **Theme**: `SYSTEM/LIGHT/DARK` + palette as one combined row (mode group first, palette second; value reads `"$mode · $palette"`), font, surfaces and the global MaterialKolor `PaletteStyle` as their own rows — same pickers the auth modal's theme sheet had. Style names travel raw ("Tonal spot", "Monochrome", …) like palette names. Writes persist to the store; the auth modal keeps only its language picker.
 - Settings is its own feature. Other features must not import `settings`; `root` renders the screen standalone (never inside profile routes). `settings` never imports `root`.
 

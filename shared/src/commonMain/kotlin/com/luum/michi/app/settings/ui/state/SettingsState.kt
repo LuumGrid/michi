@@ -25,14 +25,12 @@ import com.luum.michi.app.settings.domain.model.parseScoreFormat
 import com.luum.michi.app.settings.domain.model.parseTitleLanguage
 import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.AppPalette
+import com.luum.michi.app.ui.theme.AppPaletteStyle
 import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.ThemeColors
 import com.luum.michi.app.ui.theme.ThemeType
 import com.luum.michi.app.ui.theme.paletteForId
-import com.luum.michi.app.ui.theme.paletteIdOf
 import com.luum.michi.app.ui.theme.paletteStyleForId
-import com.luum.michi.app.ui.theme.paletteStyleIdOf
-import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -179,12 +177,12 @@ internal class SettingsState(
     var language: AppLanguage by languagePref
 
     private val palettePref =
-        codedPref(SettingsStoreKeys.ThemePalette, store, ::paletteForId, ::paletteIdOf)
-    var palette: ThemeColors by palettePref
+        codedPref(SettingsStoreKeys.ThemePalette, store, ::paletteForId, encode = { it.id })
+    var palette: AppPalette by palettePref
 
     private val themeStylePref =
-        codedPref(SettingsStoreKeys.ThemeStyle, store, ::paletteStyleForId, ::paletteStyleIdOf)
-    var themeStyle: PaletteStyle by themeStylePref
+        codedPref(SettingsStoreKeys.ThemeStyle, store, ::paletteStyleForId, encode = { it.id })
+    var themeStyle: AppPaletteStyle by themeStylePref
 
     private val themeTypePref =
         localEnum(SettingsStoreKeys.ThemeMode, ThemeType.SYSTEM, ThemeType.entries)
