@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.discover.domain.model.CatalogSortOptions
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
-import com.luum.michi.app.discover.domain.model.ExploreSortOptions
 import com.luum.michi.app.discover.domain.model.filterLabel
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import com.luum.michi.app.ui.components.ChipRail
@@ -158,7 +158,7 @@ internal fun ExploreScreen(
         }
         if (isSortOpen) {
             SortSheet(
-                options = ExploreSortOptions,
+                options = CatalogSortOptions,
                 selected = holder.currentSortOption,
                 onSelect = { holder.updateSort(it, holder.currentSortOrder) },
                 order = holder.currentSortOrder,

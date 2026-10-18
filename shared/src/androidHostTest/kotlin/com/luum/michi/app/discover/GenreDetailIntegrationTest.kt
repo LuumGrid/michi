@@ -1,16 +1,18 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.DeferredDispatcher
-import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreResult
-import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
+import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
+import com.luum.michi.app.discover.domain.model.genreCatalogFilter
+import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +24,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private fun gridItem(id: Int) = MediaGridItem(
+internal fun gridItem(id: Int) = MediaGridItem(
     mediaId = id,
     title = "Media $id",
     cover = null,
@@ -35,23 +37,23 @@ private fun gridItem(id: Int) = MediaGridItem(
     genres = listOf("Action", "Comedy"),
 )
 
-private fun gridPage(items: List<Int>, hasNextPage: Boolean = false, currentPage: Int = 1) =
+internal fun gridPage(items: List<Int>, hasNextPage: Boolean = false, currentPage: Int = 1) =
     Page(items.map { gridItem(it) }, hasNextPage = hasNextPage, currentPage = currentPage)
 
-private fun holderWired(
+private fun genreHolder(
     repository: ExploreRepository,
     hideAdult: Boolean = true,
-) = GenreDetailStateHolder(
+) = CatalogGridStateHolder(
     repository = repository,
     scope = CoroutineScope(Dispatchers.Unconfined),
     hideAdult = hideAdult,
 )
 
 /**
- * The genre page only uses [ExploreRepository.searchMediaGrid]; the rest of the
- * catalog interface is stubbed so the double stays a full implementation.
+ * The catalog grid only uses [ExploreRepository.searchMediaGrid]; the rest of
+ * the interface is stubbed so the double stays a full implementation.
  */
-private open class FakeGenreExploreRepository : ExploreRepository {
+internal open class FakeCatalogExploreRepository : ExploreRepository {
     override suspend fun searchMedia(
         type: MediaType,
         query: String?,
@@ -65,11 +67,10 @@ private open class FakeGenreExploreRepository : ExploreRepository {
         onList: Boolean?,
         hideAdult: Boolean,
         strings: LanguageStrings,
-    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page(emptyList(), false, 1))
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -80,57 +81,53 @@ private open class FakeGenreExploreRepository : ExploreRepository {
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page(emptyList(), false, 1))
 
     override suspend fun searchStaff(
         query: String?,
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page(emptyList(), false, 1))
 
     override suspend fun searchStudios(
         query: String?,
         page: Int,
         perPage: Int,
         strings: LanguageStrings,
-    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page<ExploreResult>(emptyList(), false, 1))
+    ): NetworkResult<Page<ExploreResult>> = NetworkResult.Success(Page(emptyList(), false, 1))
 }
 
 /**
  * Repository double: canned pages per page number plus call counters and the
- * last request, to prove cache hits, the adult gate and that a catalog/sort
+ * last request, to prove cache hits, the adult gate and that a filter/sort
  * change re-queries.
  */
-private class RecordingGenreRepository(
+internal class RecordingCatalogRepository(
     private val pages: Map<Int, Page<MediaGridItem>> = emptyMap(),
-) : FakeGenreExploreRepository() {
+) : FakeCatalogExploreRepository() {
     var calls = 0
         private set
     var lastSort: String? = null
         private set
-    var lastType: MediaType? = null
+    var lastFilter: MediaCatalogFilter? = null
         private set
     var lastPage: Int? = null
         private set
     var lastHideAdult: Boolean? = null
         private set
-    var lastGenres: List<String>? = null
-        private set
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
     ): NetworkResult<Page<MediaGridItem>> {
         calls++
         lastSort = sort
-        lastType = type
+        lastFilter = filter
         lastPage = page
         lastHideAdult = hideAdult
-        lastGenres = genres
         return NetworkResult.Success(pages[page] ?: Page(emptyList(), false, page))
     }
 }
@@ -139,15 +136,15 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun loadHydratesPageOneByPopularity() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(1 to gridPage(listOf(7), hasNextPage = true)),
         )
-        val holder = holderWired(repository)
+        val holder = genreHolder(repository)
 
-        holder.load("Action", MediaType.ANIME)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
-        assertEquals("Action", holder.name)
-        assertEquals(MediaType.ANIME, holder.type)
+        assertEquals(MediaType.ANIME, holder.filter.type)
+        assertEquals(listOf("Action"), holder.filter.genres)
         assertEquals(listOf(7), holder.media.items.map { it.mediaId })
         val item = holder.media.items.single()
         assertEquals(42, item.favourites)
@@ -160,35 +157,35 @@ class GenreDetailIntegrationTest {
         assertEquals(UserListSort.POPULARITY, holder.sortOption)
         assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
         assertEquals("POPULARITY_DESC", repository.lastSort)
-        assertEquals(MediaType.ANIME, repository.lastType)
-        assertEquals(listOf("Action"), repository.lastGenres, "the genre travels as the catalog filter")
+        assertEquals(MediaType.ANIME, repository.lastFilter?.type)
+        assertEquals(listOf("Action"), repository.lastFilter?.genres, "the genre travels as genre_in")
         assertEquals(true, repository.lastHideAdult)
     }
 
     @Test
     fun cacheHitSkipsNetworkWhenTheSameGenreReopens() {
-        val repository = RecordingGenreRepository()
-        val holder = holderWired(repository)
+        val repository = RecordingCatalogRepository()
+        val holder = genreHolder(repository)
 
-        holder.load("Action", MediaType.ANIME)
-        holder.load("Comedy", MediaType.ANIME)
-        holder.load("Action", MediaType.ANIME)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
+        holder.load(genreCatalogFilter("Comedy", MediaType.ANIME))
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
         assertEquals(2, repository.calls)
-        assertEquals("Action", holder.name)
+        assertEquals(listOf("Action"), holder.filter.genres)
     }
 
     @Test
     fun loadMoreAppendsNextPage() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(
                 1 to gridPage(listOf(1), hasNextPage = true, currentPage = 1),
                 2 to gridPage(listOf(2), hasNextPage = false, currentPage = 2),
             ),
         )
-        val holder = holderWired(repository)
+        val holder = genreHolder(repository)
 
-        holder.load("Action", MediaType.ANIME)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         assertTrue(holder.media.hasNextPage)
 
         holder.loadMore()
@@ -200,16 +197,16 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun changeTypeRequeriestheOtherCatalogFromPageOne() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(1 to gridPage(listOf(1), hasNextPage = true)),
         )
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
         holder.changeType(MediaType.MANGA)
 
-        assertEquals(MediaType.MANGA, holder.type)
-        assertEquals(MediaType.MANGA, repository.lastType)
+        assertEquals(MediaType.MANGA, holder.filter.type)
+        assertEquals(MediaType.MANGA, repository.lastFilter?.type)
         assertEquals(2, repository.calls, "the switch re-queries page 1")
         assertEquals(1, repository.lastPage)
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
@@ -217,29 +214,29 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun returningToAVisitedCatalogRestoresItsSnapshot() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(1 to gridPage(listOf(1), hasNextPage = false)),
         )
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
         holder.changeType(MediaType.MANGA)
         holder.changeType(MediaType.ANIME)
 
         assertEquals(2, repository.calls, "the anime snapshot came from the cache")
-        assertEquals(MediaType.ANIME, holder.type)
+        assertEquals(MediaType.ANIME, holder.filter.type)
     }
 
     @Test
     fun changeSortRequeriesFromPageOneWithTheServerSort() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(
                 1 to gridPage(listOf(1), hasNextPage = true, currentPage = 1),
                 2 to gridPage(listOf(2), hasNextPage = false, currentPage = 2),
             ),
         )
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         holder.loadMore()
         assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
 
@@ -255,11 +252,11 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun changeSortOrderDerivesTheAscendingApiKey() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(1 to gridPage(listOf(1), hasNextPage = false)),
         )
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
         holder.changeSort(UserListSort.TITLE, UserListOrder.ASCENDING)
 
@@ -269,9 +266,9 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun repickingTheSameSelectionDoesNotRequery() {
-        val repository = RecordingGenreRepository()
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val repository = RecordingCatalogRepository()
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
 
         holder.changeSort(UserListSort.POPULARITY, UserListOrder.DESCENDING)
         holder.changeType(MediaType.ANIME)
@@ -281,14 +278,14 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun aPageInFlightIsDroppedWhenTheCatalogChanges() {
-        val repository = GatedPageGenreRepository(
+        val repository = GatedPageCatalogRepository(
             pageItems = mapOf(
                 MediaType.ANIME to mapOf(1 to listOf(1), 2 to listOf(99)),
                 MediaType.MANGA to mapOf(1 to listOf(2)),
             ),
         )
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         holder.loadMore() // page 2 of anime, held at the gate
@@ -302,9 +299,9 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun refreshKeepsTheWorksVisibleUntilTheNewPageArrives() {
-        val repository = GatedGenreRepository()
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val repository = GatedCatalogRepository()
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         repository.pageOne = listOf(9)
@@ -320,9 +317,9 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun changeTypeClearsTheWorksWhileItReloads() {
-        val repository = GatedGenreRepository()
-        val holder = holderWired(repository)
-        holder.load("Action", MediaType.ANIME)
+        val repository = GatedCatalogRepository()
+        val holder = genreHolder(repository)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         repository.pageOne = listOf(2)
@@ -338,11 +335,11 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun setHideAdultRequeriesWithTheNewGate() {
-        val repository = RecordingGenreRepository(
+        val repository = RecordingCatalogRepository(
             pages = mapOf(1 to gridPage(listOf(1))),
         )
-        val holder = holderWired(repository, hideAdult = true)
-        holder.load("Action", MediaType.ANIME)
+        val holder = genreHolder(repository, hideAdult = true)
+        holder.load(genreCatalogFilter("Action", MediaType.ANIME))
         assertEquals(true, repository.lastHideAdult)
 
         holder.setHideAdult(false)
@@ -359,13 +356,13 @@ class GenreDetailIntegrationTest {
     fun aCancelledFirstPageDoesNotStopTheCurrentSpinner() {
         val dispatcher = DeferredDispatcher()
         val scope = CoroutineScope(dispatcher)
-        val repository = CancelSurvivingGenreRepository()
-        val holder = GenreDetailStateHolder(repository, scope, hideAdult = true)
+        val repository = CancelSurvivingCatalogRepository()
+        val holder = CatalogGridStateHolder(repository, scope, hideAdult = true)
         val firstGate = repository.expect(listOf(1))
         val secondGate = repository.expect(listOf(2))
 
         try {
-            holder.load("Action", MediaType.ANIME) // job 1
+            holder.load(genreCatalogFilter("Action", MediaType.ANIME)) // job 1
             dispatcher.runAll()
             assertTrue(holder.isLoading)
 
@@ -393,21 +390,21 @@ class GenreDetailIntegrationTest {
 
     @Test
     fun restoringFromCacheWhilePageOneIsInFlightStopsTheSpinner() {
-        val repository = CancelSurvivingGenreRepository()
-        val holder = holderWired(repository) // Unconfined
+        val repository = CancelSurvivingCatalogRepository()
+        val holder = genreHolder(repository) // Unconfined
 
         val bGate = repository.expect(listOf(1))
-        holder.load("B", MediaType.ANIME)
+        holder.load(genreCatalogFilter("B", MediaType.ANIME))
         bGate.complete(Unit)
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
         val aGate = repository.expect(listOf(2))
-        holder.load("A", MediaType.ANIME) // page 1 in flight
+        holder.load(genreCatalogFilter("A", MediaType.ANIME)) // page 1 in flight
         assertTrue(holder.isLoading)
 
         // B comes from the cache: the in-flight A is cancelled without a
         // relaunch, and the restore turns the spinner off itself.
-        holder.load("B", MediaType.ANIME)
+        holder.load(genreCatalogFilter("B", MediaType.ANIME))
         assertFalse(holder.isLoading, "the cache restore owns the spinner")
         assertEquals(listOf(1), holder.media.items.map { it.mediaId })
 
@@ -421,14 +418,13 @@ class GenreDetailIntegrationTest {
  * Double whose page 2 is held until [gate] completes, so a page in flight can be
  * interrupted by a catalog switch.
  */
-private class GatedPageGenreRepository(
+private class GatedPageCatalogRepository(
     private val pageItems: Map<MediaType, Map<Int, List<Int>>>,
-) : FakeGenreExploreRepository() {
+) : FakeCatalogExploreRepository() {
     val gate = CompletableDeferred<Unit>()
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -436,7 +432,7 @@ private class GatedPageGenreRepository(
         if (page > 1) gate.await()
         return NetworkResult.Success(
             gridPage(
-                items = pageItems[type]?.get(page).orEmpty(),
+                items = pageItems[filter.type]?.get(page).orEmpty(),
                 hasNextPage = page == 1,
                 currentPage = page,
             ),
@@ -448,7 +444,7 @@ private class GatedPageGenreRepository(
  * Page-1 double held until [release], so the "in flight" state of a reload is
  * observable; [pageOne] lets the test change what the next response carries.
  */
-private class GatedGenreRepository : FakeGenreExploreRepository() {
+private class GatedCatalogRepository : FakeCatalogExploreRepository() {
     var pageOne: List<Int> = listOf(1)
     private var gated = false
     private var gate = CompletableDeferred<Unit>()
@@ -461,8 +457,7 @@ private class GatedGenreRepository : FakeGenreExploreRepository() {
     fun release() = gate.complete(Unit)
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -477,7 +472,7 @@ private class GatedGenreRepository : FakeGenreExploreRepository() {
  * request keeps going and returns, so the holder's job-identity check is what
  * stops the stale write. `expect` pre-registers one gate + payload per call.
  */
-private class CancelSurvivingGenreRepository : FakeGenreExploreRepository() {
+private class CancelSurvivingCatalogRepository : FakeCatalogExploreRepository() {
     private val gates = mutableListOf<CompletableDeferred<Unit>>()
     private val payloads = mutableListOf<List<Int>>()
     private var calls = 0
@@ -490,8 +485,7 @@ private class CancelSurvivingGenreRepository : FakeGenreExploreRepository() {
     }
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,

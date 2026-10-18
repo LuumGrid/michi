@@ -10,6 +10,7 @@ import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.core.platform.domain.UrlOpener
 import com.luum.michi.app.discover.domain.genre.model.genreAniListUrl
 import com.luum.michi.app.discover.domain.genre.model.genreShareText
+import com.luum.michi.app.discover.domain.model.CatalogSortOptions
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.model.aniListUrl
 import com.luum.michi.app.mediaDetail.domain.media.model.shareText
@@ -117,11 +118,16 @@ internal fun RootModals(
         null
     }
     if (gridSortHolder != null) {
-        // Shared sort sheet over the destination's grid holder (studio
-        // or genre): picking a row re-queries the grid from page 1
-        // (server order).
+        // Shared sort sheet over the destination's grid holder (studio, genre
+        // or catalog): picking a row re-queries the grid from page 1 (server
+        // order). The catalog needs TRENDING, so it uses the wider option list.
+        val sortOptions = if (state.currentDetail is DetailDestination.Catalog) {
+            CatalogSortOptions
+        } else {
+            DetailGridSortOptions
+        }
         SortSheet(
-            options = DetailGridSortOptions,
+            options = sortOptions,
             selected = gridSortHolder.sortOption,
             onSelect = { gridSortHolder.changeSort(it, gridSortHolder.sortOrder) },
             order = gridSortHolder.sortOrder,
@@ -189,9 +195,11 @@ private fun detailOverflowFor(destination: DetailDestination?, holders: RootHold
         // URL follows the catalog chip the user has selected.
         is DetailDestination.Genre -> DetailOverflow(
             destination.name,
-            genreAniListUrl(destination.name, holders.genre.type),
-            genreShareText(destination.name, holders.genre.type),
+            genreAniListUrl(destination.name, holders.catalog.filter.type),
+            genreShareText(destination.name, holders.catalog.filter.type),
         )
+        // A dashboard catalog is not an entity either, and has no canonical URL.
+        is DetailDestination.Catalog -> null
         is DetailDestination.DetailList -> null
         null -> null
     }

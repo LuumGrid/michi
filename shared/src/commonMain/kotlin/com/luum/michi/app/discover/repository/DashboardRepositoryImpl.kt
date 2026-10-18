@@ -3,7 +3,10 @@ package com.luum.michi.app.discover.repository
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
 import com.luum.michi.app.discover.domain.DashboardRepository
+import com.luum.michi.app.discover.domain.model.BestRatedMinPopularity
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
+import com.luum.michi.app.discover.domain.model.NewReleasesMinPopularity
+import com.luum.michi.app.discover.domain.model.recentStartFuzzy
 import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
 import com.luum.michi.app.core.media.domain.next
@@ -16,21 +19,6 @@ import com.luum.michi.app.core.network.domain.map
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.number
-import kotlinx.datetime.toLocalDateTime
-
-/**
- * Popularity floor for the "best rated" shelves: pure SCORE_DESC surfaces
- * obscure 90-score titles with a handful of votes, so a floor keeps them
- * recognizable (same idea as the New releases shelf).
- */
-private const val BestRatedMinPopularity = 5000
-
-/** Popularity floor for the (narrower, 12-month) New releases shelf. */
-private const val NewReleasesMinPopularity = 1000
 
 private const val MediaFields = """
       id format episodes chapters
@@ -201,11 +189,4 @@ internal class DashboardRepositoryImpl(
             AniListJson.decodeFromJsonElement(DashboardResponseDto.serializer(), dataJson)
         }.map { it.toDashboardFeed(strings) }
     }
-}
-
-/** FuzzyDateInt (YYYYMMDD) one year back: the "recent" shelf window. */
-private fun recentStartFuzzy(now: Instant = Clock.System.now()): Int {
-    val date = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val year = date.year - 1
-    return year * 10000 + date.month.number * 100 + date.day
 }

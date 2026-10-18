@@ -15,6 +15,13 @@ internal sealed interface DetailDestination {
     data class Genre(val name: String, val type: MediaType) : DetailDestination
 
     /**
+     * "View all" for a Dashboard rail. Core must not import `discover`, so the
+     * rail travels as its enum name ([kindId]) and the host resolves it to the
+     * shared catalog filter + rail title.
+     */
+    data class Catalog(val kindId: String) : DetailDestination
+
+    /**
      * "View all" list reached from a detail page: the rail shows the first
      * items, this screen shows the whole (paginated) list. [parentId] keys
      * the source so `Root` can read the right holder.

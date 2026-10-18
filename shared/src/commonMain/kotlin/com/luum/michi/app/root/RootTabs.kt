@@ -231,6 +231,7 @@ internal fun RootTabContent(
         DashboardScreen(
             holder = holders.dashboard,
             onOpenMedia = { state.openMedia(it) },
+            onOpenCatalog = { state.openCatalog(it) },
             hideAdult = !settingsState.displayAdultContent,
             bottomPadding = bottomPadding,
         )

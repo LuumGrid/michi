@@ -16,6 +16,7 @@ import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -40,8 +41,11 @@ query MediaCatalog(
   ${'$'}genre_in: [String],
   ${'$'}seasonYear: Int,
   ${'$'}season: MediaSeason,
+  ${'$'}countryOfOrigin_in: [CountryCode],
+  ${'$'}status: MediaStatus,
   ${'$'}startDate_greater: FuzzyDateInt,
   ${'$'}startDate_lesser: FuzzyDateInt,
+  ${'$'}popularity_greater: Int,
   ${'$'}sort: [MediaSort]!,
   ${'$'}page: Int!,
   ${'$'}perPage: Int!,
@@ -57,8 +61,11 @@ query MediaCatalog(
       genre_in: ${'$'}genre_in,
       seasonYear: ${'$'}seasonYear,
       season: ${'$'}season,
+      countryOfOrigin_in: ${'$'}countryOfOrigin_in,
+      status: ${'$'}status,
       startDate_greater: ${'$'}startDate_greater,
       startDate_lesser: ${'$'}startDate_lesser,
+      popularity_greater: ${'$'}popularity_greater,
       sort: ${'$'}sort,
       onList: ${'$'}onList,
       isAdult: ${'$'}isAdult
@@ -175,8 +182,7 @@ internal class ExploreRepositoryImpl(
     }
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -184,17 +190,10 @@ internal class ExploreRepositoryImpl(
         val request = AniListGraphQLRequest(
             query = MediaCatalogQuery,
             variables = JsonObject(
-                buildCatalogVariables(
-                    type = type,
-                    query = null,
-                    genres = genres,
-                    formats = emptyList(),
-                    year = null,
-                    season = null,
-                    sort = sort,
+                buildGridVariables(
+                    filter = filter,
                     page = page,
-                    perPage = GridPageSize,
-                    onList = null,
+                    sort = sort,
                     hideAdult = hideAdult,
                 ),
             ),
@@ -362,6 +361,45 @@ private fun buildCatalogVariables(
     put("sort", JsonArray(listOf(JsonPrimitive(sort))))
     put("page", JsonPrimitive(page))
     put("perPage", JsonPrimitive(perPage))
+}
+
+/**
+ * Variables for the catalog grid ([ExploreRepositoryImpl.searchMediaGrid]):
+ * one [MediaCatalogFilter] to a GraphQL variable set. Only the criteria with a
+ * value are sent, so the genre case stays just `type + genre_in`.
+ */
+private fun buildGridVariables(
+    filter: MediaCatalogFilter,
+    page: Int,
+    sort: String,
+    hideAdult: Boolean,
+): Map<String, JsonElement> = buildMap {
+    put("type", JsonPrimitive(filter.type.name))
+    if (filter.genres.isNotEmpty()) {
+        put("genre_in", JsonArray(filter.genres.map { JsonPrimitive(it) }))
+    }
+    if (filter.formats.isNotEmpty()) {
+        put("format_in", JsonArray(filter.formats.map { JsonPrimitive(it) }))
+    }
+    if (filter.countries.isNotEmpty()) {
+        put("countryOfOrigin_in", JsonArray(filter.countries.map { JsonPrimitive(it) }))
+    }
+    filter.status?.let { put("status", JsonPrimitive(it)) }
+    // Season/seasonYear are anime-only filters.
+    if (filter.type == MediaType.ANIME) {
+        filter.seasonYear?.let { put("seasonYear", JsonPrimitive(it)) }
+        filter.season?.let { put("season", JsonPrimitive(it)) }
+    }
+    filter.startDateGreater?.let { put("startDate_greater", JsonPrimitive(it)) }
+    filter.popularityGreater?.let { put("popularity_greater", JsonPrimitive(it)) }
+    // Omit (null) when adult is allowed: the server then returns both.
+    // Never send true — that would filter to adult ONLY.
+    if (hideAdult) {
+        put("isAdult", JsonPrimitive(false))
+    }
+    put("sort", JsonArray(listOf(JsonPrimitive(sort))))
+    put("page", JsonPrimitive(page))
+    put("perPage", JsonPrimitive(GridPageSize))
 }
 
 private fun CharacterDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(

@@ -6,6 +6,7 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
 
 internal interface ExploreRepository {
     /**
@@ -29,12 +30,12 @@ internal interface ExploreRepository {
     ): NetworkResult<Page<ExploreResult>>
 
     /**
-     * The same catalog query shaped as a poster grid (studio works, genre
-     * works); ordered by the server, paged at `GridPageSize`.
+     * The catalog query shaped as a poster grid (studio works, genre works,
+     * Dashboard "View all" catalogs); ordered by the server, paged at
+     * `GridPageSize`. The genre is the same filter with only `type + genre_in`.
      */
     suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int = 1,
         sort: String,
         hideAdult: Boolean = true,

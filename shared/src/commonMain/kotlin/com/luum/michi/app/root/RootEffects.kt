@@ -16,6 +16,9 @@ import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.session.domain.Viewer
+import com.luum.michi.app.discover.domain.model.catalogFilter
+import com.luum.michi.app.discover.domain.model.catalogKindOf
+import com.luum.michi.app.discover.domain.model.genreCatalogFilter
 import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.RootOverlay
@@ -190,12 +193,12 @@ internal fun RootEffects(
         }
     }
 
-    // 18+ gate: flipping it re-queries the open genre page and the visible
+    // 18+ gate: flipping it re-queries the open catalog grid and the visible
     // Explore search (a no-op while neither is loaded), so the setting applies
     // without leaving the page.
     LaunchedEffect(settingsState.displayAdultContent) {
         val hideAdult = !settingsState.displayAdultContent
-        holders.genre.setHideAdult(hideAdult)
+        holders.catalog.setHideAdult(hideAdult)
         holders.explore.updateHideAdult(hideAdult)
     }
     // A confirmed language change (titles/staff names) also re-localizes the
@@ -217,7 +220,11 @@ internal fun RootEffects(
             is DetailDestination.Character -> holders.character.load(destination.id)
             is DetailDestination.Staff -> holders.staff.load(destination.id)
             is DetailDestination.Studio -> holders.studio.load(destination.id)
-            is DetailDestination.Genre -> holders.genre.load(destination.name, destination.type)
+            is DetailDestination.Genre ->
+                holders.catalog.load(genreCatalogFilter(destination.name, destination.type))
+            is DetailDestination.Catalog -> catalogKindOf(destination.kindId)?.let { kind ->
+                holders.catalog.load(kind.catalogFilter())
+            }
             // The list renders the parent's holder. Re-bind that holder to
             // [parentId] because an item opened from the list may have swapped
             // it for another media/character/staff; `load` is a no-op when the

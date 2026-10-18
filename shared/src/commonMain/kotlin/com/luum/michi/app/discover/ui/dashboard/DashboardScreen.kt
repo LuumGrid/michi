@@ -13,15 +13,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
-import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
-import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.discover.domain.model.DashboardCardStat
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import com.luum.michi.app.discover.domain.model.cardStats
+import com.luum.michi.app.discover.domain.model.title
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.CatalogChipRail
 import com.luum.michi.app.ui.components.CoverStat
@@ -45,6 +44,7 @@ import com.luum.michi.app.ui.language.Strings
 internal fun DashboardScreen(
     holder: DashboardStateHolder,
     onOpenMedia: (Int) -> Unit,
+    onOpenCatalog: (String) -> Unit,
     hideAdult: Boolean,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
@@ -61,6 +61,7 @@ internal fun DashboardScreen(
     DashboardContent(
         holder = holder,
         onOpenMedia = onOpenMedia,
+        onOpenCatalog = onOpenCatalog,
         strings = strings,
         modifier = modifier,
         bottomPadding = bottomPadding,
@@ -72,6 +73,7 @@ internal fun DashboardScreen(
 private fun DashboardContent(
     holder: DashboardStateHolder,
     onOpenMedia: (Int) -> Unit,
+    onOpenCatalog: (String) -> Unit,
     strings: LanguageStrings,
     bottomPadding: Dp,
     onRetry: () -> Unit,
@@ -142,6 +144,9 @@ private fun DashboardContent(
                         title = kind.title(strings, current, next),
                         items = media.mapNotNull { it.toRailItem(kind) },
                         onSelect = onOpenMedia,
+                        // "View all" opens the same catalog as a full page.
+                        onViewAll = { onOpenCatalog(kind.name) },
+                        viewAllLabel = strings.viewAllAction,
                         size = if (kind.isFeatured) {
                             CoverSize.Featured
                         } else {
@@ -157,33 +162,6 @@ private fun DashboardContent(
 /** The leading, featured rail of each selector. */
 private val DashboardSectionKind.isFeatured: Boolean
     get() = this == DashboardSectionKind.SEASONAL || this == DashboardSectionKind.NEW_RELEASES_MANGA
-
-/** Rail title; the season rails read "Fall 2026" / "Winter 2027" (localized). */
-private fun DashboardSectionKind.title(
-    strings: LanguageStrings,
-    current: MediaSeasonYear,
-    next: MediaSeasonYear,
-): String = when (this) {
-    DashboardSectionKind.SEASONAL -> "${current.season.label(strings)} ${current.year}"
-    DashboardSectionKind.UPCOMING_SEASON -> "${next.season.label(strings)} ${next.year}"
-    DashboardSectionKind.TRENDING_ANIME -> strings.discoverTrendingAnimeTitle
-    DashboardSectionKind.POPULAR_ANIME -> strings.discoverAllTimePopularAnimeTitle
-    DashboardSectionKind.POPULAR_MOVIE -> strings.discoverAllTimePopularMovieTitle
-    DashboardSectionKind.BEST_ANIME -> strings.discoverBestRatedAnimeTitle
-    DashboardSectionKind.BEST_MOVIE -> strings.discoverBestRatedMovieTitle
-    DashboardSectionKind.BEST_ANIME_NOW -> strings.discoverBestRatedAnimeNowTitle
-    DashboardSectionKind.BEST_MOVIE_NOW -> strings.discoverBestRatedMovieNowTitle
-    DashboardSectionKind.NEW_RELEASES_MANGA -> strings.discoverNewReleasesMangaTitle
-    DashboardSectionKind.TRENDING_MANGA -> strings.discoverTrendingMangaTitle
-    DashboardSectionKind.POPULAR_MANGA -> strings.discoverAllTimePopularMangaTitle
-    DashboardSectionKind.POPULAR_LIGHT_NOVEL -> strings.discoverAllTimePopularLightNovelTitle
-    DashboardSectionKind.POPULAR_MANHWA -> strings.discoverAllTimePopularManhwaTitle
-    DashboardSectionKind.POPULAR_MANHUA -> strings.discoverAllTimePopularManhuaTitle
-    DashboardSectionKind.BEST_MANGA -> strings.discoverBestRatedMangaTitle
-    DashboardSectionKind.BEST_LIGHT_NOVEL -> strings.discoverBestRatedLightNovelTitle
-    DashboardSectionKind.BEST_MANHWA -> strings.discoverBestRatedManhwaTitle
-    DashboardSectionKind.BEST_MANHUA -> strings.discoverBestRatedManhuaTitle
-}
 
 /** Catalog items with a missing id cannot navigate, so they never reach a rail. */
 private fun MediaItem.toRailItem(kind: DashboardSectionKind): MediaRailItem? = id?.let {

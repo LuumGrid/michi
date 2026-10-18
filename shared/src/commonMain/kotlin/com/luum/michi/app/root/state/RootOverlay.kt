@@ -31,7 +31,6 @@ internal enum class RootOverlay(val layer: OverlayLayer) {
     ShareProfile(OverlayLayer.ABOVE_DETAIL),
     Settings(OverlayLayer.ABOVE_DETAIL),
     SignIn(OverlayLayer.ABOVE_DETAIL),
-    Explore(OverlayLayer.BELOW_DETAIL),
     Calendar(OverlayLayer.BELOW_DETAIL),
     Notifications(OverlayLayer.BELOW_DETAIL),
 }

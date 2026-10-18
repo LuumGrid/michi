@@ -7,6 +7,10 @@ import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.platform.domain.UrlOpener
+import com.luum.michi.app.discover.domain.model.catalogFilter
+import com.luum.michi.app.discover.domain.model.catalogKindOf
+import com.luum.michi.app.discover.domain.model.genreCatalogFilter
+import com.luum.michi.app.discover.ui.catalog.CatalogDetailScreen
 import com.luum.michi.app.discover.ui.genre.GenreDetailScreen
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.ui.character.CharacterDetailScreen
@@ -96,19 +100,42 @@ internal fun RootDetailHost(
             },
             onOpenMedia = { state.openMedia(it) },
         )
-        is DetailDestination.Genre -> GenreDetailScreen(
-            holder = holders.genre,
-            strings = strings,
-            bottomPadding = bottomPadding,
-            onRetry = {
-                if (holders.genre.pageLoaded) {
-                    holders.genre.refresh()
-                } else {
-                    holders.genre.load(destination.name, destination.type)
-                }
-            },
-            onOpenMedia = { state.openMedia(it) },
-        )
+        is DetailDestination.Genre -> {
+            val filter = genreCatalogFilter(destination.name, destination.type)
+            GenreDetailScreen(
+                holder = holders.catalog,
+                strings = strings,
+                bottomPadding = bottomPadding,
+                onRetry = {
+                    if (holders.catalog.pageLoaded) {
+                        holders.catalog.refresh()
+                    } else {
+                        holders.catalog.load(filter)
+                    }
+                },
+                onOpenMedia = { state.openMedia(it) },
+            )
+        }
+        is DetailDestination.Catalog -> {
+            val kind = catalogKindOf(destination.kindId)
+            if (kind != null) {
+                val filter = kind.catalogFilter()
+                CatalogDetailScreen(
+                    holder = holders.catalog,
+                    kind = kind,
+                    strings = strings,
+                    bottomPadding = bottomPadding,
+                    onRetry = {
+                        if (holders.catalog.pageLoaded) {
+                            holders.catalog.refresh()
+                        } else {
+                            holders.catalog.load(filter)
+                        }
+                    },
+                    onOpenMedia = { state.openMedia(it) },
+                )
+            }
+        }
         is DetailDestination.DetailList -> DetailListHost(
             destination = destination,
             holders = holders,

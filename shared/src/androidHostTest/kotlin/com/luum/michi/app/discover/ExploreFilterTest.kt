@@ -16,6 +16,7 @@ import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +75,7 @@ private class FakeExploreRepository : ExploreRepository {
     }
 
     override suspend fun searchMediaGrid(
-        type: MediaType,
-        genres: List<String>,
+        filter: MediaCatalogFilter,
         page: Int,
         sort: String,
         hideAdult: Boolean,
@@ -109,27 +109,6 @@ private fun varsOf(request: AniListGraphQLRequest): Map<String, String> =
 class ExploreFilterTest {
 
     // ---- Holder -> repository wiring (caso exacto reportado) ----
-
-    @Test
-    fun applyPresetForwardsUserCase() = runBlocking {
-        val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
-        holder.applyPreset(
-            category = ExploreCategory.ANIME,
-            sortOption = UserListSort.TRENDING,
-            season = null,
-            year = 2025,
-        )
-        // applyPreset es sin debounce: la llamada ya debe estar registrada
-        assertEquals(1, repo.catalogCalls.size)
-        val call = repo.catalogCalls.single()
-        assertNull(call.query)
-        assertEquals(emptyList(), call.genres)
-        assertEquals(emptyList(), call.formats)
-        assertEquals(2025, call.year)
-        assertNull(call.season)
-        assertEquals("TRENDING_DESC", call.sort)
-    }
 
     @Test
     fun applyFiltersLoadsOnceAndIgnoresTheUnchangedDraft() = runBlocking {
@@ -184,16 +163,6 @@ class ExploreFilterTest {
 
         holder.updateSort(UserListSort.AVERAGE_SCORE, UserListOrder.ASCENDING)
         assertEquals(before + 1, repo.catalogCalls.size, "re-picking the active sort is a no-op")
-    }
-
-    @Test
-    fun mangaSearchIgnoresSeason() = runBlocking {
-        val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
-        holder.applyPreset(ExploreCategory.MANGA, UserListSort.TRENDING, year = 2025)
-        assertEquals(1, repo.mangaCalls.size)
-        assertEquals(2025, repo.mangaCalls.single().year)
-        assertTrue(repo.catalogCalls.isEmpty())
     }
 
     // ---- Repository -> variables GraphQL exactas ----

@@ -6,12 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreFilters
+import com.luum.michi.app.discover.domain.model.catalogKindOf
+import com.luum.michi.app.discover.domain.model.title
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.ui.components.Toolbar
@@ -73,6 +77,7 @@ internal fun RootToolbar(
                 isMediaDetail = state.currentDetail is DetailDestination.Media,
                 isStudioDetail = state.currentDetail is DetailDestination.Studio,
                 isGenreDetail = state.currentDetail is DetailDestination.Genre,
+                isCatalogDetail = state.currentDetail is DetailDestination.Catalog,
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
@@ -97,10 +102,11 @@ internal fun RootToolbar(
                         state.open(RootOverlay.SectionFilter)
                     }
                     ACTION_SORT -> when (state.currentDetail) {
-                        // The studio and genre grids are ordered by the
+                        // The studio, genre and catalog grids are ordered by the
                         // server, so the sheet targets their holder.
                         is DetailDestination.Studio,
-                        is DetailDestination.Genre -> state.open(RootOverlay.DetailSort)
+                        is DetailDestination.Genre,
+                        is DetailDestination.Catalog -> state.open(RootOverlay.DetailSort)
                         else -> state.open(RootOverlay.ListSort)
                     }
                     ACTION_CALENDAR -> state.open(RootOverlay.Calendar)
@@ -158,6 +164,7 @@ internal fun toolbarActions(
     isMediaDetail: Boolean,
     isStudioDetail: Boolean,
     isGenreDetail: Boolean,
+    isCatalogDetail: Boolean = false,
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
@@ -179,6 +186,8 @@ internal fun toolbarActions(
         )
         // A "View all" list has nothing but its back chevron.
         if (isDetailList) return emptyList()
+        // A catalog page is not an entity: it only carries the sort.
+        if (isCatalogDetail) return listOf(sort)
         val favourite = ToolbarAction(
             id = ACTION_FAVOURITE,
             icon = if (isDetailFavourite) AppIcons.FavoriteFilled else AppIcons.Favorite,
@@ -349,5 +358,9 @@ private fun detailToolbarTitle(destination: DetailDestination?, strings: Languag
             DetailListKind.STAFF_CHARACTERS -> strings.mediaDetailCharactersTitle
         }
         is DetailDestination.Genre -> destination.name
+        is DetailDestination.Catalog -> catalogKindOf(destination.kindId)?.let { kind ->
+            val current = currentSeasonAndYear()
+            kind.title(strings, current, current.next())
+        }
         else -> null
     }

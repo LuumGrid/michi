@@ -20,4 +20,5 @@ internal fun MediaDto.toMediaGridItem(): MediaGridItem = MediaGridItem(
     viewerStatus = mediaListEntry?.status,
     favourites = favourites?.takeIf { it > 0 },
     genres = genres.orEmpty().filter { it.isNotBlank() },
+    popularity = popularity?.takeIf { it > 0 },
 )

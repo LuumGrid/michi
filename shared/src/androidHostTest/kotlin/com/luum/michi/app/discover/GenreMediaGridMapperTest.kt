@@ -4,6 +4,7 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.media.domain.MediaGridItem
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.FakeGraphQL
 import kotlinx.coroutines.runBlocking
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -51,8 +53,7 @@ class GenreMediaGridMapperTest {
     fun mapsTheGridItemFields() = runBlocking {
         val repository = ExploreRepositoryImpl(FakeGraphQL(listOf(genrePageJson())))
         val result = repository.searchMediaGrid(
-            type = MediaType.ANIME,
-            genres = listOf("Action"),
+            filter = MediaCatalogFilter(type = MediaType.ANIME, genres = listOf("Action")),
             page = 1,
             sort = "POPULARITY_DESC",
             hideAdult = true,
@@ -74,7 +75,12 @@ class GenreMediaGridMapperTest {
     fun theQueryPinsGenreTypeSortPageAndTheAdultGate() = runBlocking {
         val graphQL = FakeGraphQL(listOf(genrePageJson()))
         ExploreRepositoryImpl(graphQL)
-            .searchMediaGrid(MediaType.MANGA, genres = listOf("Action"), page = 2, sort = "SCORE_DESC", hideAdult = true)
+            .searchMediaGrid(
+                filter = MediaCatalogFilter(type = MediaType.MANGA, genres = listOf("Action")),
+                page = 2,
+                sort = "SCORE_DESC",
+                hideAdult = true,
+            )
 
         val request = graphQL.requests.single()
         assertTrue(request.query.contains("genre_in"), request.query)
@@ -84,13 +90,56 @@ class GenreMediaGridMapperTest {
         assertEquals("2", (variables["page"] as JsonPrimitive).content)
         assertEquals("[\"SCORE_DESC\"]", variables["sort"].toString())
         assertEquals("false", (variables["isAdult"] as JsonPrimitive).content)
+        // A genre sends only its filter: no catalog windows, no popularity floor.
+        assertFalse(variables.containsKey("countryOfOrigin_in"))
+        assertFalse(variables.containsKey("status"))
+        assertFalse(variables.containsKey("popularity_greater"))
+        assertFalse(variables.containsKey("format_in"))
+        assertFalse(variables.containsKey("startDate_greater"))
+        assertFalse(variables.containsKey("seasonYear"))
+    }
+
+    @Test
+    fun aCatalogSendsItsWindowsFormatsCountriesAndFloor() = runBlocking {
+        val graphQL = FakeGraphQL(listOf(genrePageJson()))
+        ExploreRepositoryImpl(graphQL)
+            .searchMediaGrid(
+                filter = MediaCatalogFilter(
+                    type = MediaType.MANGA,
+                    countries = listOf("CN", "TW"),
+                    formats = listOf("MANGA", "ONE_SHOT"),
+                    status = "RELEASING",
+                    startDateGreater = 20251018,
+                    popularityGreater = 5000,
+                    season = "FALL",
+                    seasonYear = 2026,
+                ),
+                page = 1,
+                sort = "SCORE_DESC",
+                hideAdult = false,
+            )
+
+        val variables = graphQL.requests.single().variables!!
+        assertEquals("[\"MANGA\",\"ONE_SHOT\"]", variables["format_in"].toString())
+        assertEquals("[\"CN\",\"TW\"]", variables["countryOfOrigin_in"].toString())
+        assertEquals("RELEASING", (variables["status"] as JsonPrimitive).content)
+        assertEquals("20251018", (variables["startDate_greater"] as JsonPrimitive).content)
+        assertEquals("5000", (variables["popularity_greater"] as JsonPrimitive).content)
+        // Season is anime-only: a manga catalog never sends it.
+        assertFalse(variables.containsKey("season"))
+        assertFalse(variables.containsKey("seasonYear"))
     }
 
     @Test
     fun anAllowedAdultCatalogOmitsTheGate() = runBlocking {
         val graphQL = FakeGraphQL(listOf(genrePageJson()))
         ExploreRepositoryImpl(graphQL)
-            .searchMediaGrid(MediaType.ANIME, genres = listOf("Action"), page = 1, sort = "POPULARITY_DESC", hideAdult = false)
+            .searchMediaGrid(
+                filter = MediaCatalogFilter(type = MediaType.ANIME, genres = listOf("Action")),
+                page = 1,
+                sort = "POPULARITY_DESC",
+                hideAdult = false,
+            )
 
         assertTrue(
             graphQL.requests.single().variables?.containsKey("isAdult") != true,
@@ -102,8 +151,7 @@ class GenreMediaGridMapperTest {
     fun aPageWithoutCurrentPageFallsBackToTheRequestedPage() = runBlocking {
         val repository = ExploreRepositoryImpl(FakeGraphQL(listOf(genrePageJson(includeCurrentPage = false))))
         val result = repository.searchMediaGrid(
-            type = MediaType.ANIME,
-            genres = listOf("Action"),
+            filter = MediaCatalogFilter(type = MediaType.ANIME, genres = listOf("Action")),
             page = 3,
             sort = "POPULARITY_DESC",
             hideAdult = true,

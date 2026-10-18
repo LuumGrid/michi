@@ -7,12 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.media.domain.MediaType
-import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
+import com.luum.michi.app.discover.ui.catalog.CatalogGridContent
+import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
 import com.luum.michi.app.ui.components.CatalogChipRail
-import com.luum.michi.app.ui.components.DetailPosterGrid
-import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
 
@@ -23,60 +21,42 @@ import com.luum.michi.app.ui.language.Strings
  * chips are the grid's only header. The sort lives in the holder and is edited
  * from the shared `SortSheet` (Root toolbar action): the server orders the grid,
  * so a change re-queries from page 1. The grid pages itself when its footer
- * scrolls into view. Reached from a media genre chip via
- * [com.luum.michi.app.root.state.State.openGenre].
+ * scrolls into view. A genre is just the catalog filtered by name, so it shares
+ * the catalog grid holder/screen with the Dashboard "View all" pages. Reached
+ * from a media genre chip via [com.luum.michi.app.root.state.State.openGenre].
  */
 @Composable
 internal fun GenreDetailScreen(
-    holder: GenreDetailStateHolder,
+    holder: CatalogGridStateHolder,
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
     onRetry: () -> Unit,
     onOpenMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LoadStateContainer(
-        hasContent = holder.pageLoaded,
-        isLoading = holder.isLoading,
-        errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
-        loadingLabel = strings.mediaDetailLoadingLabel,
-        waitingLabel = strings.networkThrottleWaitingLabel,
-        errorTitle = strings.mediaDetailErrorLabel,
-        retryLabel = strings.retryAction,
+    val items = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
+    CatalogGridContent(
+        holder = holder,
+        items = items,
+        strings = strings,
+        bottomPadding = bottomPadding,
+        // Scroll rule: a catalog/sort change returns the grid to the top.
+        resetKey = listOf(holder.filter.type, holder.sortOption, holder.sortOrder),
         onRetry = onRetry,
+        onOpenMedia = onOpenMedia,
         modifier = modifier,
-        refreshError = if (holder.pageLoaded) holder.error?.let { strings.networkErrorMessage(it) } else null,
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
-        onDismissActionError = { holder.clearActionError() },
-    ) {
-        val posterItems = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
-        DetailPosterGrid(
-            items = posterItems,
-            onSelect = onOpenMedia,
-            isLoading = holder.isLoading,
-            isLoadingMore = holder.media.isLoadingMore,
-            hasNextPage = holder.media.hasNextPage,
-            loadedPage = holder.media.currentPage,
-            onLoadMore = { holder.loadMore() },
-            emptyLabel = strings.mediaDetailNoMediaLabel,
-            // Scroll rule: a catalog or sort change returns the grid to the top.
-            resetKey = listOf(holder.type, holder.sortOption, holder.sortOrder),
-            bottomPadding = bottomPadding,
-            header = {
-                item(key = "type", span = { GridItemSpan(maxLineSpan) }) {
-                    // The catalog switch is the grid's only header: the genre
-                    // name already reads in the toolbar, so no title item and no
-                    // "Works" line.
-                    CatalogChipRail(
-                        anime = MediaType.ANIME,
-                        manga = MediaType.MANGA,
-                        selected = holder.type,
-                        onSelect = { holder.changeType(it) },
-                        strings = strings,
-                    )
-                }
-            },
-        )
-    }
+        header = {
+            item(key = "type", span = { GridItemSpan(maxLineSpan) }) {
+                // The catalog switch is the grid's only header: the genre name
+                // already reads in the toolbar, so no title item, no "Works" line.
+                CatalogChipRail(
+                    anime = MediaType.ANIME,
+                    manga = MediaType.MANGA,
+                    selected = holder.filter.type,
+                    onSelect = { holder.changeType(it) },
+                    strings = strings,
+                )
+            }
+        },
+    )
 }

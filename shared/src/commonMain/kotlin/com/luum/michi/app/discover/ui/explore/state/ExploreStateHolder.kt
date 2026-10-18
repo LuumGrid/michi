@@ -168,28 +168,6 @@ internal class ExploreStateHolder(
 
     private val loadRequest = LatestRequest()
 
-    /** Navegación programática ("Ver todo" desde Dashboard): aplica el preset
-     *  y carga al momento. */
-    fun applyPreset(
-        category: ExploreCategory,
-        sortOption: UserListSort,
-        sortOrder: UserListOrder = UserListOrder.DESCENDING,
-        season: String? = null,
-        year: Int? = null,
-    ) {
-        query = ""
-        this.category = category
-        this.season = season
-        genres = emptyList()
-        formats = emptyList()
-        this.year = year
-        onList = null
-        currentSortOption = sortOption
-        currentSortOrder = sortOrder
-        sort = sortOption.toMediaSort(sortOrder, isAnime = category != ExploreCategory.MANGA)
-        load()
-    }
-
     fun load() {
         // Newest load wins: a slower (stale) response cannot overwrite newer
         // results; the helper cancels the previous request.

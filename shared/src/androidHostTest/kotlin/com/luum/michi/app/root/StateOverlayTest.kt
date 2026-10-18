@@ -1,5 +1,6 @@
 package com.luum.michi.app.root
 
+import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.RootOverlay
@@ -7,6 +8,7 @@ import com.luum.michi.app.root.state.State
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** The overlay set and its progressive back order (see [State.nextBackStep]). */
@@ -178,6 +180,30 @@ class StateOverlayTest {
         state.closeSearch()
 
         assertEquals("naruto", state.searchQuery(TabSection.DISCOVER))
+    }
+
+    @Test
+    fun backFromTheCatalogReturnsToTheDashboard() {
+        val state = State()
+        state.openCatalog("POPULAR_ANIME")
+
+        assertEquals(DetailDestination.Catalog("POPULAR_ANIME"), state.currentDetail)
+        assertTrue(state.applyBackStep())
+        assertNull(state.currentDetail, "the catalog pops back to the Dashboard")
+    }
+
+    @Test
+    fun openingADetailFromTheCatalogKeepsIt() {
+        val state = State()
+        state.openCatalog("POPULAR_ANIME")
+        state.openMedia(5)
+
+        assertTrue(state.applyBackStep())
+        assertEquals(
+            DetailDestination.Catalog("POPULAR_ANIME"),
+            state.currentDetail,
+            "back from the media leaves the catalog",
+        )
     }
 
     @Test

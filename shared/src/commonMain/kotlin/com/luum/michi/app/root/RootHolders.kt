@@ -18,11 +18,11 @@ import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.navigation.domain.GridSortHolder
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
+import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import com.luum.michi.app.discover.ui.explore.state.createExploreStateHolder
-import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
@@ -60,7 +60,7 @@ internal class RootHolders(
     val character: CharacterDetailStateHolder,
     val staff: StaffDetailStateHolder,
     val studio: StudioDetailStateHolder,
-    val genre: GenreDetailStateHolder,
+    val catalog: CatalogGridStateHolder,
 ) {
     // Every pushed detail page lives behind one contract, so refresh, cache
     // invalidation and the favourite action are a single lookup instead of a
@@ -70,21 +70,23 @@ internal class RootHolders(
         character,
         staff,
         studio,
-        genre,
+        catalog,
     )
     fun detailHolderFor(destination: DetailDestination?): DetailHolder? = when (destination) {
         is DetailDestination.Media -> mediaDetail
         is DetailDestination.Character -> character
         is DetailDestination.Staff -> staff
         is DetailDestination.Studio -> studio
-        is DetailDestination.Genre -> genre
+        is DetailDestination.Genre,
+        is DetailDestination.Catalog -> catalog
         is DetailDestination.DetailList -> null
         null -> null
     }
-    // Only the server-ordered grids (studio, genre) open the detail sort sheet.
+    // Only the server-ordered grids (studio, genre, catalog) open the detail sort sheet.
     fun gridSortHolderFor(destination: DetailDestination?): GridSortHolder? = when (destination) {
         is DetailDestination.Studio -> studio
-        is DetailDestination.Genre -> genre
+        is DetailDestination.Genre,
+        is DetailDestination.Catalog -> catalog
         else -> null
     }
 }
@@ -204,12 +206,12 @@ internal fun rememberRootHolders(
     val studioHolder = remember(studioDetailRepository, studioScope, viewerId) {
         StudioDetailStateHolder(studioDetailRepository, studioScope)
     }
-    val genreScope = rememberHolderScope(listScope, viewerId)
-    val genreHolder = remember(exploreRepository, genreScope, viewerId) {
-        GenreDetailStateHolder(
-            exploreRepository,
-            genreScope,
-            !settingsState.displayAdultContent,
+    val catalogScope = rememberHolderScope(listScope, viewerId)
+    val catalogHolder = remember(exploreRepository, catalogScope, viewerId) {
+        CatalogGridStateHolder(
+            repository = exploreRepository,
+            scope = catalogScope,
+            hideAdult = !settingsState.displayAdultContent,
         )
     }
 
@@ -224,7 +226,7 @@ internal fun rememberRootHolders(
         characterHolder,
         staffHolder,
         studioHolder,
-        genreHolder,
+        catalogHolder,
     ) {
         RootHolders(
             listScope = listScope,
@@ -237,7 +239,7 @@ internal fun rememberRootHolders(
             character = characterHolder,
             staff = staffHolder,
             studio = studioHolder,
-            genre = genreHolder,
+            catalog = catalogHolder,
         )
     }
 }

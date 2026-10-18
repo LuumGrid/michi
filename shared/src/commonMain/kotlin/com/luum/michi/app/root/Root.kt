@@ -294,7 +294,6 @@ private fun surfaceKey(tab: TabSection, state: State): String = when {
     state.isOpen(RootOverlay.Settings) -> "${tab.name}:settings"
     state.isDetailOpen -> detailSurfaceKey(tab, state.currentDetailEntryId)
     state.isOpen(RootOverlay.Calendar) -> "${tab.name}:calendar"
-    state.isOpen(RootOverlay.Explore) -> "${tab.name}:explore"
     state.isOpen(RootOverlay.Notifications) -> "${tab.name}:notifications"
     else -> "${tab.name}:tab"
 }

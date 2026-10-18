@@ -20,6 +20,7 @@ class ToolbarActionsTest {
         isMediaDetail: Boolean = false,
         isStudioDetail: Boolean = false,
         isGenreDetail: Boolean = false,
+        isCatalogDetail: Boolean = false,
         isDetailList: Boolean = false,
         isDetailFavourite: Boolean = false,
         isGuest: Boolean = false,
@@ -32,6 +33,7 @@ class ToolbarActionsTest {
         isMediaDetail = isMediaDetail,
         isStudioDetail = isStudioDetail,
         isGenreDetail = isGenreDetail,
+        isCatalogDetail = isCatalogDetail,
         isDetailList = isDetailList,
         isDetailFavourite = isDetailFavourite,
         isGuest = isGuest,
@@ -106,6 +108,13 @@ class ToolbarActionsTest {
         )
         // A genre is not an entity: sort + overflow only.
         assertEquals(listOf("sort", "more"), ids(detailActions(isGenreDetail = true)))
+    }
+
+    /** A dashboard catalog is not an entity either: only the server sort. */
+    @Test
+    fun catalogDetailShowsOnlyTheSort() {
+        assertEquals(listOf("sort"), ids(detailActions(isCatalogDetail = true)))
+        assertEquals(listOf("sort"), ids(detailActions(isCatalogDetail = true, isGuest = true)))
     }
 
     /** The filled twin is used once the entity is favourited (signed-in only). */
