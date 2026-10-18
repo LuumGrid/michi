@@ -187,14 +187,12 @@ internal class MediaEntryEditorState(
         progress = if (max != null) value.coerceIn(0, max) else value.coerceAtLeast(0)
     }
     fun incrementProgress() = updateProgress(progress + 1)
-    fun decrementProgress() = updateProgress(progress - 1)
 
     fun updateProgressVolumes(value: Int) {
         val max = maxProgressVolumes
         progressVolumes = if (max != null) value.coerceIn(0, max) else value.coerceAtLeast(0)
     }
     fun incrementProgressVolumes() = updateProgressVolumes(progressVolumes + 1)
-    fun decrementProgressVolumes() = updateProgressVolumes(progressVolumes - 1)
 
     fun updateScore(value: Float) { score = value.coerceIn(0f, scoreMax) }
     fun updateNotes(value: String) { notes = value }

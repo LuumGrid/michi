@@ -23,7 +23,7 @@ internal fun ThemeType.resolveDarkTheme(systemDark: Boolean): Boolean = when (th
 /**
  * Global app theme. Every screen — current placeholders and future feature
  * `ui/` surfaces — renders inside this theme. The active [ThemeColors]
- * class is provided via [LocalThemeColors] and mapped to Material3.
+ * class is mapped to Material3.
  * Typography is [appTypography] over the [AppFont] catalog (bundled).
  */
 @Composable
@@ -39,7 +39,6 @@ internal fun Theme(
     val scheme = remember(palette, dark, style) { palette.scheme(dark, style) }
     val warning = remember(dark) { warningScheme(dark).primary }
     CompositionLocalProvider(
-        LocalThemeColors provides palette,
         LocalWarning provides warning,
         LocalSurfaceStyle provides surfaces,
     ) {

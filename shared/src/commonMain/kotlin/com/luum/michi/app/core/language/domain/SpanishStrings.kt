@@ -94,7 +94,6 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailCharacterRoleMain = "Principal"
     override val mediaDetailCharacterRoleSupporting = "Secundario"
     override val mediaDetailCharacterRoleBackground = "Fondo"
-    override val mediaDetailNoCharactersLabel = "Sin personajes registrados"
     override val mediaDetailCharactersTitle = "Personajes"
     override val mediaDetailVoiceLanguageLabel = "Idioma de voz"
     override val voiceLanguageJapanese = "Japonés"

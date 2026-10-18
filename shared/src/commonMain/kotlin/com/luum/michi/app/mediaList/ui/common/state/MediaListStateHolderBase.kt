@@ -52,7 +52,6 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
     // intent (plain vars would apply silently until the next load).
     override var currentSortOption by mutableStateOf(UserListSort.FOLLOW_LIST)
     override var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
-    var isSortPersisted by mutableStateOf(false)
 
     override var filterSeason by mutableStateOf<MediaSeason?>(null)
     override var filterGenres by mutableStateOf(emptyList<String>())
@@ -79,7 +78,6 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
     override fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
         currentSortOption = option
         currentSortOrder = order
-        isSortPersisted = persist
         if (persist) {
             sortPersistence?.saveSort(sortScope, option.name, order.name)
         }

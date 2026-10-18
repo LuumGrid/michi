@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,7 +47,6 @@ internal data class ToolbarAction(
     val id: String,
     val icon: ImageVector,
     val contentDescription: String,
-    val badgeCount: Int? = null,
     val group: String? = null,
 )
 
@@ -153,7 +151,6 @@ internal fun Toolbar(
                         icon = action.icon,
                         contentDescription = action.contentDescription,
                         onClick = { onAction(action.id) },
-                        badgeCount = action.badgeCount,
                     )
                 } else if (actions.size > 1) {
                     actionRuns(actions).forEachIndexed { index, run ->
@@ -166,7 +163,6 @@ internal fun Toolbar(
                                 icon = action.icon,
                                 contentDescription = action.contentDescription,
                                 onClick = { onAction(action.id) },
-                                badgeCount = action.badgeCount,
                             )
                         } else {
                             Surface(
@@ -257,18 +253,9 @@ private fun ToolbarActionButton(
         onClick = { onAction(action.id) },
         modifier = modifier,
     ) {
-        if (action.badgeCount != null && action.badgeCount > 0) {
-            BadgedBox(badge = { Text(text = action.badgeCount.toString()) }) {
-                Icon(
-                    imageVector = action.icon,
-                    contentDescription = action.contentDescription,
-                )
-            }
-        } else {
-            Icon(
-                imageVector = action.icon,
-                contentDescription = action.contentDescription,
-            )
-        }
+        Icon(
+            imageVector = action.icon,
+            contentDescription = action.contentDescription,
+        )
     }
 }

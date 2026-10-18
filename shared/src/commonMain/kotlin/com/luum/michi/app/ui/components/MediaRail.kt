@@ -13,10 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.core.model.CoverSizes
+
+/** Baked 16dp matching the full-width layout (panels are already inset). */
+private val RailHorizontalPadding = 16.dp
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -54,9 +56,6 @@ internal fun MediaRail(
     onViewAll: (() -> Unit)? = null,
     viewAllLabel: String? = null,
     emptyLabel: String? = null,
-    // Baked 16dp matches the full-width layout; panels (already inset) pass
-    // zero to avoid double padding.
-    horizontalPadding: Dp = 16.dp,
     // Standard poster size for the rail cards: a token, never a raw width.
     // Only the dashboard's featured rail passes a different one.
     size: CoverSize = CoverSize.Rail,
@@ -70,7 +69,7 @@ internal fun MediaRail(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 8.dp),
+                    .padding(start = RailHorizontalPadding, end = RailHorizontalPadding, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SectionHeader(
@@ -92,12 +91,12 @@ internal fun MediaRail(
                 text = emptyLabel,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = RailHorizontalPadding, vertical = 8.dp),
             )
         } else {
             LazyRow(
                 state = rowState,
-                contentPadding = PaddingValues(horizontal = horizontalPadding),
+                contentPadding = PaddingValues(horizontal = RailHorizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 itemsIndexed(

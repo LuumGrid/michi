@@ -245,10 +245,3 @@ internal class GenreDetailStateHolder(
 
 private val DEFAULT_SORT_OPTION = UserListSort.POPULARITY
 private val DEFAULT_SORT_ORDER = UserListOrder.DESCENDING
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createGenreDetailStateHolder(
-    repository: ExploreRepository,
-    scope: CoroutineScope,
-    hideAdult: Boolean,
-): GenreDetailStateHolder = GenreDetailStateHolder(repository, scope, hideAdult)

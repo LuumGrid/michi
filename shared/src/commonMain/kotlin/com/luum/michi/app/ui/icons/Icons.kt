@@ -65,10 +65,6 @@ internal object AppIcons {
     val Language: ImageVector
         get() = IconPack.LanguageRounded
 
-    /** Palette: theme (palette + mode + font) switch. */
-    val Theme: ImageVector
-        get() = IconPack.ThemeRounded
-
     // ---- TabBar: the 4 top-level destinations ----
     // Vectors live in the generated pack, but the section->icon MAPPING
     // belongs to root/Root.kt::tabs() — ui holds the catalog, never decides

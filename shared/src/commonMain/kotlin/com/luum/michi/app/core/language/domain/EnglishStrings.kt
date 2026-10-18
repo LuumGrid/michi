@@ -94,7 +94,6 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailCharacterRoleMain = "Main"
     override val mediaDetailCharacterRoleSupporting = "Supporting"
     override val mediaDetailCharacterRoleBackground = "Background"
-    override val mediaDetailNoCharactersLabel = "No characters listed"
     override val mediaDetailCharactersTitle = "Characters"
     override val mediaDetailVoiceLanguageLabel = "Voice language"
     override val voiceLanguageJapanese = "Japanese"

@@ -2,12 +2,10 @@ package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -117,7 +115,6 @@ internal fun GlassCircleButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    badgeCount: Int? = null,
     enabled: Boolean = true,
 ) {
     Surface(
@@ -130,13 +127,7 @@ internal fun GlassCircleButton(
         modifier = modifier,
     ) {
         IconButton(onClick = onClick, enabled = enabled) {
-            if (badgeCount != null && badgeCount > 0) {
-                BadgedBox(badge = { Text(text = badgeCount.toString()) }) {
-                    Icon(imageVector = icon, contentDescription = contentDescription)
-                }
-            } else {
-                Icon(imageVector = icon, contentDescription = contentDescription)
-            }
+            Icon(imageVector = icon, contentDescription = contentDescription)
         }
     }
 }

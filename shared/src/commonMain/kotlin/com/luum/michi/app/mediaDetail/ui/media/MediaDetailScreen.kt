@@ -154,9 +154,6 @@ private fun MediaDetailContent(
                     onSelect = onOpenCharacter,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_CHARACTERS) },
                     viewAllLabel = strings.viewAllAction,
-                    // A language with no cast empties the rail: say so
-                    // instead of leaving a bare header.
-                    emptyLabel = strings.mediaDetailNoCharactersLabel.takeIf { !holder.characters.isLoadingMore },
                 )
             }
         }

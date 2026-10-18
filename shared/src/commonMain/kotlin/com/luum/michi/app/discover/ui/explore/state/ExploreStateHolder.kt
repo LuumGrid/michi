@@ -40,7 +40,6 @@ internal class ExploreStateHolder(
     var hideAdult by mutableStateOf(true)
     var currentSortOption by mutableStateOf(UserListSort.TRENDING)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
-    var isSortPersisted by mutableStateOf(false)
     var focusSearchRequested by mutableStateOf(false)
 
     private var loadingState by mutableStateOf(false)
@@ -105,10 +104,9 @@ internal class ExploreStateHolder(
      *  La persistencia entre reinicios es solo de sesión en Discover (cada
      *  superficie persiste su propio slot de SortPersistence: anime/manga
      *  no comparten memoria de sort). */
-    fun updateSort(option: UserListSort, order: UserListOrder, persist: Boolean) {
+    fun updateSort(option: UserListSort, order: UserListOrder) {
         currentSortOption = option
         currentSortOrder = order
-        isSortPersisted = persist
         sort = option.toMediaSort(order, isAnime = category != ExploreCategory.MANGA)
         loadingState = true
         invalidateSearch()
@@ -142,7 +140,6 @@ internal class ExploreStateHolder(
         onList = null
         currentSortOption = sortOption
         currentSortOrder = sortOrder
-        isSortPersisted = false
         sort = sortOption.toMediaSort(sortOrder, isAnime = category != ExploreCategory.MANGA)
         load()
     }

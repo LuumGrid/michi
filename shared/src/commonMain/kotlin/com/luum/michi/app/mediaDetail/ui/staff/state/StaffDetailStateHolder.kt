@@ -103,12 +103,3 @@ internal class StaffDetailStateHolder(
     override suspend fun requestToggleFavourite(id: Int, detail: StaffDetail): NetworkResult<Unit> =
         repository.toggleFavourite(id)
 }
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createStaffDetailStateHolder(
-    repository: StaffDetailRepository,
-    scope: CoroutineScope,
-    stringsProvider: () -> LanguageStrings,
-): StaffDetailStateHolder {
-    return StaffDetailStateHolder(repository, scope, stringsProvider)
-}

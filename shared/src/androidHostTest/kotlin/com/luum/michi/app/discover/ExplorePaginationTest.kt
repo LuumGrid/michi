@@ -143,7 +143,7 @@ class ExplorePaginationTest {
             )
             val holder = holderWith(client, scope)
 
-            holder.updateSort(UserListSort.PROGRESS, UserListOrder.DESCENDING, persist = false)
+            holder.updateSort(UserListSort.PROGRESS, UserListOrder.DESCENDING)
             holder.updateFilters(newCategory = ExploreCategory.MANGA)
 
             // Synchronous: a category change recomputes the derived key.

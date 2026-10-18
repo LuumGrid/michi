@@ -22,19 +22,14 @@ import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
-import com.luum.michi.app.discover.ui.genre.state.createGenreDetailStateHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaDetail.ui.character.state.CharacterDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.character.state.createCharacterDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.media.state.createMediaDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.staff.state.createStaffDetailStateHolder
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
-import com.luum.michi.app.mediaDetail.ui.studio.state.createStudioDetailStateHolder
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
@@ -178,7 +173,7 @@ internal fun rememberRootHolders(
     // cancelled when it is replaced.
     val mediaDetailScope = rememberHolderScope(listScope, viewerId)
     val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, mediaDetailScope, viewerId) {
-        createMediaDetailStateHolder(
+        MediaDetailStateHolder(
             mediaDetailRepository,
             mediaListEntryRepository,
             mediaDetailScope,
@@ -186,19 +181,19 @@ internal fun rememberRootHolders(
     }
     val characterScope = rememberHolderScope(listScope, viewerId)
     val characterHolder = remember(characterDetailRepository, characterScope, viewerId) {
-        createCharacterDetailStateHolder(characterDetailRepository, characterScope) { currentStrings }
+        CharacterDetailStateHolder(characterDetailRepository, characterScope) { currentStrings }
     }
     val staffScope = rememberHolderScope(listScope, viewerId)
     val staffHolder = remember(staffDetailRepository, staffScope, viewerId) {
-        createStaffDetailStateHolder(staffDetailRepository, staffScope) { currentStrings }
+        StaffDetailStateHolder(staffDetailRepository, staffScope) { currentStrings }
     }
     val studioScope = rememberHolderScope(listScope, viewerId)
     val studioHolder = remember(studioDetailRepository, studioScope, viewerId) {
-        createStudioDetailStateHolder(studioDetailRepository, studioScope)
+        StudioDetailStateHolder(studioDetailRepository, studioScope)
     }
     val genreScope = rememberHolderScope(listScope, viewerId)
     val genreHolder = remember(exploreRepository, genreScope, viewerId) {
-        createGenreDetailStateHolder(
+        GenreDetailStateHolder(
             exploreRepository,
             genreScope,
             !settingsState.displayAdultContent,

@@ -98,7 +98,6 @@ interface LanguageStrings {
     val mediaDetailCharacterRoleMain: String
     val mediaDetailCharacterRoleSupporting: String
     val mediaDetailCharacterRoleBackground: String
-    val mediaDetailNoCharactersLabel: String
     val mediaDetailCharactersTitle: String
     val mediaDetailVoiceLanguageLabel: String
     val voiceLanguageJapanese: String

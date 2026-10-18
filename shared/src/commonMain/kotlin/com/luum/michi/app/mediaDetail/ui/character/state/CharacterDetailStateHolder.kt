@@ -91,12 +91,3 @@ internal class CharacterDetailStateHolder(
     override suspend fun requestToggleFavourite(id: Int, detail: CharacterDetail): NetworkResult<Unit> =
         repository.toggleFavourite(id)
 }
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createCharacterDetailStateHolder(
-    repository: CharacterDetailRepository,
-    scope: CoroutineScope,
-    stringsProvider: () -> LanguageStrings,
-): CharacterDetailStateHolder {
-    return CharacterDetailStateHolder(repository, scope, stringsProvider)
-}

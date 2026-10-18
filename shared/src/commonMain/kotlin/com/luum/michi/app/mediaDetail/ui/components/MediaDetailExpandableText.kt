@@ -19,11 +19,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.common.BiographyStat
 import com.luum.michi.app.ui.components.SectionHeader
+
+/** Baked 16dp matching the full-width layout (panels are already inset). */
+private val HorizontalPadding = 16.dp
 
 /**
  * Collapsible long-text section shared by every detail scope (media
@@ -41,9 +43,6 @@ internal fun MediaDetailExpandableText(
     text: String,
     strings: LanguageStrings,
     modifier: Modifier = Modifier,
-    // Baked 16dp matches the full-width layout; panels (already inset) pass
-    // zero to avoid double padding.
-    horizontalPadding: Dp = 16.dp,
     // Person biographies carry the bold stats; a synopsis does not.
     stats: List<BiographyStat> = emptyList(),
 ) {
@@ -52,7 +51,7 @@ internal fun MediaDetailExpandableText(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = horizontalPadding),
+            .padding(horizontal = HorizontalPadding),
     ) {
         SectionHeader(title)
         Spacer(modifier = Modifier.height(8.dp))

@@ -173,13 +173,3 @@ internal class MediaDetailStateHolder(
         }
     }
 }
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createMediaDetailStateHolder(
-    repository: MediaDetailRepository,
-    entryRepository: MediaListEntryRepository,
-    scope: CoroutineScope,
-    stringsProvider: () -> LanguageStrings,
-): MediaDetailStateHolder {
-    return MediaDetailStateHolder(repository, entryRepository, scope, stringsProvider)
-}

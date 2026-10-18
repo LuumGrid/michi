@@ -118,11 +118,3 @@ internal class StudioDetailStateHolder(
 
 private val DEFAULT_SORT_OPTION = UserListSort.RELEASE_DATE
 private val DEFAULT_SORT_ORDER = UserListOrder.DESCENDING
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createStudioDetailStateHolder(
-    repository: StudioDetailRepository,
-    scope: CoroutineScope,
-): StudioDetailStateHolder {
-    return StudioDetailStateHolder(repository, scope)
-}
