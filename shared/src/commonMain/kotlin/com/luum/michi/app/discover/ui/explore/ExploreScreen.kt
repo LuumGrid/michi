@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -23,7 +21,6 @@ import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.domain.model.ExploreSortOptions
 import com.luum.michi.app.discover.domain.model.filterLabel
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
-import com.luum.michi.app.ui.components.ChipPill
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.DetailPosterGrid
@@ -44,12 +41,12 @@ import com.luum.michi.app.ui.language.Strings
 
 /**
  * Explore: the DISCOVER search results. It is the tab's content while a query
- * has been submitted (before that the Dashboard shows behind the search field).
- * A category chip row switches the catalog and ends with the filter/sort tool
- * chips (media categories only); the search itself never fires while typing —
- * only on submit (see `ExploreStateHolder.submitSearch`), to respect AniList's
- * request budget. Filters edit a local draft and apply once when the sheet
- * closes.
+ * has been submitted. After a submit the search field collapses and the toolbar
+ * (results mode) carries the title, filter/sort and the magnifier, so this
+ * screen only paints the category chip row and the results. The search itself
+ * never fires while typing — only on submit (see `ExploreStateHolder.submitSearch`),
+ * to respect AniList's request budget. Filters edit a local draft and apply once
+ * when the sheet closes.
  *
  * Results reuse the shared presentation: media and people render through
  * [DetailPosterGrid] (the same grid as the genre page and the "View all" lists),
@@ -64,10 +61,8 @@ internal fun ExploreScreen(
     bottomPadding: Dp = 0.dp,
     hasSession: Boolean,
     isFilterOpen: Boolean,
-    onOpenFilter: () -> Unit,
     onDismissFilter: () -> Unit,
     isSortOpen: Boolean,
-    onOpenSort: () -> Unit,
     onDismissSort: () -> Unit,
     onRetry: () -> Unit,
     onOpenResult: (Int) -> Unit,
@@ -79,34 +74,10 @@ internal fun ExploreScreen(
         val chips = remember(strings) {
             ExploreCategory.entries.map { ChipTab(value = it, label = it.filterLabel(strings)) }
         }
-        val tools: (LazyListScope.() -> Unit)? = if (isMediaCategory) {
-            {
-                item(key = "explore-filter-tool") {
-                    ChipPill(
-                        label = strings.filterAction,
-                        // The chip doubles as the "filters active" indicator.
-                        selected = holder.appliedFilters != ExploreFilters.Empty,
-                        onClick = onOpenFilter,
-                        leadingIcon = AppIcons.Filter,
-                    )
-                }
-                item(key = "explore-sort-tool") {
-                    ChipPill(
-                        label = strings.sortAction,
-                        selected = false,
-                        onClick = onOpenSort,
-                        leadingIcon = AppIcons.Sort,
-                    )
-                }
-            }
-        } else {
-            null
-        }
         ChipRail(
             tabs = chips,
             selected = holder.category,
             onSelect = { holder.changeCategory(it) },
-            trailing = tools,
         )
         val hasContent = holder.results.isNotEmpty()
         LoadStateContainer(

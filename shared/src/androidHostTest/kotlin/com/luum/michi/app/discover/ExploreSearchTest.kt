@@ -3,9 +3,11 @@ package com.luum.michi.app.discover
 import com.luum.michi.app.DeferredDispatcher
 import com.luum.michi.app.FakeGraphQL
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
+import com.luum.michi.app.root.state.State
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -161,6 +163,29 @@ class ExploreSearchTest {
             dispatcher.runAll()
 
             assertTrue(holder.results.isEmpty(), "nothing from the cancelled load lands")
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun submittingThenCollapsingTheFieldKeepsTheResults() {
+        val client = FakeGraphQL(listOf(mediaPage(listOf(1), hasNextPage = false)))
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        try {
+            val holder = holderWith(client, scope)
+            val state = State()
+
+            // Submit (the field collapses into results mode) — results survive
+            // the field close; only leaving the mode clears them.
+            holder.submitSearch("naruto")
+            state.enterExploreResults(holder.query)
+            state.closeSearch()
+
+            assertTrue(holder.hasSearched)
+            assertEquals(listOf(1), holder.results.map { it.id })
+            assertEquals("naruto", state.searchQuery(TabSection.DISCOVER))
+            assertEquals(1, client.calls)
         } finally {
             scope.cancel()
         }

@@ -2,9 +2,11 @@ package com.luum.michi.app.root
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
+import com.luum.michi.app.root.state.State
 import com.luum.michi.app.ui.components.ToolbarAction
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -37,6 +39,29 @@ class ToolbarActionsTest {
     )
 
     private fun ids(actions: List<ToolbarAction>): List<String> = actions.map { it.id }
+
+    private fun tabActions(
+        tab: TabSection = TabSection.DISCOVER,
+        isExploreResults: Boolean = false,
+        isExploreMediaCategory: Boolean = false,
+        hasExploreFilters: Boolean = false,
+    ): List<ToolbarAction> = toolbarActions(
+        tab = tab,
+        isSearching = false,
+        isSettingsOpen = false,
+        isCalendarOpen = false,
+        isDetailOpen = false,
+        isMediaDetail = false,
+        isStudioDetail = false,
+        isGenreDetail = false,
+        isDetailList = false,
+        isDetailFavourite = false,
+        isGuest = false,
+        isExploreResults = isExploreResults,
+        isExploreMediaCategory = isExploreMediaCategory,
+        hasExploreFilters = hasExploreFilters,
+        strings = EnglishStrings,
+    )
 
     @Test
     fun guestMediaShowsOnlyTheOverflow() {
@@ -91,5 +116,56 @@ class ToolbarActionsTest {
             .first { it.id == "favourite" }
 
         assertTrue(outline.icon != filled.icon, "the favourited on-state must swap the icon")
+    }
+
+    // Explore results mode: the field collapses and the toolbar owns DISCOVER.
+
+    @Test
+    fun exploreResultsOnMediaShowFilterSortAndSearchWithoutCalendar() {
+        val actions = tabActions(isExploreResults = true, isExploreMediaCategory = true)
+
+        assertEquals(listOf("filter", "sort", "search"), ids(actions))
+        assertFalse(actions.any { it.id == "calendar" }, "no calendar in results mode")
+        val filter = actions.first { it.id == "filter" }
+        val sort = actions.first { it.id == "sort" }
+        assertTrue(filter.group != null && filter.group == sort.group, "filter + sort share one capsule")
+    }
+
+    @Test
+    fun exploreResultsOnPeopleShowOnlySearch() {
+        val actions = tabActions(isExploreResults = true, isExploreMediaCategory = false)
+
+        assertEquals(listOf("search"), ids(actions))
+    }
+
+    @Test
+    fun theFilterBadgeFollowsActiveFilters() {
+        assertFalse(
+            tabActions(isExploreResults = true, isExploreMediaCategory = true)
+                .first { it.id == "filter" }.badge,
+        )
+        assertTrue(
+            tabActions(
+                isExploreResults = true,
+                isExploreMediaCategory = true,
+                hasExploreFilters = true,
+            ).first { it.id == "filter" }.badge,
+        )
+    }
+
+    @Test
+    fun exploreResultsNeverLeakIntoAnotherTabsToolbar() {
+        val state = State()
+        state.enterExploreResults("naruto")
+        state.selectTab(TabSection.ANIME)
+
+        // The caller passes the tab-scoped getter, which is false on ANIME, so
+        // the list keeps its own actions (calendar + filter + sort + search).
+        val actions = tabActions(
+            tab = TabSection.ANIME,
+            isExploreResults = state.isExploreResultsVisible,
+        )
+
+        assertEquals(listOf("calendar", "filter", "sort", "search"), ids(actions))
     }
 }

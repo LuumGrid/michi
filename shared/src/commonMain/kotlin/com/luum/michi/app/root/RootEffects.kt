@@ -71,10 +71,6 @@ internal fun RootEffects(
         if (viewer != null) state.close(RootOverlay.SignIn)
     }
 
-    // Keyboard follows search: every close path (chevron, scrim, system
-    // back, tab switch) funnels through searchActiveTab, so releasing focus
-    // here dismisses the keyboard in sync with the toolbar transition.
-    // No-op when nothing holds focus.
     // Keyboard follows the search field: it is released whenever the field stops
     // being painted (closed, or covered by a detail/editor/above-detail overlay),
     // so the keyboard never lingers behind another surface.
@@ -85,14 +81,22 @@ internal fun RootEffects(
         }
     }
 
-    // Explore belongs to the DISCOVER search surface: emptying the field or
-    // closing the search drops any in-flight load and returns to the Dashboard.
-    // The back order closes a detail before the search, so a detail opened from
-    // the results never triggers this.
+    // Explore: emptying the field while it is open leaves results mode and
+    // returns to the Dashboard. Closing the field (back/chevron/scrim/tab)
+    // does NOT clear results — only leaving the mode does.
     LaunchedEffect(state.searchActiveTab, state.searchQuery(TabSection.DISCOVER)) {
-        val active = state.searchActiveTab == TabSection.DISCOVER
-        val cleared = !active || state.searchQuery(TabSection.DISCOVER).isEmpty()
-        if (cleared && holders.explore.hasSearched) {
+        if (state.searchActiveTab == TabSection.DISCOVER &&
+            state.searchQuery(TabSection.DISCOVER).isEmpty() &&
+            holders.explore.hasSearched
+        ) {
+            state.exitExploreResults()
+        }
+    }
+
+    // Leaving Explore results mode (back from the results, or the field emptied
+    // above) drops the last search and returns to the Dashboard.
+    LaunchedEffect(state.exploreResults) {
+        if (!state.exploreResults && holders.explore.hasSearched) {
             holders.explore.enterBlankSearch()
         }
     }

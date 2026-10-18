@@ -211,10 +211,8 @@ internal fun RootTabContent(
             bottomPadding = bottomPadding,
             hasSession = viewerId != null,
             isFilterOpen = state.isOpen(RootOverlay.ExploreFilter),
-            onOpenFilter = { state.open(RootOverlay.ExploreFilter) },
             onDismissFilter = { state.close(RootOverlay.ExploreFilter) },
             isSortOpen = state.isOpen(RootOverlay.ListSort),
-            onOpenSort = { state.open(RootOverlay.ListSort) },
             onDismissSort = { state.close(RootOverlay.ListSort) },
             onRetry = { holders.explore.load() },
             onOpenResult = { id ->

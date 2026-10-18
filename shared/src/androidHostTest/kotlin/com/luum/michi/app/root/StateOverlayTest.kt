@@ -115,6 +115,72 @@ class StateOverlayTest {
     }
 
     @Test
+    fun exploreResultsCloseOnBackAfterTheFieldAndDetail() {
+        val state = State()
+        state.enterExploreResults("naruto")
+
+        // Results alone: back leaves the mode and clears the sent query.
+        assertTrue(state.isExploreResultsVisible)
+        assertEquals(BackStep.CloseExploreResults, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+        assertFalse(state.exploreResults)
+        assertEquals("", state.searchQuery(TabSection.DISCOVER))
+    }
+
+    @Test
+    fun aDetailOpenedFromExploreResultsClosesBeforeTheResults() {
+        val state = State()
+        state.enterExploreResults("naruto")
+        state.openMedia(1)
+
+        assertEquals(BackStep.CloseDetail, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+        assertFalse(state.isDetailOpen)
+        assertTrue(state.exploreResults, "the results mode survives the detail")
+        assertEquals(BackStep.CloseExploreResults, state.nextBackStep())
+    }
+
+    @Test
+    fun aReopenedFieldClosesBeforeTheExploreResults() {
+        val state = State()
+        state.enterExploreResults("naruto")
+        state.openSearch(TabSection.DISCOVER)
+
+        assertEquals(BackStep.CloseSearch, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+        assertFalse(state.isSearchActive)
+        assertTrue(state.isExploreResultsVisible, "closing the field keeps the results mode")
+        assertEquals(BackStep.CloseExploreResults, state.nextBackStep())
+    }
+
+    @Test
+    fun exploreResultsSurviveATabChangeButStayHidden() {
+        val state = State()
+        state.enterExploreResults("naruto")
+        state.selectTab(TabSection.ANIME)
+
+        assertTrue(state.exploreResults, "the mode survives a tab change")
+        assertFalse(state.isExploreResultsVisible, "…but never owns ANIME's toolbar")
+        assertEquals(BackStep.SystemDefault, state.nextBackStep())
+
+        state.selectTab(TabSection.DISCOVER)
+        assertTrue(state.isExploreResultsVisible)
+        assertEquals(BackStep.CloseExploreResults, state.nextBackStep())
+    }
+
+    @Test
+    fun closingTheFieldRestoresTheSentQuery() {
+        val state = State()
+        state.enterExploreResults("naruto")
+        state.openSearch(TabSection.DISCOVER)
+        state.updateSearch(TabSection.DISCOVER, "naruto x")
+
+        state.closeSearch()
+
+        assertEquals("naruto", state.searchQuery(TabSection.DISCOVER))
+    }
+
+    @Test
     fun resetClosesEveryOverlay() {
         val state = State()
         state.open(RootOverlay.Settings)

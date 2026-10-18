@@ -10,6 +10,8 @@ import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.ui.components.Toolbar
@@ -37,12 +39,27 @@ internal fun RootToolbar(
     // its flag on the detail snapshot; a genre has no favourite).
     val isDetailFavourite = holders.detailHolderFor(state.currentDetail)?.isFavourite == true
     val focusManager = LocalFocusManager.current
+    // Explore results mode: the raw flag survives tab changes; only the
+    // tab-scoped getter drives the toolbar, so ANIME/MANGA keep their own bar.
+    val isExploreResults = state.isExploreResultsVisible
+    val exploreMediaCategory = holders.explore.category == ExploreCategory.ANIME ||
+        holders.explore.category == ExploreCategory.MANGA
+    val exploreFiltersActive = holders.explore.appliedFilters != ExploreFilters.Empty
     Box(modifier = Modifier.fillMaxWidth()) {
         TopEdgeFade(modifier = Modifier.matchParentSize())
         Toolbar(
             title = detailToolbarTitle(state.currentDetail, strings)
-                ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
-            navigation = if (search != null || state.isDetailOpen || state.isOpen(RootOverlay.Settings) || state.isOpen(RootOverlay.Calendar)) {
+                ?: if (state.isDetailOpen) {
+                    ""
+                } else if (isExploreResults) {
+                    // Results mode reads the sent query, not the field text.
+                    holders.explore.query
+                } else {
+                    toolbarTitle(state, tab, strings)
+                },
+            navigation = if (search != null || state.isDetailOpen || isExploreResults ||
+                state.isOpen(RootOverlay.Settings) || state.isOpen(RootOverlay.Calendar)
+            ) {
                 ToolbarNavigation.Back(strings.backButton)
             } else {
                 ToolbarNavigation.None
@@ -59,6 +76,9 @@ internal fun RootToolbar(
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
+                isExploreResults = isExploreResults,
+                isExploreMediaCategory = exploreMediaCategory,
+                hasExploreFilters = exploreFiltersActive,
                 strings = strings,
             ),
             search = search,
@@ -69,11 +89,13 @@ internal fun RootToolbar(
                 when (id) {
                     ACTION_SEARCH -> state.openSearch(tab)
                     ACTION_SETTINGS -> state.open(RootOverlay.Settings)
-                    // List tools only exist on ANIME/MANGA (see
-                    // toolbarActions), so ACTION_FILTER always targets a
-                    // list tab. ACTION_SORT also belongs to the studio
-                    // detail page while it is open.
-                    ACTION_FILTER -> state.open(RootOverlay.SectionFilter)
+                    // Filter targets the list sheet on ANIME/MANGA and the
+                    // Explore sheet only while the results toolbar owns DISCOVER.
+                    ACTION_FILTER -> if (state.isExploreResultsVisible) {
+                        state.open(RootOverlay.ExploreFilter)
+                    } else {
+                        state.open(RootOverlay.SectionFilter)
+                    }
                     ACTION_SORT -> when (state.currentDetail) {
                         // The studio and genre grids are ordered by the
                         // server, so the sheet targets their holder.
@@ -97,10 +119,16 @@ internal fun RootToolbar(
             },
             onSearchSubmit = {
                 // Only DISCOVER searches the server (Explore). The lists filter
-                // locally as you type, so their submit stays a no-op.
+                // locally as you type, so their submit stays a no-op. Submitting
+                // collapses the field into results mode.
                 if (searchTab == TabSection.DISCOVER) {
-                    holders.explore.submitSearch(state.searchQuery(TabSection.DISCOVER))
-                    focusManager.clearFocus()
+                    val submitted = state.searchQuery(TabSection.DISCOVER)
+                    if (submitted.isNotBlank()) {
+                        holders.explore.submitSearch(submitted)
+                        state.enterExploreResults(holders.explore.query)
+                        state.closeSearch()
+                        focusManager.clearFocus()
+                    }
                 }
             },
             onSearchClose = { state.applyBackStep() },
@@ -133,6 +161,10 @@ internal fun toolbarActions(
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
+    // Explore results mode owns DISCOVER: filter+sort (media only) + magnifier.
+    isExploreResults: Boolean = false,
+    isExploreMediaCategory: Boolean = false,
+    hasExploreFilters: Boolean = false,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
     if (isSearching || isSettingsOpen) return emptyList()
@@ -199,6 +231,39 @@ internal fun toolbarActions(
                 contentDescription = strings.filterAction,
             ),
         )
+    }
+    // Explore results mode: the toolbar owns DISCOVER. Media categories get the
+    // filter+sort capsule (filter badged while filters are active) and the lone
+    // search magnifier; people/studios only the magnifier. No calendar here.
+    if (isExploreResults) {
+        return buildList {
+            if (isExploreMediaCategory) {
+                add(
+                    ToolbarAction(
+                        id = ACTION_FILTER,
+                        icon = AppIcons.Filter,
+                        contentDescription = strings.filterAction,
+                        group = GROUP_LIST_TOOLS,
+                        badge = hasExploreFilters,
+                    ),
+                )
+                add(
+                    ToolbarAction(
+                        id = ACTION_SORT,
+                        icon = AppIcons.Sort,
+                        contentDescription = strings.sortAction,
+                        group = GROUP_LIST_TOOLS,
+                    ),
+                )
+            }
+            add(
+                ToolbarAction(
+                    id = ACTION_SEARCH,
+                    icon = AppIcons.Search,
+                    contentDescription = strings.searchTitle,
+                ),
+            )
+        }
     }
     // Gated tabs without a session keep the calendar only (public airing
     // data, no login needed): filter/sort/search operate on lists that

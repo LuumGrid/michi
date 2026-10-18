@@ -3,7 +3,6 @@ package com.luum.michi.app.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -50,9 +49,6 @@ internal fun <T> ChipRail(
     compact: Boolean = false,
     // Display-only chips: flat surface + outline, no ripple.
     interactive: Boolean = true,
-    // Extra lazy items after the tabs (e.g. Explore's filter/sort tool chips),
-    // rendered in the same row with the same spacing.
-    trailing: (LazyListScope.() -> Unit)? = null,
 ) {
     LazyRow(
         modifier = modifier,
@@ -78,7 +74,6 @@ internal fun <T> ChipRail(
                 )
             }
         }
-        trailing?.invoke(this)
     }
 }
 

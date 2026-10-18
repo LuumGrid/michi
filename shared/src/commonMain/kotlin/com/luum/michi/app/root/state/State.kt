@@ -19,13 +19,15 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
  * Progressive back order shared by the toolbar back affordance, the search
  * scrim and the system back handler:
  * sheet -> above-detail (modal/settings/editor) -> detail -> search ->
- * below-detail overlay -> system.
+ * Explore results -> below-detail overlay -> system.
  * The detail page renders over calendar/explore/notifications, so it closes
- * before them; the search is part of the tab surface, so it closes after the
- * detail but before those below-detail overlays (one back per visible layer).
+ * before them; the search and its results mode are tab-surface states, so they
+ * close after the detail but before those below-detail overlays (one back per
+ * visible layer).
  */
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
+    data object CloseExploreResults : BackStep
     data object CloseSheet : BackStep
     data object CloseOverlay : BackStep
     data object CloseDetail : BackStep
@@ -72,6 +74,19 @@ internal class State(
     var searchActiveTab: TabSection? by mutableStateOf(null)
     private val searchQueries = mutableStateMapOf<TabSection, String>()
 
+    /**
+     * Explore results mode: the user submitted a DISCOVER query, so the field
+     * collapsed and the toolbar shows the results controls. It survives a tab
+     * change — visibility is tab-scoped ([isExploreResultsVisible]) — and only
+     * leaving the mode (back) or emptying the field clears it; the holder reset
+     * rides on [exitExploreResults].
+     */
+    var exploreResults: Boolean by mutableStateOf(false)
+        private set
+
+    /** The last sent DISCOVER query, restored into the field when it closes. */
+    private var exploreSentQuery: String = ""
+
     val isSearchActive: Boolean get() = searchActiveTab != null
 
     /**
@@ -84,6 +99,15 @@ internal class State(
     val isSearchVisible: Boolean
         get() = isSearchActive && !isDetailOpen && !isEditorOpen &&
             openOverlays.none { it.layer == OverlayLayer.ABOVE_DETAIL }
+
+    /**
+     * Whether the Explore results toolbar owns the DISCOVER tab right now: the
+     * field is collapsed, no detail draws over it, and the user is on DISCOVER.
+     * The raw [exploreResults] flag survives a tab change; only this getter is
+     * tab-scoped, so ANIME/MANGA never inherit Explore's title, actions or back.
+     */
+    val isExploreResultsVisible: Boolean
+        get() = exploreResults && selectedTab == TabSection.DISCOVER && !isSearchActive && !isDetailOpen
 
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
@@ -112,14 +136,32 @@ internal class State(
 
     fun closeSearch() {
         searchActiveTab = null
+        // Results mode: an unpublished edit is discarded when the field closes,
+        // so the title, the field and the results agree on the sent query.
+        if (exploreResults) searchQueries[TabSection.DISCOVER] = exploreSentQuery
+    }
+
+    /** Enters Explore results mode after a DISCOVER submit. */
+    fun enterExploreResults(sentQuery: String) {
+        exploreResults = true
+        exploreSentQuery = sentQuery
+        searchQueries[TabSection.DISCOVER] = sentQuery
+    }
+
+    /** Leaves Explore results mode and forgets the sent query. */
+    fun exitExploreResults() {
+        exploreResults = false
+        exploreSentQuery = ""
+        searchQueries[TabSection.DISCOVER] = ""
     }
 
     fun selectTab(tab: TabSection) {
         selectedTab = tab
         // Queries are preserved per tab in the map, but the search surface
-        // always closes: it belongs to the tab where it opened and must
-        // never show another tab's query.
-        searchActiveTab = null
+        // always closes (and restores its sent query in results mode): it
+        // belongs to the tab where it opened and must never show another tab's
+        // query. Explore results mode itself is kept.
+        closeSearch()
     }
 
     fun nextBackStep(): BackStep = when {
@@ -131,8 +173,10 @@ internal class State(
         // the below-detail overlays, so it closes before them.
         isDetailOpen -> BackStep.CloseDetail
         // The search belongs to the tab surface: it closes after the detail,
-        // but before the overlays drawn below the detail.
+        // but before the overlays drawn below the detail. The results mode sits
+        // right behind the field.
         isSearchActive -> BackStep.CloseSearch
+        isExploreResultsVisible -> BackStep.CloseExploreResults
         openOverlays.any { it.layer == OverlayLayer.BELOW_DETAIL } -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }
@@ -144,6 +188,10 @@ internal class State(
     fun applyBackStep(): Boolean = when (nextBackStep()) {
         BackStep.CloseSearch -> {
             closeSearch()
+            true
+        }
+        BackStep.CloseExploreResults -> {
+            exitExploreResults()
             true
         }
         BackStep.CloseSheet -> {
@@ -227,6 +275,8 @@ internal class State(
         editorInitialProgress = null
         searchActiveTab = null
         searchQueries.clear()
+        exploreResults = false
+        exploreSentQuery = ""
         openOverlays = emptySet()
     }
 }

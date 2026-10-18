@@ -7,12 +7,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +51,8 @@ internal data class ToolbarAction(
     val icon: ImageVector,
     val contentDescription: String,
     val group: String? = null,
+    // Small primary dot at the icon's top-end, e.g. "filters are active".
+    val badge: Boolean = false,
 )
 
 /**
@@ -253,9 +258,19 @@ private fun ToolbarActionButton(
         onClick = { onAction(action.id) },
         modifier = modifier,
     ) {
-        Icon(
-            imageVector = action.icon,
-            contentDescription = action.contentDescription,
-        )
+        Box {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = action.contentDescription,
+            )
+            if (action.badge) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(6.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape),
+                )
+            }
+        }
     }
 }
