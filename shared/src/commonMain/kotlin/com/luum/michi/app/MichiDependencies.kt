@@ -52,8 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.luum.michi.app.discover.domain.DashboardFeedCache
-import com.luum.michi.app.discover.repository.SettingsStoreDashboardFeedCache
+import com.luum.michi.app.discover.repository.clearLegacyDashboardCache
 import com.luum.michi.app.mediaDetail.domain.common.ExternalLinkCatalogRepository
 import com.luum.michi.app.mediaDetail.repository.ExternalLinkCatalogRepositoryImpl
 
@@ -118,9 +117,6 @@ class MichiDependencies internal constructor(
     internal val dashboardRepository: DashboardRepository =
         DashboardRepositoryImpl(graphQLClient)
 
-    internal val dashboardFeedCache: DashboardFeedCache =
-        SettingsStoreDashboardFeedCache(settingsStore)
-
     internal val exploreRepository: ExploreRepository =
         ExploreRepositoryImpl(graphQLClient)
 
@@ -155,10 +151,12 @@ class MichiDependencies internal constructor(
         SessionManager(tokenStorage, viewerRepository, SettingsStoreCachedViewerStore(settingsStore))
 
     /**
-     * Bootstraps the app: checks persisted token, fetches viewer if present.
+     * Bootstraps the app: clears the removed dashboard disk cache, then checks
+     * the persisted token and fetches the viewer if present.
      * Called once at app start by the platform entry.
      */
     fun bootstrap() {
+        clearLegacyDashboardCache(settingsStore)
         scope.launch { sessionManager.bootstrap() }
     }
 

@@ -16,7 +16,6 @@ import com.luum.michi.app.core.medialist.domain.SortPersistence
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailHolder
 import com.luum.michi.app.core.navigation.domain.GridSortHolder
-import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
@@ -107,7 +106,6 @@ internal fun rememberRootHolders(
     exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
-    dashboardFeedCache: DashboardFeedCache,
     sortPersistence: SortPersistence,
 ): RootHolders {
     // Latest strings for the holders' providers, without keying them on language.
@@ -156,10 +154,9 @@ internal fun rememberRootHolders(
     // without `strings` so a language change keeps the Anime/Manga selection;
     // the provider is read at launch so one request never mixes languages.
     val dashboardScope = rememberHolderScope(listScope)
-    val dashboardHolder = remember(dashboardRepository, dashboardFeedCache, dashboardScope) {
+    val dashboardHolder = remember(dashboardRepository, dashboardScope) {
         createDashboardStateHolder(
             repository = dashboardRepository,
-            cache = dashboardFeedCache,
             scope = dashboardScope,
             hideAdult = !settingsState.displayAdultContent,
             // "Pestaña al abrir" → DISCOVER sub-choice; startup only, no load.

@@ -26,7 +26,6 @@ import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.core.platform.domain.UrlOpener
 import com.luum.michi.app.core.session.domain.Viewer
-import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
@@ -75,7 +74,6 @@ internal fun Root(
     exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
-    dashboardFeedCache: DashboardFeedCache,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -155,7 +153,6 @@ internal fun Root(
         exploreRepository = exploreRepository,
         calendarRepository = calendarRepository,
         dashboardRepository = dashboardRepository,
-        dashboardFeedCache = dashboardFeedCache,
         sortPersistence = sortPersistence,
     )
 

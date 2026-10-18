@@ -9,21 +9,19 @@ import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.discover.domain.DashboardFeed
-import com.luum.michi.app.discover.domain.DashboardFeedCache
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlin.time.TimeSource
 
 internal class DashboardStateHolder(
     private val repository: DashboardRepository,
-    private val cache: DashboardFeedCache,
     private val scope: CoroutineScope,
     hideAdult: Boolean,
     // Read once per request, before it launches: one load never mixes languages.
@@ -31,7 +29,7 @@ internal class DashboardStateHolder(
     // Selector value at creation ("Pestaña al abrir" → DISCOVER sub-choice).
     initialType: DashboardMediaType = DashboardMediaType.ANIME,
 ) {
-    // Selected selector value; loads the other type on switch (cached per type).
+    // Selected selector value; loads the other type on switch (kept per type).
     var mediaType: DashboardMediaType by mutableStateOf(initialType)
         private set
 
@@ -40,7 +38,7 @@ internal class DashboardStateHolder(
     private val errors = mutableStateMapOf<DashboardMediaType, NetworkError>()
     // Loading lives per type: an Anime request finishing must not clear (or set)
     // Manga's indicator, which is what kept a pull-to-refresh spinning forever
-    // after switching to a type served from the cache.
+    // after switching to an already-loaded type.
     private val loading = mutableStateMapOf<DashboardMediaType, Boolean>()
     private val refreshing = mutableStateMapOf<DashboardMediaType, Boolean>()
     private val lastLoaded = mutableMapOf<DashboardMediaType, TimeSource.Monotonic.ValueTimeMark>()
@@ -52,12 +50,11 @@ internal class DashboardStateHolder(
     private val inFlightGate = mutableMapOf<DashboardMediaType, Boolean>()
     private val timeMark = TimeSource.Monotonic
 
-    // 18+ gate, applied from creation so the screen's first sync is a no-op and
-    // a cold start with an allowed gate and a fresh cache never hits the network.
+    // 18+ gate, applied from creation so the screen's first sync is a no-op.
     private var hideAdultState: Boolean = hideAdult
 
     // Bumped by invalidate(): a response from an older generation is dropped
-    // (never rewrites memory or disk with the previous language's `meta`).
+    // (never rewrites memory with the previous language's `meta`).
     // Observable so the screen can key its load effect on it.
     private var generationState by mutableStateOf(0)
 
@@ -74,9 +71,11 @@ internal class DashboardStateHolder(
         // A type that has neither a feed nor an error counts as loading: the
         // screen shows the spinner until its first load resolves, instead of
         // the empty panel on the frame before the load effect fires (or after
-        // invalidate() dropped the feed). Every visible type's path launches a
-        // load, so this never sticks: see load()/selectType()/setHideAdult()
-        // and the failure surfacing below for a selected-but-invisible preload.
+        // invalidate() dropped the feed). A cold start always goes to the
+        // network, so this is the spinner until the first response. Every
+        // visible type's path launches a load, so this never sticks: see
+        // load()/selectType()/setHideAdult() and the failure surfacing below
+        // for a selected-but-invisible preload.
         (feeds[mediaType] == null && errors[mediaType] == null)
     val isRefreshing: Boolean get() = refreshing[mediaType] == true
 
@@ -87,7 +86,7 @@ internal class DashboardStateHolder(
     val sections: Map<DashboardSectionKind, List<MediaItem>>
         get() = feeds[mediaType]?.sections ?: emptyMap()
 
-    /** Selector: switching to an unloaded type hydrates from disk then revalidates. */
+    /** Selector: switching to an unloaded type loads it (kept per type). */
     fun selectType(type: DashboardMediaType) {
         if (mediaType == type) return
         mediaType = type
@@ -95,10 +94,10 @@ internal class DashboardStateHolder(
     }
 
     /**
-     * Mirror the 18+ setting. The disk cache is keyed by the gate, so a fresh
-     * cache under the new value is valid: drop the in-memory rails (they belong
-     * to the old gate) and reload **without forcing**, hydrating the new key.
-     * The first sync (equal to the value applied at creation) is a no-op.
+     * Mirror the 18+ setting. The in-memory rails belong to the old gate, so
+     * drop them and reload **without forcing**: the new gate has no memory yet,
+     * so it always fetches. The first sync (equal to the value applied at
+     * creation) is a no-op.
      */
     fun setHideAdult(hideAdult: Boolean) {
         if (hideAdultState == hideAdult) return
@@ -110,10 +109,10 @@ internal class DashboardStateHolder(
     }
 
     /**
-     * The app language changed: the cached `meta` is localized, so drop disk +
-     * memory and bump the generation. Launches nothing — the screen reloads
-     * when it is (re)composed, so a change made on another tab or under
-     * Settings never fires a background request.
+     * The app language changed: the in-memory `meta` is localized, so drop it
+     * and bump the generation. Launches nothing — the screen reloads when it is
+     * (re)composed, so a change made on another tab or under Settings never
+     * fires a background request.
      */
     fun invalidate() {
         generationState += 1
@@ -125,7 +124,6 @@ internal class DashboardStateHolder(
         inFlightGate.clear()
         pendingReload = false
         pendingForce = false
-        cache.clear()
         feeds.clear()
         lastLoaded.clear()
         errors.clear()
@@ -134,9 +132,6 @@ internal class DashboardStateHolder(
     /** Load the current type's rails, skipping the network within the TTL. */
     fun load(forceRefresh: Boolean = false) {
         val type = mediaType
-        // Cold start (or a fresh holder): hydrate from disk before deciding on
-        // the network, so a cached rail never flashes a spinner.
-        if (feeds[type] == null) hydrateFromCache(type)
         val hasData = feeds[type]?.sections?.isNotEmpty() == true
         val mark = lastLoaded[type]
         if (!forceRefresh && mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL && hasData) return
@@ -161,11 +156,10 @@ internal class DashboardStateHolder(
         )
     }
 
-    /** Warm the other type once: hydrate first, skip the network when fresh. */
+    /** Warm the other type once: skip the network while its memory is fresh. */
     fun preloadOther() {
         val other = if (mediaType == DashboardMediaType.ANIME) DashboardMediaType.MANGA else DashboardMediaType.ANIME
         if (inFlight[other]?.isActive == true) return
-        if (feeds[other] == null) hydrateFromCache(other)
         val mark = lastLoaded[other]
         if (mark != null && mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL &&
             feeds[other]?.sections?.isNotEmpty() == true
@@ -196,19 +190,22 @@ internal class DashboardStateHolder(
         }
         errors.remove(type)
         inFlightGate[type] = gate
-        inFlight[type] = scope.launch {
+        // LAZY then start: the job is stored before the body runs, so the
+        // identity check in `finally` is always valid — even on a scope that
+        // dispatches immediately and resolves the response synchronously, which
+        // must still clear its own indicator.
+        val request = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 when (val result = repository.loadFeed(type, gate, strings)) {
                     is NetworkResult.Success -> {
                         // Drop a response from an older generation (language
-                        // changed mid-flight): it must not rewrite either cache.
+                        // changed mid-flight): it must not rewrite memory.
                         if (launchGeneration == generation) {
                             // Discard a response whose gate is no longer in effect.
                             if (gate == hideAdultState) {
                                 feeds[type] = result.value
                                 lastLoaded[type] = timeMark.markNow()
                             }
-                            cache.save(type, gate, result.value)
                         }
                     }
                     is NetworkResult.Failure ->
@@ -230,7 +227,7 @@ internal class DashboardStateHolder(
                     inFlight.remove(type)
                     inFlightGate.remove(type)
                     // Only this type's indicators: another type's request (or a
-                    // cached switch) is untouched.
+                    // memory-served switch) is untouched.
                     loading[type] = false
                     refreshing[type] = false
                     if (pendingReload) {
@@ -242,16 +239,8 @@ internal class DashboardStateHolder(
                 }
             }
         }
-    }
-
-    /** Hydrate [type] from disk (no spinner); a fresh cache counts as loaded. */
-    private fun hydrateFromCache(type: DashboardMediaType) {
-        val cached = cache.load(type, hideAdultState) ?: return
-        feeds[type] = cached.feed
-        val ageMs = Clock.System.now().toEpochMilliseconds() - cached.savedAtMillis
-        if (ageMs in 0 until AniListNetworkPolicy.CACHE_TTL.inWholeMilliseconds) {
-            lastLoaded[type] = timeMark.markNow()
-        }
+        inFlight[type] = request
+        request.start()
     }
 }
 
@@ -260,11 +249,10 @@ internal class DashboardStateHolder(
  *  request so the holder survives a language change (and keeps the selection). */
 internal fun createDashboardStateHolder(
     repository: DashboardRepository,
-    cache: DashboardFeedCache,
     scope: CoroutineScope,
     hideAdult: Boolean = true,
     initialType: DashboardMediaType = DashboardMediaType.ANIME,
     stringsProvider: () -> LanguageStrings,
 ): DashboardStateHolder {
-    return DashboardStateHolder(repository, cache, scope, hideAdult, stringsProvider, initialType)
+    return DashboardStateHolder(repository, scope, hideAdult, stringsProvider, initialType)
 }

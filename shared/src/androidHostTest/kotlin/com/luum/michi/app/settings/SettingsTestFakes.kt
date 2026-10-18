@@ -15,11 +15,16 @@ import kotlinx.serialization.json.JsonElement
 internal class FakeSettingsStore : SettingsStore {
     private val values = mutableMapOf<String, Any?>()
 
+    /** Number of `putString` calls; lets a test assert that a no-op wrote nothing. */
+    var putStringCount = 0
+        private set
+
     fun preload(key: String, value: Any?) {
         values[key] = value
     }
 
     override fun putString(key: String, value: String) {
+        putStringCount++
         values[key] = value
     }
 
