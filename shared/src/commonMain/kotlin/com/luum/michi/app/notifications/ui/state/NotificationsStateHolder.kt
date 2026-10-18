@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
@@ -13,6 +14,7 @@ import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
+import kotlin.time.TimeSource
 
 internal class NotificationsStateHolder(
     private val repository: NotificationsRepository,
@@ -25,9 +27,16 @@ internal class NotificationsStateHolder(
     private var generation = 0
     private val loadRequest = LatestRequest()
 
+    /** True once page 1 answered: [onOpen] only re-asks when there is a reason. */
+    private var hasLoaded by mutableStateOf(false)
+    private val timeMark = TimeSource.Monotonic
+    private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
+
     val notifications: List<AppNotification> get() = paginated.items
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
     val hasNextPage: Boolean get() = paginated.hasNextPage
+    /** Current page of the backing PagedList: the auto-paging effect keys on it. */
+    val currentPage: Int get() = paginated.currentPage
 
     var isLoading by mutableStateOf(false)
         private set
@@ -40,6 +49,28 @@ internal class NotificationsStateHolder(
         private set
     var selectedFilter by mutableStateOf(NotificationFilter.ALL)
         private set
+
+    /**
+     * The unread dot is owned here, fed by the profile (which carries the
+     * Viewer's count on its own query, 0 extra requests). A null from the profile
+     * cache never reaches this (the caller only forwards non-null counts), so a
+     * cold start keeps whatever the last known value was.
+     */
+    fun updateUnreadCount(count: Int) {
+        unreadCount = count
+    }
+
+    /**
+     * Opening the page is reading it, so it resets the server count. Skipped only
+     * when it was already read and the feed is still fresh: no reason, no request.
+     */
+    fun onOpen() {
+        val mark = lastLoaded
+        val fresh = hasLoaded && unreadCount == 0 && mark != null &&
+            mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL
+        if (fresh) return
+        load(resetCount = true)
+    }
 
     /**
      * First page. The loaded items stay on screen until the new page 1 replaces
@@ -64,6 +95,8 @@ internal class NotificationsStateHolder(
                     val page = result.value
                     paginated.set(Page(page.notifications, page.hasNextPage, 1))
                     unreadCount = if (resetCount) 0 else page.unreadCount ?: unreadCount
+                    hasLoaded = true
+                    lastLoaded = timeMark.markNow()
                     error = null
                 }
                 is NetworkResult.Failure -> if (isCurrent()) error = result.error

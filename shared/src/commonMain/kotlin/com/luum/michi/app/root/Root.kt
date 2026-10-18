@@ -35,6 +35,8 @@ import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
+import com.luum.michi.app.notifications.domain.NotificationsRepository
+import com.luum.michi.app.notifications.ui.NotificationsScreen
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -79,6 +81,7 @@ internal fun Root(
     dashboardRepository: DashboardRepository,
     profileRepository: ProfileRepository,
     favouriteRepository: FavouriteRepository,
+    notificationsRepository: NotificationsRepository,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -163,6 +166,7 @@ internal fun Root(
         dashboardRepository = dashboardRepository,
         profileRepository = profileRepository,
         favouriteRepository = favouriteRepository,
+        notificationsRepository = notificationsRepository,
         sortPersistence = sortPersistence,
     )
 
@@ -258,6 +262,20 @@ internal fun Root(
                                 isFilterOpen = state.isOpen(RootOverlay.CalendarFilter),
                                 onDismissFilter = { state.close(RootOverlay.CalendarFilter) },
                                 onOpenDetail = { state.openMedia(it) },
+                                onOpenUrl = { urlOpener.open(it) },
+                            )
+                        } else if (state.isOpen(RootOverlay.Notifications) &&
+                            holders.notifications != null
+                        ) {
+                            // Notifications page (fullscreen, tab bar hidden), over
+                            // the current tab. A media notification pushes its
+                            // detail above it, so back returns to the feed.
+                            NotificationsScreen(
+                                holder = holders.notifications,
+                                bottomPadding = padding.calculateBottomPadding(),
+                                onRetry = { holders.notifications.load(resetCount = true) },
+                                onRefresh = { holders.notifications.load(resetCount = true) },
+                                onOpenMedia = { state.openMedia(it) },
                                 onOpenUrl = { urlOpener.open(it) },
                             )
                         } else {

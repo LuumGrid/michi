@@ -37,6 +37,9 @@ import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
+import com.luum.michi.app.notifications.domain.NotificationsRepository
+import com.luum.michi.app.notifications.ui.state.NotificationsStateHolder
+import com.luum.michi.app.notifications.ui.state.createNotificationsStateHolder
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.profile.ui.state.ProfileFavoritesGridStateHolder
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
@@ -70,6 +73,7 @@ internal class RootHolders(
     val catalog: CatalogGridStateHolder,
     val profile: ProfileStateHolder?,
     val profileFavorites: ProfileFavoritesGridStateHolder?,
+    val notifications: NotificationsStateHolder?,
     /**
      * Single favourite-change router: applies a change to the detail holder of
      * its target kind (visible page + cached snapshot, no network). Used by the
@@ -130,6 +134,7 @@ internal fun rememberRootHolders(
     dashboardRepository: DashboardRepository,
     profileRepository: ProfileRepository,
     favouriteRepository: FavouriteRepository,
+    notificationsRepository: NotificationsRepository,
     sortPersistence: SortPersistence,
 ): RootHolders {
     // Latest strings for the holders' providers, without keying them on language.
@@ -256,6 +261,12 @@ internal fun rememberRootHolders(
             }
         }
     }
+    // Notifications: the feed holder, session-gated (the overlay entry is the
+    // PROFILE bell). It owns the unread dot; the profile only feeds it.
+    val notificationsScope = rememberHolderScope(listScope, viewerId)
+    val notificationsHolder = remember(viewerId, notificationsRepository, notificationsScope) {
+        viewerId?.let { createNotificationsStateHolder(notificationsRepository, notificationsScope) }
+    }
     val profileScope = rememberHolderScope(listScope, viewerId)
     val profileHolder = remember(
         viewerId,
@@ -270,6 +281,7 @@ internal fun rememberRootHolders(
                 favouriteRepository = favouriteRepository,
                 scope = profileScope,
                 onFavouriteChanged = favouriteRouter,
+                onUnreadNotificationCount = { count -> notificationsHolder?.updateUnreadCount(count) },
             )
         }
     }
@@ -298,6 +310,7 @@ internal fun rememberRootHolders(
         catalogHolder,
         profileHolder,
         profileFavoritesHolder,
+        notificationsHolder,
         favouriteRouter,
     ) {
         RootHolders(
@@ -314,6 +327,7 @@ internal fun rememberRootHolders(
             catalog = catalogHolder,
             profile = profileHolder,
             profileFavorites = profileFavoritesHolder,
+            notifications = notificationsHolder,
             onFavouriteChanged = favouriteRouter,
         )
     }

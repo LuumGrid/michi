@@ -120,11 +120,13 @@ internal fun favouritesPageOf(
 
 // ── Full UserProfile response with several favourites buckets ───────────────
 
-/** The UserProfile query's shape with the given favourites, for removal tests. */
+/** The UserProfile query's shape with the given favourites, for removal tests.
+ *  [unreadCount], when set, adds the Viewer root field (the dot's source). */
 internal fun profileJson(
     anime: List<Pair<Int, String>> = emptyList(),
     manga: List<Pair<Int, String>> = emptyList(),
     studios: List<Pair<Int, String>> = emptyList(),
+    unreadCount: Int? = null,
 ): JsonObject = buildJsonObject {
     put("User", buildJsonObject {
         put("statistics", buildJsonObject {
@@ -139,6 +141,9 @@ internal fun profileJson(
             put("studios", favouritesBucket(studios.map { studioFavoriteJson(it.first, it.second) }))
         })
     })
+    if (unreadCount != null) {
+        put("Viewer", buildJsonObject { put("unreadNotificationCount", unreadCount) })
+    }
     put("followers", buildJsonObject { put("pageInfo", buildJsonObject { put("total", 0) }) })
     put("following", buildJsonObject { put("pageInfo", buildJsonObject { put("total", 0) }) })
 }

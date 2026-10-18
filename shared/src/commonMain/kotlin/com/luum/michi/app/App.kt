@@ -200,6 +200,7 @@ fun App(
                             dashboardRepository = dependencies.dashboardRepository,
                             profileRepository = dependencies.profileRepository,
                             favouriteRepository = dependencies.favouriteRepository,
+                            notificationsRepository = dependencies.notificationsRepository,
                             urlOpener = dependencies.urlOpener,
                             shareLauncher = dependencies.shareLauncher,
                             sortPersistence = sortPersistence,

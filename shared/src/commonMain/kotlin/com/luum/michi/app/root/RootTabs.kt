@@ -69,7 +69,8 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
  * hide it (full-screen surfaces like Settings). Default is visible.
  */
 private fun showsTabBar(tab: TabSection, state: State): Boolean =
-    !state.isOpen(RootOverlay.Settings) && !state.isOpen(RootOverlay.Calendar) && !state.isDetailOpen
+    !state.isOpen(RootOverlay.Settings) && !state.isOpen(RootOverlay.Calendar) &&
+        !state.isOpen(RootOverlay.Notifications) && !state.isDetailOpen
 
 /** The bottom tab bar, over the edge fade, hidden by full-screen surfaces. */
 @Composable

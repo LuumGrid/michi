@@ -49,6 +49,9 @@ class ToolbarActionsTest {
         hasExploreFilters: Boolean = false,
         isProfileEditing: Boolean = false,
         isProfileEditable: Boolean = false,
+        isNotificationsOpen: Boolean = false,
+        unreadNotificationCount: Int = 0,
+        isGuest: Boolean = false,
     ): List<ToolbarAction> = toolbarActions(
         tab = tab,
         isSearching = false,
@@ -60,9 +63,11 @@ class ToolbarActionsTest {
         isGenreDetail = false,
         isDetailList = false,
         isDetailFavourite = false,
-        isGuest = false,
+        isGuest = isGuest,
         isProfileEditing = isProfileEditing,
         isProfileEditable = isProfileEditable,
+        isNotificationsOpen = isNotificationsOpen,
+        unreadNotificationCount = unreadNotificationCount,
         isExploreResults = isExploreResults,
         isExploreMediaCategory = isExploreMediaCategory,
         hasExploreFilters = hasExploreFilters,
@@ -186,11 +191,32 @@ class ToolbarActionsTest {
 
     @Test
     fun profileShowsTheEditToggleOnlyWhenEditable() {
-        assertEquals(listOf("settings"), ids(tabActions(tab = TabSection.PROFILE)))
         assertEquals(
-            listOf("profile-edit", "settings"),
+            listOf("notifications", "settings"),
+            ids(tabActions(tab = TabSection.PROFILE)),
+        )
+        assertEquals(
+            listOf("notifications", "profile-edit", "settings"),
             ids(tabActions(tab = TabSection.PROFILE, isProfileEditable = true)),
         )
+    }
+
+    @Test
+    fun theNotificationsBellIsSessionOnlyAndBadgedOnUnread() {
+        // A guest has no notifications page: no bell.
+        assertFalse(tabActions(tab = TabSection.PROFILE, isGuest = true).any { it.id == "notifications" })
+
+        val read = tabActions(tab = TabSection.PROFILE).first { it.id == "notifications" }
+        assertFalse(read.badge)
+
+        val unread = tabActions(tab = TabSection.PROFILE, unreadNotificationCount = 3)
+            .first { it.id == "notifications" }
+        assertTrue(unread.badge)
+    }
+
+    @Test
+    fun theNotificationsPageCarriesNoActions() {
+        assertTrue(tabActions(tab = TabSection.PROFILE, isNotificationsOpen = true).isEmpty())
     }
 
     @Test

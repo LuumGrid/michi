@@ -347,6 +347,9 @@ object EnglishStrings : LanguageStrings {
 
     override val notificationsEmptyLabel = "No notifications yet."
     override val notificationsErrorLabel = "Couldn't load notifications."
+    override val notificationsLoadingLabel = "Loading notifications…"
+    override val timeJustNowLabel = "now"
+    override fun timeAgoLabel(value: String) = "$value ago"
     override val notificationFilterAll = "All"
     override val notificationFilterAiring = "Airing"
     override val notificationFilterReplies = "Replies"

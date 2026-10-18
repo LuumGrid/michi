@@ -97,6 +97,9 @@ query UserProfile(${'$'}userId: Int!) {
       }
     }
   }
+  Viewer {
+    unreadNotificationCount
+  }
   followers: Page(perPage: 1) {
     pageInfo { total }
     followers(userId: ${'$'}userId) { id }
@@ -185,7 +188,11 @@ internal class ProfileRepositoryImpl(
                 manga = response.user?.statistics?.manga.toProfileMediaTypeStats(isManga = true),
             )
             val favorites = response.user?.favourites?.toDomain() ?: ProfileFavorites.EMPTY
-            ProfileData(stats = stats, favorites = favorites)
+            ProfileData(
+                stats = stats,
+                favorites = favorites,
+                unreadNotificationCount = response.viewer?.unreadNotificationCount,
+            )
         }.also { result ->
             if (result is NetworkResult.Success) cache?.write(userId, result.value)
         }

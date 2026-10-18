@@ -98,6 +98,20 @@ class ProfileCacheTest {
     }
 
     @Test
+    fun theUnreadNotificationCountIsNotPersisted() {
+        val store = InMemoryFileStore()
+        val cache = diskCache(store)
+
+        runBlocking {
+            cache.write(7, richProfile().copy(unreadNotificationCount = 5))
+            assertNull(
+                cache.read(7)?.unreadNotificationCount,
+                "the dot's count is live-only: a stale one would lie on a cold start",
+            )
+        }
+    }
+
+    @Test
     fun anotherUsersProfileFileIsNeverRead() {
         val store = InMemoryFileStore()
         val cache = diskCache(store)

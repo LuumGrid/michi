@@ -71,7 +71,8 @@ internal fun RootToolbar(
                     toolbarTitle(state, tab, strings)
                 },
             navigation = if (search != null || state.isDetailOpen || isExploreResults ||
-                state.isOpen(RootOverlay.Settings) || state.isOpen(RootOverlay.Calendar)
+                state.isOpen(RootOverlay.Settings) || state.isOpen(RootOverlay.Calendar) ||
+                state.isOpen(RootOverlay.Notifications)
             ) {
                 ToolbarNavigation.Back(strings.backButton)
             } else {
@@ -93,6 +94,8 @@ internal fun RootToolbar(
                 isGuest = isGuest,
                 isProfileEditing = state.profileEditing,
                 isProfileEditable = holders.profile?.canEdit == true,
+                isNotificationsOpen = state.isOpen(RootOverlay.Notifications),
+                unreadNotificationCount = holders.notifications?.unreadCount ?: 0,
                 isExploreResults = isExploreResults,
                 isExploreMediaCategory = exploreMediaCategory,
                 hasExploreFilters = exploreFiltersActive,
@@ -124,6 +127,7 @@ internal fun RootToolbar(
                     ACTION_CALENDAR -> state.open(RootOverlay.Calendar)
                     ACTION_CALENDAR_FILTER -> state.open(RootOverlay.CalendarFilter)
                     ACTION_PROFILE_EDIT -> state.toggleProfileEditing()
+                    ACTION_NOTIFICATIONS -> state.open(RootOverlay.Notifications)
                     ACTION_EDIT -> if (!isGuest) {
                         holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
                     }
@@ -162,12 +166,16 @@ private const val ACTION_SORT = "sort"
 private const val ACTION_CALENDAR = "calendar"
 private const val ACTION_CALENDAR_FILTER = "calendar-filter"
 private const val ACTION_PROFILE_EDIT = "profile-edit"
+private const val ACTION_NOTIFICATIONS = "notifications"
 private const val ACTION_EDIT = "edit"
 private const val ACTION_FAVOURITE = "favourite"
 private const val ACTION_MORE = "more"
 
 /** Shared capsule group for the list tools (reference: one capsule, lone search). */
 private const val GROUP_LIST_TOOLS = "list-tools"
+
+/** PROFILE's tools capsule: the edit toggle and the gear share one piece. */
+private const val GROUP_PROFILE_TOOLS = "profile-tools"
 
 internal fun toolbarActions(
     tab: TabSection,
@@ -186,13 +194,16 @@ internal fun toolbarActions(
     // PROFILE's favourites edit mode: the toolbar carries the pencil / check.
     isProfileEditing: Boolean = false,
     isProfileEditable: Boolean = false,
+    // PROFILE's notifications bell (session only): badge = unread > 0.
+    isNotificationsOpen: Boolean = false,
+    unreadNotificationCount: Int = 0,
     // Explore results mode owns DISCOVER: filter+sort (media only) + magnifier.
     isExploreResults: Boolean = false,
     isExploreMediaCategory: Boolean = false,
     hasExploreFilters: Boolean = false,
     strings: LanguageStrings,
 ): List<ToolbarAction> {
-    if (isSearching || isSettingsOpen) return emptyList()
+    if (isSearching || isSettingsOpen || isNotificationsOpen) return emptyList()
     // Detail overlay: edit / favourite / overflow trailing the back chevron.
     // The heart swaps to its filled twin when the entry is favourited.
     // Character/staff/studio details have no list entry, so only the heart.
@@ -339,8 +350,18 @@ internal fun toolbarActions(
                 )
             }
         } else {
-            // PROFILE: the gear, plus the favourites edit toggle once the
-            // profile is network-confirmed (a disk-only profile must not edit).
+            // PROFILE: the bell stands alone on the left (like the calendar on
+            // the other tabs); the edit toggle and the gear share one capsule.
+            if (!isGuest) {
+                add(
+                    ToolbarAction(
+                        id = ACTION_NOTIFICATIONS,
+                        icon = AppIcons.Notifications,
+                        contentDescription = strings.notificationsLabel,
+                        badge = unreadNotificationCount > 0,
+                    ),
+                )
+            }
             if (isProfileEditable) {
                 add(
                     ToolbarAction(
@@ -351,6 +372,7 @@ internal fun toolbarActions(
                         } else {
                             strings.profileEditFavoritesAction
                         },
+                        group = GROUP_PROFILE_TOOLS,
                     ),
                 )
             }
@@ -359,6 +381,7 @@ internal fun toolbarActions(
                     id = ACTION_SETTINGS,
                     icon = AppIcons.Settings,
                     contentDescription = strings.settingsAction,
+                    group = GROUP_PROFILE_TOOLS,
                 ),
             )
         }
@@ -373,6 +396,8 @@ private fun toolbarTitle(
     strings.settingsTitle
 } else if (state.isOpen(RootOverlay.Calendar)) {
     strings.calendarTitle
+} else if (state.isOpen(RootOverlay.Notifications)) {
+    strings.notificationsLabel
 } else {
     tab.label(strings)
 }

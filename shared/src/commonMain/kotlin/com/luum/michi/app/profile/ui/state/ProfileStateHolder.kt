@@ -38,6 +38,9 @@ internal class ProfileStateHolder(
     // Tells Root's favourite router an item was removed here, so a detail page
     // still in the stack or cache flips its heart too (no feature import).
     private val onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
+    // Forwards the Viewer's unread count (from the same profile request) to the
+    // notifications holder, the single owner of the dot. No copy is kept here.
+    private val onUnreadNotificationCount: (Int) -> Unit = {},
 ) {
     private var statsState by mutableStateOf(EmptyStats)
     private var favoritesState by mutableStateOf(ProfileFavorites.EMPTY)
@@ -150,6 +153,9 @@ internal class ProfileStateHolder(
                     lastLoaded = timeMark.markNow()
                     lastUserId = userId
                     loadedRevision = favouriteRepository.revision.value
+                    // A null (cache / older shape) never reaches the dot, so it
+                    // cannot blank a live count.
+                    result.value.unreadNotificationCount?.let(onUnreadNotificationCount)
                 }
                 is NetworkResult.Failure -> if (isCurrent()) {
                     errorState = result.error
@@ -229,6 +235,13 @@ internal fun createProfileStateHolder(
     favouriteRepository: FavouriteRepository,
     scope: CoroutineScope,
     onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
+    onUnreadNotificationCount: (Int) -> Unit = {},
 ): ProfileStateHolder {
-    return ProfileStateHolder(repository, favouriteRepository, scope, onFavouriteChanged)
+    return ProfileStateHolder(
+        repository = repository,
+        favouriteRepository = favouriteRepository,
+        scope = scope,
+        onFavouriteChanged = onFavouriteChanged,
+        onUnreadNotificationCount = onUnreadNotificationCount,
+    )
 }

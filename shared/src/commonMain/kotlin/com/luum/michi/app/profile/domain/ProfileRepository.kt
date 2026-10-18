@@ -11,6 +11,12 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 internal data class ProfileData(
     val stats: ProfileStats,
     val favorites: ProfileFavorites,
+    /**
+     * The Viewer's unread notification count. Only ever set from the network
+     * (the cache never carries it), so it feeds the notifications dot without
+     * persisting a stale count.
+     */
+    val unreadNotificationCount: Int? = null,
 )
 
 /**

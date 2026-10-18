@@ -222,6 +222,70 @@ class NotificationsIntegrationTest {
         }
     }
 
+    // ────────────── holder: open (reset + TTL) ──────────────
+
+    @Test
+    fun openingResetsTheCountAndReopeningWithinTheTtlDoesNotRequest() {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+        ))
+        val holder = NotificationsStateHolder(
+            NotificationsRepositoryImpl(client),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+
+        holder.onOpen()
+
+        assertEquals(1, client.calls)
+        assertEquals(true, resetFlag(client.requests[0]), "the first open marks the feed read")
+        assertEquals(0, holder.unreadCount, "the dot disappears")
+
+        holder.onOpen()
+
+        assertEquals(1, client.calls, "a fresh, already-read feed is not re-asked")
+    }
+
+    @Test
+    fun anUnreadCountForcesAResetOnReopen() {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+            notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+        ))
+        val holder = NotificationsStateHolder(
+            NotificationsRepositoryImpl(client),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+
+        holder.onOpen()
+        assertEquals(1, client.calls)
+        assertEquals(0, holder.unreadCount)
+
+        holder.updateUnreadCount(3) // the profile reports new unread
+        holder.onOpen()
+
+        assertEquals(2, client.calls, "unread is a reason to ask again")
+        assertEquals(true, resetFlag(client.requests[1]))
+        assertEquals(0, holder.unreadCount)
+    }
+
+    @Test
+    fun loadMoreAppendsTheNextPage() {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(node(1, "AIRING")), hasNextPage = true),
+            notificationPage(listOf(node(2, "AIRING")), hasNextPage = false),
+        ))
+        val holder = NotificationsStateHolder(
+            NotificationsRepositoryImpl(client),
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+
+        holder.load()
+        holder.loadMore()
+
+        assertEquals(listOf(1, 2), idsOf(holder))
+        assertFalse(holder.hasNextPage)
+    }
+
     // ────────────── holder: races ──────────────
 
     @Test

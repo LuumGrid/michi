@@ -20,6 +20,7 @@ import kotlinx.serialization.Serializable
  *       studios(perPage: 12) { nodes { id name media { nodes { status coverImage { ... } } } } }
  *     }
  *   }
+ *   Viewer { unreadNotificationCount }
  *   followers: Page(perPage: 1) { pageInfo { total } followers(userId: $userId) { id } }
  *   following: Page(perPage: 1) { pageInfo { total } following(userId: $userId) { id } }
  * }
@@ -29,8 +30,16 @@ import kotlinx.serialization.Serializable
 internal data class UserProfileResponseDto(
     @SerialName("User")
     val user: UserProfileContainerDto? = null,
+    @SerialName("Viewer")
+    val viewer: ProfileViewerDto? = null,
     val followers: FollowsPageDto? = null,
     val following: FollowsPageDto? = null,
+)
+
+/** The unread-notification dot's source: free on the profile request. */
+@Serializable
+internal data class ProfileViewerDto(
+    val unreadNotificationCount: Int? = null,
 )
 
 @Serializable
