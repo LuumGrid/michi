@@ -7,6 +7,7 @@ import com.luum.michi.app.profile.domain.ProfileData
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
+import com.luum.michi.app.profile.domain.model.ProfileFavoritesPageSize
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
@@ -161,9 +162,6 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
     """.trimIndent()
 }
 
-/** Items fetched per page in the "see more" favourites grid. */
-private const val FavoritesPageSize = 25
-
 internal class ProfileRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
     private val cache: ProfileDiskCache? = null,
@@ -215,7 +213,7 @@ internal class ProfileRepositoryImpl(
                 mapOf(
                     "userId" to JsonPrimitive(userId),
                     "page" to JsonPrimitive(page),
-                    "perPage" to JsonPrimitive(FavoritesPageSize),
+                    "perPage" to JsonPrimitive(ProfileFavoritesPageSize),
                 ),
             ),
             operationName = "UserFavouritesPage",

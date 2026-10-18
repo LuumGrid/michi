@@ -89,11 +89,10 @@ internal fun RootToolbar(
                 isGenreDetail = state.currentDetail is DetailDestination.Genre,
                 isCatalogDetail = state.currentDetail is DetailDestination.Catalog,
                 isProfileFavorites = state.currentDetail is DetailDestination.ProfileFavorites,
+                isProfileFavoritesEditing = state.favoritesEditing,
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
-                isProfileEditing = state.profileEditing,
-                isProfileEditable = holders.profile?.canEdit == true,
                 isNotificationsOpen = state.isOpen(RootOverlay.Notifications),
                 unreadNotificationCount = holders.notifications?.unreadCount ?: 0,
                 isExploreResults = isExploreResults,
@@ -126,7 +125,7 @@ internal fun RootToolbar(
                     }
                     ACTION_CALENDAR -> state.open(RootOverlay.Calendar)
                     ACTION_CALENDAR_FILTER -> state.open(RootOverlay.CalendarFilter)
-                    ACTION_PROFILE_EDIT -> state.toggleProfileEditing()
+                    ACTION_FAVORITES_EDIT -> state.toggleFavoritesEditing()
                     ACTION_NOTIFICATIONS -> state.open(RootOverlay.Notifications)
                     ACTION_EDIT -> if (!isGuest) {
                         holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
@@ -165,7 +164,7 @@ private const val ACTION_FILTER = "filter"
 private const val ACTION_SORT = "sort"
 private const val ACTION_CALENDAR = "calendar"
 private const val ACTION_CALENDAR_FILTER = "calendar-filter"
-private const val ACTION_PROFILE_EDIT = "profile-edit"
+private const val ACTION_FAVORITES_EDIT = "favorites-edit"
 private const val ACTION_NOTIFICATIONS = "notifications"
 private const val ACTION_EDIT = "edit"
 private const val ACTION_FAVOURITE = "favourite"
@@ -173,9 +172,6 @@ private const val ACTION_MORE = "more"
 
 /** Shared capsule group for the list tools (reference: one capsule, lone search). */
 private const val GROUP_LIST_TOOLS = "list-tools"
-
-/** PROFILE's tools capsule: the edit toggle and the gear share one piece. */
-private const val GROUP_PROFILE_TOOLS = "profile-tools"
 
 internal fun toolbarActions(
     tab: TabSection,
@@ -191,9 +187,8 @@ internal fun toolbarActions(
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
-    // PROFILE's favourites edit mode: the toolbar carries the pencil / check.
-    isProfileEditing: Boolean = false,
-    isProfileEditable: Boolean = false,
+    // The favourites "View all" page's edit toggle (pencil / check).
+    isProfileFavoritesEditing: Boolean = false,
     // PROFILE's notifications bell (session only): badge = unread > 0.
     isNotificationsOpen: Boolean = false,
     unreadNotificationCount: Int = 0,
@@ -215,8 +210,20 @@ internal fun toolbarActions(
         )
         // A "View all" list has nothing but its back chevron.
         if (isDetailList) return emptyList()
-        // The favourites grid is a "View all" list too: title in the bar, only back.
-        if (isProfileFavorites) return emptyList()
+        // The favourites grid carries only its edit toggle (pencil / check).
+        if (isProfileFavorites) {
+            return listOf(
+                ToolbarAction(
+                    id = ACTION_FAVORITES_EDIT,
+                    icon = if (isProfileFavoritesEditing) AppIcons.Check else AppIcons.Edit,
+                    contentDescription = if (isProfileFavoritesEditing) {
+                        strings.profileFavoritesDoneAction
+                    } else {
+                        strings.profileEditFavoritesAction
+                    },
+                ),
+            )
+        }
         // A catalog page is not an entity: it only carries the sort.
         if (isCatalogDetail) return listOf(sort)
         val favourite = ToolbarAction(
@@ -350,8 +357,7 @@ internal fun toolbarActions(
                 )
             }
         } else {
-            // PROFILE: the bell stands alone on the left (like the calendar on
-            // the other tabs); the edit toggle and the gear share one capsule.
+            // PROFILE: the notifications bell and the gear, each its own circle.
             if (!isGuest) {
                 add(
                     ToolbarAction(
@@ -362,26 +368,11 @@ internal fun toolbarActions(
                     ),
                 )
             }
-            if (isProfileEditable) {
-                add(
-                    ToolbarAction(
-                        id = ACTION_PROFILE_EDIT,
-                        icon = if (isProfileEditing) AppIcons.Check else AppIcons.Edit,
-                        contentDescription = if (isProfileEditing) {
-                            strings.profileFavoritesDoneAction
-                        } else {
-                            strings.profileEditFavoritesAction
-                        },
-                        group = GROUP_PROFILE_TOOLS,
-                    ),
-                )
-            }
             add(
                 ToolbarAction(
                     id = ACTION_SETTINGS,
                     icon = AppIcons.Settings,
                     contentDescription = strings.settingsAction,
-                    group = GROUP_PROFILE_TOOLS,
                 ),
             )
         }

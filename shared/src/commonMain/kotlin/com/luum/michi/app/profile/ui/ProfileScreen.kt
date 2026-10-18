@@ -29,7 +29,6 @@ import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.profile.domain.model.itemsFor
 import com.luum.michi.app.profile.domain.model.nonEmptyCategories
-import com.luum.michi.app.profile.ui.components.ProfileFavoriteRemoveButton
 import com.luum.michi.app.profile.ui.model.title
 import com.luum.michi.app.profile.ui.model.toRailItem
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
@@ -51,19 +50,15 @@ import com.luum.michi.app.ui.language.Strings
  * favourites, one rail per category with a "View all" page. Only the viewer's
  * own profile is loaded ([ProfileStateHolder.load] with the viewer id); the
  * name/avatar come from the already-loaded [Viewer] — no extra request.
- *
- * [isEditing] is the root-owned edit mode: every favourite shows a remove button
- * and tapping one does not navigate. The "View all" page is read-only.
+ * Read-only: favourites are removed from each category's "View all" page.
  */
 @Composable
 internal fun ProfileScreen(
     holder: ProfileStateHolder,
     viewer: Viewer,
-    isEditing: Boolean,
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
     onOpenFavorite: (ProfileFavoritesCategory, Int) -> Unit,
-    onRemoveFavorite: (ProfileFavoritesCategory, Int) -> Unit,
     onViewAll: (ProfileFavoritesCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -74,11 +69,9 @@ internal fun ProfileScreen(
     ProfileContent(
         holder = holder,
         viewer = viewer,
-        isEditing = isEditing,
         strings = strings,
         bottomPadding = bottomPadding,
         onOpenFavorite = onOpenFavorite,
-        onRemoveFavorite = onRemoveFavorite,
         onViewAll = onViewAll,
         modifier = modifier,
     )
@@ -88,11 +81,9 @@ internal fun ProfileScreen(
 private fun ProfileContent(
     holder: ProfileStateHolder,
     viewer: Viewer,
-    isEditing: Boolean,
     strings: LanguageStrings,
     bottomPadding: Dp,
     onOpenFavorite: (ProfileFavoritesCategory, Int) -> Unit,
-    onRemoveFavorite: (ProfileFavoritesCategory, Int) -> Unit,
     onViewAll: (ProfileFavoritesCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -112,10 +103,6 @@ private fun ProfileContent(
         modifier = modifier.fillMaxSize(),
         // With the profile already on screen, a failed load is a compact line.
         refreshError = if (holder.hasContent) errorMessage else null,
-        // A failed removal is a compact dismissible line, not a blocking error.
-        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
-        dismissLabel = strings.dismissAction,
-        onDismissActionError = { holder.clearActionError() },
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -143,11 +130,7 @@ private fun ProfileContent(
                             items = items,
                             title = category.title(strings),
                             viewAllLabel = strings.viewAllAction,
-                            isEditing = isEditing,
-                            removeDescription = strings.profileRemoveFavoriteAction,
                             onSelect = { id -> onOpenFavorite(category, id) },
-                            onRemove = { id -> onRemoveFavorite(category, id) },
-                            isRemoving = { id -> holder.isRemoving(category, id) },
                             onViewAll = { onViewAll(category) },
                         )
                     } else {
@@ -157,20 +140,6 @@ private fun ProfileContent(
                             onSelect = { id -> onOpenFavorite(category, id) },
                             onViewAll = { onViewAll(category) },
                             viewAllLabel = strings.viewAllAction,
-                            cardOverlay = if (isEditing) {
-                                { favorite ->
-                                    ProfileFavoriteRemoveButton(
-                                        contentDescription = strings.profileRemoveFavoriteAction,
-                                        onClick = { onRemoveFavorite(category, favorite.id) },
-                                        enabled = !holder.isRemoving(category, favorite.id),
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(4.dp),
-                                    )
-                                }
-                            } else {
-                                null
-                            },
                         )
                     }
                 }
@@ -273,18 +242,13 @@ private fun ProfileStatColumn(
 /**
  * Studio favourites: no image on AniList, so they are settings-style rows (the
  * same look as Explore's studio results) under a rail header with "View all".
- * In edit mode the chevron becomes a remove button and the row does not navigate.
  */
 @Composable
 private fun ProfileStudioSection(
     items: List<ProfileFavorite>,
     title: String,
     viewAllLabel: String,
-    isEditing: Boolean,
-    removeDescription: String,
     onSelect: (Int) -> Unit,
-    onRemove: (Int) -> Unit,
-    isRemoving: (Int) -> Boolean,
     onViewAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -308,19 +272,8 @@ private fun ProfileStudioSection(
                     SettingsRow(
                         label = studio.name,
                         value = "",
-                        onClick = if (isEditing) null else ({ onSelect(studio.id) }),
+                        onClick = { onSelect(studio.id) },
                         divider = index > 0,
-                        trailing = if (isEditing) {
-                            {
-                                ProfileFavoriteRemoveButton(
-                                    contentDescription = removeDescription,
-                                    onClick = { onRemove(studio.id) },
-                                    enabled = !isRemoving(studio.id),
-                                )
-                            }
-                        } else {
-                            null
-                        },
                     )
                 }
             }

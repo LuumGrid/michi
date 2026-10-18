@@ -248,11 +248,9 @@ internal fun RootTabContent(
         ProfileScreen(
             holder = holders.profile,
             viewer = viewer,
-            isEditing = state.profileEditing,
             strings = strings,
             bottomPadding = bottomPadding,
             onOpenFavorite = { category, id -> state.openProfileFavorite(category, id) },
-            onRemoveFavorite = { category, id -> holders.profile.removeFavorite(category, id) },
             onViewAll = { state.openProfileFavorites(it.name) },
         )
     } else if (

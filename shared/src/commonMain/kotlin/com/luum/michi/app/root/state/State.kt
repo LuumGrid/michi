@@ -28,7 +28,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
     data object CloseExploreResults : BackStep
-    data object CloseProfileEdit : BackStep
+    data object CloseFavoritesEdit : BackStep
     data object CloseSheet : BackStep
     data object CloseOverlay : BackStep
     data object CloseDetail : BackStep
@@ -89,18 +89,19 @@ internal class State(
     private var exploreSentQuery: String = ""
 
     /**
-     * PROFILE's favourites edit mode. Root owns it because it is a tab-surface
-     * state with a back step: back exits it and switching tabs drops it.
+     * The favourites "View all" page's edit mode. Root owns it because it is a
+     * page state with a back step: back exits it before the page, and leaving
+     * the page or the tab drops it.
      */
-    var profileEditing: Boolean by mutableStateOf(false)
+    var favoritesEditing: Boolean by mutableStateOf(false)
         private set
 
-    fun toggleProfileEditing() {
-        profileEditing = !profileEditing
+    fun toggleFavoritesEditing() {
+        favoritesEditing = !favoritesEditing
     }
 
-    fun exitProfileEdit() {
-        profileEditing = false
+    fun exitFavoritesEdit() {
+        favoritesEditing = false
     }
 
     val isSearchActive: Boolean get() = searchActiveTab != null
@@ -178,8 +179,8 @@ internal class State(
         // belongs to the tab where it opened and must never show another tab's
         // query. Explore results mode itself is kept.
         closeSearch()
-        // Edit mode is PROFILE-only: leaving the tab exits it.
-        exitProfileEdit()
+        // The favourites edit mode belongs to its page: leaving the tab exits it.
+        exitFavoritesEdit()
     }
 
     fun nextBackStep(): BackStep = when {
@@ -187,6 +188,9 @@ internal class State(
         // Surfaces drawn ABOVE the detail page (modal sheets + settings), plus
         // the editor, which is not part of the overlay set.
         isEditorOpen || openOverlays.any { it.layer == OverlayLayer.ABOVE_DETAIL } -> BackStep.CloseOverlay
+        // The favourites "View all" page's edit mode sits on top of its own page:
+        // back leaves the mode before it closes the page.
+        favoritesEditing && currentDetail is DetailDestination.ProfileFavorites -> BackStep.CloseFavoritesEdit
         // The detail page sits over the tab content (search included) and over
         // the below-detail overlays, so it closes before them.
         isDetailOpen -> BackStep.CloseDetail
@@ -195,8 +199,6 @@ internal class State(
         // right behind the field.
         isSearchActive -> BackStep.CloseSearch
         isExploreResultsVisible -> BackStep.CloseExploreResults
-        // PROFILE's edit mode is the other tab-surface state behind the search.
-        profileEditing -> BackStep.CloseProfileEdit
         openOverlays.any { it.layer == OverlayLayer.BELOW_DETAIL } -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }
@@ -214,8 +216,8 @@ internal class State(
             exitExploreResults()
             true
         }
-        BackStep.CloseProfileEdit -> {
-            exitProfileEdit()
+        BackStep.CloseFavoritesEdit -> {
+            exitFavoritesEdit()
             true
         }
         BackStep.CloseSheet -> {
@@ -264,6 +266,8 @@ internal class State(
     fun closeDetail() {
         close(RootOverlay.DetailMenu)
         close(RootOverlay.DetailSort)
+        // The page that owns the edit mode is leaving: drop it.
+        exitFavoritesEdit()
         if (detailStack.isNotEmpty()) {
             detailStack.removeAt(detailStack.lastIndex)
             entryIds.removeAt(entryIds.lastIndex)
@@ -304,7 +308,7 @@ internal class State(
         searchQueries.clear()
         exploreResults = false
         exploreSentQuery = ""
-        profileEditing = false
+        favoritesEditing = false
         openOverlays = emptySet()
     }
 }

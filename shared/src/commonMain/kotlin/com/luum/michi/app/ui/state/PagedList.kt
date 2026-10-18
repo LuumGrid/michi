@@ -70,9 +70,12 @@ internal class PagedList<T>(
         fetch: suspend (page: Int) -> NetworkResult<Page<T>>,
         onLoaded: () -> Unit = {},
         onError: (NetworkError) -> Unit = {},
+        // Overrides the page to fetch: used to re-read a page the server shifted
+        // (post-removal rewind) instead of advancing. Null keeps `currentPage + 1`.
+        page: Int? = null,
     ) {
         if (isLoadingMore || !started || !hasNextPage) return
-        val nextPage = currentPage + 1
+        val nextPage = page ?: (currentPage + 1)
         request(scope) {
             when (val result = fetch(nextPage)) {
                 is NetworkResult.Success -> if (isCurrent()) {

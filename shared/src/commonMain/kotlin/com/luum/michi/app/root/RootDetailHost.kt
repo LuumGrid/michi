@@ -153,10 +153,12 @@ internal fun RootDetailHost(
                 ProfileFavoritesGridScreen(
                     holder = holder,
                     category = category,
+                    isEditing = state.favoritesEditing,
                     strings = strings,
                     bottomPadding = bottomPadding,
                     onRetry = { holder.refresh() },
                     onOpen = { id -> state.openProfileFavorite(category, id) },
+                    onRemove = { id -> holder.removeFavorite(id) },
                 )
             }
         }

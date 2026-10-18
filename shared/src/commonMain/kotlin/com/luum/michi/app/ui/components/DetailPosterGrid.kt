@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -42,6 +43,9 @@ internal fun DetailPosterGrid(
     resetKey: Any? = null,
     bottomPadding: Dp = 0.dp,
     header: (LazyGridScope.() -> Unit)? = null,
+    // Painted over each card's cover (e.g. an edit-mode remove button). When set,
+    // the card no longer navigates: the overlay owns the interaction.
+    cardOverlay: (@Composable BoxScope.(MediaRailItem) -> Unit)? = null,
 ) {
     val gridState = rememberResetGridState(resetKey)
     LoadMoreEffect(
@@ -89,12 +93,17 @@ internal fun DetailPosterGrid(
                         cover = item.image,
                         title = item.title,
                         size = coverSize,
-                        onClick = { onSelect(item.id) },
+                        onClick = if (cardOverlay == null) {
+                            { onSelect(item.id) }
+                        } else {
+                            null
+                        },
                         subtitle = item.subtitle,
                         placeholderHex = item.placeholderHex,
                         stats = item.stats,
                         // A grid cell lets the subtitle hug the title.
                         reserveTitleLines = false,
+                        overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
                     )
                 }
                 if (hasNextPage) {

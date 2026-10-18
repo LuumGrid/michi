@@ -4,21 +4,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
-import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.network.domain.AniListNetworkPolicy
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.profile.domain.ProfileData
 import com.luum.michi.app.profile.domain.ProfileRepository
-import com.luum.michi.app.profile.domain.model.ProfileFavoriteKey
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.profile.domain.model.itemsFor
 import com.luum.michi.app.profile.domain.model.removeFavorite
-import com.luum.michi.app.profile.domain.model.restoreFavorite
-import com.luum.michi.app.profile.domain.model.without
-import com.luum.michi.app.profile.ui.model.toFavouriteTarget
 import com.luum.michi.app.ui.state.LatestRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -35,9 +30,6 @@ internal class ProfileStateHolder(
     private val repository: ProfileRepository,
     private val favouriteRepository: FavouriteRepository,
     private val scope: CoroutineScope,
-    // Tells Root's favourite router an item was removed here, so a detail page
-    // still in the stack or cache flips its heart too (no feature import).
-    private val onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
     // Forwards the Viewer's unread count (from the same profile request) to the
     // notifications holder, the single owner of the dot. No copy is kept here.
     private val onUnreadNotificationCount: (Int) -> Unit = {},
@@ -47,17 +39,8 @@ internal class ProfileStateHolder(
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
-    /** Non-blocking failure of a removal: the profile stays on screen. */
-    private var actionErrorState by mutableStateOf<NetworkError?>(null)
     /** True while anything for [renderedUserId] is painted (disk or network). */
     private var paintedState by mutableStateOf(false)
-    /** True once the network confirmed this user's profile this session. Gates
-     *  editing: a disk-only (or failed-revalidation) profile must not toggle. */
-    private var confirmedState by mutableStateOf(false)
-    /** Removals in flight: their item is disabled and filtered from a late load. */
-    private var removingKeys by mutableStateOf(emptySet<ProfileFavoriteKey>())
-    /** Removals that succeeded but are not yet folded into a network result. */
-    private var removedKeys by mutableStateOf(emptySet<ProfileFavoriteKey>())
 
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
@@ -80,23 +63,10 @@ internal class ProfileStateHolder(
     val isLoading: Boolean get() = loadingState
     val isRefreshing: Boolean get() = refreshingState
     val error: NetworkError? get() = errorState
-    val actionError: NetworkError? get() = actionErrorState
 
     /** True once a profile is on screen (from disk or the network), so the
      *  screen can tell "nothing yet" apart from a real all-zero account. */
     val hasContent: Boolean get() = paintedState
-
-    /** Editing the favourites is safe only once the network confirmed the
-     *  profile: on disk-only data a removal could re-add what the web removed. */
-    val canEdit: Boolean get() = confirmedState
-
-    fun clearActionError() {
-        actionErrorState = null
-    }
-
-    /** True while [id]'s removal in [category] is in flight (its button is off). */
-    fun isRemoving(category: ProfileFavoritesCategory, id: Int): Boolean =
-        ProfileFavoriteKey(category, id) in removingKeys
 
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
@@ -114,9 +84,6 @@ internal class ProfileStateHolder(
             favoritesState = ProfileFavorites.EMPTY
             renderedUserId = null
             paintedState = false
-            confirmedState = false
-            removingKeys = emptySet()
-            removedKeys = emptySet()
         }
         // "Has data" keys on what is painted, not on the stats being non-zero:
         // a real account with everything at 0 is still loaded data.
@@ -125,10 +92,6 @@ internal class ProfileStateHolder(
         refreshingState = false
         if (isRefresh) refreshingState = true else loadingState = true
         errorState = null
-        actionErrorState = null
-        // Removals already applied when this load started: any that land after
-        // must not be repainted by this (older) result.
-        val removedAtLoadStart = removedKeys
         // Newest load wins: a slower (stale) response cannot overwrite newer
         // data, and only the current request writes state and owns the spinners.
         loadRequest.launch(
@@ -141,15 +104,10 @@ internal class ProfileStateHolder(
             hydrateIfNeeded(userId, isCurrent)
             when (val result = repository.loadProfile(userId)) {
                 is NetworkResult.Success -> if (isCurrent()) {
-                    val removedSince = removedKeys - removedAtLoadStart
                     statsState = result.value.stats
-                    favoritesState = result.value.favorites.without(removingKeys + removedSince)
-                    // Folded in: the server truth (minus pending removals) is now
-                    // the visible state, so these no longer need filtering.
-                    removedKeys = emptySet()
+                    favoritesState = result.value.favorites
                     renderedUserId = userId
                     paintedState = true
-                    confirmedState = true
                     lastLoaded = timeMark.markNow()
                     lastUserId = userId
                     loadedRevision = favouriteRepository.revision.value
@@ -165,48 +123,23 @@ internal class ProfileStateHolder(
     }
 
     /**
-     * Removes one favourite: optimistic (it disappears now), one toggle request,
-     * rollback on failure, and the disk cache is rewritten on success. No-op
-     * while the profile is not network-confirmed or this item is already leaving.
+     * Mirrors a removal made from a "View all" grid: drops it from the in-memory
+     * favourites and rewrites the disk cache, with no request. The profile's
+     * revision is advanced too, so its own removal never marks it stale. A no-op
+     * on the data (but still not stale) when the item was not in the rails.
      */
-    fun removeFavorite(category: ProfileFavoritesCategory, id: Int) {
-        if (!confirmedState) return
+    fun removeFavoriteLocally(category: ProfileFavoritesCategory, id: Int) {
+        loadedRevision = favouriteRepository.revision.value
         val userId = renderedUserId ?: return
-        val key = ProfileFavoriteKey(category, id)
-        if (key in removingKeys) return
-        val index = favoritesState.itemsFor(category).indexOfFirst { it.id == id }
-        if (index < 0) return
-        val favorite = favoritesState.itemsFor(category)[index]
-
+        if (favoritesState.itemsFor(category).none { it.id == id }) return
         favoritesState = favoritesState.removeFavorite(category, id)
-        removingKeys = removingKeys + key
-        actionErrorState = null
-        val target = category.toFavouriteTarget(id)
-        // Optimistic for the detail holders too: a cached/stacked detail flips now.
-        onFavouriteChanged(target, false)
-        scope.launch {
-            when (val result = favouriteRepository.toggleFavourite(target)) {
-                is NetworkResult.Success -> {
-                    removedKeys = removedKeys + key
-                    repository.saveCachedProfile(userId, ProfileData(statsState, favoritesState))
-                    loadedRevision = favouriteRepository.revision.value
-                }
-                is NetworkResult.Failure -> {
-                    favoritesState = favoritesState.restoreFavorite(category, index, favorite)
-                    actionErrorState = result.error
-                    onFavouriteChanged(target, true)
-                }
-            }
-            removingKeys = removingKeys - key
-        }
+        scope.launch { repository.saveCachedProfile(userId, ProfileData(statsState, favoritesState)) }
     }
 
     /**
      * Reads the disk cache once per user, before the network. The file is never
      * fresh ([lastLoaded] stays null), so the fetch always runs; while it does,
      * hydrated data keeps the full-page spinner off (the revalidation is silent).
-     * Disk data is not network-confirmed, so editing stays disabled until the
-     * revalidation answers.
      */
     private suspend fun hydrateIfNeeded(userId: Int, isCurrent: () -> Boolean) {
         if (hydratedUserId == userId) return
@@ -234,14 +167,12 @@ internal fun createProfileStateHolder(
     repository: ProfileRepository,
     favouriteRepository: FavouriteRepository,
     scope: CoroutineScope,
-    onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
     onUnreadNotificationCount: (Int) -> Unit = {},
 ): ProfileStateHolder {
     return ProfileStateHolder(
         repository = repository,
         favouriteRepository = favouriteRepository,
         scope = scope,
-        onFavouriteChanged = onFavouriteChanged,
         onUnreadNotificationCount = onUnreadNotificationCount,
     )
 }

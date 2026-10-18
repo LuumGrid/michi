@@ -21,6 +21,8 @@ class ToolbarActionsTest {
         isStudioDetail: Boolean = false,
         isGenreDetail: Boolean = false,
         isCatalogDetail: Boolean = false,
+        isProfileFavorites: Boolean = false,
+        isProfileFavoritesEditing: Boolean = false,
         isDetailList: Boolean = false,
         isDetailFavourite: Boolean = false,
         isGuest: Boolean = false,
@@ -34,6 +36,8 @@ class ToolbarActionsTest {
         isStudioDetail = isStudioDetail,
         isGenreDetail = isGenreDetail,
         isCatalogDetail = isCatalogDetail,
+        isProfileFavorites = isProfileFavorites,
+        isProfileFavoritesEditing = isProfileFavoritesEditing,
         isDetailList = isDetailList,
         isDetailFavourite = isDetailFavourite,
         isGuest = isGuest,
@@ -47,8 +51,6 @@ class ToolbarActionsTest {
         isExploreResults: Boolean = false,
         isExploreMediaCategory: Boolean = false,
         hasExploreFilters: Boolean = false,
-        isProfileEditing: Boolean = false,
-        isProfileEditable: Boolean = false,
         isNotificationsOpen: Boolean = false,
         unreadNotificationCount: Int = 0,
         isGuest: Boolean = false,
@@ -64,8 +66,6 @@ class ToolbarActionsTest {
         isDetailList = false,
         isDetailFavourite = false,
         isGuest = isGuest,
-        isProfileEditing = isProfileEditing,
-        isProfileEditable = isProfileEditable,
         isNotificationsOpen = isNotificationsOpen,
         unreadNotificationCount = unreadNotificationCount,
         isExploreResults = isExploreResults,
@@ -187,17 +187,13 @@ class ToolbarActionsTest {
         assertEquals(listOf("calendar", "filter", "sort", "search"), ids(actions))
     }
 
-    // PROFILE: the gear, plus the pencil/check edit toggle once editable.
+    // PROFILE: the bell and the gear, each a lone circle (no pencil here).
 
     @Test
-    fun profileShowsTheEditToggleOnlyWhenEditable() {
+    fun profileShowsTheBellAndGearOnly() {
         assertEquals(
             listOf("notifications", "settings"),
             ids(tabActions(tab = TabSection.PROFILE)),
-        )
-        assertEquals(
-            listOf("notifications", "profile-edit", "settings"),
-            ids(tabActions(tab = TabSection.PROFILE, isProfileEditable = true)),
         )
     }
 
@@ -219,15 +215,15 @@ class ToolbarActionsTest {
         assertTrue(tabActions(tab = TabSection.PROFILE, isNotificationsOpen = true).isEmpty())
     }
 
+    // The favourites "View all" page carries only its edit toggle.
+
     @Test
-    fun theProfileEditActionSwapsToTheCheckWhileEditing() {
-        val view = tabActions(tab = TabSection.PROFILE, isProfileEditable = true)
-            .first { it.id == "profile-edit" }
-        val editing = tabActions(
-            tab = TabSection.PROFILE,
-            isProfileEditable = true,
-            isProfileEditing = true,
-        ).first { it.id == "profile-edit" }
+    fun theFavoritesPageEditActionSwapsToTheCheckWhileEditing() {
+        assertEquals(listOf("favorites-edit"), ids(detailActions(isProfileFavorites = true)))
+
+        val view = detailActions(isProfileFavorites = true).first { it.id == "favorites-edit" }
+        val editing = detailActions(isProfileFavorites = true, isProfileFavoritesEditing = true)
+            .first { it.id == "favorites-edit" }
 
         assertEquals("Edit", view.contentDescription)
         assertEquals("Done", editing.contentDescription)

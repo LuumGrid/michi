@@ -273,25 +273,31 @@ internal fun rememberRootHolders(
         profileRepository,
         favouriteRepository,
         profileScope,
-        favouriteRouter,
     ) {
         viewerId?.let {
             createProfileStateHolder(
                 repository = profileRepository,
                 favouriteRepository = favouriteRepository,
                 scope = profileScope,
-                onFavouriteChanged = favouriteRouter,
                 onUnreadNotificationCount = { count -> notificationsHolder?.updateUnreadCount(count) },
             )
         }
     }
     val profileFavoritesScope = rememberHolderScope(listScope, viewerId)
-    val profileFavoritesHolder = remember(viewerId, profileRepository, favouriteRepository, profileFavoritesScope) {
+    val profileFavoritesHolder = remember(
+        viewerId,
+        profileRepository,
+        favouriteRepository,
+        profileFavoritesScope,
+        favouriteRouter,
+    ) {
         viewerId?.let {
             createProfileFavoritesGridStateHolder(
                 repository = profileRepository,
                 favouriteRepository = favouriteRepository,
                 scope = profileFavoritesScope,
+                onFavouriteChanged = favouriteRouter,
+                onFavoriteRemoved = { category, id -> profileHolder?.removeFavoriteLocally(category, id) },
             )
         }
     }
