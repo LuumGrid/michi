@@ -4,6 +4,9 @@ package com.luum.michi.app.root.state
  * Back-close layer of a [RootOverlay], in the order back closes them: sheets
  * first, then the surfaces drawn above the detail page, then the overlays below
  * it. One back closes a whole layer at once.
+ *
+ * The in-context search is not an overlay: it is part of the tab surface, so in
+ * back order it sits between the detail page and the [BELOW_DETAIL] layer.
  */
 internal enum class OverlayLayer {
     SHEET,

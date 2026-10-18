@@ -82,6 +82,18 @@ internal fun RootEffects(
         }
     }
 
+    // Explore belongs to the DISCOVER search surface: emptying the field or
+    // closing the search drops any in-flight load and returns to the Dashboard.
+    // The back order closes a detail before the search, so a detail opened from
+    // the results never triggers this.
+    LaunchedEffect(state.searchActiveTab, state.searchQuery(TabSection.DISCOVER)) {
+        val active = state.searchActiveTab == TabSection.DISCOVER
+        val cleared = !active || state.searchQuery(TabSection.DISCOVER).isEmpty()
+        if (cleared && holders.explore.hasSearched) {
+            holders.explore.enterBlankSearch()
+        }
+    }
+
     // ── Session transitions ────────────────────────────────────────────────
     // viewerId drives three things: seeding/clearing the synced prefs, resetting
     // the transient navigation state, and re-keying the holders (their favourite
@@ -161,11 +173,23 @@ internal fun RootEffects(
             holders.dashboard.invalidate()
         }
     }
+    // A language change also re-localizes the visible search: re-run the LAST
+    // SUBMITTED query (not the text left in the field), one request.
+    var lastExploreLanguage by remember { mutableStateOf(settingsState.language) }
+    LaunchedEffect(settingsState.language) {
+        if (settingsState.language != lastExploreLanguage) {
+            lastExploreLanguage = settingsState.language
+            if (holders.explore.hasSearched) holders.explore.load()
+        }
+    }
 
-    // 18+ gate: flipping it re-queries the open genre page (a no-op while no
-    // genre is loaded), so the setting applies without leaving the page.
+    // 18+ gate: flipping it re-queries the open genre page and the visible
+    // Explore search (a no-op while neither is loaded), so the setting applies
+    // without leaving the page.
     LaunchedEffect(settingsState.displayAdultContent) {
-        holders.genre.setHideAdult(!settingsState.displayAdultContent)
+        val hideAdult = !settingsState.displayAdultContent
+        holders.genre.setHideAdult(hideAdult)
+        holders.explore.updateHideAdult(hideAdult)
     }
     // A confirmed language change (titles/staff names) also re-localizes the
     // open detail page and the calendar day; the dashboard re-hydrates when its

@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.Dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.discover.domain.model.ExploreResultTarget
+import com.luum.michi.app.discover.domain.model.resultTarget
 import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
+import com.luum.michi.app.discover.ui.explore.ExploreScreen
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
@@ -89,9 +92,9 @@ internal fun RootTabBar(tab: TabSection, state: State, strings: LanguageStrings)
 }
 
 /**
- * The tab content router: the two lists, the dashboard and the guest/placeholder
- * panels. The query belongs to the tab where search opened, so [tabQuery] only
- * filters the matching list.
+ * The tab content router: the two lists, the dashboard/Explore and the
+ * guest/placeholder panels. The query belongs to the tab where search opened,
+ * so [tabQuery] only filters the matching list.
  */
 @Composable
 internal fun RootTabContent(
@@ -100,8 +103,6 @@ internal fun RootTabContent(
     holders: RootHolders,
     settingsState: SettingsState,
     viewerId: Int?,
-    isSearching: Boolean,
-    activeQuery: String,
     tabQuery: String,
     strings: LanguageStrings,
     bottomPadding: Dp,
@@ -201,17 +202,27 @@ internal fun RootTabContent(
             onEditEntry = { state.openEditor(it) },
             onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
         )
-    } else if (isSearching && activeQuery.isNotEmpty()) {
-        // DISCOVER (and guests): server search lands in a later step.
-        MessagePanel(
-            title = strings.searchNoResultsLabel,
-            message = null,
-            icon = AppIcons.Search,
+    } else if (activeTab == TabSection.DISCOVER && holders.explore.hasSearched) {
+        // Explore: the DISCOVER search results (server search), guests included.
+        // Before a submitted query the dashboard below is what shows.
+        ExploreScreen(
+            holder = holders.explore,
+            strings = strings,
+            bottomPadding = bottomPadding,
+            onRetry = { holders.explore.load() },
+            onOpenResult = { id ->
+                when (holders.explore.category.resultTarget()) {
+                    ExploreResultTarget.MEDIA -> state.openMedia(id)
+                    ExploreResultTarget.CHARACTER -> state.openCharacter(id)
+                    ExploreResultTarget.STAFF -> state.openStaff(id)
+                    ExploreResultTarget.STUDIO -> state.openStudio(id)
+                }
+            },
         )
     } else if (activeTab == TabSection.DISCOVER) {
-        // Discover dashboard: public catalog, guests included.
-        // The branch above still owns the active-query state
-        // (Explore search lands later).
+        // Discover dashboard: public catalog, guests included. It stays until a
+        // search is submitted (Explore replaces it) and behind the search field
+        // while the user is still typing.
         DashboardScreen(
             holder = holders.dashboard,
             onOpenMedia = { state.openMedia(it) },

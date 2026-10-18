@@ -1,5 +1,6 @@
 package com.luum.michi.app.root
 
+import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -57,6 +58,38 @@ class StateOverlayTest {
         assertEquals(BackStep.CloseOverlay, state.nextBackStep())
         assertTrue(state.applyBackStep())
         assertFalse(state.isOpen(RootOverlay.Calendar))
+    }
+
+    @Test
+    fun detailOpenedFromSearchClosesBeforeTheSearch() {
+        val state = State()
+        state.openSearch(TabSection.DISCOVER)
+        state.updateSearch(TabSection.DISCOVER, "naruto")
+        state.openMedia(1)
+
+        // The first back closes the detail; the search behind it survives.
+        assertEquals(BackStep.CloseDetail, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+        assertFalse(state.isDetailOpen)
+        assertTrue(state.isSearchActive, "the search stays active under the detail")
+
+        // The second back (now the topmost layer) closes the search.
+        assertEquals(BackStep.CloseSearch, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+        assertFalse(state.isSearchActive)
+    }
+
+    @Test
+    fun aSheetOverSearchClosesBeforeTheSearch() {
+        val state = State()
+        state.openSearch(TabSection.DISCOVER)
+        state.open(RootOverlay.ListSort)
+
+        assertEquals(BackStep.CloseSheet, state.nextBackStep())
+        assertTrue(state.applyBackStep())
+
+        assertFalse(state.isOpen(RootOverlay.ListSort))
+        assertTrue(state.isSearchActive, "the sheet closes before the search")
     }
 
     @Test

@@ -20,6 +20,8 @@ import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
+import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
+import com.luum.michi.app.discover.ui.explore.state.createExploreStateHolder
 import com.luum.michi.app.discover.ui.genre.state.GenreDetailStateHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
@@ -53,6 +55,7 @@ internal class RootHolders(
     val anime: AnimeListStateHolder?,
     val manga: MangaListStateHolder?,
     val dashboard: DashboardStateHolder,
+    val explore: ExploreStateHolder,
     val mediaDetail: MediaDetailStateHolder,
     val character: CharacterDetailStateHolder,
     val staff: StaffDetailStateHolder,
@@ -164,6 +167,19 @@ internal fun rememberRootHolders(
         ) { currentStrings }
     }
 
+    // Explore holder: the DISCOVER search surface. Session-independent catalog
+    // but `onList` depends on the session, so it is re-keyed per viewer; the
+    // provider is read at launch so one request never mixes languages.
+    val exploreScope = rememberHolderScope(listScope, viewerId)
+    val exploreHolder = remember(exploreRepository, exploreScope, viewerId) {
+        createExploreStateHolder(
+            repository = exploreRepository,
+            scope = exploreScope,
+            stringsProvider = { currentStrings },
+            initialHideAdult = !settingsState.displayAdultContent,
+        )
+    }
+
     // Detail holders: session-independent data but per-user favourite state, so
     // they are re-keyed per viewer and read strings through a provider (a
     // language change keeps the holder and its cache). Each owns a child scope
@@ -203,6 +219,7 @@ internal fun rememberRootHolders(
         animeHolder,
         mangaHolder,
         dashboardHolder,
+        exploreHolder,
         mediaDetailHolder,
         characterHolder,
         staffHolder,
@@ -215,6 +232,7 @@ internal fun rememberRootHolders(
             anime = animeHolder,
             manga = mangaHolder,
             dashboard = dashboardHolder,
+            explore = exploreHolder,
             mediaDetail = mediaDetailHolder,
             character = characterHolder,
             staff = staffHolder,

@@ -111,7 +111,7 @@ class ExploreFilterTest {
     @Test
     fun applyPresetForwardsUserCase() = runBlocking {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
         holder.applyPreset(
             category = ExploreCategory.ANIME,
             sortOption = UserListSort.TRENDING,
@@ -132,7 +132,7 @@ class ExploreFilterTest {
     @Test
     fun updateFiltersForwardsGenresFormatsAndYear() {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
         holder.updateFilters(
             newCategory = ExploreCategory.ANIME,
             newSeason = null,
@@ -160,7 +160,7 @@ class ExploreFilterTest {
     @Test
     fun mangaSearchIgnoresSeason() = runBlocking {
         val repo = FakeExploreRepository()
-        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined)) { EnglishStrings }
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
         holder.applyPreset(ExploreCategory.MANGA, UserListSort.TRENDING, year = 2025)
         assertEquals(1, repo.mangaCalls.size)
         assertEquals(2025, repo.mangaCalls.single().year)

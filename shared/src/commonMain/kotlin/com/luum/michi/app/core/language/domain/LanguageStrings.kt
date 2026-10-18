@@ -40,6 +40,8 @@ interface LanguageStrings {
     val searchTypeAll: String
     val searchEmptyQueryHint: String
     val searchNoResultsLabel: String
+    /** Explore's catalog search came back empty ("No results"). */
+    val exploreNoResultsLabel: String
     fun exploreEpisodeCountLabel(count: Int): String
     fun exploreChapterCountLabel(count: Int): String
     val charactersLabel: String

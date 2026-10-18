@@ -28,6 +28,7 @@ internal class ExploreStateHolder(
     /** Read once per request, never cached: a language change localizes the next
      *  search (the `meta` lines come from the repository, which receives it). */
     private val stringsProvider: () -> LanguageStrings,
+    initialHideAdult: Boolean = true,
 ) {
     var query by mutableStateOf("")
     var category by mutableStateOf(ExploreCategory.ANIME)
@@ -37,10 +38,18 @@ internal class ExploreStateHolder(
     var year by mutableStateOf<Int?>(null)
     var sort by mutableStateOf("TRENDING_DESC")
     var onList by mutableStateOf<Boolean?>(null)
-    var hideAdult by mutableStateOf(true)
+    var hideAdult by mutableStateOf(initialHideAdult)
     var currentSortOption by mutableStateOf(UserListSort.TRENDING)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
     var focusSearchRequested by mutableStateOf(false)
+
+    /**
+     * True once the user submitted a non-empty query: it gates the Explore
+     * surface (before it, DISCOVER shows the Dashboard). Cleared by
+     * [enterBlankSearch] (empty field or closed search).
+     */
+    var hasSearched by mutableStateOf(false)
+        private set
 
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
@@ -58,6 +67,8 @@ internal class ExploreStateHolder(
     val isLoading: Boolean get() = loadingState
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
     val hasNextPage: Boolean get() = paginated.hasNextPage
+    /** Current page of the results, the auto-paging effect's key. */
+    val currentPage: Int get() = paginated.currentPage
     val error: NetworkError? get() = errorState
     /** A failed page load (2+): it must not replace the loaded results with the
      *  blocking error panel. Dismissible. */
@@ -88,12 +99,62 @@ internal class ExploreStateHolder(
         searchJob?.cancel()
         loadRequest.cancel()
         query = ""
+        hasSearched = false
         invalidateSearch()
         paginated.clear()
         errorState = null
         actionErrorState = null
         loadingState = false
         focusSearchRequested = true
+    }
+
+    /**
+     * Submits a query (the keyboard Search action). Explore never loads while
+     * typing: only this sets the query and fetches, so the budget is spent on
+     * intent. A blank submit is a no-op; re-submitting the same query for the
+     * same category while a result is already shown (or loading) is deduped.
+     * A different query clears the previous results so the first-load spinner
+     * (and its AniList wait notice) can show.
+     */
+    fun submitSearch(newQuery: String) {
+        val trimmed = newQuery.trim()
+        if (trimmed.isEmpty()) return
+        if (hasSearched && trimmed == query &&
+            (paginated.items.isNotEmpty() || loadingState)
+        ) {
+            return
+        }
+        searchJob?.cancel()
+        query = trimmed
+        hasSearched = true
+        paginated.clear()
+        load()
+    }
+
+    /**
+     * Category chip change. With a submitted search it loads the new category
+     * at once (no debounce); the previous results are cleared so the chip and
+     * the content never disagree, and the first-load spinner can show.
+     */
+    fun changeCategory(newCategory: ExploreCategory) {
+        if (newCategory == category) return
+        category = newCategory
+        sort = currentSortOption.toMediaSort(currentSortOrder, isAnime = category != ExploreCategory.MANGA)
+        if (!hasSearched) return
+        searchJob?.cancel()
+        paginated.clear()
+        load()
+    }
+
+    /**
+     * 18+ gate: flipping it re-runs the last submitted query when Explore is
+     * visible (never the text left in the field), so the setting applies
+     * without leaving the results.
+     */
+    fun updateHideAdult(value: Boolean) {
+        if (value == hideAdult) return
+        hideAdult = value
+        if (hasSearched) load()
     }
 
     fun consumeFocusRequest() {
@@ -268,11 +329,12 @@ internal class ExploreStateHolder(
     }
 }
 
-/** Pure-logic factory (placeholder for UI wiring). */
+/** Pure-logic factory used by RootHolders. */
 internal fun createExploreStateHolder(
     repository: ExploreRepository,
     scope: CoroutineScope,
     stringsProvider: () -> LanguageStrings,
+    initialHideAdult: Boolean,
 ): ExploreStateHolder {
-    return ExploreStateHolder(repository, scope, stringsProvider)
+    return ExploreStateHolder(repository, scope, stringsProvider, initialHideAdult)
 }

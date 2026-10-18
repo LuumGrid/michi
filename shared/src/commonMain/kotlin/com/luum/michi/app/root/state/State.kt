@@ -17,10 +17,12 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 
 /**
  * Progressive back order shared by the toolbar back affordance, the search
- * scrim and (once entries are wired) the system back handler:
- * search -> sheet -> modal/settings -> detail -> overlay -> system.
+ * scrim and the system back handler:
+ * sheet -> above-detail (modal/settings/editor) -> detail -> search ->
+ * below-detail overlay -> system.
  * The detail page renders over calendar/explore/notifications, so it closes
- * before them (one back per visible layer).
+ * before them; the search is part of the tab surface, so it closes after the
+ * detail but before those below-detail overlays (one back per visible layer).
  */
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
@@ -110,14 +112,16 @@ internal class State(
     }
 
     fun nextBackStep(): BackStep = when {
-        isSearchActive -> BackStep.CloseSearch
         openOverlays.any { it.layer == OverlayLayer.SHEET } -> BackStep.CloseSheet
         // Surfaces drawn ABOVE the detail page (modal sheets + settings), plus
         // the editor, which is not part of the overlay set.
         isEditorOpen || openOverlays.any { it.layer == OverlayLayer.ABOVE_DETAIL } -> BackStep.CloseOverlay
-        // The detail page sits over the tab content and over the overlays
-        // below, so it closes before them (one back per visible layer).
+        // The detail page sits over the tab content (search included) and over
+        // the below-detail overlays, so it closes before them.
         isDetailOpen -> BackStep.CloseDetail
+        // The search belongs to the tab surface: it closes after the detail,
+        // but before the overlays drawn below the detail.
+        isSearchActive -> BackStep.CloseSearch
         openOverlays.any { it.layer == OverlayLayer.BELOW_DETAIL } -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }

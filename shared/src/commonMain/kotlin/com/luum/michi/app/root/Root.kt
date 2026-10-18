@@ -258,8 +258,6 @@ internal fun Root(
                                 holders = holders,
                                 settingsState = settingsState,
                                 viewerId = viewerId,
-                                isSearching = search != null,
-                                activeQuery = activeQuery,
                                 tabQuery = tabQuery,
                                 strings = strings,
                                 bottomPadding = padding.calculateBottomPadding(),

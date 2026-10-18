@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
@@ -35,6 +36,7 @@ internal fun RootToolbar(
     // The heart reads the holder that owns the active destination (media keeps
     // its flag on the detail snapshot; a genre has no favourite).
     val isDetailFavourite = holders.detailHolderFor(state.currentDetail)?.isFavourite == true
+    val focusManager = LocalFocusManager.current
     Box(modifier = Modifier.fillMaxWidth()) {
         TopEdgeFade(modifier = Modifier.matchParentSize())
         Toolbar(
@@ -93,7 +95,14 @@ internal fun RootToolbar(
             onSearchChange = { query ->
                 searchTab?.let { state.updateSearch(it, query) }
             },
-            onSearchSubmit = {},
+            onSearchSubmit = {
+                // Only DISCOVER searches the server (Explore). The lists filter
+                // locally as you type, so their submit stays a no-op.
+                if (searchTab == TabSection.DISCOVER) {
+                    holders.explore.submitSearch(state.searchQuery(TabSection.DISCOVER))
+                    focusManager.clearFocus()
+                }
+            },
             onSearchClose = { state.applyBackStep() },
         )
     }

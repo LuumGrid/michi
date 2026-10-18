@@ -40,6 +40,7 @@ object EnglishStrings : LanguageStrings {
     override val searchTypeAll = "All"
     override val searchEmptyQueryHint = "Type to search..."
     override val searchNoResultsLabel = "No results in your list"
+    override val exploreNoResultsLabel = "No results"
     override fun exploreEpisodeCountLabel(count: Int) = "$count ep"
     override fun exploreChapterCountLabel(count: Int) = "$count ch"
     override val charactersLabel = "Characters"
