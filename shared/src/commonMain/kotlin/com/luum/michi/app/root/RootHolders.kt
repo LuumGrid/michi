@@ -35,6 +35,11 @@ import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
+import com.luum.michi.app.profile.domain.ProfileRepository
+import com.luum.michi.app.profile.ui.state.ProfileFavoritesGridStateHolder
+import com.luum.michi.app.profile.ui.state.ProfileStateHolder
+import com.luum.michi.app.profile.ui.state.createProfileFavoritesGridStateHolder
+import com.luum.michi.app.profile.ui.state.createProfileStateHolder
 import com.luum.michi.app.root.state.toDashboardMediaType
 import com.luum.michi.app.settings.ui.state.SettingsState
 import kotlinx.coroutines.CoroutineScope
@@ -61,6 +66,8 @@ internal class RootHolders(
     val staff: StaffDetailStateHolder,
     val studio: StudioDetailStateHolder,
     val catalog: CatalogGridStateHolder,
+    val profile: ProfileStateHolder?,
+    val profileFavorites: ProfileFavoritesGridStateHolder?,
 ) {
     // Every pushed detail page lives behind one contract, so refresh, cache
     // invalidation and the favourite action are a single lookup instead of a
@@ -79,6 +86,7 @@ internal class RootHolders(
         is DetailDestination.Studio -> studio
         is DetailDestination.Genre,
         is DetailDestination.Catalog -> catalog
+        is DetailDestination.ProfileFavorites -> null
         is DetailDestination.DetailList -> null
         null -> null
     }
@@ -111,6 +119,7 @@ internal fun rememberRootHolders(
     exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
+    profileRepository: ProfileRepository,
     sortPersistence: SortPersistence,
 ): RootHolders {
     // Latest strings for the holders' providers, without keying them on language.
@@ -215,6 +224,18 @@ internal fun rememberRootHolders(
         )
     }
 
+    // Profile: the viewer's own profile (guests get null — the tab shows the
+    // sign-in prompt). Recreated per viewer, like the lists, so one viewer's
+    // cached state can never bleed into another's.
+    val profileScope = rememberHolderScope(listScope, viewerId)
+    val profileHolder = remember(viewerId, profileRepository, profileScope) {
+        viewerId?.let { createProfileStateHolder(profileRepository, profileScope) }
+    }
+    val profileFavoritesScope = rememberHolderScope(listScope, viewerId)
+    val profileFavoritesHolder = remember(viewerId, profileRepository, profileFavoritesScope) {
+        viewerId?.let { createProfileFavoritesGridStateHolder(profileRepository, profileFavoritesScope) }
+    }
+
     return remember(
         listScope,
         calendarHolder,
@@ -227,6 +248,8 @@ internal fun rememberRootHolders(
         staffHolder,
         studioHolder,
         catalogHolder,
+        profileHolder,
+        profileFavoritesHolder,
     ) {
         RootHolders(
             listScope = listScope,
@@ -240,6 +263,8 @@ internal fun rememberRootHolders(
             staff = staffHolder,
             studio = studioHolder,
             catalog = catalogHolder,
+            profile = profileHolder,
+            profileFavorites = profileFavoritesHolder,
         )
     }
 }

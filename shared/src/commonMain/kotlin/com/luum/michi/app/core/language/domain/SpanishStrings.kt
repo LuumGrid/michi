@@ -219,6 +219,8 @@ object SpanishStrings : LanguageStrings {
     override val profileStatsTopGenresTitle = "Géneros principales"
     override val profileStatsEmptyLabel = "Aún no hay estadísticas."
     override val profileFavoritesGridEmptyLabel = "Aún no hay favoritos."
+    override val profileLoadingLabel = "Cargando perfil…"
+    override val profileErrorLabel = "No se pudo cargar el perfil"
     override val settingsGeneralSection = "General"
     override val settingsAniListSection = "AniList"
     override val settingsListsSection = "Listas"

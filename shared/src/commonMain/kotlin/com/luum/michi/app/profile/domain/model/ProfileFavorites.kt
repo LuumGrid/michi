@@ -37,3 +37,20 @@ internal enum class ProfileFavoritesCategory {
     STAFF,
     STUDIOS,
 }
+
+/** The favourites of one category, in the order the rail/grid paints them. */
+internal fun ProfileFavorites.itemsFor(category: ProfileFavoritesCategory): List<ProfileFavorite> =
+    when (category) {
+        ProfileFavoritesCategory.ANIME -> anime
+        ProfileFavoritesCategory.MANGA -> manga
+        ProfileFavoritesCategory.CHARACTERS -> characters
+        ProfileFavoritesCategory.STAFF -> staff
+        ProfileFavoritesCategory.STUDIOS -> studios
+    }
+
+/**
+ * The categories that actually carry favourites, in display order. Empty
+ * categories are never painted, so the screen only iterates over these.
+ */
+internal fun ProfileFavorites.nonEmptyCategories(): List<ProfileFavoritesCategory> =
+    ProfileFavoritesCategory.entries.filter { itemsFor(it).isNotEmpty() }

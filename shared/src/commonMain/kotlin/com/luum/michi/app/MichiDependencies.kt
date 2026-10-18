@@ -3,6 +3,7 @@ package com.luum.michi.app
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
 import com.luum.michi.app.profile.repository.ProfileRepositoryImpl
+import com.luum.michi.app.profile.repository.ProfileDiskCache
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
@@ -123,6 +124,9 @@ class MichiDependencies internal constructor(
     /** One cache instance serves both list repositories and the session wipe. */
     private val mediaListCache: MediaListDiskCache = MediaListDiskCache(fileStore)
 
+    /** The viewer profile's disk cache, wiped with the lists on logout/401. */
+    private val profileCache: ProfileDiskCache = ProfileDiskCache(fileStore)
+
     internal val animeListRepository: AnimeListRepository =
         AnimeListRepositoryImpl(graphQLClient, mediaListCache)
 
@@ -130,7 +134,7 @@ class MichiDependencies internal constructor(
         MangaListRepositoryImpl(graphQLClient, mediaListCache)
 
     internal val profileRepository: ProfileRepository =
-        ProfileRepositoryImpl(graphQLClient)
+        ProfileRepositoryImpl(graphQLClient, profileCache)
 
     internal val externalLinkCatalogRepository: ExternalLinkCatalogRepository =
         ExternalLinkCatalogRepositoryImpl(graphQLClient, settingsStore, scope)
@@ -173,7 +177,12 @@ class MichiDependencies internal constructor(
             tokenStorage = tokenStorage,
             viewerRepository = viewerRepository,
             cachedViewerStore = SettingsStoreCachedViewerStore(settingsStore),
-            onClearUserData = { mediaListCache.clear() },
+            onClearUserData = {
+                // Both caches live in the same FileStore/folder; clear both for
+                // an explicit, best-effort privacy wipe on logout/401/expired token.
+                mediaListCache.clear()
+                profileCache.clear()
+            },
         )
 
     /**

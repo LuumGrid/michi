@@ -18,7 +18,19 @@ internal data class ProfileData(
  * plus one paged favourites category at a time for the "see more" grid.
  */
 internal interface ProfileRepository {
+    /**
+     * Fetches the profile (statistics + favourites) in one round-trip. A
+     * successful fetch is persisted so a later cold start can paint it before
+     * the network.
+     */
     suspend fun loadProfile(userId: Int): NetworkResult<ProfileData>
+
+    /**
+     * The last persisted profile for [userId], or null when nothing valid is
+     * stored. Never counts as a fresh load: the caller still revalidates against
+     * the network.
+     */
+    suspend fun loadCachedProfile(userId: Int): ProfileData?
 
     /** Fetches one page of a single favourites category for the "see more" grid. */
     suspend fun loadFavoritesPage(

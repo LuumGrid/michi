@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.discover.domain.model.ExploreResultTarget
 import com.luum.michi.app.discover.domain.model.resultTarget
 import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
@@ -21,6 +22,7 @@ import com.luum.michi.app.discover.ui.explore.ExploreScreen
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
+import com.luum.michi.app.profile.ui.ProfileScreen
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.settings.domain.model.ScoreFormat
@@ -102,6 +104,7 @@ internal fun RootTabContent(
     state: State,
     holders: RootHolders,
     settingsState: SettingsState,
+    viewer: Viewer?,
     viewerId: Int?,
     tabQuery: String,
     strings: LanguageStrings,
@@ -234,6 +237,23 @@ internal fun RootTabContent(
             onOpenCatalog = { state.openCatalog(it) },
             hideAdult = !settingsState.displayAdultContent,
             bottomPadding = bottomPadding,
+        )
+    } else if (
+        activeTab == TabSection.PROFILE && viewerId != null &&
+        holders.profile != null && viewer != null
+    ) {
+        // The viewer's own profile: header + favourites rails. The name/avatar
+        // come from the already-loaded Viewer (no extra request).
+        ProfileScreen(
+            holder = holders.profile,
+            viewer = viewer,
+            strings = strings,
+            bottomPadding = bottomPadding,
+            onOpenMedia = { state.openMedia(it) },
+            onOpenCharacter = { state.openCharacter(it) },
+            onOpenStaff = { state.openStaff(it) },
+            onOpenStudio = { state.openStudio(it) },
+            onViewAll = { state.openProfileFavorites(it.name) },
         )
     } else if (
         (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||

@@ -20,6 +20,7 @@ import com.luum.michi.app.discover.domain.model.catalogFilter
 import com.luum.michi.app.discover.domain.model.catalogKindOf
 import com.luum.michi.app.discover.domain.model.genreCatalogFilter
 import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
+import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -239,6 +240,12 @@ internal fun RootEffects(
                 DetailListKind.CHARACTER_MEDIA -> holders.character.load(destination.parentId)
                 DetailListKind.STAFF_MEDIA,
                 DetailListKind.STAFF_CHARACTERS -> holders.staff.load(destination.parentId)
+            }
+            is DetailDestination.ProfileFavorites -> {
+                val category = favoritesCategoryOfOrNull(destination.categoryId)
+                if (category != null && viewerId != null) {
+                    holders.profileFavorites?.load(viewerId, category)
+                }
             }
             null -> {}
         }

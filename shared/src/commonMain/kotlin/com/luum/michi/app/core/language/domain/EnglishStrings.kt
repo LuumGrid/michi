@@ -217,6 +217,8 @@ object EnglishStrings : LanguageStrings {
     override val profileStatsTopGenresTitle = "Top genres"
     override val profileStatsEmptyLabel = "No statistics yet."
     override val profileFavoritesGridEmptyLabel = "No favorites yet."
+    override val profileLoadingLabel = "Loading profile…"
+    override val profileErrorLabel = "Couldn't load the profile"
     override val settingsGeneralSection = "General"
     override val settingsAniListSection = "AniList"
     override val settingsListsSection = "Lists"

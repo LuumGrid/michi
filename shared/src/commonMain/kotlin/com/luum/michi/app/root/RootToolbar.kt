@@ -20,6 +20,8 @@ import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.catalogKindOf
 import com.luum.michi.app.discover.domain.model.selectedSeason
 import com.luum.michi.app.discover.domain.model.title
+import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
+import com.luum.michi.app.profile.ui.model.title
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.ui.components.Toolbar
@@ -85,6 +87,7 @@ internal fun RootToolbar(
                 isStudioDetail = state.currentDetail is DetailDestination.Studio,
                 isGenreDetail = state.currentDetail is DetailDestination.Genre,
                 isCatalogDetail = state.currentDetail is DetailDestination.Catalog,
+                isProfileFavorites = state.currentDetail is DetailDestination.ProfileFavorites,
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
@@ -172,6 +175,7 @@ internal fun toolbarActions(
     isStudioDetail: Boolean,
     isGenreDetail: Boolean,
     isCatalogDetail: Boolean = false,
+    isProfileFavorites: Boolean = false,
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
@@ -193,6 +197,8 @@ internal fun toolbarActions(
         )
         // A "View all" list has nothing but its back chevron.
         if (isDetailList) return emptyList()
+        // The favourites grid is a "View all" list too: title in the bar, only back.
+        if (isProfileFavorites) return emptyList()
         // A catalog page is not an entity: it only carries the sort.
         if (isCatalogDetail) return listOf(sort)
         val favourite = ToolbarAction(
@@ -379,5 +385,7 @@ private fun detailToolbarTitle(
                 kind.title(strings, current, current.next())
             }
         }
+        is DetailDestination.ProfileFavorites ->
+            favoritesCategoryOfOrNull(destination.categoryId)?.title(strings)
         else -> null
     }

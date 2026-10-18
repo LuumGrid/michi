@@ -29,10 +29,16 @@ internal class ProfileStateHolder(
     private var loadingState by mutableStateOf(false)
     private var refreshingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
+    /** True while anything for [renderedUserId] is painted (disk or network). */
+    private var paintedState by mutableStateOf(false)
     private val timeMark = TimeSource.Monotonic
     private var lastLoaded: TimeSource.Monotonic.ValueTimeMark? = null
-    /** Last successful load: the cache shortcut keys on it. */
+    /** Last successful network load: the TTL shortcut keys on it. */
     private var lastUserId: Int? = null
+    /** User whose data is on screen right now (painted from disk or network). */
+    private var renderedUserId: Int? = null
+    /** User whose disk cache was already read, so a cold load reads it once. */
+    private var hydratedUserId: Int? = null
 
     /** Last user a load was started for: [refresh] retries this one even if it
      *  failed (a failed switch must not make refresh reload the previous user). */
@@ -45,6 +51,10 @@ internal class ProfileStateHolder(
     val isRefreshing: Boolean get() = refreshingState
     val error: NetworkError? get() = errorState
 
+    /** True once a profile is on screen (from disk or the network), so the
+     *  screen can tell "nothing yet" apart from a real all-zero account. */
+    val hasContent: Boolean get() = paintedState
+
     fun load(userId: Int, forceRefresh: Boolean = false) {
         val mark = lastLoaded
         if (!forceRefresh && hasDataFor(userId) && mark != null
@@ -53,13 +63,15 @@ internal class ProfileStateHolder(
         requestedUserId = userId
         // Switching user must never show the previous user's data while the new
         // one loads; a same-user reload keeps it until the response replaces it.
-        if (lastUserId != userId) {
+        if (renderedUserId != userId) {
             statsState = EmptyStats
             favoritesState = ProfileFavorites.EMPTY
+            renderedUserId = null
+            paintedState = false
         }
-        // "Has data" keys on a successful load, not on the stats being non-zero:
+        // "Has data" keys on what is painted, not on the stats being non-zero:
         // a real account with everything at 0 is still loaded data.
-        val isRefresh = forceRefresh && hasDataFor(userId)
+        val isRefresh = forceRefresh && paintedState
         loadingState = false
         refreshingState = false
         if (isRefresh) refreshingState = true else loadingState = true
@@ -73,10 +85,13 @@ internal class ProfileStateHolder(
                 refreshingState = false
             },
         ) { isCurrent ->
+            hydrateIfNeeded(userId, isCurrent)
             when (val result = repository.loadProfile(userId)) {
                 is NetworkResult.Success -> if (isCurrent()) {
                     statsState = result.value.stats
                     favoritesState = result.value.favorites
+                    renderedUserId = userId
+                    paintedState = true
                     lastLoaded = timeMark.markNow()
                     lastUserId = userId
                 }
@@ -87,11 +102,35 @@ internal class ProfileStateHolder(
         }
     }
 
+    /**
+     * Reads the disk cache once per user, before the network. The file is never
+     * fresh ([lastLoaded] stays null), so the fetch always runs; while it does,
+     * hydrated data keeps the full-page spinner off (the revalidation is silent).
+     * A missing file still clears the previous user's data, so it is never shown
+     * under another user.
+     */
+    private suspend fun hydrateIfNeeded(userId: Int, isCurrent: () -> Boolean) {
+        if (hydratedUserId == userId) return
+        val cached = repository.loadCachedProfile(userId)
+        if (!isCurrent()) return
+        hydratedUserId = userId
+        if (cached == null) return
+        if (renderedUserId != userId) {
+            statsState = EmptyStats
+            favoritesState = ProfileFavorites.EMPTY
+        }
+        statsState = cached.stats
+        favoritesState = cached.favorites
+        renderedUserId = userId
+        paintedState = true
+        loadingState = false
+    }
+
     fun refresh() {
         requestedUserId?.let { load(it, forceRefresh = true) }
     }
 
-    /** True once a load for [userId] succeeded (even with all-zero stats). */
+    /** True once a network load for [userId] succeeded (even with all-zero stats). */
     private fun hasDataFor(userId: Int): Boolean = lastUserId == userId && lastLoaded != null
 }
 
@@ -99,7 +138,6 @@ internal class ProfileStateHolder(
 internal fun createProfileStateHolder(
     repository: ProfileRepository,
     scope: CoroutineScope,
-    viewerId: Int,
 ): ProfileStateHolder {
     return ProfileStateHolder(repository, scope)
 }

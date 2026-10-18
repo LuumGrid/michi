@@ -33,12 +33,17 @@ internal class ProfileFavoritesGridStateHolder(
 
     private var loadedUserId: Int? = null
     private var loadedCategory: ProfileFavoritesCategory? = null
+    /** Last (userId, category) a load was started for: [refresh]/retry re-run it. */
+    private var requestedUserId: Int? = null
+    private var requestedCategory: ProfileFavoritesCategory? = null
     private val loadRequest = LatestRequest()
 
     val items: List<ProfileFavorite> get() = paginated.items
     val isLoading: Boolean get() = loadingState
     val isLoadingMore: Boolean get() = paginated.isLoadingMore
     val hasNextPage: Boolean get() = paginated.hasNextPage
+    /** Current page of the backing PagedList: the auto-paging effect keys on it. */
+    val currentPage: Int get() = paginated.currentPage
     val error: NetworkError? get() = errorState
     /** A failed page load (2+): a compact dismissible row, never the blocking
      *  first-page error. */
@@ -49,7 +54,23 @@ internal class ProfileFavoritesGridStateHolder(
     }
 
     fun load(userId: Int, category: ProfileFavoritesCategory) {
+        requestedUserId = userId
+        requestedCategory = category
+        // Already loaded (same user + category): a re-entry shows the in-memory
+        // page without another request.
         if (loadedUserId == userId && loadedCategory == category) return
+        startFirstPage(userId, category)
+    }
+
+    /** Re-runs the current (user, category) page 1: retry after a failure and
+     *  pull-to-refresh. No-op before the first [load]. */
+    fun refresh() {
+        val userId = requestedUserId ?: return
+        val category = requestedCategory ?: return
+        startFirstPage(userId, category)
+    }
+
+    private fun startFirstPage(userId: Int, category: ProfileFavoritesCategory) {
         loadedUserId = userId
         loadedCategory = category
         generation++

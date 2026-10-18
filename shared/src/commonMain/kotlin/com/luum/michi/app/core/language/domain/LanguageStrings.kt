@@ -206,6 +206,8 @@ interface LanguageStrings {
     val profileStatsTopGenresTitle: String
     val profileStatsEmptyLabel: String
     val profileFavoritesGridEmptyLabel: String
+    val profileLoadingLabel: String
+    val profileErrorLabel: String
     val settingsGeneralSection: String
     val settingsAniListSection: String
     val settingsListsSection: String

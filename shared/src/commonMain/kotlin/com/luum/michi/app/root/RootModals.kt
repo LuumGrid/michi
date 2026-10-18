@@ -200,6 +200,8 @@ private fun detailOverflowFor(destination: DetailDestination?, holders: RootHold
         )
         // A dashboard catalog is not an entity either, and has no canonical URL.
         is DetailDestination.Catalog -> null
+        // A favourites grid is a list of entities, not an entity.
+        is DetailDestination.ProfileFavorites -> null
         is DetailDestination.DetailList -> null
         null -> null
     }

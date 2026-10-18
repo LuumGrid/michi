@@ -163,6 +163,7 @@ private const val FavoritesPageSize = 25
 
 internal class ProfileRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
+    private val cache: ProfileDiskCache? = null,
 ) : ProfileRepository {
 
     override suspend fun loadProfile(userId: Int): NetworkResult<ProfileData> {
@@ -185,8 +186,12 @@ internal class ProfileRepositoryImpl(
             )
             val favorites = response.user?.favourites?.toDomain() ?: ProfileFavorites.EMPTY
             ProfileData(stats = stats, favorites = favorites)
+        }.also { result ->
+            if (result is NetworkResult.Success) cache?.write(userId, result.value)
         }
     }
+
+    override suspend fun loadCachedProfile(userId: Int): ProfileData? = cache?.read(userId)
 
     override suspend fun loadFavoritesPage(
         userId: Int,

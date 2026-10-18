@@ -233,6 +233,8 @@ internal class State(
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))
     fun openGenre(name: String, type: MediaType) = push(DetailDestination.Genre(name, type))
     fun openCatalog(kindId: String) = push(DetailDestination.Catalog(kindId))
+    fun openProfileFavorites(categoryId: String) =
+        push(DetailDestination.ProfileFavorites(categoryId))
     fun openDetailList(kind: DetailListKind, parentId: Int) =
         push(DetailDestination.DetailList(kind, parentId))
     fun closeDetail() {

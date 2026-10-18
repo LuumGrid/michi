@@ -20,6 +20,9 @@ import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
+import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.ui.favorites.ProfileFavoritesGridScreen
+import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
 import com.luum.michi.app.root.state.State
 
 /**
@@ -143,7 +146,32 @@ internal fun RootDetailHost(
             strings = strings,
             bottomPadding = bottomPadding,
         )
+        is DetailDestination.ProfileFavorites -> {
+            val category = favoritesCategoryOfOrNull(destination.categoryId)
+            val holder = holders.profileFavorites
+            if (category != null && holder != null) {
+                ProfileFavoritesGridScreen(
+                    holder = holder,
+                    category = category,
+                    strings = strings,
+                    bottomPadding = bottomPadding,
+                    onRetry = { holder.refresh() },
+                    onOpen = { id -> state.openProfileFavorite(category, id) },
+                )
+            }
+        }
         null -> {}
+    }
+}
+
+/** A favourites grid item opens the detail of its entity kind. */
+private fun State.openProfileFavorite(category: ProfileFavoritesCategory, id: Int) {
+    when (category) {
+        ProfileFavoritesCategory.ANIME,
+        ProfileFavoritesCategory.MANGA -> openMedia(id)
+        ProfileFavoritesCategory.CHARACTERS -> openCharacter(id)
+        ProfileFavoritesCategory.STAFF -> openStaff(id)
+        ProfileFavoritesCategory.STUDIOS -> openStudio(id)
     }
 }
 

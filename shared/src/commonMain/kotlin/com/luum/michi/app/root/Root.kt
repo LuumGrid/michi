@@ -34,6 +34,7 @@ import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
+import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.detailSurfaceKey
@@ -75,6 +76,7 @@ internal fun Root(
     exploreRepository: ExploreRepository,
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
+    profileRepository: ProfileRepository,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -157,6 +159,7 @@ internal fun Root(
         exploreRepository = exploreRepository,
         calendarRepository = calendarRepository,
         dashboardRepository = dashboardRepository,
+        profileRepository = profileRepository,
         sortPersistence = sortPersistence,
     )
 
@@ -260,6 +263,7 @@ internal fun Root(
                                 state = state,
                                 holders = holders,
                                 settingsState = settingsState,
+                                viewer = viewer,
                                 viewerId = viewerId,
                                 tabQuery = tabQuery,
                                 strings = strings,
