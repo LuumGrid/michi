@@ -50,6 +50,7 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ModalSheet
 import com.luum.michi.app.ui.components.OptionGroup
+import com.luum.michi.app.ui.components.SettingsRow
 import com.luum.michi.app.ui.components.OptionList
 import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.PickerSheet
@@ -727,50 +728,6 @@ private fun SettingsErrorRow(
                     imageVector = AppIcons.ChevronRight,
                     contentDescription = null,
                     tint = LocalWarning.current,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-    }
-}
-
-/** Single settings row: label + current value, opens its picker sheet (or static when onClick is null). */
-@Composable
-private fun SettingsRow(
-    label: String,
-    value: String,
-    onClick: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    divider: Boolean = true,
-    valueColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (divider) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = valueColor,
-            )
-            if (onClick != null) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = AppIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
             }

@@ -75,9 +75,12 @@ internal fun RootEffects(
     // back, tab switch) funnels through searchActiveTab, so releasing focus
     // here dismisses the keyboard in sync with the toolbar transition.
     // No-op when nothing holds focus.
+    // Keyboard follows the search field: it is released whenever the field stops
+    // being painted (closed, or covered by a detail/editor/above-detail overlay),
+    // so the keyboard never lingers behind another surface.
     val focusManager = LocalFocusManager.current
-    LaunchedEffect(state.searchActiveTab) {
-        if (state.searchActiveTab == null) {
+    LaunchedEffect(state.isSearchVisible) {
+        if (!state.isSearchVisible) {
             focusManager.clearFocus()
         }
     }

@@ -58,6 +58,11 @@ interface LanguageStrings {
     val exploreFilterYearLabel: String
     val exploreAnySeasonLabel: String
     val exploreAnyYearLabel: String
+    /** Explore "In my list" filter section (session only). */
+    val exploreOnListTitle: String
+    val exploreOnListYes: String
+    val exploreOnListNo: String
+    val exploreOnListAny: String
     /** Season names for preformatted detail labels (kept separate from the
      *  explore filter labels so each context can evolve independently). */
     val seasonWinterLabel: String

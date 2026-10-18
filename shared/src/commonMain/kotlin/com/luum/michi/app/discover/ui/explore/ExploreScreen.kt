@@ -4,19 +4,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
+import com.luum.michi.app.discover.domain.model.ExploreSortOptions
 import com.luum.michi.app.discover.domain.model.filterLabel
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
-import com.luum.michi.app.ui.components.ActionRow
+import com.luum.michi.app.ui.components.ChipPill
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.DetailPosterGrid
@@ -26,6 +33,9 @@ import com.luum.michi.app.ui.components.LoadMoreKey
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.OptionGroup
+import com.luum.michi.app.ui.components.SettingsRow
+import com.luum.michi.app.ui.components.SortSheet
 import com.luum.michi.app.ui.components.favouritesBadge
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.components.scoreBadge
@@ -35,33 +45,68 @@ import com.luum.michi.app.ui.language.Strings
 /**
  * Explore: the DISCOVER search results. It is the tab's content while a query
  * has been submitted (before that the Dashboard shows behind the search field).
- * A category chip row switches the catalog; the search itself never fires while
- * typing — only on submit (see `ExploreStateHolder.submitSearch`), to respect
- * AniList's request budget.
+ * A category chip row switches the catalog and ends with the filter/sort tool
+ * chips (media categories only); the search itself never fires while typing —
+ * only on submit (see `ExploreStateHolder.submitSearch`), to respect AniList's
+ * request budget. Filters edit a local draft and apply once when the sheet
+ * closes.
  *
  * Results reuse the shared presentation: media and people render through
  * [DetailPosterGrid] (the same grid as the genre page and the "View all" lists),
- * studios are plain text rows (a studio has no image). Pagination is automatic
- * when the footer scrolls into view; a new submit or a chip change returns the
- * list to the top.
+ * studios are settings-style rows (a studio has no image). Pagination is
+ * automatic when the footer scrolls into view; a new submit or a chip change
+ * returns the list to the top.
  */
 @Composable
 internal fun ExploreScreen(
     holder: ExploreStateHolder,
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
+    hasSession: Boolean,
+    isFilterOpen: Boolean,
+    onOpenFilter: () -> Unit,
+    onDismissFilter: () -> Unit,
+    isSortOpen: Boolean,
+    onOpenSort: () -> Unit,
+    onDismissSort: () -> Unit,
     onRetry: () -> Unit,
     onOpenResult: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
+        val isMediaCategory = holder.category == ExploreCategory.ANIME ||
+            holder.category == ExploreCategory.MANGA
         val chips = remember(strings) {
             ExploreCategory.entries.map { ChipTab(value = it, label = it.filterLabel(strings)) }
+        }
+        val tools: (LazyListScope.() -> Unit)? = if (isMediaCategory) {
+            {
+                item(key = "explore-filter-tool") {
+                    ChipPill(
+                        label = strings.filterAction,
+                        // The chip doubles as the "filters active" indicator.
+                        selected = holder.appliedFilters != ExploreFilters.Empty,
+                        onClick = onOpenFilter,
+                        leadingIcon = AppIcons.Filter,
+                    )
+                }
+                item(key = "explore-sort-tool") {
+                    ChipPill(
+                        label = strings.sortAction,
+                        selected = false,
+                        onClick = onOpenSort,
+                        leadingIcon = AppIcons.Sort,
+                    )
+                }
+            }
+        } else {
+            null
         }
         ChipRail(
             tabs = chips,
             selected = holder.category,
             onSelect = { holder.changeCategory(it) },
+            trailing = tools,
         )
         val hasContent = holder.results.isNotEmpty()
         LoadStateContainer(
@@ -98,11 +143,12 @@ internal fun ExploreScreen(
                     onSelect = onOpenResult,
                     resetKey = resetKey,
                     bottomPadding = bottomPadding,
+                    animeStudioLabel = strings.mediaDetailAnimeStudioLabel,
+                    producerLabel = strings.mediaDetailProducerLabel,
                 )
             } else {
                 // People repeat the chip as a subtitle, so only media keep meta.
-                val showMeta = holder.category == ExploreCategory.ANIME ||
-                    holder.category == ExploreCategory.MANGA
+                val showMeta = isMediaCategory
                 val items = remember(holder.results, showMeta) {
                     holder.results.map { it.toRailItem(showMeta) }
                 }
@@ -120,12 +166,42 @@ internal fun ExploreScreen(
                 )
             }
         }
+
+        if (isFilterOpen) {
+            // The draft is local: taps never hit the network. It commits once
+            // when the sheet closes (X, scrim or system back all leave this
+            // branch), and a no-op when it equals what is already applied.
+            var draft by remember { mutableStateOf(holder.appliedFilters) }
+            DisposableEffect(Unit) {
+                onDispose { holder.applyFilters(draft) }
+            }
+            ExploreFilterSheet(
+                draft = draft,
+                onDraftChange = { draft = it },
+                onReset = { draft = ExploreFilters.Empty },
+                showSeason = holder.category == ExploreCategory.ANIME,
+                hasSession = hasSession,
+                hideAdult = holder.hideAdult,
+                onDismiss = onDismissFilter,
+            )
+        }
+        if (isSortOpen) {
+            SortSheet(
+                options = ExploreSortOptions,
+                selected = holder.currentSortOption,
+                onSelect = { holder.updateSort(it, holder.currentSortOrder) },
+                order = holder.currentSortOrder,
+                onSelectOrder = { holder.updateSort(holder.currentSortOption, it) },
+                onDismiss = onDismissSort,
+            )
+        }
     }
 }
 
 /**
- * A studio has no image on AniList (see `ExploreRepositoryImpl`), so its results
- * are plain text rows instead of a cover grid.
+ * Studio results: settings-style rows (name + "Anime studio"/"Producer"). A
+ * studio search is short, so all loaded rows live in one [OptionGroup] item so
+ * the frame stays continuous; the auto-paging footer is its own item.
  */
 @Composable
 private fun StudioRows(
@@ -137,6 +213,8 @@ private fun StudioRows(
     onSelect: (Int) -> Unit,
     resetKey: Any?,
     bottomPadding: Dp,
+    animeStudioLabel: String,
+    producerLabel: String,
 ) {
     val listState = rememberResetListState(resetKey)
     LoadMoreEffect(
@@ -155,15 +233,17 @@ private fun StudioRows(
             bottom = 24.dp + bottomPadding,
         ),
     ) {
-        itemsIndexed(
-            items = items,
-            key = { index, item -> "${item.id}#$index" },
-        ) { index, item ->
-            ActionRow(
-                label = item.title,
-                onClick = { onSelect(item.id) },
-                divider = index > 0,
-            )
+        item(key = "studio-rows") {
+            OptionGroup(title = null) {
+                items.forEachIndexed { index, item ->
+                    SettingsRow(
+                        label = item.title,
+                        value = if (item.isAnimationStudio) animeStudioLabel else producerLabel,
+                        onClick = { onSelect(item.id) },
+                        divider = index > 0,
+                    )
+                }
+            }
         }
         if (hasNextPage) {
             item(key = LoadMoreKey) { LoadMoreFooter(isLoading = isLoadingMore) }

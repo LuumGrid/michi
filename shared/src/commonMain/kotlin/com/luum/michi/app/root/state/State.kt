@@ -74,6 +74,17 @@ internal class State(
 
     val isSearchActive: Boolean get() = searchActiveTab != null
 
+    /**
+     * Whether the in-context search field is actually painted. It is a tab-surface
+     * affordance, so any surface that draws over it — a detail page, the editor or
+     * an [OverlayLayer.ABOVE_DETAIL] overlay (settings, sign-in, profile share) —
+     * replaces it. The search is NOT closed (tab + query stay), so it just
+     * reappears on back.
+     */
+    val isSearchVisible: Boolean
+        get() = isSearchActive && !isDetailOpen && !isEditorOpen &&
+            openOverlays.none { it.layer == OverlayLayer.ABOVE_DETAIL }
+
     val currentDetail: DetailDestination? get() = detailStack.lastOrNull()
     val isDetailOpen: Boolean get() = detailStack.isNotEmpty()
 

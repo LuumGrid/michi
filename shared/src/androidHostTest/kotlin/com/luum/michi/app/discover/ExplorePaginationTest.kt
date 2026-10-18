@@ -7,6 +7,7 @@ import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import com.luum.michi.app.FakeGraphQL
@@ -139,22 +140,19 @@ class ExplorePaginationTest {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         try {
             val client = FakeGraphQL(
-                listOf(mediaPage(emptyList(), hasNextPage = false), mediaPage(emptyList(), hasNextPage = false)),
+                listOf(mediaPage(emptyList(), hasNextPage = false), mediaPage(emptyList(), hasNextPage = false), mediaPage(emptyList(), hasNextPage = false)),
             )
             val holder = holderWith(client, scope)
 
+            holder.submitSearch("naruto")
+            holder.changeCategory(ExploreCategory.MANGA)
             holder.updateSort(UserListSort.PROGRESS, UserListOrder.DESCENDING)
-            holder.updateFilters(newCategory = ExploreCategory.MANGA)
 
-            // Synchronous: a category change recomputes the derived key.
+            // Synchronous: the derived key follows the manga catalog.
             assertEquals("CHAPTERS_DESC", holder.sort)
 
-            // The eventual (debounced) request carries it.
-            val deadline = System.currentTimeMillis() + 3000
-            while (client.requests.isEmpty() && System.currentTimeMillis() < deadline) {
-                Thread.sleep(50)
-            }
-            val variables = client.requests.single().variables
+            assertEquals(3, client.requests.size)
+            val variables = client.requests[2].variables
             assertEquals("MANGA", (variables?.get("type") as? JsonPrimitive)?.content)
             assertEquals("[\"CHAPTERS_DESC\"]", variables?.get("sort").toString())
         } finally {
@@ -234,23 +232,19 @@ class ExplorePaginationTest {
     }
 
     @Test
-    fun aFilterChangeKeepsTheVisibleItemsAndBlocksLoadMoreDuringTheDebounce() {
+    fun applyingFiltersClearsTheOldResultsAndReloads() {
         val client = FakeGraphQL(
-            listOf(mediaPage(listOf(1), hasNextPage = true), mediaPage(listOf(1), hasNextPage = false)),
+            listOf(mediaPage(listOf(1), hasNextPage = true), mediaPage(listOf(2), hasNextPage = false)),
         )
         val scope = CoroutineScope(Dispatchers.Unconfined)
         try {
             val holder = holderWith(client, scope)
-            holder.load()
+            holder.submitSearch("naruto")
             assertEquals(listOf(1), ids(holder))
 
-            val callsBefore = client.calls
-            holder.updateFilters(newGenres = listOf("Action"))
+            holder.applyFilters(ExploreFilters(genres = listOf("Action")))
 
-            assertTrue(holder.isLoading)
-            assertEquals(listOf(1), ids(holder), "the loaded items stay visible while typing")
-            holder.loadMore()
-            assertEquals(callsBefore, client.calls, "no page N+1 against the old items")
+            assertEquals(listOf(2), ids(holder), "the old page is dropped and replaced")
         } finally {
             scope.cancel()
         }

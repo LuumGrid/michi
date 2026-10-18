@@ -13,4 +13,6 @@ internal data class ExploreResult(
     val genres: List<String> = emptyList(),
     val isUserFavorited: Boolean = false,
     val isUserRanked: Boolean = false,
+    /** Studio results only: true = animation studio, false = producer. */
+    val isAnimationStudio: Boolean = false,
 )

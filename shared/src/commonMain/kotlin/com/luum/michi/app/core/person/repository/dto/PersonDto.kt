@@ -43,4 +43,5 @@ internal data class StaffDto(
 internal data class StudioDto(
     val id: Int,
     val name: String,
+    val isAnimationStudio: Boolean = false,
 )

@@ -1,13 +1,9 @@
 package com.luum.michi.app.discover.ui.explore.state
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import kotlin.time.Duration.Companion.milliseconds
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkError
@@ -18,6 +14,7 @@ import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.state.PagedList
@@ -41,7 +38,6 @@ internal class ExploreStateHolder(
     var hideAdult by mutableStateOf(initialHideAdult)
     var currentSortOption by mutableStateOf(UserListSort.TRENDING)
     var currentSortOrder by mutableStateOf(UserListOrder.DESCENDING)
-    var focusSearchRequested by mutableStateOf(false)
 
     /**
      * True once the user submitted a non-empty query: it gates the Explore
@@ -50,6 +46,10 @@ internal class ExploreStateHolder(
      */
     var hasSearched by mutableStateOf(false)
         private set
+
+    /** The filters currently applied to the search (what the sheet starts from). */
+    val appliedFilters: ExploreFilters
+        get() = ExploreFilters(season = season, genres = genres, formats = formats, year = year, onList = onList)
 
     private var loadingState by mutableStateOf(false)
     private var errorState by mutableStateOf<NetworkError?>(null)
@@ -78,25 +78,8 @@ internal class ExploreStateHolder(
         actionErrorState = null
     }
 
-    /** Orden in-app espejo de las listas: solo TITLE/AVERAGE_SCORE/FAVORITES
-     *  tienen dato local en ExploreResult; el resto lo ordena el servidor
-     *  vía el MediaSort derivado en [updateSort]. */
-    val visibleResults: List<ExploreResult>
-        get() {
-            val ordered = when (currentSortOption) {
-                UserListSort.TITLE -> paginated.items.sortedBy { it.title.lowercase() }
-                UserListSort.AVERAGE_SCORE,
-                UserListSort.SCORE -> paginated.items.sortedBy { it.averageScore ?: -1 }
-                UserListSort.FAVORITES -> paginated.items.sortedBy { it.favourites ?: -1 }
-                else -> return paginated.items.toList()
-            }
-            return if (currentSortOrder == UserListOrder.DESCENDING) ordered.reversed() else ordered
-        }
-
-    /** Entrada estilo YT: vacía todo (es lo que este caso pide) y da foco al
-     *  field, preservando filtros. */
+    /** Entrada estilo YT: vacía todo (es lo que este caso pide), preservando filtros. */
     fun enterBlankSearch() {
-        searchJob?.cancel()
         loadRequest.cancel()
         query = ""
         hasSearched = false
@@ -105,7 +88,6 @@ internal class ExploreStateHolder(
         errorState = null
         actionErrorState = null
         loadingState = false
-        focusSearchRequested = true
     }
 
     /**
@@ -124,7 +106,6 @@ internal class ExploreStateHolder(
         ) {
             return
         }
-        searchJob?.cancel()
         query = trimmed
         hasSearched = true
         paginated.clear()
@@ -133,15 +114,16 @@ internal class ExploreStateHolder(
 
     /**
      * Category chip change. With a submitted search it loads the new category
-     * at once (no debounce); the previous results are cleared so the chip and
-     * the content never disagree, and the first-load spinner can show.
+     * at once; the previous results are cleared so the chip and the content
+     * never disagree. Season is an anime-only filter, so leaving anime drops it
+     * while the filters that apply to both catalogs stay.
      */
     fun changeCategory(newCategory: ExploreCategory) {
         if (newCategory == category) return
         category = newCategory
+        if (newCategory != ExploreCategory.ANIME) season = null
         sort = currentSortOption.toMediaSort(currentSortOrder, isAnime = category != ExploreCategory.MANGA)
         if (!hasSearched) return
-        searchJob?.cancel()
         paginated.clear()
         load()
     }
@@ -157,33 +139,37 @@ internal class ExploreStateHolder(
         if (hasSearched) load()
     }
 
-    fun consumeFocusRequest() {
-        focusSearchRequested = false
+    /** Applies the sheet's draft: no-op when nothing changed, otherwise clears
+     *  the old results (so the first-load spinner can show) and reloads. */
+    fun applyFilters(filters: ExploreFilters) {
+        if (filters == appliedFilters) return
+        season = filters.season
+        genres = filters.genres
+        formats = filters.formats
+        year = filters.year
+        onList = filters.onList
+        sort = currentSortOption.toMediaSort(currentSortOrder, isAnime = category != ExploreCategory.MANGA)
+        if (!hasSearched) return
+        paginated.clear()
+        load()
     }
 
-    /** Espejo de las listas: guarda la selección y deriva el MediaSort del API.
-     *  La persistencia entre reinicios es solo de sesión en Discover (cada
-     *  superficie persiste su propio slot de SortPersistence: anime/manga
-     *  no comparten memoria de sort). */
+    /** Sort change: server order, so a single request re-queries from page 1.
+     *  Picking what is already active is a no-op. */
     fun updateSort(option: UserListSort, order: UserListOrder) {
+        if (option == currentSortOption && order == currentSortOrder) return
         currentSortOption = option
         currentSortOrder = order
         sort = option.toMediaSort(order, isAnime = category != ExploreCategory.MANGA)
-        loadingState = true
-        invalidateSearch()
-        searchJob?.cancel()
-        searchJob = scope.launch {
-            delay(300.milliseconds)
-            load()
-        }
+        if (!hasSearched) return
+        paginated.clear()
+        load()
     }
 
-    private var searchJob: Job? = null
     private val loadRequest = LatestRequest()
 
-    /** Igual que updateFilters + updateSort, pero sin debounce: para navegación
-     *  programática ("Ver todo" desde Dashboard), donde la carga debe verse
-     *  instantánea en vez de esperar el retraso pensado para tipeo. */
+    /** Navegación programática ("Ver todo" desde Dashboard): aplica el preset
+     *  y carga al momento. */
     fun applyPreset(
         category: ExploreCategory,
         sortOption: UserListSort,
@@ -191,7 +177,6 @@ internal class ExploreStateHolder(
         season: String? = null,
         year: Int? = null,
     ) {
-        searchJob?.cancel()
         query = ""
         this.category = category
         this.season = season
@@ -205,39 +190,9 @@ internal class ExploreStateHolder(
         load()
     }
 
-    fun updateFilters(
-        newQuery: String = query,
-        newCategory: ExploreCategory = category,
-        newSeason: String? = season,
-        newGenres: List<String> = genres,
-        newFormats: List<String> = formats,
-        newYear: Int? = year,
-        newOnList: Boolean? = onList,
-    ) {
-        query = newQuery
-        category = newCategory
-        season = newSeason
-        genres = newGenres
-        formats = newFormats
-        year = newYear
-        onList = newOnList
-        // A category change flips the derived `isAnime`: recompute from the
-        // current selection so a move to manga sends a manga MediaSort.
-        sort = currentSortOption.toMediaSort(currentSortOrder, isAnime = category != ExploreCategory.MANGA)
-        loadingState = true
-        invalidateSearch()
-        searchJob?.cancel()
-        searchJob = scope.launch {
-            delay(300.milliseconds)
-            load()
-        }
-    }
-
     fun load() {
         // Newest load wins: a slower (stale) response cannot overwrite newer
-        // results; the helper cancels the previous request. A plain `if
-        // (loadingState) return` guard would break the debounced callers above,
-        // which preset loadingState before their 300ms delay.
+        // results; the helper cancels the previous request.
         invalidateSearch()
         loadingState = true
         errorState = null
@@ -257,8 +212,8 @@ internal class ExploreStateHolder(
     }
 
     fun loadMore() {
-        // A new search presets loadingState before its debounce fires; asking
-        // for page N+1 of the new filters against the old items would be wrong.
+        // While a page 1 is in flight (a new search just cleared the results),
+        // asking for page N+1 of the old items would be wrong.
         if (loadingState) return
         val currentGeneration = generation
         paginated.loadMore(

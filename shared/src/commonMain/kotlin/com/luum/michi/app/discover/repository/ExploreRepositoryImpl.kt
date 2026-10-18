@@ -119,6 +119,7 @@ query StudioSearch(${'$'}search: String, ${'$'}sort: [StudioSort], ${'$'}page: I
     studios(search: ${'$'}search, sort: ${'$'}sort) {
       id
       name
+      isAnimationStudio
     }
   }
 }
@@ -388,7 +389,8 @@ private fun StudioDto.toExploreResult(strings: LanguageStrings): ExploreResult =
     meta = strings.studioLabel,
     cover = null,
     paletteHex = null,
-    averageScore = null
+    averageScore = null,
+    isAnimationStudio = isAnimationStudio,
 )
 
 @Serializable

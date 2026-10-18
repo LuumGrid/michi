@@ -9,10 +9,12 @@ import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.discover.repository.ExploreRepositoryImpl
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
+import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import kotlinx.coroutines.CoroutineScope
@@ -130,31 +132,58 @@ class ExploreFilterTest {
     }
 
     @Test
-    fun updateFiltersForwardsGenresFormatsAndYear() {
+    fun applyFiltersLoadsOnceAndIgnoresTheUnchangedDraft() = runBlocking {
         val repo = FakeExploreRepository()
         val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
-        holder.updateFilters(
-            newCategory = ExploreCategory.ANIME,
-            newSeason = null,
-            newGenres = listOf("Adventure", "Comedy"),
-            newFormats = listOf("TV", "MOVIE"),
-            newYear = 2025,
+        holder.submitSearch("naruto")
+        val afterSubmit = repo.catalogCalls.size
+
+        // The draft equals what is applied: closing the sheet fires nothing.
+        holder.applyFilters(holder.appliedFilters)
+        assertEquals(afterSubmit, repo.catalogCalls.size)
+
+        // A changed draft fires exactly one request carrying it.
+        holder.applyFilters(
+            ExploreFilters(
+                genres = listOf("Adventure", "Comedy"),
+                formats = listOf("TV"),
+                year = 2025,
+            ),
         )
-        // Estado síncrono: el sheet ya refleja el draft aplicado
-        assertEquals(listOf("Adventure", "Comedy"), holder.genres)
-        assertEquals(listOf("TV", "MOVIE"), holder.formats)
-        assertEquals(2025, holder.year)
-        // La query sale tras el debounce de 300ms
-        val deadline = System.currentTimeMillis() + 3000
-        while (repo.catalogCalls.isEmpty() && System.currentTimeMillis() < deadline) {
-            Thread.sleep(50)
-        }
-        assertEquals(1, repo.catalogCalls.size)
-        val call = repo.catalogCalls.single()
+        assertEquals(afterSubmit + 1, repo.catalogCalls.size)
+        val call = repo.catalogCalls.last()
         assertEquals(listOf("Adventure", "Comedy"), call.genres)
-        assertEquals(listOf("TV", "MOVIE"), call.formats)
+        assertEquals(listOf("TV"), call.formats)
         assertEquals(2025, call.year)
-        assertNull(call.season)
+    }
+
+    @Test
+    fun clearingFiltersAfterApplyingLoadsOnce() = runBlocking {
+        val repo = FakeExploreRepository()
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
+        holder.submitSearch("naruto")
+        holder.applyFilters(ExploreFilters(genres = listOf("Action")))
+        val before = repo.catalogCalls.size
+
+        holder.applyFilters(ExploreFilters.Empty)
+
+        assertEquals(before + 1, repo.catalogCalls.size)
+        assertEquals(emptyList(), repo.catalogCalls.last().genres)
+    }
+
+    @Test
+    fun sortChangeLoadsOnceAndIgnoresTheActiveOne() = runBlocking {
+        val repo = FakeExploreRepository()
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
+        holder.submitSearch("naruto")
+        val before = repo.catalogCalls.size
+
+        holder.updateSort(UserListSort.AVERAGE_SCORE, UserListOrder.ASCENDING)
+        assertEquals(before + 1, repo.catalogCalls.size)
+        assertEquals("SCORE", repo.catalogCalls.last().sort)
+
+        holder.updateSort(UserListSort.AVERAGE_SCORE, UserListOrder.ASCENDING)
+        assertEquals(before + 1, repo.catalogCalls.size, "re-picking the active sort is a no-op")
     }
 
     @Test

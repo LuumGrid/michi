@@ -105,7 +105,10 @@ internal fun Root(
     )
     val tab = state.selectedTab
     val searchTab = state.searchActiveTab
-    val search = searchTab?.let {
+    // The search field is a tab-surface affordance: while a detail, the editor or
+    // an above-detail overlay draws over it, the toolbar shows that surface
+    // instead (State.isSearchVisible). The search itself stays open.
+    val search = searchTab?.takeIf { state.isSearchVisible }?.let {
         ToolbarSearch(
             query = state.searchQuery(it),
             hint = searchHintFor(it, strings).orEmpty(),
@@ -118,7 +121,7 @@ internal fun Root(
     // The query belongs to the tab where search opened: switching tabs
     // mid-search must not filter the new tab with a foreign query.
     val tabQuery = if (searchTab == tab) activeQuery else ""
-    val showScrim = search != null && activeQuery.isEmpty()
+    val showScrim = state.isSearchVisible && activeQuery.isEmpty()
 
     val viewerId = viewer?.id
 

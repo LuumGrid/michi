@@ -93,6 +93,28 @@ class StateOverlayTest {
     }
 
     @Test
+    fun searchIsHiddenWhileASurfaceDrawsOverIt() {
+        val state = State()
+        state.openSearch(TabSection.DISCOVER)
+        state.updateSearch(TabSection.DISCOVER, "naruto")
+        assertTrue(state.isSearchVisible)
+
+        // A detail opened from the results replaces the search field...
+        state.openMedia(1)
+        assertFalse(state.isSearchVisible, "the detail owns the toolbar")
+        assertTrue(state.isSearchActive, "but the search itself stays open")
+
+        // ...and back brings it back, query intact.
+        assertTrue(state.applyBackStep())
+        assertTrue(state.isSearchVisible)
+        assertEquals("naruto", state.searchQuery(TabSection.DISCOVER))
+
+        // An above-detail overlay (Settings) also covers it.
+        state.open(RootOverlay.Settings)
+        assertFalse(state.isSearchVisible)
+    }
+
+    @Test
     fun resetClosesEveryOverlay() {
         val state = State()
         state.open(RootOverlay.Settings)

@@ -120,8 +120,8 @@ class ExploreIntegrationTest {
 
         assertTrue(
             normalized(graphQL.requests.single().query)
-                .contains("studios(search: \$search, sort: \$sort) { id name }"),
-            "the studio search selection must be only id + name",
+                .contains("studios(search: \$search, sort: \$sort) { id name isAnimationStudio }"),
+            "the studio search selection must be only id + name + isAnimationStudio",
         )
         assertTrue(result is NetworkResult.Success)
         assertTrue(result.value.items.single().cover == null, "a studio has no image")
