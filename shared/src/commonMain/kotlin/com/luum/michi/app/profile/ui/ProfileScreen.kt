@@ -33,16 +33,16 @@ import com.luum.michi.app.profile.ui.model.title
 import com.luum.michi.app.profile.ui.model.toRailItem
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
 import com.luum.michi.app.ui.components.Avatar
+import com.luum.michi.app.ui.components.AvatarSize
 import com.luum.michi.app.ui.components.LoadStateContainer
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.PanelShape
-import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.RailHeader
+import com.luum.michi.app.ui.components.RailHorizontalPadding
 import com.luum.michi.app.ui.components.SettingsRow
-import com.luum.michi.app.ui.components.TrailingPill
 import com.luum.michi.app.ui.components.flatBorder
 import com.luum.michi.app.ui.components.solidContainerColor
-import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -176,7 +176,7 @@ private fun ProfileHeader(
                     Avatar(
                         imageUrl = viewer.avatarUrl,
                         initials = viewer.initials(),
-                        size = 64.dp,
+                        size = AvatarSize.Header,
                     )
                     Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                         Text(
@@ -253,20 +253,12 @@ private fun ProfileStudioSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SectionHeader(title = title, modifier = Modifier.weight(1f))
-            TrailingPill(
-                label = viewAllLabel,
-                onClick = onViewAll,
-                trailingIcon = AppIcons.ChevronRight,
-            )
-        }
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        RailHeader(
+            title = title,
+            viewAllLabel = viewAllLabel,
+            onViewAll = onViewAll,
+        )
+        Column(modifier = Modifier.padding(horizontal = RailHorizontalPadding)) {
             OptionGroup(title = null) {
                 items.forEachIndexed { index, studio ->
                     SettingsRow(

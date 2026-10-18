@@ -37,3 +37,12 @@ internal data class CoverSize(val width: Dp) {
 /** Sizes a poster exactly like the token: width and height, never one alone. */
 internal fun Modifier.coverSize(size: CoverSize): Modifier =
     this.width(size.width).height(size.height)
+
+/**
+ * The standard avatar diameters: a settings/list **row** avatar, and the larger
+ * **header** avatar (the profile card). Tokens so no surface invents a size.
+ */
+internal object AvatarSize {
+    val Row = 48.dp
+    val Header = 64.dp
+}

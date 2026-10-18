@@ -221,6 +221,8 @@ object SpanishStrings : LanguageStrings {
     override val profileFavoritesGridEmptyLabel = "Aún no hay favoritos."
     override val profileLoadingLabel = "Cargando perfil…"
     override val profileErrorLabel = "No se pudo cargar el perfil"
+    override val profileFavoritesLoadingLabel = "Cargando favoritos…"
+    override val profileFavoritesErrorLabel = "No se pudieron cargar los favoritos"
     override val profileEditFavoritesAction = "Editar"
     override val profileFavoritesDoneAction = "Listo"
     override val profileRemoveFavoriteAction = "Quitar de favoritos"

@@ -13,10 +13,10 @@ import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
-import com.luum.michi.app.profile.ui.components.ProfileFavoriteRemoveButton
 import com.luum.michi.app.profile.ui.model.toRailItem
 import com.luum.michi.app.profile.ui.state.ProfileFavoritesGridStateHolder
 import com.luum.michi.app.ui.components.DetailPosterGrid
+import com.luum.michi.app.ui.components.GlassCircleCompactButton
 import com.luum.michi.app.ui.components.LoadMoreEffect
 import com.luum.michi.app.ui.components.LoadMoreFooter
 import com.luum.michi.app.ui.components.LoadMoreKey
@@ -52,9 +52,9 @@ internal fun ProfileFavoritesGridScreen(
         hasContent = hasContent,
         isLoading = holder.isLoading,
         errorMessage = errorMessage,
-        loadingLabel = strings.profileLoadingLabel,
+        loadingLabel = strings.profileFavoritesLoadingLabel,
         waitingLabel = strings.networkThrottleWaitingLabel,
-        errorTitle = strings.profileErrorLabel,
+        errorTitle = strings.profileFavoritesErrorLabel,
         retryLabel = strings.retryAction,
         onRetry = onRetry,
         modifier = modifier,
@@ -96,7 +96,8 @@ internal fun ProfileFavoritesGridScreen(
                 bottomPadding = bottomPadding,
                 cardOverlay = if (isEditing) {
                     { favorite ->
-                        ProfileFavoriteRemoveButton(
+                        GlassCircleCompactButton(
+                            icon = AppIcons.Clear,
                             contentDescription = strings.profileRemoveFavoriteAction,
                             onClick = { onRemove(favorite.id) },
                             enabled = !holder.isRemoving(favorite.id),
@@ -152,7 +153,8 @@ private fun StudioFavoriteRows(
                         divider = index > 0,
                         trailing = if (isEditing) {
                             {
-                                ProfileFavoriteRemoveButton(
+                                GlassCircleCompactButton(
+                                    icon = AppIcons.Clear,
                                     contentDescription = removeDescription,
                                     onClick = { onRemove(studio.id) },
                                     enabled = !holder.isRemoving(studio.id),

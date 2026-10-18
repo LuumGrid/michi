@@ -57,6 +57,7 @@ import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.PullRefresh
 import com.luum.michi.app.ui.components.AppButton
 import com.luum.michi.app.ui.components.Avatar
+import com.luum.michi.app.ui.components.AvatarSize
 import com.luum.michi.app.ui.components.ButtonEmphasis
 import com.luum.michi.app.ui.components.ToggleRow
 import com.luum.michi.app.ui.icons.AppIcons
@@ -635,7 +636,7 @@ private fun SettingsAccountCard(
                 Avatar(
                     imageUrl = viewer.avatarUrl,
                     initials = initialsFor(viewer.name),
-                    size = 48.dp,
+                    size = AvatarSize.Row,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(

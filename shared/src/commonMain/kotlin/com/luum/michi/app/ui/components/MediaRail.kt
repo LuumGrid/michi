@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,14 +11,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.core.model.CoverSizes
-
-/** Baked 16dp matching the full-width layout (panels are already inset). */
-private val RailHorizontalPadding = 16.dp
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -70,25 +64,11 @@ internal fun MediaRail(
     val rowState = rememberResetListState(resetKey)
     Column(modifier = modifier.fillMaxWidth()) {
         if (title != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = RailHorizontalPadding, end = RailHorizontalPadding, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SectionHeader(
-                    title = title,
-                    modifier = Modifier.weight(1f),
-                )
-                if (onViewAll != null && viewAllLabel != null) {
-                    // Same pill as the voice-language selector, label + chevron.
-                    TrailingPill(
-                        label = viewAllLabel,
-                        onClick = onViewAll,
-                        trailingIcon = AppIcons.ChevronRight,
-                    )
-                }
-            }
+            RailHeader(
+                title = title,
+                viewAllLabel = viewAllLabel,
+                onViewAll = onViewAll,
+            )
         }
         if (items.isEmpty() && emptyLabel != null) {
             Text(

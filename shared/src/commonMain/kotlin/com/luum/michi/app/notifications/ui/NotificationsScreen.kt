@@ -3,9 +3,7 @@ package com.luum.michi.app.notifications.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -87,7 +85,6 @@ private fun NotificationsContent(
         NotificationFilter.entries.map { ChipTab(value = it, label = it.label(strings)) }
     }
     Column(modifier = modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(8.dp))
         ChipRail(
             tabs = chips,
             selected = holder.selectedFilter,
@@ -147,6 +144,10 @@ private fun NotificationsContent(
                         cover = item.image,
                         title = item.text,
                         subtitle = item.time,
+                        // Long phrases (a thread title) and the full date with its
+                        // countdown need more than the list default.
+                        titleMaxLines = 3,
+                        subtitleMaxLines = 2,
                         onClick = {
                             item.target.dispatch(onOpenMedia, onOpenCharacter, onOpenStaff, onOpenUrl)
                         },

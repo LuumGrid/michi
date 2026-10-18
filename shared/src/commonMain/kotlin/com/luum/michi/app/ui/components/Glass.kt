@@ -1,6 +1,9 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -8,7 +11,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,6 +33,19 @@ internal val GlassCircle: Shape = CircleShape
 
 /** Shared translucency for every glass surface (bars and buttons alike). */
 private const val GLASS_ALPHA = 0.88f
+
+/** Visible diameter of the standard floating circle (Toolbar/TabBar actions). */
+internal val GlassCircleSize = 48.dp
+
+/** Visible diameter of a compact floating circle (a card/row overlay control). */
+internal val GlassCircleCompactSize = 32.dp
+
+/** Minimum touch target: a compact circle still gets a full 48dp circle to hit. */
+internal val GlassTouchTargetSize = 48.dp
+
+/** Icon inside [GlassCircleSize] / [GlassCircleCompactSize]. */
+internal val GlassCircleIconSize = 24.dp
+internal val GlassCircleCompactIconSize = 18.dp
 
 /**
  * Compact elevation for small surfaces (48dp circles): still reads as
@@ -126,8 +144,50 @@ internal fun GlassCircleButton(
         shadowElevation = GlassElevationCompact,
         modifier = modifier,
     ) {
-        IconButton(onClick = onClick, enabled = enabled) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(GlassCircleSize)) {
             Icon(imageVector = icon, contentDescription = contentDescription)
+        }
+    }
+}
+
+/**
+ * Compact variant of [GlassCircleButton]: a [GlassCircleCompactSize] visible
+ * circle (card/row overlay control) that keeps a full [GlassTouchTargetSize]
+ * circular touch area around it. Same tool recipe and elevation as the standard
+ * circle, so it reads as the same floating piece, just smaller.
+ */
+@Composable
+internal fun GlassCircleCompactButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Box(
+        modifier = modifier
+            .size(GlassTouchTargetSize)
+            .clip(GlassCircle)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = GlassCircle,
+            color = toolContainerColor(),
+            border = toolBorder(),
+            // Elevation straight on the Surface (never a chained .shadow()).
+            shadowElevation = GlassElevationCompact,
+        ) {
+            Box(
+                modifier = Modifier.size(GlassCircleCompactSize),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    modifier = Modifier.size(GlassCircleCompactIconSize),
+                )
+            }
         }
     }
 }

@@ -208,6 +208,8 @@ interface LanguageStrings {
     val profileFavoritesGridEmptyLabel: String
     val profileLoadingLabel: String
     val profileErrorLabel: String
+    val profileFavoritesLoadingLabel: String
+    val profileFavoritesErrorLabel: String
     val profileEditFavoritesAction: String
     val profileFavoritesDoneAction: String
     val profileRemoveFavoriteAction: String

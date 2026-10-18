@@ -49,6 +49,10 @@ internal fun MediaCoverCard(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     titleTrailing: (@Composable () -> Unit)? = null,
+    // Line budget of the two text slots. The card's height is fixed, so a longer
+    // budget only spends the air the row already reserves (still ellipsized).
+    titleMaxLines: Int = 2,
+    subtitleMaxLines: Int = 1,
     content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     CardCappedDensity {
@@ -91,7 +95,7 @@ internal fun MediaCoverCard(
                             Text(
                                 text = title,
                                 style = MaterialTheme.typography.titleMedium,
-                                maxLines = 2,
+                                maxLines = titleMaxLines,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             if (subtitle != null) {
@@ -99,7 +103,7 @@ internal fun MediaCoverCard(
                                     text = subtitle,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+                                    maxLines = subtitleMaxLines,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
