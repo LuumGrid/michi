@@ -26,6 +26,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(profileData()))
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -40,6 +41,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(buildJsonObject {}))
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -53,6 +55,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(favouritesPage("anime", "A", true)))
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.ANIME)
@@ -66,6 +69,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(profileData()), failureAt = 0)
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -80,6 +84,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1)
@@ -93,6 +98,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(favouritesPage("manga", "M", false)))
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.MANGA)
@@ -104,6 +110,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(favouritesPage("characters", "C", false)))
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.CHARACTERS)
@@ -115,6 +122,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(favouritesPage("staff", "S", false)))
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.STAFF)
@@ -126,6 +134,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(favouritesPage("studios", "T", false)))
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.STUDIOS)
@@ -142,6 +151,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.ANIME)
@@ -161,6 +171,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.MANGA)
@@ -178,7 +189,7 @@ class ProfileIntegrationTest {
             val client = FakeProfileGraphQL(
                 listOf(profileData(animeCount = 10), profileData(animeCount = 20), profileData(animeCount = 30)),
             )
-            val holder = ProfileStateHolder(ProfileRepositoryImpl(client), scope)
+            val holder = ProfileStateHolder(ProfileRepositoryImpl(client), FakeFavouriteRepository(), scope)
 
             holder.load(1) // completes: user 1 on screen
             dispatcher.runAll()
@@ -212,6 +223,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
 
@@ -240,7 +252,7 @@ class ProfileIntegrationTest {
                     favouritesPage("manga", "manga-1", hasNextPage = false),
                 ),
             )
-            val holder = ProfileFavoritesGridStateHolder(ProfileRepositoryImpl(client), scope)
+            val holder = ProfileFavoritesGridStateHolder(ProfileRepositoryImpl(client), FakeFavouriteRepository(), scope)
 
             holder.load(1, ProfileFavoritesCategory.ANIME)
             dispatcher.runAll()
@@ -274,6 +286,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.ANIME)
@@ -298,6 +311,7 @@ class ProfileIntegrationTest {
         val graphQL = FakeProfileGraphQL(listOf(zeroProfile))
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
 
@@ -325,6 +339,7 @@ class ProfileIntegrationTest {
         )
         val holder = ProfileFavoritesGridStateHolder(
             ProfileRepositoryImpl(graphQL),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
         holder.load(1, ProfileFavoritesCategory.ANIME)

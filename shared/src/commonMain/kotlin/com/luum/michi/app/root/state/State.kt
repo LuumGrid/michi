@@ -28,6 +28,7 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 internal sealed interface BackStep {
     data object CloseSearch : BackStep
     data object CloseExploreResults : BackStep
+    data object CloseProfileEdit : BackStep
     data object CloseSheet : BackStep
     data object CloseOverlay : BackStep
     data object CloseDetail : BackStep
@@ -86,6 +87,21 @@ internal class State(
 
     /** The last sent DISCOVER query, restored into the field when it closes. */
     private var exploreSentQuery: String = ""
+
+    /**
+     * PROFILE's favourites edit mode. Root owns it because it is a tab-surface
+     * state with a back step: back exits it and switching tabs drops it.
+     */
+    var profileEditing: Boolean by mutableStateOf(false)
+        private set
+
+    fun toggleProfileEditing() {
+        profileEditing = !profileEditing
+    }
+
+    fun exitProfileEdit() {
+        profileEditing = false
+    }
 
     val isSearchActive: Boolean get() = searchActiveTab != null
 
@@ -162,6 +178,8 @@ internal class State(
         // belongs to the tab where it opened and must never show another tab's
         // query. Explore results mode itself is kept.
         closeSearch()
+        // Edit mode is PROFILE-only: leaving the tab exits it.
+        exitProfileEdit()
     }
 
     fun nextBackStep(): BackStep = when {
@@ -177,6 +195,8 @@ internal class State(
         // right behind the field.
         isSearchActive -> BackStep.CloseSearch
         isExploreResultsVisible -> BackStep.CloseExploreResults
+        // PROFILE's edit mode is the other tab-surface state behind the search.
+        profileEditing -> BackStep.CloseProfileEdit
         openOverlays.any { it.layer == OverlayLayer.BELOW_DETAIL } -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }
@@ -192,6 +212,10 @@ internal class State(
         }
         BackStep.CloseExploreResults -> {
             exitExploreResults()
+            true
+        }
+        BackStep.CloseProfileEdit -> {
+            exitProfileEdit()
             true
         }
         BackStep.CloseSheet -> {
@@ -280,6 +304,7 @@ internal class State(
         searchQueries.clear()
         exploreResults = false
         exploreSentQuery = ""
+        profileEditing = false
         openOverlays = emptySet()
     }
 }

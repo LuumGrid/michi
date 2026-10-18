@@ -112,6 +112,8 @@ internal class StudioDetailStateHolder(
     override fun snapshotWithFavourite(snapshot: StudioDetailSnapshot, value: Boolean): StudioDetailSnapshot =
         snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
 
+    override fun isFavouriteOfSnapshot(snapshot: StudioDetailSnapshot): Boolean = snapshot.detail.isFavourite
+
     override suspend fun requestToggleFavourite(id: Int, detail: StudioDetail): NetworkResult<Unit> =
         repository.toggleFavourite(id)
 }

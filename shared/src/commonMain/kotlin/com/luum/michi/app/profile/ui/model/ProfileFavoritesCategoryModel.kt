@@ -1,5 +1,6 @@
 package com.luum.michi.app.profile.ui.model
 
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 
@@ -20,6 +21,11 @@ internal fun ProfileFavoritesCategory.title(strings: LanguageStrings): String = 
 internal fun favoritesCategoryOfOrNull(id: String): ProfileFavoritesCategory? =
     ProfileFavoritesCategory.entries.firstOrNull { it.name == id }
 
-/** True when tapping a favourite of this category opens a media detail. */
-internal fun ProfileFavoritesCategory.isMedia(): Boolean =
-    this == ProfileFavoritesCategory.ANIME || this == ProfileFavoritesCategory.MANGA
+/** The favourite mutation target of a category item (removing a favourite). */
+internal fun ProfileFavoritesCategory.toFavouriteTarget(id: Int): FavouriteTarget = when (this) {
+    ProfileFavoritesCategory.ANIME -> FavouriteTarget.Anime(id)
+    ProfileFavoritesCategory.MANGA -> FavouriteTarget.Manga(id)
+    ProfileFavoritesCategory.CHARACTERS -> FavouriteTarget.Character(id)
+    ProfileFavoritesCategory.STAFF -> FavouriteTarget.Staff(id)
+    ProfileFavoritesCategory.STUDIOS -> FavouriteTarget.Studio(id)
+}

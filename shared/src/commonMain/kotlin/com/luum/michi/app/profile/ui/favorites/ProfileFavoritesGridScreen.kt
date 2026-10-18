@@ -18,9 +18,11 @@ import com.luum.michi.app.ui.components.LoadMoreEffect
 import com.luum.michi.app.ui.components.LoadMoreFooter
 import com.luum.michi.app.ui.components.LoadMoreKey
 import com.luum.michi.app.ui.components.LoadStateContainer
+import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.SettingsRow
 import com.luum.michi.app.ui.components.rememberResetListState
+import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -55,6 +57,13 @@ internal fun ProfileFavoritesGridScreen(
         actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
         dismissLabel = strings.dismissAction,
         onDismissActionError = { holder.clearActionError() },
+        empty = {
+            MessagePanel(
+                title = strings.profileFavoritesGridEmptyLabel,
+                message = null,
+                icon = AppIcons.Favorite,
+            )
+        },
     ) {
         if (category == ProfileFavoritesCategory.STUDIOS) {
             StudioFavoriteRows(

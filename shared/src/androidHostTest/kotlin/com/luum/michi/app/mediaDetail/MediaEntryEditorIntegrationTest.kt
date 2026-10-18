@@ -5,6 +5,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.core.favourite.repository.FavouriteRepositoryImpl
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
@@ -97,6 +98,8 @@ private fun editorWired(
     scoreMax: Float = 10f,
     initialStatusOverride: MediaListStatus? = null,
     initialProgressOverride: Int? = null,
+    onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
+    favouriteFromDetail: () -> Boolean? = { null },
     todayMillis: () -> Long = { TODAY },
 ): MediaEntryEditorState = MediaEntryEditorState(
     entryRepository = MediaListEntryRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL)),
@@ -108,6 +111,8 @@ private fun editorWired(
     scoreMax = scoreMax,
     initialStatusOverride = initialStatusOverride,
     initialProgressOverride = initialProgressOverride,
+    onFavouriteChanged = onFavouriteChanged,
+    favouriteFromDetail = favouriteFromDetail,
     todayMillis = todayMillis,
 )
 
@@ -222,6 +227,50 @@ class MediaEntryEditorIntegrationTest {
 
         assertFalse(editor.isFavourite)
         assertIs<NetworkError.Http>(editor.error)
+    }
+
+    /**
+     * The editor drives Root's favourite router optimistically and reverts it on
+     * failure, so the media detail page's heart follows every tap without waiting
+     * for the request.
+     */
+    @Test
+    fun favouriteTogglesTheRouterOptimisticallyAndRevertsOnFailure() {
+        val graphQL = FakeGraphQL(listOf(buildJsonObject {}), failureAt = 0)
+        val changes = mutableListOf<Pair<FavouriteTarget, Boolean>>()
+        val editor = editorWired(
+            graphQL,
+            existingEntry(),
+            onFavouriteChanged = { target, value -> changes += target to value },
+        )
+
+        editor.load()
+        editor.toggleFavourite()
+
+        val expected: List<Pair<FavouriteTarget, Boolean>> = listOf(
+            FavouriteTarget.Anime(101) to true,
+            FavouriteTarget.Anime(101) to false,
+        )
+        assertEquals(
+            expected,
+            changes,
+            "optimistic on, then reverted to the previous value",
+        )
+        assertFalse(editor.isFavourite)
+    }
+
+    /** The live detail holder wins over a (possibly stale) loadEditorData read. */
+    @Test
+    fun favouriteSeedsFromTheDetailHolderWhenItKnowsTheId() {
+        val editor = editorWired(
+            FakeGraphQL(emptyList()),
+            existingEntry(),
+            favouriteFromDetail = { true },
+        )
+
+        editor.load()
+
+        assertTrue(editor.isFavourite, "the holder's value wins over the server read")
     }
 
     @Test

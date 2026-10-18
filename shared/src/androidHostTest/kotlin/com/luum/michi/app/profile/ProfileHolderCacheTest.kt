@@ -51,7 +51,7 @@ class ProfileHolderCacheTest {
 
         val gate = CompletableDeferred<Unit>()
         val graphQL = FakeProfileGraphQL(listOf(profileData(animeCount = 99))).apply { this.gate = gate }
-        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), CoroutineScope(Dispatchers.Unconfined))
+        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), FakeFavouriteRepository(), CoroutineScope(Dispatchers.Unconfined))
 
         holder.load(7)
 
@@ -72,7 +72,7 @@ class ProfileHolderCacheTest {
         runBlocking { cache.write(7, cachedProfile()) }
 
         val graphQL = FakeProfileGraphQL(listOf(profileData()), failureAt = 0)
-        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), CoroutineScope(Dispatchers.Unconfined))
+        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), FakeFavouriteRepository(), CoroutineScope(Dispatchers.Unconfined))
 
         holder.load(7)
 
@@ -86,6 +86,7 @@ class ProfileHolderCacheTest {
         val graphQL = FakeProfileGraphQL(listOf(profileData(animeCount = 10)))
         val holder = ProfileStateHolder(
             ProfileRepositoryImpl(graphQL, diskCache(InMemoryFileStore())),
+            FakeFavouriteRepository(),
             CoroutineScope(Dispatchers.Unconfined),
         )
 
@@ -105,7 +106,7 @@ class ProfileHolderCacheTest {
 
         val gate = CompletableDeferred<Unit>()
         val graphQL = FakeProfileGraphQL(listOf(profileData(animeCount = 55))).apply { this.gate = gate }
-        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), CoroutineScope(Dispatchers.Unconfined))
+        val holder = ProfileStateHolder(ProfileRepositoryImpl(graphQL, cache), FakeFavouriteRepository(), CoroutineScope(Dispatchers.Unconfined))
 
         holder.load(2)
 

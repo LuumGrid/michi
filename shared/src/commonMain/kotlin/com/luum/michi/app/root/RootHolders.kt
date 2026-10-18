@@ -10,6 +10,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.state.CalendarStateHolder
 import com.luum.michi.app.calendar.ui.state.createCalendarStateHolder
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.SortPersistence
@@ -68,6 +70,13 @@ internal class RootHolders(
     val catalog: CatalogGridStateHolder,
     val profile: ProfileStateHolder?,
     val profileFavorites: ProfileFavoritesGridStateHolder?,
+    /**
+     * Single favourite-change router: applies a change to the detail holder of
+     * its target kind (visible page + cached snapshot, no network). Used by the
+     * profile's remove action and the entry editor, so neither feature imports
+     * the other.
+     */
+    val onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit,
 ) {
     // Every pushed detail page lives behind one contract, so refresh, cache
     // invalidation and the favourite action are a single lookup instead of a
@@ -120,6 +129,7 @@ internal fun rememberRootHolders(
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
     profileRepository: ProfileRepository,
+    favouriteRepository: FavouriteRepository,
     sortPersistence: SortPersistence,
 ): RootHolders {
     // Latest strings for the holders' providers, without keying them on language.
@@ -227,13 +237,51 @@ internal fun rememberRootHolders(
     // Profile: the viewer's own profile (guests get null — the tab shows the
     // sign-in prompt). Recreated per viewer, like the lists, so one viewer's
     // cached state can never bleed into another's.
+    // Stable across recompositions: the router is a key of the final remember
+    // (and of profileHolder), so a fresh lambda would recreate RootHolders on
+    // every Root recomposition.
+    val favouriteRouter: (FavouriteTarget, Boolean) -> Unit = remember(
+        mediaDetailHolder,
+        characterHolder,
+        staffHolder,
+        studioHolder,
+    ) {
+        { target, value ->
+            when (target) {
+                is FavouriteTarget.Anime,
+                is FavouriteTarget.Manga -> mediaDetailHolder.applyFavourite(target.id, value)
+                is FavouriteTarget.Character -> characterHolder.applyFavourite(target.id, value)
+                is FavouriteTarget.Staff -> staffHolder.applyFavourite(target.id, value)
+                is FavouriteTarget.Studio -> studioHolder.applyFavourite(target.id, value)
+            }
+        }
+    }
     val profileScope = rememberHolderScope(listScope, viewerId)
-    val profileHolder = remember(viewerId, profileRepository, profileScope) {
-        viewerId?.let { createProfileStateHolder(profileRepository, profileScope) }
+    val profileHolder = remember(
+        viewerId,
+        profileRepository,
+        favouriteRepository,
+        profileScope,
+        favouriteRouter,
+    ) {
+        viewerId?.let {
+            createProfileStateHolder(
+                repository = profileRepository,
+                favouriteRepository = favouriteRepository,
+                scope = profileScope,
+                onFavouriteChanged = favouriteRouter,
+            )
+        }
     }
     val profileFavoritesScope = rememberHolderScope(listScope, viewerId)
-    val profileFavoritesHolder = remember(viewerId, profileRepository, profileFavoritesScope) {
-        viewerId?.let { createProfileFavoritesGridStateHolder(profileRepository, profileFavoritesScope) }
+    val profileFavoritesHolder = remember(viewerId, profileRepository, favouriteRepository, profileFavoritesScope) {
+        viewerId?.let {
+            createProfileFavoritesGridStateHolder(
+                repository = profileRepository,
+                favouriteRepository = favouriteRepository,
+                scope = profileFavoritesScope,
+            )
+        }
     }
 
     return remember(
@@ -250,6 +298,7 @@ internal fun rememberRootHolders(
         catalogHolder,
         profileHolder,
         profileFavoritesHolder,
+        favouriteRouter,
     ) {
         RootHolders(
             listScope = listScope,
@@ -265,6 +314,7 @@ internal fun rememberRootHolders(
             catalog = catalogHolder,
             profile = profileHolder,
             profileFavorites = profileFavoritesHolder,
+            onFavouriteChanged = favouriteRouter,
         )
     }
 }

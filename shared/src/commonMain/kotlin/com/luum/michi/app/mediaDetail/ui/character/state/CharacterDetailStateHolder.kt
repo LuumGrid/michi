@@ -88,6 +88,8 @@ internal class CharacterDetailStateHolder(
     override fun snapshotWithFavourite(snapshot: CharacterDetailSnapshot, value: Boolean): CharacterDetailSnapshot =
         snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
 
+    override fun isFavouriteOfSnapshot(snapshot: CharacterDetailSnapshot): Boolean = snapshot.detail.isFavourite
+
     override suspend fun requestToggleFavourite(id: Int, detail: CharacterDetail): NetworkResult<Unit> =
         repository.toggleFavourite(id)
 }

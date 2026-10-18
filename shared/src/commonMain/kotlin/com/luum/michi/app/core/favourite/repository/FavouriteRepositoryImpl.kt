@@ -7,6 +7,10 @@ import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
 import com.luum.michi.app.core.network.repository.AniListJson
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -21,6 +25,9 @@ private data class ToggleFavouriteResponseDto(
 internal class FavouriteRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
 ) : FavouriteRepository {
+
+    private val _revision = MutableStateFlow(0)
+    override val revision: StateFlow<Int> = _revision.asStateFlow()
 
     /**
      * One mutation for every target, built so only the target's argument and
@@ -56,6 +63,10 @@ mutation ToggleFavourite(${'$'}id: Int) {
         )
         return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(ToggleFavouriteResponseDto.serializer(), dataJson)
-        }.map { }
+        }.map { }.also { result ->
+            // Only a confirmed toggle advances the revision: a failed one must
+            // not make cached mirrors look stale.
+            if (result is NetworkResult.Success) _revision.update { it + 1 }
+        }
     }
 }

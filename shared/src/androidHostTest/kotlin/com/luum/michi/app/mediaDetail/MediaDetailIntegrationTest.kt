@@ -41,6 +41,7 @@ private fun sampleDetail(
     staff: Page<MediaStaffEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     recommendations: Page<MediaRecommendationEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     viewerEntry: MediaListViewerEntry? = null,
+    isFavourite: Boolean = false,
 ) = MediaDetail(
     id = id,
     type = MediaDetailType.ANIME,
@@ -67,7 +68,7 @@ private fun sampleDetail(
     favourites = null,
     descriptionPlain = "",
     isAdult = false,
-    isFavourite = false,
+    isFavourite = isFavourite,
     viewerEntry = viewerEntry,
     relations = emptyList(),
     characters = characters,
@@ -122,6 +123,7 @@ private class RecordingDetailRepository(
     private val recommendationsPages: Map<Int, Page<MediaRecommendationEntry>> = emptyMap(),
     private val failDetail: Boolean = false,
     private val viewerEntry: MediaListViewerEntry? = null,
+    private val isFavourite: Boolean = false,
 ) : MediaDetailRepository {
     var detailCalls = 0
         private set
@@ -146,6 +148,7 @@ private class RecordingDetailRepository(
                 // The first recommendations page now travels inside the detail.
                 recommendations = recommendationsPages[1] ?: Page(emptyList(), false, 1),
                 viewerEntry = viewerEntry,
+                isFavourite = isFavourite,
             ),
         )
     }
@@ -317,6 +320,31 @@ class MediaDetailIntegrationTest {
         // Three loads, two fetches: the third restored from the LRU cache.
         assertEquals(2, repository.detailCalls)
         assertEquals(1, holder.detail?.id)
+    }
+
+    /**
+     * The favourite router (a removal made elsewhere) mirrors into this holder:
+     * [DetailStateHolderBase.applyFavourite] flips the visible page and the cached
+     * snapshot, and [DetailStateHolderBase.favouriteFor] reads both back.
+     */
+    @Test
+    fun applyFavouriteMirrorsTheVisiblePageAndTheCachedSnapshot() {
+        val repository = RecordingDetailRepository(isFavourite = true)
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertTrue(holder.isFavourite)
+        assertEquals(true, holder.favouriteFor(1))
+        assertNull(holder.favouriteFor(2), "an unknown id has no favourite state")
+
+        // Navigate away: media 1 lives in the LRU cache now.
+        holder.load(2)
+        assertEquals(2, holder.detail?.id)
+
+        holder.applyFavourite(1, false)
+        assertEquals(false, holder.favouriteFor(1), "the cached snapshot flipped")
+        assertTrue(holder.isFavourite, "media 2 (on screen) is untouched")
+        assertEquals(true, holder.favouriteFor(2))
     }
 
     @Test

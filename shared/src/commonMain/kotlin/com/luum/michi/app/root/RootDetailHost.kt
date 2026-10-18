@@ -164,8 +164,9 @@ internal fun RootDetailHost(
     }
 }
 
-/** A favourites grid item opens the detail of its entity kind. */
-private fun State.openProfileFavorite(category: ProfileFavoritesCategory, id: Int) {
+/** A favourites grid item opens the detail of its entity kind (shared by the
+ *  profile rails and the "View all" grid: one category→detail mapping). */
+internal fun State.openProfileFavorite(category: ProfileFavoritesCategory, id: Int) {
     when (category) {
         ProfileFavoritesCategory.ANIME,
         ProfileFavoritesCategory.MANGA -> openMedia(id)

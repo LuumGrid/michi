@@ -89,7 +89,8 @@ internal fun RootModals(
                 advancedScoringAnimeNames = settingsState.advancedScoringAnime,
                 advancedScoringMangaNames = settingsState.advancedScoringManga,
                 scoreMax = scoreMax,
-                onFavouriteChanged = { id, value -> holders.mediaDetail.applyFavouriteChange(id, value) },
+                onFavouriteChanged = holders.onFavouriteChanged,
+                favouriteFromDetail = { holders.mediaDetail.favouriteFor(editorId) },
             )
         }
         LaunchedEffect(editorId) { editor.load() }

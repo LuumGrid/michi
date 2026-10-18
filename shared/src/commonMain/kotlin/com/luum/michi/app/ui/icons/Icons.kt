@@ -8,6 +8,7 @@ import com.luum.michi.app.ui.icons.generated.AnimeRounded
 import com.luum.michi.app.ui.icons.generated.AnimeRoundedFilled
 import com.luum.michi.app.ui.icons.generated.BackRounded
 import com.luum.michi.app.ui.icons.generated.CalendarRounded
+import com.luum.michi.app.ui.icons.generated.CheckRounded
 import com.luum.michi.app.ui.icons.generated.ChevronRightRounded
 import com.luum.michi.app.ui.icons.generated.ClearRounded
 import com.luum.michi.app.ui.icons.generated.EditRounded
@@ -114,6 +115,10 @@ internal object AppIcons {
     /** Pencil: opens the list-entry editor. */
     val Edit: ImageVector
         get() = IconPack.EditRounded
+
+    /** Check: closes the profile's favourites edit mode ("Done"). */
+    val Check: ImageVector
+        get() = IconPack.CheckRounded
 
     /** Heart outline: adds to favorites (see FavoriteFilled for the on-state). */
     val Favorite: ImageVector

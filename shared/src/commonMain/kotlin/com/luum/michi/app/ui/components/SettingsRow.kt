@@ -33,6 +33,8 @@ internal fun SettingsRow(
     modifier: Modifier = Modifier,
     divider: Boolean = true,
     valueColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    // Trailing widget instead of the chevron (e.g. an edit-mode remove button).
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
@@ -55,7 +57,10 @@ internal fun SettingsRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = valueColor,
             )
-            if (onClick != null) {
+            if (trailing != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                trailing()
+            } else if (onClick != null) {
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = AppIcons.ChevronRight,

@@ -171,6 +171,25 @@ internal abstract class DetailStateHolderBase<D, S>(
         detailCache.remove(id)
     }
 
+    /**
+     * Applies a favourite change made elsewhere (the editor, the profile's
+     * remove action) to this scope's visible page and cached snapshot, so it is
+     * never left stale. No network: the caller owns the request. [favouriteFor]
+     * is its read twin, used by the editor to seed itself from the live holder
+     * instead of asking the server again.
+     */
+    fun applyFavourite(id: Int, value: Boolean) {
+        updateCachedFavourite(id, value)
+        if (currentId == id) detail = detail?.let { withFavourite(it, value) }
+    }
+
+    /** This holder's favourite for [id]: the visible page when it is the current
+     *  one, else a cached snapshot, else null when it knows nothing about it. */
+    fun favouriteFor(id: Int): Boolean? {
+        if (currentId == id) return detail?.let(::isFavouriteOf)
+        return detailCache.get(id)?.let(::isFavouriteOfSnapshot)
+    }
+
     /** Flips one cached snapshot's favourite without touching the visible page. */
     protected fun updateCachedFavourite(id: Int, value: Boolean) {
         detailCache.update(id) { snapshotWithFavourite(it, value) }
@@ -192,6 +211,9 @@ internal abstract class DetailStateHolderBase<D, S>(
 
     /** The favourite flag of [detail] (each scope reads its own model). */
     protected abstract fun isFavouriteOf(detail: D): Boolean
+
+    /** The favourite flag of a cached [snapshot] (read twin of [snapshotWithFavourite]). */
+    protected abstract fun isFavouriteOfSnapshot(snapshot: S): Boolean
 
     /** The network call behind page 1 (each scope builds its own arguments). */
     protected abstract suspend fun fetchDetail(id: Int): NetworkResult<D>

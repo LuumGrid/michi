@@ -91,6 +91,8 @@ internal fun RootToolbar(
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
+                isProfileEditing = state.profileEditing,
+                isProfileEditable = holders.profile?.canEdit == true,
                 isExploreResults = isExploreResults,
                 isExploreMediaCategory = exploreMediaCategory,
                 hasExploreFilters = exploreFiltersActive,
@@ -121,6 +123,7 @@ internal fun RootToolbar(
                     }
                     ACTION_CALENDAR -> state.open(RootOverlay.Calendar)
                     ACTION_CALENDAR_FILTER -> state.open(RootOverlay.CalendarFilter)
+                    ACTION_PROFILE_EDIT -> state.toggleProfileEditing()
                     ACTION_EDIT -> if (!isGuest) {
                         holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
                     }
@@ -158,6 +161,7 @@ private const val ACTION_FILTER = "filter"
 private const val ACTION_SORT = "sort"
 private const val ACTION_CALENDAR = "calendar"
 private const val ACTION_CALENDAR_FILTER = "calendar-filter"
+private const val ACTION_PROFILE_EDIT = "profile-edit"
 private const val ACTION_EDIT = "edit"
 private const val ACTION_FAVOURITE = "favourite"
 private const val ACTION_MORE = "more"
@@ -179,6 +183,9 @@ internal fun toolbarActions(
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
+    // PROFILE's favourites edit mode: the toolbar carries the pencil / check.
+    isProfileEditing: Boolean = false,
+    isProfileEditable: Boolean = false,
     // Explore results mode owns DISCOVER: filter+sort (media only) + magnifier.
     isExploreResults: Boolean = false,
     isExploreMediaCategory: Boolean = false,
@@ -332,6 +339,21 @@ internal fun toolbarActions(
                 )
             }
         } else {
+            // PROFILE: the gear, plus the favourites edit toggle once the
+            // profile is network-confirmed (a disk-only profile must not edit).
+            if (isProfileEditable) {
+                add(
+                    ToolbarAction(
+                        id = ACTION_PROFILE_EDIT,
+                        icon = if (isProfileEditing) AppIcons.Check else AppIcons.Edit,
+                        contentDescription = if (isProfileEditing) {
+                            strings.profileFavoritesDoneAction
+                        } else {
+                            strings.profileEditFavoritesAction
+                        },
+                    ),
+                )
+            }
             add(
                 ToolbarAction(
                     id = ACTION_SETTINGS,

@@ -193,6 +193,10 @@ internal class ProfileRepositoryImpl(
 
     override suspend fun loadCachedProfile(userId: Int): ProfileData? = cache?.read(userId)
 
+    override suspend fun saveCachedProfile(userId: Int, data: ProfileData) {
+        cache?.write(userId, data)
+    }
+
     override suspend fun loadFavoritesPage(
         userId: Int,
         category: ProfileFavoritesCategory,

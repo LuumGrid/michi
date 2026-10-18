@@ -47,6 +47,8 @@ class ToolbarActionsTest {
         isExploreResults: Boolean = false,
         isExploreMediaCategory: Boolean = false,
         hasExploreFilters: Boolean = false,
+        isProfileEditing: Boolean = false,
+        isProfileEditable: Boolean = false,
     ): List<ToolbarAction> = toolbarActions(
         tab = tab,
         isSearching = false,
@@ -59,6 +61,8 @@ class ToolbarActionsTest {
         isDetailList = false,
         isDetailFavourite = false,
         isGuest = false,
+        isProfileEditing = isProfileEditing,
+        isProfileEditable = isProfileEditable,
         isExploreResults = isExploreResults,
         isExploreMediaCategory = isExploreMediaCategory,
         hasExploreFilters = hasExploreFilters,
@@ -176,5 +180,31 @@ class ToolbarActionsTest {
         )
 
         assertEquals(listOf("calendar", "filter", "sort", "search"), ids(actions))
+    }
+
+    // PROFILE: the gear, plus the pencil/check edit toggle once editable.
+
+    @Test
+    fun profileShowsTheEditToggleOnlyWhenEditable() {
+        assertEquals(listOf("settings"), ids(tabActions(tab = TabSection.PROFILE)))
+        assertEquals(
+            listOf("profile-edit", "settings"),
+            ids(tabActions(tab = TabSection.PROFILE, isProfileEditable = true)),
+        )
+    }
+
+    @Test
+    fun theProfileEditActionSwapsToTheCheckWhileEditing() {
+        val view = tabActions(tab = TabSection.PROFILE, isProfileEditable = true)
+            .first { it.id == "profile-edit" }
+        val editing = tabActions(
+            tab = TabSection.PROFILE,
+            isProfileEditable = true,
+            isProfileEditing = true,
+        ).first { it.id == "profile-edit" }
+
+        assertEquals("Edit", view.contentDescription)
+        assertEquals("Done", editing.contentDescription)
+        assertTrue(view.icon != editing.icon, "pencil to enter, check to leave")
     }
 }

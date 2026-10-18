@@ -199,6 +199,7 @@ fun App(
                             calendarRepository = dependencies.calendarRepository,
                             dashboardRepository = dependencies.dashboardRepository,
                             profileRepository = dependencies.profileRepository,
+                            favouriteRepository = dependencies.favouriteRepository,
                             urlOpener = dependencies.urlOpener,
                             shareLauncher = dependencies.shareLauncher,
                             sortPersistence = sortPersistence,

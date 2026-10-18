@@ -29,6 +29,7 @@ import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.profile.domain.model.itemsFor
 import com.luum.michi.app.profile.domain.model.nonEmptyCategories
+import com.luum.michi.app.profile.ui.components.ProfileFavoriteRemoveButton
 import com.luum.michi.app.profile.ui.model.title
 import com.luum.michi.app.profile.ui.model.toRailItem
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
@@ -49,19 +50,20 @@ import com.luum.michi.app.ui.language.Strings
  * PROFILE tab: the viewer's header (avatar + name + counters) over their
  * favourites, one rail per category with a "View all" page. Only the viewer's
  * own profile is loaded ([ProfileStateHolder.load] with the viewer id); the
- * name/avatar come from the already-loaded [Viewer] — no extra request. Public
- * profile viewing is a later step.
+ * name/avatar come from the already-loaded [Viewer] — no extra request.
+ *
+ * [isEditing] is the root-owned edit mode: every favourite shows a remove button
+ * and tapping one does not navigate. The "View all" page is read-only.
  */
 @Composable
 internal fun ProfileScreen(
     holder: ProfileStateHolder,
     viewer: Viewer,
+    isEditing: Boolean,
     strings: LanguageStrings = Strings.current,
     bottomPadding: Dp = 0.dp,
-    onOpenMedia: (Int) -> Unit,
-    onOpenCharacter: (Int) -> Unit,
-    onOpenStaff: (Int) -> Unit,
-    onOpenStudio: (Int) -> Unit,
+    onOpenFavorite: (ProfileFavoritesCategory, Int) -> Unit,
+    onRemoveFavorite: (ProfileFavoritesCategory, Int) -> Unit,
     onViewAll: (ProfileFavoritesCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,21 +71,14 @@ internal fun ProfileScreen(
     LaunchedEffect(holder, viewer.id) {
         holder.load(viewer.id)
     }
-    val openFavorite: (ProfileFavoritesCategory, Int) -> Unit = { category, id ->
-        when (category) {
-            ProfileFavoritesCategory.ANIME,
-            ProfileFavoritesCategory.MANGA -> onOpenMedia(id)
-            ProfileFavoritesCategory.CHARACTERS -> onOpenCharacter(id)
-            ProfileFavoritesCategory.STAFF -> onOpenStaff(id)
-            ProfileFavoritesCategory.STUDIOS -> onOpenStudio(id)
-        }
-    }
     ProfileContent(
         holder = holder,
         viewer = viewer,
+        isEditing = isEditing,
         strings = strings,
         bottomPadding = bottomPadding,
-        onOpenFavorite = openFavorite,
+        onOpenFavorite = onOpenFavorite,
+        onRemoveFavorite = onRemoveFavorite,
         onViewAll = onViewAll,
         modifier = modifier,
     )
@@ -93,9 +88,11 @@ internal fun ProfileScreen(
 private fun ProfileContent(
     holder: ProfileStateHolder,
     viewer: Viewer,
+    isEditing: Boolean,
     strings: LanguageStrings,
     bottomPadding: Dp,
     onOpenFavorite: (ProfileFavoritesCategory, Int) -> Unit,
+    onRemoveFavorite: (ProfileFavoritesCategory, Int) -> Unit,
     onViewAll: (ProfileFavoritesCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -113,8 +110,12 @@ private fun ProfileContent(
         retryLabel = strings.retryAction,
         onRetry = { holder.refresh() },
         modifier = modifier.fillMaxSize(),
-        // With the profile already on screen, a failed refresh is a compact line.
+        // With the profile already on screen, a failed load is a compact line.
         refreshError = if (holder.hasContent) errorMessage else null,
+        // A failed removal is a compact dismissible line, not a blocking error.
+        actionError = holder.actionError?.let { strings.networkErrorMessage(it) },
+        dismissLabel = strings.dismissAction,
+        onDismissActionError = { holder.clearActionError() },
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -136,24 +137,40 @@ private fun ProfileContent(
             }
             categories.forEach { category ->
                 val items = favorites.itemsFor(category)
-                if (category == ProfileFavoritesCategory.STUDIOS) {
-                    item(key = "profile-favorites-${category.name}") {
+                item(key = "profile-favorites-${category.name}") {
+                    if (category == ProfileFavoritesCategory.STUDIOS) {
                         ProfileStudioSection(
                             items = items,
                             title = category.title(strings),
                             viewAllLabel = strings.viewAllAction,
+                            isEditing = isEditing,
+                            removeDescription = strings.profileRemoveFavoriteAction,
                             onSelect = { id -> onOpenFavorite(category, id) },
+                            onRemove = { id -> onRemoveFavorite(category, id) },
+                            isRemoving = { id -> holder.isRemoving(category, id) },
                             onViewAll = { onViewAll(category) },
                         )
-                    }
-                } else {
-                    item(key = "profile-favorites-${category.name}") {
+                    } else {
                         MediaRail(
                             title = category.title(strings),
                             items = items.map { it.toRailItem() },
                             onSelect = { id -> onOpenFavorite(category, id) },
                             onViewAll = { onViewAll(category) },
                             viewAllLabel = strings.viewAllAction,
+                            cardOverlay = if (isEditing) {
+                                { favorite ->
+                                    ProfileFavoriteRemoveButton(
+                                        contentDescription = strings.profileRemoveFavoriteAction,
+                                        onClick = { onRemoveFavorite(category, favorite.id) },
+                                        enabled = !holder.isRemoving(category, favorite.id),
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                         )
                     }
                 }
@@ -256,13 +273,18 @@ private fun ProfileStatColumn(
 /**
  * Studio favourites: no image on AniList, so they are settings-style rows (the
  * same look as Explore's studio results) under a rail header with "View all".
+ * In edit mode the chevron becomes a remove button and the row does not navigate.
  */
 @Composable
 private fun ProfileStudioSection(
     items: List<ProfileFavorite>,
     title: String,
     viewAllLabel: String,
+    isEditing: Boolean,
+    removeDescription: String,
     onSelect: (Int) -> Unit,
+    onRemove: (Int) -> Unit,
+    isRemoving: (Int) -> Boolean,
     onViewAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -286,8 +308,19 @@ private fun ProfileStudioSection(
                     SettingsRow(
                         label = studio.name,
                         value = "",
-                        onClick = { onSelect(studio.id) },
+                        onClick = if (isEditing) null else ({ onSelect(studio.id) }),
                         divider = index > 0,
+                        trailing = if (isEditing) {
+                            {
+                                ProfileFavoriteRemoveButton(
+                                    contentDescription = removeDescription,
+                                    onClick = { onRemove(studio.id) },
+                                    enabled = !isRemoving(studio.id),
+                                )
+                            }
+                        } else {
+                            null
+                        },
                     )
                 }
             }

@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media.state
 
+import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
@@ -25,9 +26,12 @@ internal class MediaEntryEditorState(
     private val advancedScoringAnimeNames: List<String> = emptyList(),
     private val advancedScoringMangaNames: List<String> = emptyList(),
     private val scoreMax: Float = 10f,
-    // Tells the detail holder a favourite toggled here, so closing the editor
-    // never leaves the detail page's heart stale.
-    private val onFavouriteChanged: (mediaId: Int, value: Boolean) -> Unit = { _, _ -> },
+    // Tells Root's favourite router a favourite toggled here (optimistically,
+    // and reverted on failure), so the detail page's heart never stays stale.
+    private val onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
+    // The media detail holder's live favourite for this id (on screen or cached);
+    // when it knows it, the editor seeds from it instead of loadEditorData.
+    private val favouriteFromDetail: () -> Boolean? = { null },
     // Injectable so status automations (started/completed = today) are
     // deterministic in tests; same UTC-midnight millis the date pickers speak.
     private val todayMillis: () -> Long = { todayCalendarMillis() },
@@ -123,7 +127,9 @@ internal class MediaEntryEditorState(
             when (val result = detailRepository.loadEditorData(mediaId)) {
                 is NetworkResult.Success -> {
                     data = result.value
-                    isFavourite = result.value.isFavourite
+                    // The detail holder knows the live value; a stale server
+                    // read must not flip the heart back.
+                    isFavourite = favouriteFromDetail() ?: result.value.isFavourite
                     val existing = result.value.viewerEntry
                     if (existing != null) {
                         status = existing.status ?: MediaListStatus.CURRENT
@@ -260,11 +266,20 @@ internal class MediaEntryEditorState(
         val target = !previous
         isFavourite = target
         isTogglingFavourite = true
+        val favouriteTarget = if (isManga) {
+            FavouriteTarget.Manga(mediaId)
+        } else {
+            FavouriteTarget.Anime(mediaId)
+        }
+        // Optimistic: the detail page (and its cached snapshot) flip now; a
+        // failed request reverts them with the previous value.
+        onFavouriteChanged(favouriteTarget, target)
         scope.launch {
             when (val result = entryRepository.toggleFavourite(mediaId, isManga)) {
-                is NetworkResult.Success -> onFavouriteChanged(mediaId, target)
+                is NetworkResult.Success -> {}
                 is NetworkResult.Failure -> {
                     isFavourite = previous
+                    onFavouriteChanged(favouriteTarget, previous)
                     error = result.error
                 }
             }
@@ -354,7 +369,8 @@ internal fun createMediaEntryEditorState(
     advancedScoringAnimeNames: List<String> = emptyList(),
     advancedScoringMangaNames: List<String> = emptyList(),
     scoreMax: Float = 10f,
-    onFavouriteChanged: (mediaId: Int, value: Boolean) -> Unit = { _, _ -> },
+    onFavouriteChanged: (FavouriteTarget, Boolean) -> Unit = { _, _ -> },
+    favouriteFromDetail: () -> Boolean? = { null },
     todayMillis: () -> Long = { todayCalendarMillis() },
 ): MediaEntryEditorState {
     return MediaEntryEditorState(
@@ -369,6 +385,7 @@ internal fun createMediaEntryEditorState(
         advancedScoringMangaNames = advancedScoringMangaNames,
         scoreMax = scoreMax,
         onFavouriteChanged = onFavouriteChanged,
+        favouriteFromDetail = favouriteFromDetail,
         todayMillis = todayMillis,
     )
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.CalendarScreen
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.SortPersistence
 import com.luum.michi.app.core.navigation.domain.TabSection
@@ -77,6 +78,7 @@ internal fun Root(
     calendarRepository: CalendarRepository,
     dashboardRepository: DashboardRepository,
     profileRepository: ProfileRepository,
+    favouriteRepository: FavouriteRepository,
     urlOpener: UrlOpener,
     shareLauncher: ShareLauncher,
     sortPersistence: SortPersistence,
@@ -160,6 +162,7 @@ internal fun Root(
         calendarRepository = calendarRepository,
         dashboardRepository = dashboardRepository,
         profileRepository = profileRepository,
+        favouriteRepository = favouriteRepository,
         sortPersistence = sortPersistence,
     )
 

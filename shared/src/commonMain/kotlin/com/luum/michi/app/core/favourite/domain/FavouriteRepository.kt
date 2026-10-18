@@ -1,6 +1,7 @@
 package com.luum.michi.app.core.favourite.domain
 
 import com.luum.michi.app.core.network.domain.NetworkResult
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * What a favourite toggle can target. The single [FavouriteRepository] mutation
@@ -23,5 +24,13 @@ internal sealed interface FavouriteTarget {
  * unfavourite. One mutation instead of a copy per feature.
  */
 internal interface FavouriteRepository {
+    /**
+     * Monotonic revision, bumped after every successful toggle. Holders that
+     * cache favourite state (the profile, the favourites grid) store the revision
+     * they loaded at and compare it on open: a change means their mirror is stale
+     * and must be reloaded. It adds no requests by itself.
+     */
+    val revision: StateFlow<Int>
+
     suspend fun toggleFavourite(target: FavouriteTarget): NetworkResult<Unit>
 }

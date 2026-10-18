@@ -32,6 +32,13 @@ internal interface ProfileRepository {
      */
     suspend fun loadCachedProfile(userId: Int): ProfileData?
 
+    /**
+     * Rewrites the persisted profile for [userId] with [data] (the in-memory
+     * state after a favourite removal), so a cold start never repaints an
+     * already-removed favourite.
+     */
+    suspend fun saveCachedProfile(userId: Int, data: ProfileData)
+
     /** Fetches one page of a single favourites category for the "see more" grid. */
     suspend fun loadFavoritesPage(
         userId: Int,

@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -62,6 +63,9 @@ internal fun MediaRail(
     // When the caller's item set changes because of a filter/order, it passes
     // the filter value here and the rail returns to the start (scroll rule).
     resetKey: Any? = null,
+    // Painted over each card's cover (e.g. an edit-mode remove button). When
+    // set, the card no longer navigates: the overlay owns the interaction.
+    cardOverlay: (@Composable BoxScope.(MediaRailItem) -> Unit)? = null,
 ) {
     val rowState = rememberResetListState(resetKey)
     Column(modifier = modifier.fillMaxWidth()) {
@@ -110,10 +114,15 @@ internal fun MediaRail(
                         cover = item.image,
                         title = item.title,
                         size = size,
-                        onClick = onSelect?.let { select -> { select(item.id) } },
+                        onClick = if (cardOverlay == null) {
+                            onSelect?.let { select -> { select(item.id) } }
+                        } else {
+                            null
+                        },
                         subtitle = item.subtitle,
                         placeholderHex = item.placeholderHex,
                         stats = item.stats,
+                        overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
                     )
                 }
             }

@@ -100,6 +100,8 @@ internal class StaffDetailStateHolder(
     override fun snapshotWithFavourite(snapshot: StaffDetailSnapshot, value: Boolean): StaffDetailSnapshot =
         snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
 
+    override fun isFavouriteOfSnapshot(snapshot: StaffDetailSnapshot): Boolean = snapshot.detail.isFavourite
+
     override suspend fun requestToggleFavourite(id: Int, detail: StaffDetail): NetworkResult<Unit> =
         repository.toggleFavourite(id)
 }

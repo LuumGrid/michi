@@ -89,15 +89,6 @@ internal class MediaDetailStateHolder(
         )
     }
 
-    /**
-     * Applies a favourite change made from the editor to this media's state and
-     * cached snapshot, so closing the editor never leaves the detail stale.
-     */
-    fun applyFavouriteChange(mediaId: Int, value: Boolean) {
-        updateCachedFavourite(mediaId, value)
-        if (currentDetailId == mediaId) detail = detail?.let { withFavourite(it, value) }
-    }
-
     override suspend fun fetchDetail(id: Int): NetworkResult<MediaDetail> =
         repository.loadDetail(id, stringsProvider())
 
@@ -138,6 +129,8 @@ internal class MediaDetailStateHolder(
 
     override fun snapshotWithFavourite(snapshot: MediaDetailSnapshot, value: Boolean): MediaDetailSnapshot =
         snapshot.copy(detail = snapshot.detail.copy(isFavourite = value))
+
+    override fun isFavouriteOfSnapshot(snapshot: MediaDetailSnapshot): Boolean = snapshot.detail.isFavourite
 
     override suspend fun requestToggleFavourite(id: Int, detail: MediaDetail): NetworkResult<Unit> =
         entryRepository.toggleFavourite(id, detail.type == MediaDetailType.MANGA)

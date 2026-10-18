@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -37,6 +38,9 @@ internal fun PosterCard(
     placeholderHex: String? = null,
     stats: List<CoverStat> = emptyList(),
     reserveTitleLines: Boolean = true,
+    // Extra cover overlay painted after the badges (e.g. an edit-mode remove
+    // button); a null keeps every existing card byte-identical.
+    overlay: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     // A larger token gets one step up in the type scale, so a featured card
     // reads as a bigger card instead of a rail card with more air.
@@ -71,6 +75,7 @@ internal fun PosterCard(
                                 .padding(4.dp),
                         )
                     }
+                    overlay?.invoke(this)
                 },
             )
             Spacer(modifier = Modifier.height(6.dp))

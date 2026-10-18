@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.profile.domain.model.ProfileFavorite
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.ui.state.LatestRequest
@@ -16,9 +17,12 @@ import kotlinx.coroutines.CoroutineScope
  * Paginated state for the "see more" favourites grid screen. All five categories
  * share one [ProfileFavorite] list; a category switch is a new search, so the
  * loaded pages are dropped and a page still in flight never lands (generation).
+ * A favourite toggled elsewhere ([FavouriteRepository.revision]) makes the loaded
+ * page stale: the next open refetches instead of showing the in-memory copy.
  */
 internal class ProfileFavoritesGridStateHolder(
     private val repository: ProfileRepository,
+    private val favouriteRepository: FavouriteRepository,
     private val scope: CoroutineScope,
 ) {
     private var loadingState by mutableStateOf(false)
@@ -36,6 +40,8 @@ internal class ProfileFavoritesGridStateHolder(
     /** Last (userId, category) a load was started for: [refresh]/retry re-run it. */
     private var requestedUserId: Int? = null
     private var requestedCategory: ProfileFavoritesCategory? = null
+    /** Favourite revision the loaded page came from; a change drops the copy. */
+    private var loadedRevision: Int = 0
     private val loadRequest = LatestRequest()
 
     val items: List<ProfileFavorite> get() = paginated.items
@@ -56,9 +62,10 @@ internal class ProfileFavoritesGridStateHolder(
     fun load(userId: Int, category: ProfileFavoritesCategory) {
         requestedUserId = userId
         requestedCategory = category
-        // Already loaded (same user + category): a re-entry shows the in-memory
-        // page without another request.
-        if (loadedUserId == userId && loadedCategory == category) return
+        // Already loaded (same user + category) and no favourite changed since:
+        // a re-entry shows the in-memory page without another request.
+        val stale = favouriteRepository.revision.value != loadedRevision
+        if (!stale && loadedUserId == userId && loadedCategory == category) return
         startFirstPage(userId, category)
     }
 
@@ -85,6 +92,7 @@ internal class ProfileFavoritesGridStateHolder(
             when (val result = repository.loadFavoritesPage(userId, category, page = 1)) {
                 is NetworkResult.Success -> if (isCurrent()) {
                     paginated.set(result.value)
+                    loadedRevision = favouriteRepository.revision.value
                 }
                 is NetworkResult.Failure -> if (isCurrent()) {
                     errorState = result.error
@@ -116,7 +124,8 @@ internal class ProfileFavoritesGridStateHolder(
 /** Pure-logic factory (placeholder for UI wiring). */
 internal fun createProfileFavoritesGridStateHolder(
     repository: ProfileRepository,
+    favouriteRepository: FavouriteRepository,
     scope: CoroutineScope,
 ): ProfileFavoritesGridStateHolder {
-    return ProfileFavoritesGridStateHolder(repository, scope)
+    return ProfileFavoritesGridStateHolder(repository, favouriteRepository, scope)
 }
