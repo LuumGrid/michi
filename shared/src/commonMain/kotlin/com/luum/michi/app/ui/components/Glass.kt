@@ -112,7 +112,7 @@ internal fun GlassCapsule(
 @Composable
 internal fun GlassCircleButton(
     icon: ImageVector,
-    contentDescription: String?,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

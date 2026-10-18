@@ -60,8 +60,7 @@ import kotlin.time.Instant
  * calendar, arrows step ±1 day with empty days included). States reuse
  * the app-wide vocabulary (spinner, [MessagePanel] with retry, empty
  * label). The feed is public, so guests render the same surface with
- * null user fields. Release taps navigate to detail (dormant until
- * detail nav lands, same as the list cards).
+ * null user fields. Release taps navigate to detail, same as the list cards.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

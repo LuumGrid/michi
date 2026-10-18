@@ -32,7 +32,6 @@ import com.luum.michi.app.ui.icons.generated.SettingsRounded
 import com.luum.michi.app.ui.icons.generated.SortRounded
 import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
 import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
-import com.luum.michi.app.ui.icons.generated.ThemeRounded
 import com.luum.michi.app.ui.icons.generated.WebRounded
 
 /**

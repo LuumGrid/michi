@@ -10,9 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.ui.components.GlassCapsule
 import com.luum.michi.app.ui.components.GlassCircleButton
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.language.Strings
 
 /**
  * Bottom date bar: previous-day chevron, date button (opens the system
@@ -27,6 +29,7 @@ internal fun CalendarDateBar(
     onNext: () -> Unit,
     previousEnabled: Boolean,
     nextEnabled: Boolean,
+    strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
     dateContent: @Composable RowScope.() -> Unit,
 ) {
@@ -46,14 +49,14 @@ internal fun CalendarDateBar(
             ) {
                 GlassCircleButton(
                     icon = AppIcons.Back,
-                    contentDescription = null,
+                    contentDescription = strings.calendarPreviousDayAction,
                     onClick = onPrevious,
                     enabled = previousEnabled,
                 )
                 dateContent()
                 GlassCircleButton(
                     icon = AppIcons.ChevronRight,
-                    contentDescription = null,
+                    contentDescription = strings.calendarNextDayAction,
                     onClick = onNext,
                     enabled = nextEnabled,
                 )

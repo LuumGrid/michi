@@ -96,8 +96,11 @@ internal fun ModalSheet(
                     ),
                 ),
                 search = null,
-                backContentDescription = null,
-                clearContentDescription = null,
+                // The sheet header has no back affordance and never enters
+                // search, so both descriptions go unused; the X is the only
+                // action and carries dismissLabel.
+                backContentDescription = dismissLabel,
+                clearContentDescription = dismissLabel,
                 onNavigation = {},
                 onAction = { id ->
                     if (id == ACTION_DISMISS) onDismiss() else onHeaderAction(id)

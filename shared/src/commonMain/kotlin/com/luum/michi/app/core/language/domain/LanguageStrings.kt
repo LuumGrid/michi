@@ -75,6 +75,8 @@ interface LanguageStrings {
     val dayFriday: String
     val daySaturday: String
     val daySunday: String
+    val calendarPreviousDayAction: String
+    val calendarNextDayAction: String
     val mediaDetailDescriptionTitle: String
     val mediaDetailBiographyTitle: String
     val mediaDetailCharacterDescriptionTitle: String
@@ -158,6 +160,8 @@ interface LanguageStrings {
     val privateLabel: String
     val hiddenFromStatusListsLabel: String
     val saveAction: String
+    val editorDecrementAction: String
+    val editorIncrementAction: String
     fun episodesBehind(count: Int): String
     fun chaptersBehind(count: Int): String
     fun nextEpisodeReleaseLabel(episodeNumber: Int, releaseDateTime: MediaReleaseDateTime): String

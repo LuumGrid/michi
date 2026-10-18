@@ -71,6 +71,8 @@ object EnglishStrings : LanguageStrings {
     override val dayFriday = "Friday"
     override val daySaturday = "Saturday"
     override val daySunday = "Sunday"
+    override val calendarPreviousDayAction = "Previous day"
+    override val calendarNextDayAction = "Next day"
     override val mediaDetailDescriptionTitle = "Synopsis"
     override val mediaDetailBiographyTitle = "Biography"
     override val mediaDetailCharacterDescriptionTitle = "Description"
@@ -153,6 +155,8 @@ object EnglishStrings : LanguageStrings {
     override val privateLabel = "Private"
     override val hiddenFromStatusListsLabel = "Hidden from status lists"
     override val saveAction = "Save"
+    override val editorDecrementAction = "Decrease"
+    override val editorIncrementAction = "Increase"
     override fun episodesBehind(count: Int): String {
         val unit = if (count == 1) "episode" else "episodes"
         return "$count $unit behind"

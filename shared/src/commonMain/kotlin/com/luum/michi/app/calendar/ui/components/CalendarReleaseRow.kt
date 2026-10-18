@@ -96,8 +96,8 @@ private fun ColumnScope.ReleaseMetaRow(
             overflow = TextOverflow.Ellipsis,
         )
         if (platforms.isNotEmpty()) {
-            // URLs already travel in StreamingPlatform.url; opening a
-            // browser needs a platform launcher (deferred), so taps no-op.
+            // URLs already travel in StreamingPlatform.url; a tap opens the
+            // platform through the caller's onOpenUrl.
             ChipRail(
                 tabs = platforms.map { ChipTab(it.url, it.site, iconUrl = it.iconUrl) },
                 selected = null,

@@ -83,8 +83,8 @@ internal fun Toolbar(
     navigation: ToolbarNavigation,
     actions: List<ToolbarAction>,
     search: ToolbarSearch?,
-    backContentDescription: String?,
-    clearContentDescription: String?,
+    backContentDescription: String,
+    clearContentDescription: String,
     onNavigation: () -> Unit,
     onAction: (String) -> Unit,
     onSearchChange: (String) -> Unit,
@@ -216,7 +216,7 @@ internal fun Toolbar(
                         autoFocus = activeSearch.autoFocus,
                         onQueryChange = onSearchChange,
                         onSubmit = onSearchSubmit,
-                        clearDescription = clearContentDescription.orEmpty(),
+                        clearDescription = clearContentDescription,
                     )
                 }
             }

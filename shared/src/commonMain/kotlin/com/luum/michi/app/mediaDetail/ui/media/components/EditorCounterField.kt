@@ -22,9 +22,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.ui.components.GlassCircleButton
 import com.luum.michi.app.ui.components.SheetTextField
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.language.Strings
 
 /**
  * Label + editable value with suffix and round −/+ steppers (progress,
@@ -42,6 +44,7 @@ internal fun EditorCounterField(
     onCommit: (String) -> Unit,
     onDecrement: () -> Unit,
     onIncrement: () -> Unit,
+    strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
     decrementEnabled: Boolean = true,
     incrementEnabled: Boolean = true,
@@ -86,7 +89,7 @@ internal fun EditorCounterField(
             Spacer(modifier = Modifier.width(8.dp))
             GlassCircleButton(
                 icon = AppIcons.ExpandMore,
-                contentDescription = null,
+                contentDescription = strings.editorDecrementAction,
                 onClick = {
                     draft = null
                     onDecrement()
@@ -96,7 +99,7 @@ internal fun EditorCounterField(
             Spacer(modifier = Modifier.width(8.dp))
             GlassCircleButton(
                 icon = AppIcons.ExpandLess,
-                contentDescription = null,
+                contentDescription = strings.editorIncrementAction,
                 onClick = {
                     draft = null
                     onIncrement()

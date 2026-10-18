@@ -75,7 +75,7 @@ internal fun SearchField(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 16.dp, end = 4.dp),
+                    .padding(start = 16.dp, end = 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
@@ -95,7 +95,7 @@ internal fun SearchField(
                 if (query.isNotEmpty()) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .clickable { onQueryChange("") },
                         contentAlignment = Alignment.Center,

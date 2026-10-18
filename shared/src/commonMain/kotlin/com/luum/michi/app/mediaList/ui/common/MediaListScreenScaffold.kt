@@ -142,14 +142,24 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             selected = effectiveSelected,
             onSelect = onSelectSection,
         )
-        // With content already loaded, a failed refresh is a compact retry line
-        // above the list, never a full-page error that hides the entries.
-        if (errorMessage != null && hasLoadedEntries) {
-            RefreshErrorRow(
-                message = errorMessage,
-                retryLabel = strings.retryAction,
-                onRetry = onReload,
-            )
+        // With content already loaded, only ONE error line shows above the
+        // list: the action error wins (it is the user's last action), and once
+        // dismissed a still-failing refresh falls back to its retry line.
+        if (hasLoadedEntries) {
+            val actionError = holder.actionError
+            if (actionError != null) {
+                RefreshErrorRow(
+                    message = strings.networkErrorMessage(actionError),
+                    dismissLabel = strings.dismissAction,
+                    onDismiss = { holder.clearActionError() },
+                )
+            } else if (errorMessage != null) {
+                RefreshErrorRow(
+                    message = errorMessage,
+                    retryLabel = strings.retryAction,
+                    onRetry = onReload,
+                )
+            }
         }
         when {
             holder.isLoading && !hasLoadedEntries -> {
@@ -175,13 +185,6 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                 )
             }
             else -> {
-                holder.actionError?.let { error ->
-                    RefreshErrorRow(
-                        message = strings.networkErrorMessage(error),
-                        dismissLabel = strings.dismissAction,
-                        onDismiss = { holder.clearActionError() },
-                    )
-                }
                 PullRefresh(
                     isRefreshing = isRefreshing,
                     onRefresh = onReload,
