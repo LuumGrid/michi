@@ -1,5 +1,7 @@
 package com.luum.michi.app.settings.domain.model
 
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+
 /**
  * AniList-synced settings payload. Theme and default discover tab are intentionally
  * excluded - they are local-only preferences with no AniList equivalent.

@@ -9,7 +9,7 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
-import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.TitleLanguage

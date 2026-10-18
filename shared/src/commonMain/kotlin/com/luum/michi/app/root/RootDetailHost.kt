@@ -21,8 +21,12 @@ import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
 import com.luum.michi.app.mediaDetail.ui.studio.StudioDetailScreen
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.domain.model.followsKindOfOrNull
 import com.luum.michi.app.profile.ui.favorites.ProfileFavoritesGridScreen
+import com.luum.michi.app.profile.ui.follows.ProfileFollowsScreen
 import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
+import com.luum.michi.app.profile.ui.reviews.ProfileReviewsScreen
+import com.luum.michi.app.profile.ui.stats.ProfileStatisticsScreen
 import com.luum.michi.app.root.state.State
 
 /**
@@ -37,6 +41,7 @@ internal fun RootDetailHost(
     strings: LanguageStrings,
     bottomPadding: Dp,
     urlOpener: UrlOpener,
+    viewerScoreFormat: String?,
 ) {
     when (destination) {
         is DetailDestination.Media -> MediaDetailScreen(
@@ -159,6 +164,44 @@ internal fun RootDetailHost(
                     onRetry = { holder.refresh() },
                     onOpen = { id -> state.openProfileFavorite(category, id) },
                     onRemove = { id -> holder.removeFavorite(id) },
+                )
+            }
+        }
+        is DetailDestination.ProfileStatistics -> {
+            val holder = holders.profile
+            if (holder != null) {
+                ProfileStatisticsScreen(
+                    holder = holder,
+                    scoreFormat = viewerScoreFormat,
+                    initialType = destination.type,
+                    strings = strings,
+                    bottomPadding = bottomPadding,
+                    onRetry = { holder.refresh() },
+                )
+            }
+        }
+        is DetailDestination.ProfileFollows -> {
+            val kind = followsKindOfOrNull(destination.kindId)
+            val holder = holders.profileFollows
+            if (kind != null && holder != null) {
+                ProfileFollowsScreen(
+                    holder = holder,
+                    strings = strings,
+                    bottomPadding = bottomPadding,
+                    onRetry = { holder.refresh() },
+                    onOpenUser = { url -> urlOpener.open(url) },
+                )
+            }
+        }
+        is DetailDestination.ProfileReviews -> {
+            val holder = holders.profileReviews
+            if (holder != null) {
+                ProfileReviewsScreen(
+                    holder = holder,
+                    strings = strings,
+                    bottomPadding = bottomPadding,
+                    onRetry = { holder.refresh() },
+                    onOpenMedia = { state.openMedia(it) },
                 )
             }
         }

@@ -22,11 +22,12 @@ import com.luum.michi.app.discover.ui.explore.ExploreScreen
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
+import com.luum.michi.app.profile.domain.model.ProfileFollowsKind
 import com.luum.michi.app.profile.ui.ProfileScreen
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
-import com.luum.michi.app.settings.domain.model.ScoreFormat
-import com.luum.michi.app.settings.domain.model.formatScoreValue
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.formatScoreValue
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.BottomEdgeFade
 import com.luum.michi.app.ui.components.MessagePanel
@@ -252,6 +253,10 @@ internal fun RootTabContent(
             bottomPadding = bottomPadding,
             onOpenFavorite = { category, id -> state.openProfileFavorite(category, id) },
             onViewAll = { state.openProfileFavorites(it.name) },
+            onOpenStatistics = { state.openProfileStatistics(it) },
+            onOpenFollowing = { state.openProfileFollows(ProfileFollowsKind.FOLLOWING.name) },
+            onOpenFollowers = { state.openProfileFollows(ProfileFollowsKind.FOLLOWERS.name) },
+            onOpenReviews = { state.openProfileReviews() },
         )
     } else if (
         (activeTab == TabSection.ANIME || activeTab == TabSection.MANGA ||

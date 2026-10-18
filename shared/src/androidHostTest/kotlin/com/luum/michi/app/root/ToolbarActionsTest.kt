@@ -23,6 +23,7 @@ class ToolbarActionsTest {
         isCatalogDetail: Boolean = false,
         isProfileFavorites: Boolean = false,
         isProfileFavoritesEditing: Boolean = false,
+        isProfileListPage: Boolean = false,
         isDetailList: Boolean = false,
         isDetailFavourite: Boolean = false,
         isGuest: Boolean = false,
@@ -38,6 +39,7 @@ class ToolbarActionsTest {
         isCatalogDetail = isCatalogDetail,
         isProfileFavorites = isProfileFavorites,
         isProfileFavoritesEditing = isProfileFavoritesEditing,
+        isProfileListPage = isProfileListPage,
         isDetailList = isDetailList,
         isDetailFavourite = isDetailFavourite,
         isGuest = isGuest,
@@ -94,6 +96,13 @@ class ToolbarActionsTest {
     @Test
     fun guestViewAllListHasNoActions() {
         assertTrue(detailActions(isDetailList = true, isGuest = true).isEmpty())
+    }
+
+    /** Statistics, follows and reviews are list pages: back chevron only. */
+    @Test
+    fun theProfileListPagesCarryNoActions() {
+        assertTrue(detailActions(isProfileListPage = true).isEmpty())
+        assertTrue(detailActions(isProfileListPage = true, isGuest = true).isEmpty())
     }
 
     @Test

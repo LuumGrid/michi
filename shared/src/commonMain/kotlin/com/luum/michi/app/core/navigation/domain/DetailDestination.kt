@@ -29,6 +29,22 @@ internal sealed interface DetailDestination {
     data class ProfileFavorites(val categoryId: String) : DetailDestination
 
     /**
+     * The viewer's statistics page, seeded on one catalog type (the header
+     * counter the user tapped). Data comes from the profile query, so this page
+     * costs no request of its own.
+     */
+    data class ProfileStatistics(val type: MediaType) : DetailDestination
+
+    /**
+     * The viewer's following or followers list. Core must not import `profile`,
+     * so the kind travels as its enum name.
+     */
+    data class ProfileFollows(val kindId: String) : DetailDestination
+
+    /** The viewer's reviews. Tapping one opens the reviewed media's detail. */
+    data object ProfileReviews : DetailDestination
+
+    /**
      * "View all" list reached from a detail page: the rail shows the first
      * items, this screen shows the whole (paginated) list. [parentId] keys
      * the source so `Root` can read the right holder.

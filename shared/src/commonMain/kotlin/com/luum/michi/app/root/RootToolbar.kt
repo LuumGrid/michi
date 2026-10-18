@@ -20,6 +20,7 @@ import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.catalogKindOf
 import com.luum.michi.app.discover.domain.model.selectedSeason
 import com.luum.michi.app.discover.domain.model.title
+import com.luum.michi.app.profile.domain.model.followsKindOfOrNull
 import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
 import com.luum.michi.app.profile.ui.model.title
 import com.luum.michi.app.root.state.RootOverlay
@@ -90,6 +91,9 @@ internal fun RootToolbar(
                 isCatalogDetail = state.currentDetail is DetailDestination.Catalog,
                 isProfileFavorites = state.currentDetail is DetailDestination.ProfileFavorites,
                 isProfileFavoritesEditing = state.favoritesEditing,
+                isProfileListPage = state.currentDetail is DetailDestination.ProfileStatistics ||
+                    state.currentDetail is DetailDestination.ProfileFollows ||
+                    state.currentDetail is DetailDestination.ProfileReviews,
                 isDetailList = state.currentDetail is DetailDestination.DetailList,
                 isDetailFavourite = isDetailFavourite,
                 isGuest = isGuest,
@@ -184,6 +188,8 @@ internal fun toolbarActions(
     isGenreDetail: Boolean,
     isCatalogDetail: Boolean = false,
     isProfileFavorites: Boolean = false,
+    // The statistics/follows/reviews pages carry only their back chevron.
+    isProfileListPage: Boolean = false,
     isDetailList: Boolean,
     isDetailFavourite: Boolean,
     isGuest: Boolean,
@@ -209,7 +215,7 @@ internal fun toolbarActions(
             contentDescription = strings.sortAction,
         )
         // A "View all" list has nothing but its back chevron.
-        if (isDetailList) return emptyList()
+        if (isDetailList || isProfileListPage) return emptyList()
         // The favourites grid carries only its edit toggle (pencil / check).
         if (isProfileFavorites) {
             return listOf(
@@ -425,5 +431,9 @@ private fun detailToolbarTitle(
         }
         is DetailDestination.ProfileFavorites ->
             favoritesCategoryOfOrNull(destination.categoryId)?.title(strings)
+        is DetailDestination.ProfileStatistics -> strings.profileStatisticsTitle
+        is DetailDestination.ProfileFollows ->
+            followsKindOfOrNull(destination.kindId)?.title(strings)
+        is DetailDestination.ProfileReviews -> strings.profileReviewsTitle
         else -> null
     }

@@ -203,8 +203,21 @@ interface LanguageStrings {
     val profileStatsStandardDeviationLabel: String
     val profileStatsScoreDistributionTitle: String
     val profileStatsFormatDistributionTitle: String
+    val profileStatsStatusDistributionTitle: String
     val profileStatsTopGenresTitle: String
     val profileStatsEmptyLabel: String
+    val profileStatisticsTitle: String
+    val profileStatsLoadingLabel: String
+    val profileStatsErrorLabel: String
+    val profileFollowsLoadingLabel: String
+    val profileFollowsErrorLabel: String
+    val profileFollowsEmptyLabel: String
+    val profileReviewsTitle: String
+    val profileReviewsLoadingLabel: String
+    val profileReviewsErrorLabel: String
+    val profileReviewsEmptyLabel: String
+    /** A review's fixed 0-100 rating, e.g. "85/100". */
+    fun profileReviewScoreLabel(score: Int): String
     val profileFavoritesGridEmptyLabel: String
     val profileLoadingLabel: String
     val profileErrorLabel: String

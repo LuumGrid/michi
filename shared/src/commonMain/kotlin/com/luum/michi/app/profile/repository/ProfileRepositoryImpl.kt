@@ -10,6 +10,10 @@ import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesPageSize
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
+import com.luum.michi.app.profile.domain.model.ProfileFollow
+import com.luum.michi.app.profile.domain.model.ProfileFollowsKind
+import com.luum.michi.app.profile.domain.model.ProfileListPageSize
+import com.luum.michi.app.profile.domain.model.ProfileReview
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.media.repository.dto.MediaDto
@@ -162,6 +166,44 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
     """.trimIndent()
 }
 
+private const val UserReviewsPageQuery = """
+query UserReviewsPage(${'$'}userId: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
+  Page(page: ${'$'}page, perPage: ${'$'}perPage) {
+    pageInfo { hasNextPage currentPage }
+    reviews(userId: ${'$'}userId, sort: [ID_DESC]) {
+      id
+      summary
+      score
+      media {
+        id
+        title { romaji english native userPreferred }
+        coverImage { extraLarge large medium color }
+      }
+    }
+  }
+}
+"""
+
+/** One page of the viewer's following or followers, the connection picked by [kind]. */
+private fun followsPageQuery(kind: ProfileFollowsKind): String {
+    val connection = when (kind) {
+        ProfileFollowsKind.FOLLOWING -> "following"
+        ProfileFollowsKind.FOLLOWERS -> "followers"
+    }
+    return """
+        query UserFollowsPage(${'$'}userId: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
+          Page(page: ${'$'}page, perPage: ${'$'}perPage) {
+            pageInfo { hasNextPage currentPage }
+            $connection(userId: ${'$'}userId) {
+              id
+              name
+              avatar { large medium }
+            }
+          }
+        }
+    """.trimIndent()
+}
+
 internal class ProfileRepositoryImpl(
     private val graphQLClient: AniListGraphQLClient,
     private val cache: ProfileDiskCache? = null,
@@ -224,31 +266,31 @@ internal class ProfileRepositoryImpl(
         }.map { response ->
             val favourites = response.user?.favourites
             when (category) {
-                ProfileFavoritesCategory.ANIME -> favoritePage(
+                ProfileFavoritesCategory.ANIME -> profilePage(
                     nodes = favourites?.anime?.nodes,
                     pageInfo = favourites?.anime?.pageInfo,
                     requestedPage = page,
                     map = MediaDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.MANGA -> favoritePage(
+                ProfileFavoritesCategory.MANGA -> profilePage(
                     nodes = favourites?.manga?.nodes,
                     pageInfo = favourites?.manga?.pageInfo,
                     requestedPage = page,
                     map = MediaDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.CHARACTERS -> favoritePage(
+                ProfileFavoritesCategory.CHARACTERS -> profilePage(
                     nodes = favourites?.characters?.nodes,
                     pageInfo = favourites?.characters?.pageInfo,
                     requestedPage = page,
                     map = CharacterDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.STAFF -> favoritePage(
+                ProfileFavoritesCategory.STAFF -> profilePage(
                     nodes = favourites?.staff?.nodes,
                     pageInfo = favourites?.staff?.pageInfo,
                     requestedPage = page,
                     map = StaffDto::toProfileFavorite,
                 )
-                ProfileFavoritesCategory.STUDIOS -> favoritePage(
+                ProfileFavoritesCategory.STUDIOS -> profilePage(
                     nodes = favourites?.studios?.nodes,
                     pageInfo = favourites?.studios?.pageInfo,
                     requestedPage = page,
@@ -257,16 +299,75 @@ internal class ProfileRepositoryImpl(
             }
         }
     }
+
+    override suspend fun loadFollowsPage(
+        userId: Int,
+        kind: ProfileFollowsKind,
+        page: Int,
+    ): NetworkResult<Page<ProfileFollow>> {
+        val request = AniListGraphQLRequest(
+            query = followsPageQuery(kind),
+            variables = JsonObject(
+                mapOf(
+                    "userId" to JsonPrimitive(userId),
+                    "page" to JsonPrimitive(page),
+                    "perPage" to JsonPrimitive(ProfileListPageSize),
+                ),
+            ),
+            operationName = "UserFollowsPage",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(FollowsListResponseDto.serializer(), dataJson)
+        }.map { response ->
+            val pageDto = response.page
+            val users = when (kind) {
+                ProfileFollowsKind.FOLLOWING -> pageDto?.following
+                ProfileFollowsKind.FOLLOWERS -> pageDto?.followers
+            }
+            profilePage(
+                nodes = users,
+                pageInfo = pageDto?.pageInfo,
+                requestedPage = page,
+                map = ProfileUserDto::toProfileFollow,
+            )
+        }
+    }
+
+    override suspend fun loadReviewsPage(userId: Int, page: Int): NetworkResult<Page<ProfileReview>> {
+        val request = AniListGraphQLRequest(
+            query = UserReviewsPageQuery,
+            variables = JsonObject(
+                mapOf(
+                    "userId" to JsonPrimitive(userId),
+                    "page" to JsonPrimitive(page),
+                    "perPage" to JsonPrimitive(ProfileListPageSize),
+                ),
+            ),
+            operationName = "UserReviewsPage",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(ReviewsListResponseDto.serializer(), dataJson)
+        }.map { response ->
+            profilePage(
+                nodes = response.page?.reviews,
+                pageInfo = response.page?.pageInfo,
+                requestedPage = page,
+                map = ProfileReviewDto::toProfileReview,
+            )
+        }
+    }
 }
 
-/** Maps one favourites connection to a [Page], dedup left to the holder's PagedList. */
-private fun <T> favoritePage(
-    nodes: List<T>?,
+/** Maps one paged connection to a [Page], dedup left to the holder's PagedList. */
+private fun <T, R> profilePage(
+    nodes: List<T?>?,
     pageInfo: PageInfoDto?,
     requestedPage: Int,
-    map: (T) -> ProfileFavorite,
-): Page<ProfileFavorite> = Page(
-    items = nodes.orEmpty().map(map),
+    map: (T) -> R,
+): Page<R> = Page(
+    items = nodes.orEmpty().mapNotNull { it?.let(map) },
     hasNextPage = pageInfo?.hasNextPage ?: false,
     currentPage = pageInfo?.currentPage ?: requestedPage,
 )

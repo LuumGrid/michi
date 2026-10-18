@@ -3,6 +3,9 @@ package com.luum.michi.app.profile.domain
 import com.luum.michi.app.profile.domain.model.ProfileFavorites
 import com.luum.michi.app.profile.domain.model.ProfileFavoritesCategory
 import com.luum.michi.app.profile.domain.model.ProfileFavorite
+import com.luum.michi.app.profile.domain.model.ProfileFollow
+import com.luum.michi.app.profile.domain.model.ProfileFollowsKind
+import com.luum.michi.app.profile.domain.model.ProfileReview
 import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -51,4 +54,17 @@ internal interface ProfileRepository {
         category: ProfileFavoritesCategory,
         page: Int,
     ): NetworkResult<Page<ProfileFavorite>>
+
+    /**
+     * Fetches one page of the viewer's following or followers list. Public on
+     * AniList, so the caller caches it in memory only (no disk).
+     */
+    suspend fun loadFollowsPage(
+        userId: Int,
+        kind: ProfileFollowsKind,
+        page: Int,
+    ): NetworkResult<Page<ProfileFollow>>
+
+    /** Fetches one page of the viewer's reviews, newest first. Public, memory-only. */
+    suspend fun loadReviewsPage(userId: Int, page: Int): NetworkResult<Page<ProfileReview>>
 }

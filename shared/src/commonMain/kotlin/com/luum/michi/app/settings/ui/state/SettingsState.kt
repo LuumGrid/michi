@@ -16,12 +16,12 @@ import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.NotificationPreferences
-import com.luum.michi.app.settings.domain.model.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.parseScoreFormat
 import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.TitleLanguage
-import com.luum.michi.app.settings.domain.model.parseScoreFormat
 import com.luum.michi.app.settings.domain.model.parseTitleLanguage
 import com.luum.michi.app.ui.state.LatestRequest
 import com.luum.michi.app.ui.theme.AppFont

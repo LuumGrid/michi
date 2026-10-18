@@ -249,6 +249,7 @@ internal fun Root(
                                 strings = strings,
                                 bottomPadding = padding.calculateBottomPadding(),
                                 urlOpener = urlOpener,
+                                viewerScoreFormat = viewer?.scoreFormat,
                             )
                         } else if (state.isOpen(RootOverlay.Calendar)) {
                             // Airing schedule overlay (fullscreen, tab bar hidden):

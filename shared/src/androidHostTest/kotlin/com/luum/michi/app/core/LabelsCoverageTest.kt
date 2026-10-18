@@ -7,6 +7,7 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
 import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
@@ -18,10 +19,9 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.label
+import com.luum.michi.app.settings.domain.model.ListSort
 import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
-import com.luum.michi.app.settings.domain.model.ListSort
-import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.domain.model.ThemeMode
 import com.luum.michi.app.settings.domain.model.TitleLanguage

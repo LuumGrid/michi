@@ -21,6 +21,7 @@ import com.luum.michi.app.discover.domain.model.catalogKindOf
 import com.luum.michi.app.discover.domain.model.genreCatalogFilter
 import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.profile.ui.model.favoritesCategoryOfOrNull
+import com.luum.michi.app.profile.domain.model.followsKindOfOrNull
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -246,6 +247,20 @@ internal fun RootEffects(
                 if (category != null && viewerId != null) {
                     holders.profileFavorites?.load(viewerId, category)
                 }
+            }
+            // Statistics come from the profile query: a load here is 0 requests
+            // while the TTL is fresh. Follows and reviews own their paged query.
+            is DetailDestination.ProfileStatistics -> {
+                if (viewerId != null) holders.profile?.load(viewerId)
+            }
+            is DetailDestination.ProfileFollows -> {
+                val kind = followsKindOfOrNull(destination.kindId)
+                if (kind != null && viewerId != null) {
+                    holders.profileFollows?.load(viewerId, kind)
+                }
+            }
+            is DetailDestination.ProfileReviews -> {
+                if (viewerId != null) holders.profileReviews?.load(viewerId)
             }
             null -> {}
         }

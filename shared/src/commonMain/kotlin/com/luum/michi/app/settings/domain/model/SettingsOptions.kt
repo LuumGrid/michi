@@ -35,31 +35,6 @@ internal fun StaffNameLanguage.label(strings: LanguageStrings): String = when (t
     StaffNameLanguage.NATIVE -> strings.settingsStaffNameNative
 }
 
-internal enum class ScoreFormat {
-    POINT_100,
-    POINT_10_DECIMAL,
-    POINT_10,
-    POINT_5_STARS,
-    POINT_3_SMILEYS,
-}
-
-/** Parses AniList's raw `ScoreFormat` value (`Viewer.mediaListOptions.scoreFormat`). */
-internal fun parseScoreFormat(raw: String?): ScoreFormat = when (raw) {
-    "POINT_100" -> ScoreFormat.POINT_100
-    "POINT_10" -> ScoreFormat.POINT_10
-    "POINT_5" -> ScoreFormat.POINT_5_STARS
-    "POINT_3" -> ScoreFormat.POINT_3_SMILEYS
-    else -> ScoreFormat.POINT_10_DECIMAL
-}
-
-internal fun ScoreFormat.label(strings: LanguageStrings): String = when (this) {
-    ScoreFormat.POINT_100 -> strings.settingsScoreFormatPoint100
-    ScoreFormat.POINT_10_DECIMAL -> strings.settingsScoreFormatPoint10Decimal
-    ScoreFormat.POINT_10 -> strings.settingsScoreFormatPoint10
-    ScoreFormat.POINT_5_STARS -> strings.settingsScoreFormatPoint5Stars
-    ScoreFormat.POINT_3_SMILEYS -> strings.settingsScoreFormatPoint3Smileys
-}
-
 internal enum class ListSort {
     TITLE,
     SCORE,

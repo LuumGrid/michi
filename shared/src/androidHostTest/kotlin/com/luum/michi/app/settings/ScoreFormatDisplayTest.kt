@@ -1,11 +1,11 @@
 package com.luum.michi.app.settings
 
-import com.luum.michi.app.settings.domain.model.ScoreFormat
-import com.luum.michi.app.settings.domain.model.formatScoreValue
-import com.luum.michi.app.settings.domain.model.parseScoreValue
-import com.luum.michi.app.settings.domain.model.scoreMaxFor
-import com.luum.michi.app.settings.domain.model.scoreStepFor
-import com.luum.michi.app.settings.domain.model.scoreSuffixFor
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.formatScoreValue
+import com.luum.michi.app.core.medialist.domain.parseScoreValue
+import com.luum.michi.app.core.medialist.domain.scoreMaxFor
+import com.luum.michi.app.core.medialist.domain.scoreStepFor
+import com.luum.michi.app.core.medialist.domain.scoreSuffixFor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

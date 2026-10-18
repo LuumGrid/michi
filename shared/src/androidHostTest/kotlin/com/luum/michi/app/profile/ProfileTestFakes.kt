@@ -161,3 +161,39 @@ private fun studioFavoriteJson(id: Int, name: String): JsonObject = buildJsonObj
     put("id", id)
     put("name", name)
 }
+
+// ── Social lists (following/followers and reviews) ──────────────────────────
+
+/** One follows page (`kind` = "following"/"followers") shaped for the DTO. */
+internal fun followsPage(kind: String, hasNextPage: Boolean, vararg nodes: Pair<Int, String>) =
+    buildJsonObject {
+        put("Page", buildJsonObject {
+            put("pageInfo", buildJsonObject { put("hasNextPage", hasNextPage) })
+            put(kind, JsonArray(nodes.map { node ->
+                buildJsonObject {
+                    put("id", node.first)
+                    put("name", node.second)
+                    put("avatar", buildJsonObject { put("large", "https://img/${node.first}.png") })
+                }
+            }))
+        })
+    }
+
+/** One reviews page: each node is (reviewId, mediaId, mediaTitle). */
+internal fun reviewsPage(hasNextPage: Boolean, vararg nodes: Triple<Int, Int, String>) =
+    buildJsonObject {
+        put("Page", buildJsonObject {
+            put("pageInfo", buildJsonObject { put("hasNextPage", hasNextPage) })
+            put("reviews", JsonArray(nodes.map { node ->
+                buildJsonObject {
+                    put("id", node.first)
+                    put("summary", "summary-${node.first}")
+                    put("score", 80)
+                    put("media", buildJsonObject {
+                        put("id", node.second)
+                        put("title", buildJsonObject { put("userPreferred", node.third) })
+                    })
+                }
+            }))
+        })
+    }

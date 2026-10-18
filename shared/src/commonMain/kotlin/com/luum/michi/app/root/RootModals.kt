@@ -24,11 +24,11 @@ import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
-import com.luum.michi.app.settings.domain.model.formatScoreValue
-import com.luum.michi.app.settings.domain.model.parseScoreValue
-import com.luum.michi.app.settings.domain.model.scoreMaxFor
-import com.luum.michi.app.settings.domain.model.scoreStepFor
-import com.luum.michi.app.settings.domain.model.scoreSuffixFor
+import com.luum.michi.app.core.medialist.domain.formatScoreValue
+import com.luum.michi.app.core.medialist.domain.parseScoreValue
+import com.luum.michi.app.core.medialist.domain.scoreMaxFor
+import com.luum.michi.app.core.medialist.domain.scoreStepFor
+import com.luum.michi.app.core.medialist.domain.scoreSuffixFor
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.ActionRow
 import com.luum.michi.app.ui.components.DetailGridSortOptions
@@ -203,6 +203,10 @@ private fun detailOverflowFor(destination: DetailDestination?, holders: RootHold
         is DetailDestination.Catalog -> null
         // A favourites grid is a list of entities, not an entity.
         is DetailDestination.ProfileFavorites -> null
+        // The statistics/follows/reviews pages are not entities either.
+        is DetailDestination.ProfileStatistics -> null
+        is DetailDestination.ProfileFollows -> null
+        is DetailDestination.ProfileReviews -> null
         is DetailDestination.DetailList -> null
         null -> null
     }

@@ -42,8 +42,12 @@ import com.luum.michi.app.notifications.ui.state.NotificationsStateHolder
 import com.luum.michi.app.notifications.ui.state.createNotificationsStateHolder
 import com.luum.michi.app.profile.domain.ProfileRepository
 import com.luum.michi.app.profile.ui.state.ProfileFavoritesGridStateHolder
+import com.luum.michi.app.profile.ui.state.ProfileFollowsStateHolder
+import com.luum.michi.app.profile.ui.state.ProfileReviewsStateHolder
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
 import com.luum.michi.app.profile.ui.state.createProfileFavoritesGridStateHolder
+import com.luum.michi.app.profile.ui.state.createProfileFollowsStateHolder
+import com.luum.michi.app.profile.ui.state.createProfileReviewsStateHolder
 import com.luum.michi.app.profile.ui.state.createProfileStateHolder
 import com.luum.michi.app.root.state.toDashboardMediaType
 import com.luum.michi.app.settings.ui.state.SettingsState
@@ -73,6 +77,8 @@ internal class RootHolders(
     val catalog: CatalogGridStateHolder,
     val profile: ProfileStateHolder?,
     val profileFavorites: ProfileFavoritesGridStateHolder?,
+    val profileFollows: ProfileFollowsStateHolder?,
+    val profileReviews: ProfileReviewsStateHolder?,
     val notifications: NotificationsStateHolder?,
     /**
      * Single favourite-change router: applies a change to the detail holder of
@@ -100,6 +106,9 @@ internal class RootHolders(
         is DetailDestination.Genre,
         is DetailDestination.Catalog -> catalog
         is DetailDestination.ProfileFavorites -> null
+        is DetailDestination.ProfileStatistics -> null
+        is DetailDestination.ProfileFollows -> null
+        is DetailDestination.ProfileReviews -> null
         is DetailDestination.DetailList -> null
         null -> null
     }
@@ -301,6 +310,16 @@ internal fun rememberRootHolders(
             )
         }
     }
+    // The follows and reviews lists: public AniList data, memory-only, re-keyed
+    // per viewer like the rest of the profile.
+    val profileFollowsScope = rememberHolderScope(listScope, viewerId)
+    val profileFollowsHolder = remember(viewerId, profileRepository, profileFollowsScope) {
+        viewerId?.let { createProfileFollowsStateHolder(profileRepository, profileFollowsScope) }
+    }
+    val profileReviewsScope = rememberHolderScope(listScope, viewerId)
+    val profileReviewsHolder = remember(viewerId, profileRepository, profileReviewsScope) {
+        viewerId?.let { createProfileReviewsStateHolder(profileRepository, profileReviewsScope) }
+    }
 
     return remember(
         listScope,
@@ -316,6 +335,8 @@ internal fun rememberRootHolders(
         catalogHolder,
         profileHolder,
         profileFavoritesHolder,
+        profileFollowsHolder,
+        profileReviewsHolder,
         notificationsHolder,
         favouriteRouter,
     ) {
@@ -333,6 +354,8 @@ internal fun rememberRootHolders(
             catalog = catalogHolder,
             profile = profileHolder,
             profileFavorites = profileFavoritesHolder,
+            profileFollows = profileFollowsHolder,
+            profileReviews = profileReviewsHolder,
             notifications = notificationsHolder,
             onFavouriteChanged = favouriteRouter,
         )

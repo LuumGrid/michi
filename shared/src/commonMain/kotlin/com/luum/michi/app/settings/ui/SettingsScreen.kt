@@ -39,8 +39,9 @@ import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+import com.luum.michi.app.core.medialist.domain.label
 import com.luum.michi.app.settings.domain.model.ListSort
-import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.StaffNameLanguage
 import com.luum.michi.app.settings.ui.model.StartDestinationChoice
 import com.luum.michi.app.settings.domain.model.StartTabOption
