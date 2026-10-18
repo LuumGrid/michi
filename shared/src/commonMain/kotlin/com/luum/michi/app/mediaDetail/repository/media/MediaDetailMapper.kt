@@ -23,6 +23,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaEntryEditorData
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
@@ -72,6 +73,7 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
             .distinctBy { it.mediaId },
         characters = characters.toCharactersPage(currentPage = 1),
         staff = staff.toStaffPage(currentPage = 1),
+        recommendations = recommendations.toRecommendationsPage(fallbackPage = 1),
         titleRomaji = title?.romaji,
         titleNative = title?.native,
         synonyms = synonyms,
@@ -142,6 +144,41 @@ internal fun MediaStaffConnectionDto?.toStaffPage(currentPage: Int): Page<MediaS
         items = edges.mapIndexedNotNull { index, edge -> edge.toEntry(currentPage, index) },
         hasNextPage = this?.pageInfo?.hasNextPage == true,
         currentPage = this?.pageInfo?.currentPage ?: currentPage,
+    )
+}
+
+/**
+ * The `Media.recommendations` connection as a page. A media can repeat (one
+ * node per user recommendation), so the items are collapsed by id — otherwise
+ * the grid's keys collide. Shared by the media detail (page 1) and the
+ * page-2+ query.
+ */
+internal fun MediaRecommendationsConnectionDto?.toRecommendationsPage(
+    fallbackPage: Int,
+): Page<MediaRecommendationEntry> {
+    val items = this?.nodes.orEmpty().mapNotNull { node ->
+        val recMedia = node.mediaRecommendation ?: return@mapNotNull null
+        MediaRecommendationEntry(
+            id = recMedia.id,
+            title = recMedia.title.bestTitle(),
+            cover = recMedia.coverImage?.toCoverSizes(),
+            format = recMedia.format?.toTitleCase(),
+            season = parseMediaSeason(recMedia.season),
+            year = recMedia.seasonYear,
+            workStatus = parseMediaWorkStatus(recMedia.status),
+            episodesCount = recMedia.episodes,
+            chaptersCount = recMedia.chapters,
+            volumesCount = recMedia.volumes,
+            averageScore = recMedia.averageScore,
+            favouritesCount = recMedia.favourites,
+            likesCount = node.rating,
+            viewerStatus = recMedia.mediaListEntry?.status,
+        )
+    }.distinctBy { it.id }
+    return Page(
+        items = items,
+        hasNextPage = this?.pageInfo?.hasNextPage == true,
+        currentPage = this?.pageInfo?.currentPage ?: fallbackPage,
     )
 }
 

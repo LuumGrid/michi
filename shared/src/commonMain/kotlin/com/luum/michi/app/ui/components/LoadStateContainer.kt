@@ -36,6 +36,7 @@ internal fun LoadStateContainer(
     isLoading: Boolean,
     errorMessage: String?,
     loadingLabel: String,
+    waitingLabel: String,
     errorTitle: String,
     retryLabel: String,
     onRetry: () -> Unit,
@@ -50,7 +51,11 @@ internal fun LoadStateContainer(
     content: @Composable () -> Unit,
 ) {
     when {
-        !hasContent && isLoading -> LoadingPanel(label = loadingLabel, modifier = modifier)
+        !hasContent && isLoading -> LoadingPanel(
+            label = loadingLabel,
+            waitingLabel = waitingLabel,
+            modifier = modifier,
+        )
         !hasContent && errorMessage != null -> {
             MessagePanel(
                 title = errorTitle,

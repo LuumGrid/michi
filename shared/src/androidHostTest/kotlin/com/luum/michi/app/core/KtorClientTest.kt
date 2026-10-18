@@ -25,6 +25,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 
 private fun client(
     handler: MockEngine,
@@ -94,6 +96,37 @@ class KtorClientTest {
         val result = runExecute(client(engine)) { data -> data.toString() }
         assertEquals(NetworkResult.Failure(NetworkError.RateLimited(0)), result)
         assertEquals(3, calls)
+    }
+
+    @Test
+    fun rateLimitedRetryWaitsThroughTheLimiterAndIsVisible() {
+        var calls = 0
+        val engine = MockEngine {
+            calls++
+            if (calls == 1) {
+                respond("slow", HttpStatusCode.TooManyRequests, headersOf("Retry-After", "5"))
+            } else {
+                respond("""{"data":{"ok":true}}""", HttpStatusCode.OK)
+            }
+        }
+        // Virtual clock + injected pause: the retry's wait is advanced instantly.
+        val clock = TestTimeSource()
+        val observed = mutableListOf<Int>()
+        lateinit var limiter: AniListRateLimiter
+        limiter = AniListRateLimiter(clock) { ms ->
+            observed += limiter.waitingRequests.value
+            clock += ms.milliseconds
+        }
+
+        val result = runExecute(client(engine, limiter)) { data ->
+            data.jsonObject["ok"]!!.jsonPrimitive.boolean
+        }
+
+        assertEquals(NetworkResult.Success(true), result)
+        assertEquals(2, calls)
+        // The 429's Retry-After pause is now a phase-1 wait: surfaced while parked.
+        assertEquals(listOf(1), observed, "the retry wait is counted as a parked request")
+        assertEquals(0, limiter.waitingRequests.value, "and clears once admitted")
     }
 
     @Test

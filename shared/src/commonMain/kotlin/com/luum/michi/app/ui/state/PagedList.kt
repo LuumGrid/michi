@@ -18,8 +18,7 @@ import kotlinx.coroutines.CoroutineScope
  * `isCurrent()` still holds, so a page from the previous entity/sort never lands.
  *
  * [set] seeds the first page (the holders that get it inside the detail
- * response); [loadFirst] replaces it from its own call (recommendations);
- * [loadMore] appends `currentPage + 1` and stops until [set]/[loadFirst] started.
+ * response); [loadMore] appends `currentPage + 1` and stops until [set] started.
  */
 internal class PagedList<T>(
     private val merge: (List<T>, List<T>) -> List<T> = { a, b -> a + b },
@@ -63,32 +62,6 @@ internal class PagedList<T>(
     fun cancel() {
         pageRequest.cancel()
         isLoadingMore = false
-    }
-
-    /**
-     * Loads page 1 and replaces the list. Only the recommendations list uses it;
-     * the other holders seed their first page from the detail response via [set].
-     */
-    fun loadFirst(
-        scope: CoroutineScope,
-        isCurrent: () -> Boolean,
-        fetch: suspend () -> NetworkResult<Page<T>>,
-        onLoaded: () -> Unit = {},
-        onError: (NetworkError) -> Unit = {},
-    ) {
-        if (isLoadingMore) return
-        request(scope) {
-            when (val result = fetch()) {
-                is NetworkResult.Success -> if (isCurrent()) {
-                    items = merge(emptyList(), result.value.items)
-                    hasNextPage = result.value.hasNextPage
-                    currentPage = result.value.currentPage
-                    started = true
-                    onLoaded()
-                }
-                is NetworkResult.Failure -> if (isCurrent()) onError(result.error)
-            }
-        }
     }
 
     fun loadMore(

@@ -47,6 +47,7 @@ import com.luum.michi.app.ui.LocalImageQuality
 import com.luum.michi.app.core.model.resolved
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.LocalStrings
+import com.luum.michi.app.ui.network.LocalNetworkThrottle
 import com.luum.michi.app.ui.theme.Theme
 import kotlinx.coroutines.launch
 
@@ -125,6 +126,7 @@ fun App(
     CompositionLocalProvider(
         LocalStrings provides strings,
         LocalImageQuality provides settingsState.imageQuality.resolved(unmeteredConnection),
+        LocalNetworkThrottle provides dependencies.networkThrottle,
     ) {
         Theme(
             palette = settingsState.palette,

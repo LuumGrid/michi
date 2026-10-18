@@ -1,7 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -102,8 +101,6 @@ private fun MediaDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val isManga = detail.type == MediaDetailType.MANGA
-    // Recommendations are a second, lazy query: fire once per media opened.
-    LaunchedEffect(detail.id) { holder.loadRecommendations() }
     // Streaming (Crunchyroll…) and everything else (social/official) share one
     // framed panel with two subtitles; AniList marks the difference by `type`.
     val streamingLinks = detail.externalLinks.filter { it.type.equals("STREAMING", ignoreCase = true) }

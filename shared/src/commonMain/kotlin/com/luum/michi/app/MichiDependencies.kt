@@ -18,6 +18,8 @@ import com.luum.michi.app.core.auth.domain.AniListTokenStorage
 import com.luum.michi.app.core.auth.domain.parseAniListOAuthCallback
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.NetworkThrottle
+import com.luum.michi.app.core.network.repository.AniListRateLimiter
 import com.luum.michi.app.core.network.repository.KtorAniListGraphQLClient
 import com.luum.michi.app.core.network.repository.createAniListHttpClient
 import com.luum.michi.app.core.session.domain.AniListViewerRepository
@@ -84,6 +86,17 @@ class MichiDependencies internal constructor(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     internal val httpClient: HttpClient = createAniListHttpClient()
+
+    /**
+     * One rate limiter for the whole process: the client sends through it and
+     * [networkThrottle] exposes its wait state to the UI. Sharing the instance
+     * means a single window/semaphore, and a single honest "the brake is on".
+     */
+    private val rateLimiter: AniListRateLimiter = AniListRateLimiter()
+
+    /** Read-only wait state of [rateLimiter], for the UI notice. */
+    internal val networkThrottle: NetworkThrottle = rateLimiter
+
     internal val graphQLClient: AniListGraphQLClient = KtorAniListGraphQLClient(
         httpClient = httpClient,
         // Never send an expired token: it would 401 forever, so an expired stored
@@ -99,6 +112,7 @@ class MichiDependencies internal constructor(
             }
         },
         debugLogging = isDebug,
+        rateLimiter = rateLimiter,
         // A mid-session 401 closes the session only if that token is still the
         // stored one (a stale 401 never closes a newer session).
         onUnauthorized = { token -> scope.launch { sessionManager.onUnauthorized(token) } },

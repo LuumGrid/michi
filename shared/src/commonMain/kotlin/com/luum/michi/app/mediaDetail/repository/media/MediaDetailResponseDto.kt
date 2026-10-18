@@ -9,6 +9,7 @@ import com.luum.michi.app.core.media.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import com.luum.michi.app.core.person.repository.dto.PersonNameDto
+import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -68,6 +69,7 @@ internal data class MediaDetailDto(
     val relations: MediaRelationConnectionDto? = null,
     val characters: MediaCharacterConnectionDto? = null,
     val staff: MediaStaffConnectionDto? = null,
+    val recommendations: MediaRecommendationsConnectionDto? = null,
     val tags: List<MediaTagDto> = emptyList(),
     val externalLinks: List<MediaExternalLinkDto> = emptyList(),
     val trailer: MediaTrailerDto? = null,
@@ -167,4 +169,39 @@ internal data class MediaRelationNodeDto(
     val season: String? = null,
     val seasonYear: Int? = null,
     val startDate: FuzzyDateDto? = null,
+)
+
+/**
+ * The `Media.recommendations` connection, shared by the media detail query
+ * (page 1, embedded in [MediaDetailDto]) and the page-2+ query
+ * (`MediaRecommendationsPage`).
+ */
+@Serializable
+internal data class MediaRecommendationsConnectionDto(
+    val pageInfo: PageInfoDto? = null,
+    val nodes: List<MediaRecommendationNodeDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaRecommendationNodeDto(
+    val id: Int,
+    val rating: Int = 0,
+    val mediaRecommendation: MediaRecommendationMediaDto? = null,
+)
+
+@Serializable
+internal data class MediaRecommendationMediaDto(
+    val id: Int,
+    val title: MediaTitleDto? = null,
+    val coverImage: MediaCoverImageDto? = null,
+    val format: String? = null,
+    val status: String? = null,
+    val season: String? = null,
+    val seasonYear: Int? = null,
+    val episodes: Int? = null,
+    val chapters: Int? = null,
+    val volumes: Int? = null,
+    val averageScore: Int? = null,
+    val favourites: Int? = null,
+    val mediaListEntry: MediaListStatusDto? = null,
 )

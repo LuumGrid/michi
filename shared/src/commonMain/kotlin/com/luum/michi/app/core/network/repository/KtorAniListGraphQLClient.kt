@@ -17,8 +17,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -125,10 +123,13 @@ internal class KtorAniListGraphQLClient(
                 429 -> {
                     val retryAfterSeconds = response.headers["Retry-After"]?.toLongOrNull()
                         ?: AniListNetworkPolicy.DEFAULT_RETRY_AFTER_SECONDS
-                    // Inform the limiter so concurrent callers also pause.
+                    // Inform the limiter so this caller (and every concurrent one)
+                    // pauses for the server-mandated interval. The retry below goes
+                    // through withPermit again, which waits that pause in phase 1 —
+                    // so the wait is the same but now it is visible in
+                    // NetworkThrottle.waitingRequests instead of an unseen delay.
                     rateLimiter.onRateLimited(retryAfterSeconds)
                     if (retriesLeft > 0) {
-                        delay(retryAfterSeconds.seconds)
                         executeWithRetry(request, parseData, retriesLeft - 1)
                     } else {
                         NetworkResult.Failure(NetworkError.RateLimited(retryAfterSeconds.toInt()))

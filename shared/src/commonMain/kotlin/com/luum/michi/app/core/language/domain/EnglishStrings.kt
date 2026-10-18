@@ -294,6 +294,7 @@ object EnglishStrings : LanguageStrings {
     override val retryAction = "Retry"
     override val viewAllAction = "View all"
     override val listsLoadingLabel = "Loading your list..."
+    override val networkThrottleWaitingLabel = "AniList limits requests per minute. It will load in a few seconds."
     override val listsEmptyLabel = "Your list is empty"
     override val listsErrorLabel = "Could not load your list"
     override val listsIncrementEpisodeAction = "+1 EP"

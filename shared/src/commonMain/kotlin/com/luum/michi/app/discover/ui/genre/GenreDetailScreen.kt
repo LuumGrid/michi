@@ -40,6 +40,7 @@ internal fun GenreDetailScreen(
         isLoading = holder.isLoading,
         errorMessage = holder.error?.let { strings.networkErrorMessage(it) },
         loadingLabel = strings.mediaDetailLoadingLabel,
+        waitingLabel = strings.networkThrottleWaitingLabel,
         errorTitle = strings.mediaDetailErrorLabel,
         retryLabel = strings.retryAction,
         onRetry = onRetry,

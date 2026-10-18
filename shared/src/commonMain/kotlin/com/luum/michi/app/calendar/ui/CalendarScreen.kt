@@ -124,7 +124,10 @@ internal fun CalendarScreen(
             }
             when {
                 holder.isLoading && !hasLoadedDay -> {
-                    LoadingPanel(label = strings.listsLoadingLabel)
+                    LoadingPanel(
+                        label = strings.listsLoadingLabel,
+                        waitingLabel = strings.networkThrottleWaitingLabel,
+                    )
                 }
                 holder.error != null && !hasLoadedDay -> {
                     MessagePanel(

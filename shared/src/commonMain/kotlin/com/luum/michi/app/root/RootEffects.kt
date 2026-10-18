@@ -197,11 +197,6 @@ internal fun RootEffects(
                 DetailListKind.MEDIA_RELATED,
                 DetailListKind.MEDIA_RECOMMENDATIONS -> {
                     holders.mediaDetail.load(destination.parentId)
-                    // Recommendations are a per-visit query, not cached: refetch
-                    // the parent's page 1 so the "View all" list is not empty.
-                    if (destination.kind == DetailListKind.MEDIA_RECOMMENDATIONS) {
-                        holders.mediaDetail.loadRecommendations()
-                    }
                 }
                 DetailListKind.CHARACTER_MEDIA -> holders.character.load(destination.parentId)
                 DetailListKind.STAFF_MEDIA,

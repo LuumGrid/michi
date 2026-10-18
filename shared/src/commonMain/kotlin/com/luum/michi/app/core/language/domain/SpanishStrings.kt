@@ -296,6 +296,7 @@ object SpanishStrings : LanguageStrings {
     override val retryAction = "Reintentar"
     override val viewAllAction = "Ver todo"
     override val listsLoadingLabel = "Cargando tu lista..."
+    override val networkThrottleWaitingLabel = "AniList limita las consultas por minuto. Cargará en unos segundos."
     override val listsEmptyLabel = "Tu lista esta vacia"
     override val listsErrorLabel = "No se pudo cargar tu lista"
     override val listsIncrementEpisodeAction = "+1 EP"

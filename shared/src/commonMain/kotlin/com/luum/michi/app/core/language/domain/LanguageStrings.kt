@@ -278,6 +278,8 @@ interface LanguageStrings {
     val retryAction: String
     val viewAllAction: String
     val listsLoadingLabel: String
+    /** Shown under a first-load spinner while the rate limiter holds requests. */
+    val networkThrottleWaitingLabel: String
     val listsEmptyLabel: String
     val listsErrorLabel: String
     val listsIncrementEpisodeAction: String

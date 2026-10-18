@@ -57,6 +57,7 @@ internal data class MediaDetail(
     val relations: List<MediaDetailRelation>,
     val characters: Page<MediaCharacterEntry>,
     val staff: Page<MediaStaffEntry>,
+    val recommendations: Page<MediaRecommendationEntry>,
     val titleRomaji: String?,
     val titleNative: String?,
     val synonyms: List<String>,

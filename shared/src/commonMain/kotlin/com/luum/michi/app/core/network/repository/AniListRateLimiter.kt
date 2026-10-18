@@ -1,7 +1,12 @@
 package com.luum.michi.app.core.network.repository
 
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
+import com.luum.michi.app.core.network.domain.NetworkThrottle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -28,8 +33,18 @@ import kotlin.time.TimeSource
  * [withPermit] holds the concurrency permit only for the duration of the block (the
  * network round-trip) and releases it in a `finally` even on cancellation/exception,
  * so a canceled coroutine can never leak a permit and stall future requests.
+ *
+ * It also implements [NetworkThrottle]: [waitingRequests] counts the callers still
+ * parked in phase 1, so the UI can show an honest notice while the brake is on.
+ *
+ * [timeSource] and [pause] are injectable only for tests: production uses the
+ * monotonic clock and the real [delay]. A test can drive a virtual clock and skip
+ * the wait entirely (see `AniListRateLimiterTest`).
  */
-internal class AniListRateLimiter {
+internal class AniListRateLimiter(
+    private val timeSource: TimeSource = TimeSource.Monotonic,
+    private val pause: suspend (Long) -> Unit = { delay(it.milliseconds) },
+) : NetworkThrottle {
 
     private companion object {
         const val WINDOW_LIMIT = 28          // slots per rolling window (30 - 2 safety margin)
@@ -37,9 +52,13 @@ internal class AniListRateLimiter {
         const val MAX_IN_FLIGHT = 5         // max concurrent HTTP calls
         const val LOW_REMAINING_THRESHOLD = 2
         const val FIXED_BACKOFF_MILLIS = 5_000L  // fallback when no reset header
+        // Waits shorter than this are not surfaced: they would flicker the notice.
+        const val MIN_VISIBLE_WAIT_MILLIS = 1_000L
     }
 
-    private val timeSource = TimeSource.Monotonic
+    // Monotonic base so we can translate mark values to delays.
+    private val startMark = timeSource.markNow()
+
     private val mutex = Mutex()
     // Monotonic timestamps (ms) of the last WINDOW_LIMIT send events.
     private val sendTimes = ArrayDeque<Long>(WINDOW_LIMIT)
@@ -51,8 +70,11 @@ internal class AniListRateLimiter {
 
     private val semaphore = Semaphore(permits = MAX_IN_FLIGHT)
 
-    // Monotonic base so we can translate mark values to delays.
-    private val startMark = timeSource.markNow()
+    // One state for the waiting callers: a counter-and-boolean pair could be
+    // interleaved by two threads (A reaches 0 and sets false after B reached 1
+    // and set true), leaving the notice off while a request still waits.
+    private val _waitingRequests = MutableStateFlow(0)
+    override val waitingRequests: StateFlow<Int> = _waitingRequests.asStateFlow()
 
     private fun nowMs(): Long = startMark.elapsedNow().inWholeMilliseconds
 
@@ -76,7 +98,15 @@ internal class AniListRateLimiter {
                 wait
             }
             if (waitMs <= 0L) break
-            delay(waitMs.milliseconds)
+            // Count only waits long enough to be worth surfacing; the exit runs
+            // in `finally` so cancellation (or a thrown delay) cannot leak it.
+            val visible = waitMs >= MIN_VISIBLE_WAIT_MILLIS
+            if (visible) _waitingRequests.update { it + 1 }
+            try {
+                pause(waitMs)
+            } finally {
+                if (visible) _waitingRequests.update { it - 1 }
+            }
         }
 
         // Phase 2: hold a concurrency permit for the round-trip; released in finally.

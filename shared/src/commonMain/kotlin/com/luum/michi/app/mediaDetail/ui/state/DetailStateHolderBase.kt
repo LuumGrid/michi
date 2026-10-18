@@ -18,8 +18,7 @@ import kotlinx.coroutines.launch
  * network calls and its own `PagedList`s — the base never knows about them.
  *
  * [D] is the detail model, [S] its cache snapshot. The hooks are the minimum a
- * scope must supply; [onCacheMiss]/[onRefreshed] cover the studio's default sort
- * and the media's per-visit recommendations.
+ * scope must supply; [onCacheMiss] covers the studio's default sort.
  */
 internal abstract class DetailStateHolderBase<D, S>(
     protected val scope: CoroutineScope,
@@ -82,14 +81,7 @@ internal abstract class DetailStateHolderBase<D, S>(
         // Invalidate the cached entry so the next visit re-fetches from network.
         detailCache.remove(id)
         // Keep the detail and lists on screen while reloading (no flicker).
-        launchFetch(
-            id,
-            clearDetail = false,
-            clearLists = false,
-            // Only while this refresh is still the current one (a later load
-            // cancels the job, but the guard mirrors the original behaviour).
-            afterSuccess = { if (currentId == id) onRefreshed(id) },
-        )
+        launchFetch(id, clearDetail = false, clearLists = false)
     }
 
     override fun toggleFavourite() {
@@ -134,14 +126,13 @@ internal abstract class DetailStateHolderBase<D, S>(
 
     /** Fetches page 1 through [fetchDetail]; the single network path of a holder. */
     protected fun fetchFirstPage(id: Int, clearDetail: Boolean, clearLists: Boolean) {
-        launchFetch(id, clearDetail, clearLists, afterSuccess = null)
+        launchFetch(id, clearDetail, clearLists)
     }
 
     private fun launchFetch(
         id: Int,
         clearDetail: Boolean,
         clearLists: Boolean,
-        afterSuccess: (() -> Unit)?,
     ) {
         currentJob?.cancel()
         // A page from the previous entity/sort must never append.
@@ -157,7 +148,6 @@ internal abstract class DetailStateHolderBase<D, S>(
                     detail = result.value
                     onDetailLoaded(result.value)
                     cacheSnapshot(id)
-                    afterSuccess?.invoke()
                 }
                 is NetworkResult.Failure -> error = result.error
             }
@@ -226,7 +216,4 @@ internal abstract class DetailStateHolderBase<D, S>(
 
     /** Called on a cache miss before the first fetch (studio resets its sort). */
     protected open fun onCacheMiss(id: Int) {}
-
-    /** Called after a refresh's fetch succeeds while [id] is still current. */
-    protected open fun onRefreshed(id: Int) {}
 }

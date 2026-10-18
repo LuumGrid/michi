@@ -136,6 +136,31 @@ private fun mediaDetailPageJson() = buildJsonObject {
                 },
             )))
         })
+        put("recommendations", buildJsonObject {
+            put("pageInfo", buildJsonObject {
+                put("hasNextPage", true)
+                put("currentPage", 1)
+            })
+            put("nodes", JsonArray(listOf(
+                buildJsonObject {
+                    put("id", 5)
+                    put("rating", 7)
+                    put("mediaRecommendation", buildJsonObject {
+                        put("id", 99)
+                        put("title", buildJsonObject { put("romaji", "Recommended Show") })
+                    })
+                },
+                // Same media recommended by another user: must collapse by id.
+                buildJsonObject {
+                    put("id", 6)
+                    put("rating", 3)
+                    put("mediaRecommendation", buildJsonObject {
+                        put("id", 99)
+                        put("title", buildJsonObject { put("romaji", "Recommended Show") })
+                    })
+                },
+            )))
+        })
     })
 }
 
@@ -271,6 +296,23 @@ class MediaDetailMapperTest {
     }
 
     @Test
+    fun detailQueryCarriesTheFirstRecommendationsPageInOneRequest() = runBlocking {
+        val graphQL = FakeGraphQL(listOf(mediaDetailPageJson()))
+        val result = MediaDetailRepositoryImpl(graphQL).loadDetail(42, strings = EnglishStrings)
+        assertIs<NetworkResult.Success<MediaDetail>>(result)
+
+        // Opening a media is a single request: recommendations page 1 rides it.
+        assertEquals(1, graphQL.calls)
+        assertTrue(graphQL.requests.single().query.contains("recommendations(page: 1"))
+
+        val recommendations = result.value.recommendations
+        assertEquals(listOf(99), recommendations.items.map { it.id }, "collapsed by media id")
+        assertTrue(recommendations.hasNextPage)
+        assertEquals(1, recommendations.currentPage)
+        assertEquals(7, recommendations.items.single().likesCount)
+    }
+
+    @Test
     fun mapsRecommendationsPageWithPaging() = runBlocking {
         val page = buildJsonObject {
             put("Media", buildJsonObject {
@@ -294,12 +336,15 @@ class MediaDetailMapperTest {
             })
         }
 
-        val result = MediaDetailRepositoryImpl(FakeGraphQL(listOf(page)))
+        val graphQL = FakeGraphQL(listOf(page))
+        val result = MediaDetailRepositoryImpl(graphQL)
             .loadRecommendations(42, page = 2)
 
         assertIs<NetworkResult.Success<Page<MediaRecommendationEntry>>>(result)
         assertEquals(listOf(99), result.value.items.map { it.id })
         assertEquals(true, result.value.hasNextPage)
         assertEquals(2, result.value.currentPage)
+        // Pages 2+ keep their own query/operation.
+        assertEquals("MediaRecommendationsPage", graphQL.requests.single().operationName)
     }
 }

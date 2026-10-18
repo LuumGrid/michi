@@ -39,6 +39,7 @@ private fun sampleDetail(
     id: Int,
     characters: Page<MediaCharacterEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     staff: Page<MediaStaffEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    recommendations: Page<MediaRecommendationEntry> = Page(emptyList(), hasNextPage = false, currentPage = 1),
     viewerEntry: MediaListViewerEntry? = null,
 ) = MediaDetail(
     id = id,
@@ -71,6 +72,7 @@ private fun sampleDetail(
     relations = emptyList(),
     characters = characters,
     staff = staff,
+    recommendations = recommendations,
     titleRomaji = null,
     titleNative = null,
     synonyms = emptyList(),
@@ -141,6 +143,8 @@ private class RecordingDetailRepository(
                 id = mediaId,
                 characters = charactersPages[1] ?: Page(emptyList(), false, 1),
                 staff = staffPages[1] ?: Page(emptyList(), false, 1),
+                // The first recommendations page now travels inside the detail.
+                recommendations = recommendationsPages[1] ?: Page(emptyList(), false, 1),
                 viewerEntry = viewerEntry,
             ),
         )
@@ -277,12 +281,14 @@ private fun holderWired(
 class MediaDetailIntegrationTest {
 
     @Test
-    fun loadHydratesDetailCharactersAndStaff() {
+    fun loadHydratesDetailCharactersStaffAndRecommendations() {
         val characters = Page(listOf(character(1), character(2)), false, 1)
         val staff = Page(listOf(staffEntry(9)), false, 1)
+        val recommendations = Page(listOf(recommendation(4)), false, 1)
         val repository = RecordingDetailRepository(
             charactersPages = mapOf(1 to characters),
             staffPages = mapOf(1 to staff),
+            recommendationsPages = mapOf(1 to recommendations),
         )
         val holder = holderWired(repository)
 
@@ -291,9 +297,12 @@ class MediaDetailIntegrationTest {
         assertEquals("Media 5", holder.detail?.title)
         assertEquals(2, holder.characters.items.size)
         assertEquals(1, holder.staff.items.size)
+        assertEquals(listOf(4), holder.recommendations.items.map { it.id })
         assertFalse(holder.isLoading)
         assertNull(holder.error)
         assertEquals(1, repository.detailCalls)
+        // Recommendations ride the detail query: no extra page-1 call.
+        assertEquals(0, repository.recommendationCalls)
     }
 
     @Test
@@ -360,8 +369,8 @@ class MediaDetailIntegrationTest {
         val holder = holderWired(repository)
 
         holder.load(1)
-        holder.loadRecommendations()
 
+        // Page 1 arrived inside the detail response.
         assertEquals(listOf(1), holder.recommendations.items.map { it.id })
         assertTrue(holder.recommendations.hasNextPage)
 
@@ -369,13 +378,12 @@ class MediaDetailIntegrationTest {
 
         assertEquals(listOf(1, 2), holder.recommendations.items.map { it.id })
         assertFalse(holder.recommendations.hasNextPage)
-        assertEquals(2, repository.recommendationCalls)
+        // Only page 2 went to the network.
+        assertEquals(1, repository.recommendationCalls)
     }
 
     @Test
-    fun cacheRestoreDropsThePreviousMediasRecommendations() {
-        // The "View all" list re-binds the parent holder on back and refetches
-        // page 1; a cached restore must not keep another media's recommendations.
+    fun cacheRestoreKeepsTheCachedMediasRecommendationsWithoutNetwork() {
         val repository = RecordingDetailRepository(
             recommendationsPages = mapOf(
                 1 to Page(listOf(recommendation(1)), hasNextPage = false, currentPage = 1),
@@ -384,12 +392,14 @@ class MediaDetailIntegrationTest {
         val holder = holderWired(repository)
 
         holder.load(1)
-        holder.loadRecommendations()
         holder.load(2)
+        // Back to 1: the snapshot (recommendations included) restores with no call.
         holder.load(1)
 
         assertEquals(1, holder.detail?.id)
-        assertTrue(holder.recommendations.items.isEmpty())
+        assertEquals(listOf(1), holder.recommendations.items.map { it.id })
+        assertEquals(2, repository.detailCalls)
+        assertEquals(0, repository.recommendationCalls)
     }
 
     @Test

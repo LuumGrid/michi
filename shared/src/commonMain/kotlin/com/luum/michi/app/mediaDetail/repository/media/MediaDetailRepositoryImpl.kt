@@ -1,12 +1,6 @@
 package com.luum.michi.app.mediaDetail.repository.media
 
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
-import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
-import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.media.repository.bestTitle
-import com.luum.michi.app.core.media.domain.parseMediaSeason
-import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
-import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.repository.AniListJson
@@ -23,7 +17,6 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import com.luum.michi.app.core.media.repository.toCoverSizes
 import com.luum.michi.app.core.model.RailPageSize
 
 
@@ -91,6 +84,29 @@ query MediaDetail(${'$'}id: Int!) {
         id
         role
         node { id name { full native userPreferred } image { large medium } }
+      }
+    }
+    recommendations(page: 1, perPage: $RailPageSize, sort: [RATING_DESC]) {
+      pageInfo { hasNextPage currentPage }
+      nodes {
+        id
+        rating
+        mediaRecommendation {
+          id
+          type
+          format
+          status
+          season
+          seasonYear
+          episodes
+          chapters
+          volumes
+          averageScore
+          favourites
+          title { romaji english native userPreferred }
+          coverImage { extraLarge large medium color }
+          mediaListEntry { status }
+        }
       }
     }
   }
@@ -184,36 +200,6 @@ private data class MediaRecommendationsPageResponseDto(
 private data class MediaRecommendationsPageWrapperDto(
     val id: Int,
     val recommendations: MediaRecommendationsConnectionDto? = null,
-)
-
-@Serializable
-private data class MediaRecommendationsConnectionDto(
-    val pageInfo: PageInfoDto? = null,
-    val nodes: List<MediaRecommendationNodeDto> = emptyList(),
-)
-
-@Serializable
-private data class MediaRecommendationNodeDto(
-    val id: Int,
-    val rating: Int = 0,
-    val mediaRecommendation: MediaRecommendationMediaDto? = null,
-)
-
-@Serializable
-private data class MediaRecommendationMediaDto(
-    val id: Int,
-    val title: com.luum.michi.app.core.media.repository.dto.MediaTitleDto? = null,
-    val coverImage: com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto? = null,
-    val format: String? = null,
-    val status: String? = null,
-    val season: String? = null,
-    val seasonYear: Int? = null,
-    val episodes: Int? = null,
-    val chapters: Int? = null,
-    val volumes: Int? = null,
-    val averageScore: Int? = null,
-    val favourites: Int? = null,
-    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable
@@ -339,42 +325,9 @@ internal class MediaDetailRepositoryImpl(
             ),
             operationName = "MediaRecommendationsPage",
         )
-        val result = graphQLClient.execute(request) { dataJson ->
+        return graphQLClient.execute(request) { dataJson ->
             AniListJson.decodeFromJsonElement(MediaRecommendationsPageResponseDto.serializer(), dataJson)
         }
-        return when (result) {
-            is NetworkResult.Success -> {
-                val connection = result.value.Media?.recommendations
-                // Un mismo media puede venir repetido (un nodo por recomendación
-                // de usuario): se colapsa por id para no romper las keys del grid.
-                val items = connection?.nodes?.mapNotNull { node ->
-                    val recMedia = node.mediaRecommendation ?: return@mapNotNull null
-                    MediaRecommendationEntry(
-                        id = recMedia.id,
-                        title = recMedia.title.bestTitle(),
-                        cover = recMedia.coverImage?.toCoverSizes(),
-                        format = recMedia.format?.toTitleCase(),
-                        season = parseMediaSeason(recMedia.season),
-                        year = recMedia.seasonYear,
-                        workStatus = parseMediaWorkStatus(recMedia.status),
-                        episodesCount = recMedia.episodes,
-                        chaptersCount = recMedia.chapters,
-                        volumesCount = recMedia.volumes,
-                        averageScore = recMedia.averageScore,
-                        favouritesCount = recMedia.favourites,
-                        likesCount = node.rating,
-                        viewerStatus = recMedia.mediaListEntry?.status,
-                    )
-                }.orEmpty().distinctBy { it.id }
-                NetworkResult.Success(
-                    Page(
-                        items = items,
-                        hasNextPage = connection?.pageInfo?.hasNextPage == true,
-                        currentPage = connection?.pageInfo?.currentPage ?: page,
-                    ),
-                )
-            }
-            is NetworkResult.Failure -> result
-        }
+            .map { it.Media?.recommendations.toRecommendationsPage(fallbackPage = page) }
     }
 }

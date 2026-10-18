@@ -163,7 +163,10 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
         }
         when {
             holder.isLoading && !hasLoadedEntries -> {
-                LoadingPanel(label = strings.listsLoadingLabel)
+                LoadingPanel(
+                    label = strings.listsLoadingLabel,
+                    waitingLabel = strings.networkThrottleWaitingLabel,
+                )
             }
             errorMessage != null && !hasLoadedEntries -> {
                 MessagePanel(

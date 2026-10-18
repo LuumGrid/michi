@@ -107,6 +107,7 @@ private fun DashboardContent(
             isLoading = holder.isLoading || holder.isRefreshing,
             errorMessage = errorMessage,
             loadingLabel = strings.discoverLoadingLabel,
+            waitingLabel = strings.networkThrottleWaitingLabel,
             errorTitle = strings.discoverErrorLabel,
             retryLabel = strings.retryAction,
             onRetry = onRetry,

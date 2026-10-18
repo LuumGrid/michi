@@ -19,6 +19,7 @@ internal data class MediaDetailSnapshot(
     val detail: MediaDetail,
     val characters: Page<MediaCharacterEntry>,
     val staff: Page<MediaStaffEntry>,
+    val recommendations: Page<MediaRecommendationEntry>,
 )
 
 internal class MediaDetailStateHolder(
@@ -37,26 +38,13 @@ internal class MediaDetailStateHolder(
     val staff = PagedList<MediaStaffEntry> { a, b -> (a + b).distinctBy { it.staffId to it.role } }
 
     /**
-     * Recommendations (per visit; not part of the cache snapshot). Loaded on
-     * demand the first time and paged from there.
+     * Recommendations grid; seeded from the media detail's embedded first page
+     * and paged from page 2 on. Pages 2+ cost a request; reopening a media
+     * whose snapshot is cached restores this list with no network call.
      */
     val recommendations = PagedList<MediaRecommendationEntry> { a, b -> (a + b).distinctBy { it.id } }
 
-    // Set by [refresh] before the reload: cancelPages() also runs on a new media,
-    // where "had recommendations" means nothing, so the flag is only meaningful
-    // on the refresh path.
-    private var reloadRecommendationsAfterRefresh = false
-
     override fun isFavouriteOf(detail: MediaDetail): Boolean = detail.isFavourite
-
-    override fun refresh() {
-        // Cancelling the pagination would drop the initial recommendations fetch;
-        // remember it (or an already-loaded list) so it is relaunched once the
-        // detail answers.
-        reloadRecommendationsAfterRefresh =
-            recommendations.isLoadingMore || recommendations.items.isNotEmpty()
-        super.refresh()
-    }
 
     fun loadMoreCharacters() {
         val id = currentDetailId ?: return
@@ -91,18 +79,6 @@ internal class MediaDetailStateHolder(
         if (currentDetailId == mediaId && detail != null) refresh()
     }
 
-    /** Ensures the recommendations first page is loaded (no-op once it has items). */
-    fun loadRecommendations() {
-        if (recommendations.items.isNotEmpty()) return
-        val id = currentDetailId ?: return
-        recommendations.loadFirst(
-            scope = scope,
-            isCurrent = { currentDetailId == id },
-            fetch = { repository.loadRecommendations(id) },
-            onError = { pageError(it) },
-        )
-    }
-
     fun loadMoreRecommendations() {
         val id = currentDetailId ?: return
         recommendations.loadMore(
@@ -128,6 +104,7 @@ internal class MediaDetailStateHolder(
     override fun onDetailLoaded(detail: MediaDetail) {
         characters.set(detail.characters)
         staff.set(detail.staff)
+        recommendations.set(detail.recommendations)
     }
 
     override fun cancelPages() {
@@ -146,15 +123,14 @@ internal class MediaDetailStateHolder(
         detail = detail,
         characters = characters.snapshot(),
         staff = staff.snapshot(),
+        recommendations = recommendations.snapshot(),
     )
 
     override fun restore(snapshot: MediaDetailSnapshot) {
         detail = snapshot.detail
         characters.set(snapshot.characters)
         staff.set(snapshot.staff)
-        // Recommendations are per visit: a cached restore must not keep the
-        // previous media's list.
-        recommendations.clear()
+        recommendations.set(snapshot.recommendations)
     }
 
     override fun withFavourite(detail: MediaDetail, value: Boolean): MediaDetail =
@@ -165,11 +141,4 @@ internal class MediaDetailStateHolder(
 
     override suspend fun requestToggleFavourite(id: Int, detail: MediaDetail): NetworkResult<Unit> =
         entryRepository.toggleFavourite(id, detail.type == MediaDetailType.MANGA)
-
-    override fun onRefreshed(id: Int) {
-        if (reloadRecommendationsAfterRefresh) {
-            recommendations.clear()
-            loadRecommendations()
-        }
-    }
 }

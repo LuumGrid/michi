@@ -26,6 +26,6 @@ internal interface MediaDetailRepository {
 
     suspend fun loadRecommendations(
         mediaId: Int,
-        page: Int = 1,
+        page: Int,
     ): NetworkResult<Page<MediaRecommendationEntry>>
 }

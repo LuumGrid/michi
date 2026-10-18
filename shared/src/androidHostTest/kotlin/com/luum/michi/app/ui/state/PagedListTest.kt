@@ -9,7 +9,6 @@ import kotlinx.coroutines.cancel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 /**
  * PagedList owns the page-in-flight job and the append/dedup rules; the holders
@@ -137,28 +136,6 @@ class PagedListTest {
             assertFalse(fetched, "an unseeded list must not fetch page 1 from loadMore")
             assertEquals(emptyList(), list.items)
             assertFalse(list.isLoadingMore)
-        } finally {
-            scope.cancel()
-        }
-    }
-
-    @Test
-    fun loadFirstLoadsPageOne() {
-        val dispatcher = DeferredDispatcher()
-        val scope = CoroutineScope(dispatcher)
-        try {
-            val list = PagedList<Int>()
-
-            list.loadFirst(
-                scope = scope,
-                isCurrent = { true },
-                fetch = { NetworkResult.Success(Page(listOf(1, 2), hasNextPage = true, currentPage = 1)) },
-            )
-            dispatcher.runAll()
-
-            assertEquals(listOf(1, 2), list.items)
-            assertTrue(list.hasNextPage)
-            assertEquals(1, list.currentPage)
         } finally {
             scope.cancel()
         }
