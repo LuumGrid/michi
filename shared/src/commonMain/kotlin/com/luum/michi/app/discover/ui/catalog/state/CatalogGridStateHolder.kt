@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
@@ -105,6 +106,15 @@ internal class CatalogGridStateHolder(
     fun changeType(type: MediaType) {
         if (type == filter.type) return
         load(filter.copy(type = type))
+    }
+
+    /**
+     * Season rail: re-binds the catalog to the same filter with another season.
+     * A season already visited restores its own snapshot (and sort) with no
+     * request; an uncached one opens on the rail's default order.
+     */
+    fun changeSeason(season: MediaSeasonYear) {
+        load(filter.copy(season = season.season.name, seasonYear = season.year))
     }
 
     override fun refresh() {

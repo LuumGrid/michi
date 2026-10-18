@@ -20,6 +20,22 @@ internal fun parseMediaFormat(raw: String?): MediaFormat = when (raw?.uppercase(
     else -> MediaFormat.UNKNOWN
 }
 
+/**
+ * The formats a media type can actually have, in AniList vocabulary: anime
+ * excludes the reading formats; manga keeps only MANGA/NOVEL/ONE_SHOT. The one
+ * source both the Explore filter and the user lists' filter reuse, so the two
+ * surfaces can never disagree on what a type offers.
+ */
+internal fun mediaFormatsForType(isAnime: Boolean): List<MediaFormat> =
+    MediaFormat.entries.filter {
+        if (isAnime) {
+            it != MediaFormat.MANGA && it != MediaFormat.NOVEL &&
+                it != MediaFormat.ONE_SHOT && it != MediaFormat.UNKNOWN
+        } else {
+            it == MediaFormat.MANGA || it == MediaFormat.NOVEL || it == MediaFormat.ONE_SHOT
+        }
+    }
+
 
 /** Label derivado del nombre del enum ("TV Short", "One Shot"...) — vocabulario
  *  de AniList, igual en todos los idiomas, no es copy traducible. Los acrónimos

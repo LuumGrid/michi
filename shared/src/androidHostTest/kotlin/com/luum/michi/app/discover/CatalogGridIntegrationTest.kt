@@ -8,6 +8,7 @@ import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.catalogFilter
 import com.luum.michi.app.discover.domain.model.genreCatalogFilter
+import com.luum.michi.app.discover.domain.model.selectedSeason
 import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,5 +113,42 @@ class CatalogGridIntegrationTest {
         assertEquals(2, repository.calls)
         assertEquals(genre, state.filter)
         assertEquals(UserListSort.POPULARITY, state.sortOption)
+    }
+
+    @Test
+    fun changingSeasonFetchNewPageOnceAndReturnsFromCache() {
+        val repository = RecordingCatalogRepository(pages = mapOf(1 to gridPage(listOf(1))))
+        val state = holder(repository)
+        state.load(DashboardSectionKind.SEASONAL.catalogFilter(now = now, recentStart = recent))
+        assertEquals(1, repository.calls)
+
+        state.changeSeason(MediaSeasonYear(MediaSeason.SUMMER, 2026))
+
+        assertEquals(2, repository.calls, "a new season fetches once")
+        assertEquals("SUMMER", repository.lastFilter?.season)
+        assertEquals(2026, repository.lastFilter?.seasonYear)
+        assertEquals(
+            MediaSeasonYear(MediaSeason.SUMMER, 2026),
+            state.filter.selectedSeason(),
+            "the toolbar title source follows the selected chip",
+        )
+        assertEquals(UserListSort.POPULARITY, state.sortOption, "a new season opens on the rail's order")
+
+        state.changeSeason(MediaSeasonYear(MediaSeason.FALL, 2026))
+
+        assertEquals(2, repository.calls, "returning to a visited season must not fetch")
+        assertEquals("FALL", state.filter.season)
+        assertEquals(2026, state.filter.seasonYear)
+    }
+
+    @Test
+    fun tappingTheActiveSeasonIsANoOp() {
+        val repository = RecordingCatalogRepository(pages = mapOf(1 to gridPage(listOf(1))))
+        val state = holder(repository)
+        state.load(DashboardSectionKind.SEASONAL.catalogFilter(now = now, recentStart = recent))
+
+        state.changeSeason(MediaSeasonYear(MediaSeason.FALL, 2026))
+
+        assertEquals(1, repository.calls)
     }
 }

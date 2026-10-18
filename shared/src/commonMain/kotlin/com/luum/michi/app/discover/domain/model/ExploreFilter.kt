@@ -1,9 +1,9 @@
 package com.luum.michi.app.discover.domain.model
 
-import com.luum.michi.app.core.media.domain.MediaFormat
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.mediaFormatsForType
 import com.luum.michi.app.core.model.FilterOption
 
 internal data class ExploreFormatOption(val value: String, val label: String)
@@ -16,9 +16,8 @@ internal fun ExploreCategory.filterLabel(strings: LanguageStrings): String = whe
     ExploreCategory.STUDIOS -> strings.studiosLabel
 }
 
-internal fun exploreFormats(strings: LanguageStrings): List<ExploreFormatOption> =
-    MediaFormat.entries
-        .filter { it != MediaFormat.UNKNOWN }
+internal fun exploreFormats(isAnime: Boolean, strings: LanguageStrings): List<ExploreFormatOption> =
+    mediaFormatsForType(isAnime)
         .map { ExploreFormatOption(it.name, it.label(strings.formatUnknownLabel)) }
 
 /**

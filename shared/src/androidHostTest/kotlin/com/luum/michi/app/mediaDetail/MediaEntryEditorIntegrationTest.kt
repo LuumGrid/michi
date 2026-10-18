@@ -447,7 +447,7 @@ class MediaEntryEditorIntegrationTest {
     }
 
     @Test
-    fun openForCompletionOverrideCountsAsAnUnsavedEdit() {
+    fun openForCompletionIsCleanForDiscardButDirtyForSave() {
         val editor = editorWired(
             FakeGraphQL(listOf(buildJsonObject {})),
             existingEntry(),
@@ -458,7 +458,39 @@ class MediaEntryEditorIntegrationTest {
         editor.load()
 
         assertEquals(MediaListStatus.COMPLETED, editor.status)
-        assertTrue(editor.hasChanges)
+        // The prefill is the app's edit, not the user's: closing a pristine
+        // sheet must not prompt, but Save stays enabled from the start.
+        assertFalse(editor.hasChanges, "opening for completion must not look like a user edit")
+        assertTrue(editor.isDirty, "Save is enabled from the start of the completion flow")
+    }
+
+    @Test
+    fun editingAfterACompletionPrefillCountsAsAChange() {
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            existingEntry(),
+            initialStatusOverride = MediaListStatus.COMPLETED,
+            initialProgressOverride = 12,
+        )
+
+        editor.load()
+        editor.updateNotes("changed")
+
+        assertTrue(editor.hasChanges, "a real edit after the prefill still prompts")
+        assertTrue(editor.isDirty)
+    }
+
+    @Test
+    fun newEntryOpenedForCompletionIsCleanForDiscardButDirtyForSave() {
+        val editor = editorWired(
+            FakeGraphQL(listOf(buildJsonObject {})),
+            viewerEntry = null,
+            initialStatusOverride = MediaListStatus.COMPLETED,
+        )
+
+        editor.load()
+
+        assertFalse(editor.hasChanges)
         assertTrue(editor.isDirty)
     }
 

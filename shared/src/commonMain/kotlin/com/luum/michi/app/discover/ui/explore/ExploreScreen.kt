@@ -151,6 +151,7 @@ internal fun ExploreScreen(
                 onDraftChange = { draft = it },
                 onReset = { draft = ExploreFilters.Empty },
                 showSeason = holder.category == ExploreCategory.ANIME,
+                isAnime = holder.category == ExploreCategory.ANIME,
                 hasSession = hasSession,
                 hideAdult = holder.hideAdult,
                 onDismiss = onDismissFilter,

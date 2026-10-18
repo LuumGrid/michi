@@ -109,7 +109,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
             selected = effectiveSelected,
             sortOption = holder.currentSortOption,
             sortOrder = holder.currentSortOrder,
-            season = holder.filterSeason,
+            season = holder.filterSeason.takeIf { holder.supportsSeasonFilter },
             genres = holder.filterGenres,
             formats = holder.filterFormats,
             year = holder.filterYear,
@@ -294,6 +294,7 @@ internal fun <T : SortableMediaListEntry, S> MediaListScreenScaffold(
                 expandedDecade = null
                 onDismissFilter()
             },
+            showSeason = holder.supportsSeasonFilter,
         )
     }
     if (isSortOpen) {

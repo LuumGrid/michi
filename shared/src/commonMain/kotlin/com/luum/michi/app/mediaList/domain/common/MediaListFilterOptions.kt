@@ -1,10 +1,10 @@
 package com.luum.michi.app.mediaList.domain.common
 
-import com.luum.michi.app.core.media.domain.MediaFormat
 import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.mediaFormatsForType
 import com.luum.michi.app.core.model.FilterOption
 
 /**
@@ -33,19 +33,11 @@ internal fun mediaListSeasonOptions(strings: LanguageStrings): List<FilterOption
 }
 
 /**
- * Opciones de formato por tab (jerga AniList sin traducir, igual que en Explore):
- * anime excluye MANGA/NOVEL/ONE_SHOT, manga solo lleva esos tres.
+ * Format options for a user list, in AniList vocabulary: anime and manga split
+ * through the shared [mediaFormatsForType], the same rule Explore uses.
  */
 internal fun mediaListFormatOptions(isAnimeTab: Boolean, strings: LanguageStrings): List<FilterOption> =
-    MediaFormat.entries
-        .filter {
-            if (isAnimeTab) {
-                it != MediaFormat.MANGA && it != MediaFormat.NOVEL &&
-                    it != MediaFormat.ONE_SHOT && it != MediaFormat.UNKNOWN
-            } else {
-                it == MediaFormat.MANGA || it == MediaFormat.NOVEL || it == MediaFormat.ONE_SHOT
-            }
-        }
+    mediaFormatsForType(isAnimeTab)
         .map { FilterOption(it.name, it.label(strings.formatUnknownLabel)) }
 
 /**

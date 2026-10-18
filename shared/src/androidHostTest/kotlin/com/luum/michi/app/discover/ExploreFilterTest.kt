@@ -17,6 +17,7 @@ import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.ExploreResult
 import com.luum.michi.app.discover.domain.model.MediaCatalogFilter
+import com.luum.michi.app.discover.domain.model.exploreFormats
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -254,5 +255,36 @@ class ExploreFilterTest {
             strings = EnglishStrings,
         )
         assertEquals("[\"TV_SHORT\",\"ONE_SHOT\"]", varsOf(client.requests.single())["format_in"])
+    }
+
+    // ---- Format options follow the media type ----
+
+    @Test
+    fun formatOptionsFollowTheActiveCategory() {
+        val anime = exploreFormats(isAnime = true, strings = EnglishStrings).map { it.value }
+        assertTrue(anime.isNotEmpty())
+        assertTrue(
+            anime.none { it == "MANGA" || it == "NOVEL" || it == "ONE_SHOT" },
+            "anime must not offer the reading formats",
+        )
+
+        val manga = exploreFormats(isAnime = false, strings = EnglishStrings).map { it.value }
+        assertEquals(listOf("MANGA", "NOVEL", "ONE_SHOT"), manga)
+    }
+
+    @Test
+    fun changingCategoryKeepsOnlyFormatsTheNewTypeHas() = runBlocking {
+        val repo = FakeExploreRepository()
+        val holder = ExploreStateHolder(repo, CoroutineScope(Dispatchers.Unconfined), stringsProvider = { EnglishStrings })
+        holder.submitSearch("naruto")
+        holder.applyFilters(ExploreFilters(formats = listOf("TV", "MANGA")))
+
+        holder.changeCategory(ExploreCategory.MANGA)
+
+        assertEquals(listOf("MANGA"), holder.formats, "the anime-only TV format is dropped, the manga one stays")
+
+        holder.changeCategory(ExploreCategory.ANIME)
+
+        assertEquals(emptyList(), holder.formats, "MANGA is not an anime format")
     }
 }

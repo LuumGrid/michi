@@ -60,6 +60,9 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
     override var filterFormats by mutableStateOf(emptyList<String>())
     override var filterYear by mutableStateOf<Int?>(null)
 
+    /** Anime has a season; manga overrides this to false and skips the filter. */
+    override val supportsSeasonFilter: Boolean get() = true
+
     override val entries: List<T> get() = loader.entries
     override val isLoading: Boolean get() = loader.isLoading
     val isRefreshing: Boolean get() = loader.isRefreshing
@@ -120,7 +123,7 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
             // the whole list).
             sectionPredicate = { section == allSection || statusOf(it) == section },
             hideAdult = hideAdult,
-            filterSeason = filterSeason,
+            filterSeason = filterSeason.takeIf { supportsSeasonFilter },
             filterGenres = filterGenres,
             filterYear = filterYear,
             filterFormats = filterFormats,

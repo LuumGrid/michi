@@ -1,6 +1,8 @@
 package com.luum.michi.app.discover.domain.model
 
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.media.domain.parseMediaSeason
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 
@@ -28,3 +30,10 @@ internal data class MediaCatalogFilter(
 /** A genre page is just the catalog filtered by name (type + `genre_in`). */
 internal fun genreCatalogFilter(name: String, type: MediaType): MediaCatalogFilter =
     MediaCatalogFilter(type = type, genres = listOf(name))
+
+/** The season+year this filter currently selects, or null when it is not a season catalog. */
+internal fun MediaCatalogFilter.selectedSeason(): MediaSeasonYear? {
+    val season = parseMediaSeason(season) ?: return null
+    val year = seasonYear ?: return null
+    return MediaSeasonYear(season, year)
+}

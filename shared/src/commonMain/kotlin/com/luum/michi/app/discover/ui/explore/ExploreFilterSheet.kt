@@ -34,6 +34,7 @@ internal fun ExploreFilterSheet(
     onDraftChange: (ExploreFilters) -> Unit,
     onReset: () -> Unit,
     showSeason: Boolean,
+    isAnime: Boolean,
     hasSession: Boolean,
     hideAdult: Boolean,
     onDismiss: () -> Unit,
@@ -43,6 +44,7 @@ internal fun ExploreFilterSheet(
     val genres = remember(hideAdult) {
         if (hideAdult) MediaGenres else MediaGenres + "Hentai"
     }
+    val formats = remember(isAnime, strings) { exploreFormats(isAnime, strings) }
     ModalSheet(
         title = strings.filterAction,
         dismissLabel = strings.dismissAction,
@@ -70,7 +72,7 @@ internal fun ExploreFilterSheet(
         }
         Spacer(modifier = Modifier.height(16.dp))
         OptionGroup(title = strings.formatLabel) {
-            exploreFormats(strings).forEachIndexed { index, option ->
+            formats.forEachIndexed { index, option ->
                 OptionRow(
                     label = option.label,
                     selected = option.value in draft.formats,

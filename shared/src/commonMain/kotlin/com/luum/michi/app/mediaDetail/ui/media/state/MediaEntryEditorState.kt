@@ -87,17 +87,30 @@ internal class MediaEntryEditorState(
     val maxProgressVolumes: Int? get() = data?.volumes
     val isExisting: Boolean get() = data?.viewerEntry != null
 
-    /** Editable fields as loaded (or as defaults for a new entry): the dirty-tracking baseline. */
-    private var baseline: EditorSnapshot? by mutableStateOf(null)
-
-    /** Any editable field differs from what was loaded. Drives the discard prompt. */
-    val hasChanges: Boolean get() = baseline?.let { it != snapshot() } ?: false
+    /**
+     * Save baseline: the entry exactly as stored (or the untouched defaults for
+     * a new entry), captured **before** a completion prefill. Keeps Save enabled
+     * from the start of the "complete from the list" flow.
+     */
+    private var saveBaseline: EditorSnapshot? by mutableStateOf(null)
 
     /**
-     * Save gate: an existing entry needs a real edit; a new entry (the user
-     * pressed "add to list") can always be saved as-is, e.g. straight to Planning.
+     * Discard baseline: what the user actually sees when the sheet opens,
+     * captured **after** the prefill. Opening for completion is the app's own
+     * edit, not the user's, so a pristine open closes without prompting.
      */
-    val isDirty: Boolean get() = data != null && (!isExisting || hasChanges)
+    private var discardBaseline: EditorSnapshot? by mutableStateOf(null)
+
+    /** Any editable field differs from what the user saw at open. Drives the discard prompt. */
+    val hasChanges: Boolean get() = discardBaseline?.let { it != snapshot() } ?: false
+
+    /**
+     * Save gate: an existing entry needs a real edit (against the stored entry);
+     * a new entry (the user pressed "add to list") can always be saved as-is,
+     * e.g. straight to Planning.
+     */
+    val isDirty: Boolean get() =
+        data != null && (!isExisting || (saveBaseline?.let { it != snapshot() } ?: false))
 
     /**
      * Explicit load (no auto-load in init): Root calls this from a
@@ -132,27 +145,35 @@ internal class MediaEntryEditorState(
                         advancedScoreValues = advancedScoringNames.map { name ->
                             ((existing.advancedScores[name] ?: 0f) / 10f).coerceIn(0f, 10f)
                         }
-                        // Baseline is the stored entry: a status/progress override
-                        // (e.g. open-for-completion) is an unsaved edit, so Save
-                        // stays enabled for it.
-                        baseline = snapshot()
+                        // Save baseline is the stored entry: a status/progress
+                        // override (e.g. open-for-completion) is an unsaved edit,
+                        // so Save stays enabled from the start.
+                        saveBaseline = snapshot()
                         // "Completar" flows through the same automation as picking
                         // it in the sheet: fill the totals and stamp the end date.
                         if (initialStatusOverride != null) {
                             initialProgressOverride?.let { progress = it }
                             updateStatus(initialStatusOverride)
                         }
+                        // Discard baseline is what the user sees on open: the
+                        // prefill above is the app's edit, not the user's, so
+                        // closing a pristine sheet must not prompt.
+                        discardBaseline = snapshot()
                     } else {
                         status = MediaListStatus.PLANNING
                         progress = initialProgressOverride ?: 0
                         advancedScoreValues = List(advancedScoringNames.size) { 0f }
-                        // Baseline is the untouched default (a new entry is always
-                        // dirty); the override then flows through the same
+                        // Save baseline is the untouched default (a new entry is
+                        // always dirty); the override then flows through the same
                         // automation as picking it in the sheet, so COMPLETED
                         // fills the totals and stamps the end date and CURRENT
                         // stamps the start date.
-                        baseline = snapshot()
+                        saveBaseline = snapshot()
                         initialStatusOverride?.let { updateStatus(it) }
+                        // Discard baseline is what the user sees on open (after
+                        // the prefill): a pristine add/completion sheet closes
+                        // without prompting.
+                        discardBaseline = snapshot()
                     }
                 }
                 is NetworkResult.Failure -> loadError = result.error

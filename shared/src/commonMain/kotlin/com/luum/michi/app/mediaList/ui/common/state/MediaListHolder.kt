@@ -24,6 +24,8 @@ internal interface MediaListHolder<T, S> {
     val filterGenres: List<String>
     val filterFormats: List<String>
     val filterYear: Int?
+    /** False for a list whose media has no season (manga): the season filter is hidden and ignored. */
+    val supportsSeasonFilter: Boolean
 
     fun entriesInSection(section: S, hideAdult: Boolean = false): List<T>
     fun countInSection(section: S): Int

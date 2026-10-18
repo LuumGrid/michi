@@ -49,6 +49,7 @@ internal fun mangaMediaJson(
     romaji: String = "Romaji Manga",
     chapters: Int? = 100,
     volumes: Int? = 10,
+    startDateYear: Int? = null,
 ): JsonObject = buildJsonObject {
     put("id", id)
     put("title", titleJson(romaji))
@@ -57,6 +58,9 @@ internal fun mangaMediaJson(
     if (chapters != null) put("chapters", chapters)
     if (volumes != null) put("volumes", volumes)
     put("coverImage", buildJsonObject { put("thumbnailUrl", "https://img/$id.jpg") })
+    if (startDateYear != null) {
+        put("startDate", buildJsonObject { put("year", startDateYear) })
+    }
 }
 
 internal fun listEntryJson(

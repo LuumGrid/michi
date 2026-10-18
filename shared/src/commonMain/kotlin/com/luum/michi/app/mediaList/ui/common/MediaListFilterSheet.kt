@@ -52,6 +52,9 @@ internal fun MediaListFilterSheet(
     onToggleFormat: (String) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit,
+    // Season is an anime-only filter (a manga has no season): the group is not
+    // painted for the manga list, and any stored value is ignored there.
+    showSeason: Boolean = true,
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
@@ -69,17 +72,19 @@ internal fun MediaListFilterSheet(
             )
         },
     ) {
-        OptionGroup(title = strings.seasonLabel) {
-            seasonOptions.forEachIndexed { index, option ->
-                OptionRow(
-                    label = option.label,
-                    selected = option.id == selectedSeasonId,
-                    onClick = { onSelectSeason(option.id) },
-                    divider = index != 0,
-                )
+        if (showSeason) {
+            OptionGroup(title = strings.seasonLabel) {
+                seasonOptions.forEachIndexed { index, option ->
+                    OptionRow(
+                        label = option.label,
+                        selected = option.id == selectedSeasonId,
+                        onClick = { onSelectSeason(option.id) },
+                        divider = index != 0,
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
         // Accordion year group (variant C): decade rows expand inline to
         // their year rail. Tabs arrive flat and group here, so screens and
         // the filter predicate stay untouched; selection is the exact year.

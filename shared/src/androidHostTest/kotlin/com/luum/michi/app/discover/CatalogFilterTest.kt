@@ -1,15 +1,20 @@
 package com.luum.michi.app.discover
 
+import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.catalogFilter
+import com.luum.michi.app.discover.domain.model.defaultSeason
+import com.luum.michi.app.discover.domain.model.seasonRail
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * The rail → catalog-filter mapping. Each kind must reproduce exactly the
@@ -138,5 +143,71 @@ class CatalogFilterTest {
             )
             assertEquals(expected.getValue(kind), sortKey, "sort key for $kind")
         }
+    }
+
+    // ---- Season rail ----
+
+    @Test
+    fun seasonalRailEndsOnTheCurrentSeason() {
+        val rail = DashboardSectionKind.SEASONAL.seasonRail(now)
+
+        assertEquals(
+            listOf(
+                MediaSeasonYear(MediaSeason.WINTER, 2026),
+                MediaSeasonYear(MediaSeason.SPRING, 2026),
+                MediaSeasonYear(MediaSeason.SUMMER, 2026),
+                MediaSeasonYear(MediaSeason.FALL, 2026),
+            ),
+            rail,
+        )
+        assertEquals(
+            MediaSeasonYear(MediaSeason.FALL, 2026),
+            rail?.defaultSeason(DashboardSectionKind.SEASONAL),
+        )
+    }
+
+    @Test
+    fun seasonalRailCrossesTheYearWhenWinterIsCurrent() {
+        val rail = DashboardSectionKind.SEASONAL.seasonRail(MediaSeasonYear(MediaSeason.WINTER, 2026))
+
+        assertEquals(
+            listOf(
+                MediaSeasonYear(MediaSeason.SPRING, 2025),
+                MediaSeasonYear(MediaSeason.SUMMER, 2025),
+                MediaSeasonYear(MediaSeason.FALL, 2025),
+                MediaSeasonYear(MediaSeason.WINTER, 2026),
+            ),
+            rail,
+        )
+    }
+
+    @Test
+    fun upcomingRailStartsWithTheNextSeason() {
+        val rail = DashboardSectionKind.UPCOMING_SEASON.seasonRail(now)
+
+        assertEquals(
+            listOf(
+                MediaSeasonYear(MediaSeason.WINTER, 2027),
+                MediaSeasonYear(MediaSeason.SPRING, 2027),
+                MediaSeasonYear(MediaSeason.SUMMER, 2027),
+                MediaSeasonYear(MediaSeason.FALL, 2027),
+            ),
+            rail,
+        )
+        assertEquals(
+            MediaSeasonYear(MediaSeason.WINTER, 2027),
+            rail?.defaultSeason(DashboardSectionKind.UPCOMING_SEASON),
+        )
+    }
+
+    @Test
+    fun nonSeasonKindsHaveNoRail() {
+        assertNull(DashboardSectionKind.TRENDING_ANIME.seasonRail(now))
+        assertNull(DashboardSectionKind.POPULAR_MANGA.seasonRail(now))
+    }
+
+    @Test
+    fun seasonTitleFollowsTheSelectedSeason() {
+        assertEquals("Summer 2026", MediaSeasonYear(MediaSeason.SUMMER, 2026).label(EnglishStrings))
     }
 }

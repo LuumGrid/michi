@@ -7,6 +7,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.media.domain.MediaFormat
+import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
@@ -401,6 +402,53 @@ class MediaListIntegrationTest {
 
         holder.updateListFilters(season = null, genres = emptyList(), formats = emptyList(), year = null)
         assertEquals(2, holder.entriesInSection(AnimeListSection.WATCHING).size)
+    }
+
+    @Test
+    fun mangaYearFilterMatchesByStartDate() {
+        // AniList leaves season/seasonYear empty for manga; the mapper fills the
+        // year from startDate, so picking that year must keep the entry.
+        val graphQL = FakeGraphQL(listOf(singleGroupCollection(
+            listEntryJson(
+                id = 1,
+                status = "CURRENT",
+                progress = 3,
+                media = mangaMediaJson(id = 201, romaji = "Older Manga", startDateYear = 2024),
+            ),
+            listEntryJson(
+                id = 2,
+                status = "CURRENT",
+                progress = 1,
+                media = mangaMediaJson(id = 202, romaji = "Newer Manga", startDateYear = 2025),
+            ),
+        )))
+        val (holder) = mangaWired(graphQL)
+        holder.load(7)
+
+        holder.updateListFilters(season = null, genres = emptyList(), formats = emptyList(), year = 2024)
+
+        assertEquals(
+            listOf(201),
+            holder.entriesInSection(MangaListSection.ALL).map { it.id },
+            "the chosen year matches the manga's startDate year",
+        )
+    }
+
+    @Test
+    fun mangaIgnoresAStoredSeasonFilter() {
+        val graphQL = FakeGraphQL(listOf(mangaCollection()))
+        val (holder) = mangaWired(graphQL)
+        holder.load(7)
+
+        // A season is meaningless for manga: even a stored one must not hide entries.
+        holder.updateListFilters(
+            season = MediaSeason.WINTER,
+            genres = emptyList(),
+            formats = emptyList(),
+            year = null,
+        )
+
+        assertEquals(2, holder.entriesInSection(MangaListSection.ALL).size)
     }
 
     @Test

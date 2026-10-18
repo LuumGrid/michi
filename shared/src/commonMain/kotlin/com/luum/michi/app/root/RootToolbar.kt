@@ -6,15 +6,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.MediaSeasonYear
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
+import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.ExploreCategory
 import com.luum.michi.app.discover.domain.model.ExploreFilters
 import com.luum.michi.app.discover.domain.model.catalogKindOf
+import com.luum.michi.app.discover.domain.model.selectedSeason
 import com.luum.michi.app.discover.domain.model.title
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -49,10 +53,13 @@ internal fun RootToolbar(
     val exploreMediaCategory = holders.explore.category == ExploreCategory.ANIME ||
         holders.explore.category == ExploreCategory.MANGA
     val exploreFiltersActive = holders.explore.appliedFilters != ExploreFilters.Empty
+    // A season catalog's title follows the chip the user selected (the holder
+    // owns the bound filter); null for every other destination.
+    val catalogSeason = holders.catalog.filter.selectedSeason()
     Box(modifier = Modifier.fillMaxWidth()) {
         TopEdgeFade(modifier = Modifier.matchParentSize())
         Toolbar(
-            title = detailToolbarTitle(state.currentDetail, strings)
+            title = detailToolbarTitle(state.currentDetail, strings, catalogSeason)
                 ?: if (state.isDetailOpen) {
                     ""
                 } else if (isExploreResults) {
@@ -346,7 +353,11 @@ private fun toolbarTitle(
  *  the content: a "View all" list and a genre page (both are lists). Null for
  *  every other destination — media/character/staff/studio keep their title in
  *  the hero, and tabs use [toolbarTitle]. */
-private fun detailToolbarTitle(destination: DetailDestination?, strings: LanguageStrings): String? =
+private fun detailToolbarTitle(
+    destination: DetailDestination?,
+    strings: LanguageStrings,
+    catalogSeason: MediaSeasonYear?,
+): String? =
     when (destination) {
         is DetailDestination.DetailList -> when (destination.kind) {
             DetailListKind.MEDIA_CHARACTERS -> strings.mediaDetailCharactersTitle
@@ -360,7 +371,13 @@ private fun detailToolbarTitle(destination: DetailDestination?, strings: Languag
         is DetailDestination.Genre -> destination.name
         is DetailDestination.Catalog -> catalogKindOf(destination.kindId)?.let { kind ->
             val current = currentSeasonAndYear()
-            kind.title(strings, current, current.next())
+            if (kind == DashboardSectionKind.SEASONAL ||
+                kind == DashboardSectionKind.UPCOMING_SEASON
+            ) {
+                catalogSeason?.label(strings) ?: kind.title(strings, current, current.next())
+            } else {
+                kind.title(strings, current, current.next())
+            }
         }
         else -> null
     }

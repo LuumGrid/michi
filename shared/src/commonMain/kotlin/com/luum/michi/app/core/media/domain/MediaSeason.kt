@@ -27,6 +27,10 @@ internal fun MediaSeason.label(strings: LanguageStrings): String = when (this) {
 
 internal data class MediaSeasonYear(val season: MediaSeason, val year: Int)
 
+/** Localized rail/toolbar title: e.g. "Fall 2026". */
+internal fun MediaSeasonYear.label(strings: LanguageStrings): String =
+    "${season.label(strings)} $year"
+
 internal fun MediaSeasonYear.next(): MediaSeasonYear = when (season) {
     MediaSeason.WINTER -> MediaSeasonYear(MediaSeason.SPRING, year)
     MediaSeason.SPRING -> MediaSeasonYear(MediaSeason.SUMMER, year)

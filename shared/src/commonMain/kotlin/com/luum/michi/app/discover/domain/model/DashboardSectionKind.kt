@@ -6,6 +6,7 @@ import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.media.domain.currentSeasonAndYear
 import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.core.media.domain.next
+import com.luum.michi.app.core.media.domain.previous
 import com.luum.michi.app.core.medialist.domain.UserListSort
 
 /**
@@ -101,6 +102,33 @@ internal fun DashboardSectionKind.title(
     DashboardSectionKind.BEST_MANHWA -> strings.discoverBestRatedManhwaTitle
     DashboardSectionKind.BEST_MANHUA -> strings.discoverBestRatedManhuaTitle
 }
+
+/**
+ * The 4 seasons a season catalog's chip rail offers, in chronological order:
+ * the three before the current season plus the current one (SEASONAL, current
+ * selected last), or the next season plus the three after it (UPCOMING_SEASON,
+ * next selected first). Null for every other rail, which has no selector.
+ */
+internal fun DashboardSectionKind.seasonRail(
+    now: MediaSeasonYear = currentSeasonAndYear(),
+): List<MediaSeasonYear>? = when (this) {
+    DashboardSectionKind.SEASONAL -> listOf(now.rewind(3), now.rewind(2), now.rewind(1), now)
+    DashboardSectionKind.UPCOMING_SEASON -> {
+        val base = now.next()
+        listOf(base, base.advance(1), base.advance(2), base.advance(3))
+    }
+    else -> null
+}
+
+/** The season a season rail highlights before the user taps a chip. */
+internal fun List<MediaSeasonYear>.defaultSeason(kind: DashboardSectionKind): MediaSeasonYear =
+    if (kind == DashboardSectionKind.UPCOMING_SEASON) first() else last()
+
+private fun MediaSeasonYear.rewind(times: Int): MediaSeasonYear =
+    (0 until times).fold(this) { acc, _ -> acc.previous() }
+
+private fun MediaSeasonYear.advance(times: Int): MediaSeasonYear =
+    (0 until times).fold(this) { acc, _ -> acc.next() }
 
 private val AnimeOrMovieFormats = listOf("TV", "TV_SHORT", "OVA", "ONA", "SPECIAL")
 private val MovieFormats = listOf("MOVIE")

@@ -28,6 +28,10 @@ internal class MangaListStateHolder(
 ) {
     override val allSection = MangaListSection.ALL
 
+    // AniList leaves season/seasonYear empty for manga, so the season filter has
+    // no meaning here: the sheet hides it and the holder ignores it.
+    override val supportsSeasonFilter: Boolean get() = false
+
     override fun statusOf(entry: MangaListEntry): MangaListSection = entry.status
 
     override val progressOrder: Comparator<MangaListEntry> = compareBy { it.chaptersProgress }

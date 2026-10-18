@@ -11,6 +11,7 @@ import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.medialist.domain.UserListOrder
 import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.core.media.domain.mediaFormatsForType
 import com.luum.michi.app.core.medialist.domain.toMediaSort
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.discover.domain.model.ExploreCategory
@@ -122,6 +123,17 @@ internal class ExploreStateHolder(
         if (newCategory == category) return
         category = newCategory
         if (newCategory != ExploreCategory.ANIME) season = null
+        // Formats are type-specific (anime has no Manga/Novel/One shot and manga
+        // has no TV/Movie/…): drop every format the new category cannot have, and
+        // clear them entirely for the people/studio categories that take none.
+        val isAnime = newCategory == ExploreCategory.ANIME
+        val isMedia = isAnime || newCategory == ExploreCategory.MANGA
+        formats = if (isMedia) {
+            val valid = mediaFormatsForType(isAnime).mapTo(mutableSetOf()) { it.name }
+            formats.filter { it in valid }
+        } else {
+            emptyList()
+        }
         sort = currentSortOption.toMediaSort(currentSortOrder, isAnime = category != ExploreCategory.MANGA)
         if (!hasSearched) return
         paginated.clear()
