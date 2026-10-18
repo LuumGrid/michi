@@ -178,8 +178,8 @@ object EnglishStrings : LanguageStrings {
         val hourUnit = if (hours == 1) "hour" else "hours"
         val minuteUnit = if (minutes == 1) "minute" else "minutes"
         return when {
-            days > 0 -> "in $days $dayUnit $hours $hourUnit"
-            hours > 0 -> "in $hours $hourUnit $minutes $minuteUnit"
+            days > 0 -> if (hours > 0) "in $days $dayUnit $hours $hourUnit" else "in $days $dayUnit"
+            hours > 0 -> if (minutes > 0) "in $hours $hourUnit $minutes $minuteUnit" else "in $hours $hourUnit"
             else -> "in $minutes $minuteUnit"
         }
     }
@@ -349,9 +349,18 @@ object EnglishStrings : LanguageStrings {
     override val notificationsErrorLabel = "Couldn't load notifications."
     override val notificationsLoadingLabel = "Loading notifications…"
     override val timeJustNowLabel = "now"
-    override fun timeMinutesAgoLabel(minutes: Int) = "${minutes}min ago"
-    override fun timeHoursAgoLabel(hours: Int) = "${hours}h ago"
-    override fun timeDaysAgoLabel(days: Int) = "${days}d ago"
+    override fun timeAgoLabel(days: Int, hours: Int, minutes: Int): String {
+        val dayUnit = if (days == 1) "day" else "days"
+        val hourUnit = if (hours == 1) "hour" else "hours"
+        val minuteUnit = if (minutes == 1) "minute" else "minutes"
+        return when {
+            days > 0 -> if (hours > 0) "$days $dayUnit $hours $hourUnit ago" else "$days $dayUnit ago"
+            hours > 0 -> if (minutes > 0) "$hours $hourUnit $minutes $minuteUnit ago" else "$hours $hourUnit ago"
+            else -> "$minutes $minuteUnit ago"
+        }
+    }
+    override fun notificationTimeLabel(date: String, relative: String?) =
+        if (relative != null) "$date ($relative)" else date
     override val notificationFilterAll = "All"
     override val notificationFilterAiring = "Airing"
     override val notificationFilterReplies = "Replies"
@@ -367,11 +376,36 @@ object EnglishStrings : LanguageStrings {
     override val calendarStatusNotInList = "Not in my lists"
     override val notifAiringPrefix = "Episode"
     override val notifAiringAired = "of"
-    override val notifFollowingLabel = "started following you"
-    override val notifActivityLabel = "New activity"
-    override val notifForumLabel = "Forum reply"
-    override val notifMessageLabel = "New message"
-    override val notifMediaChangeLabel = "A title on your list changed"
+    override fun notifFollowingText(user: String?) = "${user ?: "Someone"} started following you"
+    override fun notifActivityLikeText(user: String?) = "${user ?: "Someone"} liked your activity"
+    override fun notifActivityReplyText(user: String?) = "${user ?: "Someone"} replied to your activity"
+    override fun notifActivityReplyLikeText(user: String?) = "${user ?: "Someone"} liked your reply"
+    override fun notifActivityReplySubscribedText(user: String?) =
+        "${user ?: "Someone"} replied in an activity you follow"
+    override fun notifActivityMentionText(user: String?) = "${user ?: "Someone"} mentioned you in an activity"
+    override fun notifActivityMessageText(user: String?) = "${user ?: "Someone"} sent you a message"
+    override fun notifThreadCommentReplyText(user: String?, thread: String?) =
+        "${user ?: "Someone"} replied to your comment in ${thread ?: "a thread"}"
+    override fun notifThreadCommentMentionText(user: String?, thread: String?) =
+        "${user ?: "Someone"} mentioned you in ${thread ?: "a thread"}"
+    override fun notifThreadSubscribedText(user: String?, thread: String?) =
+        "${user ?: "Someone"} commented in ${thread ?: "a thread"} you follow"
+    override fun notifThreadCommentLikeText(user: String?, thread: String?) =
+        "${user ?: "Someone"} liked your comment in ${thread ?: "a thread"}"
+    override fun notifThreadLikeText(user: String?, thread: String?): String {
+        val who = user ?: "Someone"
+        return if (thread != null) "$who liked your thread $thread" else "$who liked your thread"
+    }
+    override fun notifRelatedMediaAdditionText(media: String?) =
+        "${media ?: "A title"} was added to AniList"
+    override fun notifMediaDataChangeText(media: String?) = "${media ?: "A title"} received changes"
+    override fun notifMediaMergeText(media: String?, deletedTitles: List<String>): String {
+        val merged = "Merged into ${media ?: "a title"}"
+        return if (deletedTitles.isEmpty()) merged else "$merged: ${deletedTitles.joinToString(", ")}"
+    }
+    override fun notifMediaDeletionText(media: String?) = "${media ?: "A title"} was deleted from AniList"
+    override fun notifSubmissionText(name: String?, status: String?) =
+        "Your submission of ${name ?: "a title"}: ${status?.takeIf { it.isNotBlank() } ?: "updated"}"
 
     // Staff detail
     override val yearsActivePresent = "present"

@@ -29,13 +29,16 @@ query Notifications(${'$'}page: Int, ${'$'}reset: Boolean, ${'$'}withCount: Bool
       ... on ActivityMessageNotification { id type activityId user { id name avatar { large medium } } createdAt }
       ... on RelatedMediaAdditionNotification { id type media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
       ... on MediaDataChangeNotification { id type reason media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
-      ... on MediaMergeNotification { id type reason media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on MediaMergeNotification { id type reason deletedMediaTitles media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
       ... on MediaDeletionNotification { id type reason deletedMediaTitle createdAt }
-      ... on ThreadCommentReplyNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
-      ... on ThreadCommentMentionNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
-      ... on ThreadCommentSubscribedNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
-      ... on ThreadCommentLikeNotification { id type commentId thread { id } user { id name avatar { large medium } } createdAt }
-      ... on ThreadLikeNotification { id type threadId thread { id } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentReplyNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentMentionNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentSubscribedNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentLikeNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadLikeNotification { id type threadId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on MediaSubmissionUpdateNotification { id type status notes submittedTitle media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on StaffSubmissionUpdateNotification { id type status notes staff { id name { full userPreferred } image { large medium } } createdAt }
+      ... on CharacterSubmissionUpdateNotification { id type status notes character { id name { full userPreferred } image { large medium } } createdAt }
     }
   }
 }

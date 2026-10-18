@@ -338,9 +338,8 @@ interface LanguageStrings {
     val notificationsErrorLabel: String
     val notificationsLoadingLabel: String
     val timeJustNowLabel: String
-    fun timeMinutesAgoLabel(minutes: Int): String
-    fun timeHoursAgoLabel(hours: Int): String
-    fun timeDaysAgoLabel(days: Int): String
+    fun timeAgoLabel(days: Int, hours: Int, minutes: Int): String
+    fun notificationTimeLabel(date: String, relative: String?): String
     val notificationFilterAll: String
     val notificationFilterAiring: String
     val notificationFilterReplies: String
@@ -356,11 +355,23 @@ interface LanguageStrings {
     val calendarStatusNotInList: String
     val notifAiringPrefix: String
     val notifAiringAired: String
-    val notifFollowingLabel: String
-    val notifActivityLabel: String
-    val notifForumLabel: String
-    val notifMessageLabel: String
-    val notifMediaChangeLabel: String
+    fun notifFollowingText(user: String?): String
+    fun notifActivityLikeText(user: String?): String
+    fun notifActivityReplyText(user: String?): String
+    fun notifActivityReplyLikeText(user: String?): String
+    fun notifActivityReplySubscribedText(user: String?): String
+    fun notifActivityMentionText(user: String?): String
+    fun notifActivityMessageText(user: String?): String
+    fun notifThreadCommentReplyText(user: String?, thread: String?): String
+    fun notifThreadCommentMentionText(user: String?, thread: String?): String
+    fun notifThreadSubscribedText(user: String?, thread: String?): String
+    fun notifThreadCommentLikeText(user: String?, thread: String?): String
+    fun notifThreadLikeText(user: String?, thread: String?): String
+    fun notifRelatedMediaAdditionText(media: String?): String
+    fun notifMediaDataChangeText(media: String?): String
+    fun notifMediaMergeText(media: String?, deletedTitles: List<String>): String
+    fun notifMediaDeletionText(media: String?): String
+    fun notifSubmissionText(name: String?, status: String?): String
 
     // Staff detail
     val yearsActivePresent: String

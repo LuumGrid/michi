@@ -3,7 +3,9 @@ package com.luum.michi.app.notifications.repository
 import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
+import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.StaffDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -31,6 +33,10 @@ internal data class NotificationNodeDto(
     val createdAt: Long? = null,
     val episode: Int? = null,
     val reason: String? = null,
+    /** Media/staff/character submission kinds. */
+    val status: String? = null,
+    val notes: String? = null,
+    val submittedTitle: String? = null,
     val activityId: Int? = null,
     /** Forum: the replied/liked comment id (comment-based notifications). */
     val commentId: Int? = null,
@@ -38,13 +44,18 @@ internal data class NotificationNodeDto(
     val threadId: Int? = null,
     val thread: NotificationThreadDto? = null,
     val deletedMediaTitle: String? = null,
+    /** `MediaMergeNotification`: the titles merged away. */
+    val deletedMediaTitles: List<String> = emptyList(),
     val media: NotificationMediaDto? = null,
+    val staff: StaffDto? = null,
+    val character: CharacterDto? = null,
     val user: NotificationUserDto? = null,
 )
 
 @Serializable
 internal data class NotificationThreadDto(
     val id: Int? = null,
+    val title: String? = null,
 )
 
 @Serializable

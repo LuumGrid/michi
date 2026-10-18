@@ -4,7 +4,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.notifications.domain.model.AppNotification
-import com.luum.michi.app.notifications.domain.model.NotificationCategory
+import com.luum.michi.app.notifications.domain.model.NotificationKind
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
 
 /** One notification shaped for the row: image, text, relative time, destination. */
@@ -28,31 +28,33 @@ internal fun AppNotification.toRowItem(
 )
 
 /**
- * The row's main line. Every branch falls back to a generic label so a missing
- * episode/title/user name never renders an empty string.
+ * The row's main line. The exact [NotificationKind] picks the phrase; each
+ * LanguageStrings function owns the wording and its own fallbacks, so no sentence
+ * is assembled here (airing keeps its own two-part label as before).
  */
-private fun AppNotification.notificationText(strings: LanguageStrings): String = when (category) {
-    NotificationCategory.AIRING -> airingText(strings)
-    NotificationCategory.FOLLOWING -> userName.startedWith(strings.notifFollowingLabel)
-    NotificationCategory.ACTIVITY -> userName.prefixedWith(strings.notifActivityLabel)
-    NotificationCategory.REPLIES -> userName.prefixedWith(strings.notifForumLabel)
-    NotificationCategory.FORUM -> userName.prefixedWith(strings.notifForumLabel)
-    NotificationCategory.MESSAGE -> userName.prefixedWith(strings.notifMessageLabel)
-    NotificationCategory.MEDIA_CHANGE -> mediaTitle.suffixedWith(strings.notifMediaChangeLabel)
-    NotificationCategory.OTHER -> strings.otherLabel
+private fun AppNotification.notificationText(strings: LanguageStrings): String = when (kind) {
+    NotificationKind.AIRING -> airingText(strings)
+    NotificationKind.FOLLOWING -> strings.notifFollowingText(userName)
+    NotificationKind.ACTIVITY_LIKE -> strings.notifActivityLikeText(userName)
+    NotificationKind.ACTIVITY_REPLY -> strings.notifActivityReplyText(userName)
+    NotificationKind.ACTIVITY_REPLY_LIKE -> strings.notifActivityReplyLikeText(userName)
+    NotificationKind.ACTIVITY_REPLY_SUBSCRIBED -> strings.notifActivityReplySubscribedText(userName)
+    NotificationKind.ACTIVITY_MENTION -> strings.notifActivityMentionText(userName)
+    NotificationKind.ACTIVITY_MESSAGE -> strings.notifActivityMessageText(userName)
+    NotificationKind.THREAD_COMMENT_REPLY -> strings.notifThreadCommentReplyText(userName, threadTitle)
+    NotificationKind.THREAD_COMMENT_MENTION -> strings.notifThreadCommentMentionText(userName, threadTitle)
+    NotificationKind.THREAD_SUBSCRIBED -> strings.notifThreadSubscribedText(userName, threadTitle)
+    NotificationKind.THREAD_COMMENT_LIKE -> strings.notifThreadCommentLikeText(userName, threadTitle)
+    NotificationKind.THREAD_LIKE -> strings.notifThreadLikeText(userName, threadTitle)
+    NotificationKind.RELATED_MEDIA_ADDITION -> strings.notifRelatedMediaAdditionText(mediaTitle)
+    NotificationKind.MEDIA_DATA_CHANGE -> strings.notifMediaDataChangeText(mediaTitle)
+    NotificationKind.MEDIA_MERGE -> strings.notifMediaMergeText(mediaTitle, deletedMediaTitles)
+    NotificationKind.MEDIA_DELETION -> strings.notifMediaDeletionText(mediaTitle)
+    NotificationKind.MEDIA_SUBMISSION_UPDATE,
+    NotificationKind.STAFF_SUBMISSION_UPDATE,
+    NotificationKind.CHARACTER_SUBMISSION_UPDATE -> strings.notifSubmissionText(subjectName, status)
+    NotificationKind.UNKNOWN -> strings.otherLabel
 }
-
-/** "bob started following you". */
-private fun String?.startedWith(label: String): String =
-    this?.takeIf { it.isNotBlank() }?.let { "$it $label" } ?: label
-
-/** "bob · New activity". */
-private fun String?.prefixedWith(label: String): String =
-    this?.takeIf { it.isNotBlank() }?.let { "$it · $label" } ?: label
-
-/** "A title on your list changed: Naruto". */
-private fun String?.suffixedWith(label: String): String =
-    this?.takeIf { it.isNotBlank() }?.let { "$label: $it" } ?: label
 
 private fun AppNotification.airingText(strings: LanguageStrings): String {
     val title = mediaTitle?.takeIf { it.isNotBlank() }
@@ -66,29 +68,46 @@ private fun AppNotification.airingText(strings: LanguageStrings): String {
     }
 }
 
-/** Relative up to 7 days, then the shared readable date (never a dead label). */
+/**
+ * Time since [createdEpochSeconds], in the past: the readable date plus, in
+ * parentheses, the elapsed time (under a minute is "now", up to a week mirrors
+ * the airing countdown label's two-unit split). From 7 days on, just the date.
+ * The sentence is assembled by LanguageStrings, exactly like the next-episode
+ * release label.
+ */
 internal fun notificationTimeLabel(
     nowEpochSeconds: Long,
     createdEpochSeconds: Long,
     strings: LanguageStrings,
 ): String {
     val age = (nowEpochSeconds - createdEpochSeconds).coerceAtLeast(0)
-    return when {
+    val relative = when {
         age < 60 -> strings.timeJustNowLabel
-        age < 3_600 -> strings.timeMinutesAgoLabel((age / 60).toInt())
-        age < 86_400 -> strings.timeHoursAgoLabel((age / 3_600).toInt())
-        age < 7 * 86_400 -> strings.timeDaysAgoLabel((age / 86_400).toInt())
-        else -> strings.notificationDateLabel(createdEpochSeconds.toLocalMediaReleaseDateTime())
+        age >= 7 * 86_400 -> null
+        else -> strings.timeAgoLabel(
+            days = (age / 86_400).toInt(),
+            hours = ((age % 86_400) / 3_600).toInt(),
+            minutes = ((age % 3_600) / 60).toInt(),
+        )
     }
+    return strings.notificationTimeLabel(
+        strings.notificationDateLabel(createdEpochSeconds.toLocalMediaReleaseDateTime()),
+        relative,
+    )
 }
 
-/** Sends a tapped notification to the media detail or the browser. */
+/** Sends a tapped notification to the right destination ([None] does nothing). */
 internal fun NotificationTarget.dispatch(
     onOpenMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
 ) {
     when (this) {
         is NotificationTarget.Media -> onOpenMedia(id)
+        is NotificationTarget.Character -> onOpenCharacter(id)
+        is NotificationTarget.Staff -> onOpenStaff(id)
         is NotificationTarget.Web -> onOpenUrl(url)
+        NotificationTarget.None -> Unit
     }
 }

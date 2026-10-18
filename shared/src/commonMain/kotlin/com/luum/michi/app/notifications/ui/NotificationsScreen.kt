@@ -48,6 +48,8 @@ internal fun NotificationsScreen(
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onOpenMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -59,6 +61,8 @@ internal fun NotificationsScreen(
         onRetry = onRetry,
         onRefresh = onRefresh,
         onOpenMedia = onOpenMedia,
+        onOpenCharacter = onOpenCharacter,
+        onOpenStaff = onOpenStaff,
         onOpenUrl = onOpenUrl,
         modifier = modifier,
     )
@@ -72,6 +76,8 @@ private fun NotificationsContent(
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onOpenMedia: (Int) -> Unit,
+    onOpenCharacter: (Int) -> Unit,
+    onOpenStaff: (Int) -> Unit,
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -141,7 +147,9 @@ private fun NotificationsContent(
                         cover = item.image,
                         title = item.text,
                         subtitle = item.time,
-                        onClick = { item.target.dispatch(onOpenMedia, onOpenUrl) },
+                        onClick = {
+                            item.target.dispatch(onOpenMedia, onOpenCharacter, onOpenStaff, onOpenUrl)
+                        },
                     )
                 }
                 if (holder.hasNextPage) {

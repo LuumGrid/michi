@@ -273,9 +273,11 @@ internal fun Root(
                             NotificationsScreen(
                                 holder = holders.notifications,
                                 bottomPadding = padding.calculateBottomPadding(),
-                                onRetry = { holders.notifications.load(resetCount = true) },
-                                onRefresh = { holders.notifications.load(resetCount = true) },
+                                onRetry = { holders.notifications.refresh() },
+                                onRefresh = { holders.notifications.refresh() },
                                 onOpenMedia = { state.openMedia(it) },
+                                onOpenCharacter = { state.openCharacter(it) },
+                                onOpenStaff = { state.openStaff(it) },
                                 onOpenUrl = { urlOpener.open(it) },
                             )
                         } else {

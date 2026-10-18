@@ -61,15 +61,33 @@ internal class NotificationsStateHolder(
     }
 
     /**
-     * Opening the page is reading it, so it resets the server count. Skipped only
-     * when it was already read and the feed is still fresh: no reason, no request.
+     * Opening the page is reading it, and reading means the unfiltered feed:
+     * it always returns to ALL (dropping a leftover filter's list) and resets the
+     * server count. `resetNotificationCount` is global, so it is only ever sent
+     * with ALL. Skipped only when ALL is already selected and the feed is fresh
+     * and read: no reason, no request.
      */
     fun onOpen() {
+        if (selectedFilter != NotificationFilter.ALL) {
+            selectedFilter = NotificationFilter.ALL
+            paginated.clear()
+            // The list was just emptied: load even if the feed was fresh.
+            load(resetCount = true)
+            return
+        }
         val mark = lastLoaded
         val fresh = hasLoaded && unreadCount == 0 && mark != null &&
             mark.elapsedNow() < AniListNetworkPolicy.CACHE_TTL
         if (fresh) return
         load(resetCount = true)
+    }
+
+    /**
+     * Pull-to-refresh / retry: the reset is global, so it only happens on the
+     * unfiltered feed. With any other filter the count is left to the server.
+     */
+    fun refresh() {
+        load(resetCount = selectedFilter == NotificationFilter.ALL)
     }
 
     /**

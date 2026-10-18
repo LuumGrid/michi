@@ -1,56 +1,63 @@
 package com.luum.michi.app.notifications.repository
 
 import com.luum.michi.app.core.media.repository.bestTitleOrNull
-import com.luum.michi.app.core.model.NotificationBucket
-import com.luum.michi.app.core.model.apiTypes
-import com.luum.michi.app.core.model.notificationBucketFor
 import com.luum.michi.app.notifications.domain.model.AppNotification
-import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
+import com.luum.michi.app.notifications.domain.model.NotificationKind
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
+import com.luum.michi.app.notifications.domain.model.kinds
 import com.luum.michi.app.core.media.repository.toCoverSizes
+import com.luum.michi.app.core.person.repository.toCoverSizes
 import com.luum.michi.app.core.model.CoverSizes
-
-/** Reply types, shown under their own category and filter. Single definition:
- *  both categoryFor() and toAniListTypes() derive from here so they cannot drift. */
-private val ReplyTypes = listOf("ACTIVITY_REPLY", "ACTIVITY_REPLY_LIKE", "THREAD_COMMENT_REPLY")
-
-private fun categoryFor(type: String): NotificationCategory = when {
-    type in ReplyTypes -> NotificationCategory.REPLIES
-    else -> when (notificationBucketFor(type)) {
-        NotificationBucket.AIRING -> NotificationCategory.AIRING
-        NotificationBucket.FOLLOWING -> NotificationCategory.FOLLOWING
-        NotificationBucket.ACTIVITY -> NotificationCategory.ACTIVITY
-        NotificationBucket.MESSAGE -> NotificationCategory.MESSAGE
-        NotificationBucket.FORUM -> NotificationCategory.FORUM
-        NotificationBucket.MEDIA -> NotificationCategory.MEDIA_CHANGE
-        null -> NotificationCategory.OTHER
-    }
-}
 
 internal fun NotificationNodeDto.toAppNotification(): AppNotification? {
     val notificationId = id ?: return null
     val notificationType = type ?: return null
-    val category = categoryFor(notificationType)
+    val kind = NotificationKind.ofApiType(notificationType)
 
     val image = media?.coverImage?.toCoverSizes()
+        ?: staff?.image?.toCoverSizes()
+        ?: character?.image?.toCoverSizes()
         ?: user?.avatar?.let { CoverSizes(medium = it.medium, large = it.large) }
 
     val target: NotificationTarget = when {
+        // A deleted title has nowhere to go; neither has a rejected submission.
+        kind == NotificationKind.MEDIA_DELETION -> NotificationTarget.None
         media?.id != null -> NotificationTarget.Media(media.id)
-        else -> webTarget(category)
+        staff?.id != null -> NotificationTarget.Staff(staff.id)
+        character?.id != null -> NotificationTarget.Character(character.id)
+        kind == NotificationKind.MEDIA_SUBMISSION_UPDATE -> NotificationTarget.None
+        else -> webTarget(kind)
     }
 
     return AppNotification(
         id = notificationId,
-        category = category,
+        kind = kind,
         image = image,
         createdAtEpochSeconds = createdAt ?: 0L,
         target = target,
         episode = episode,
-        mediaTitle = media?.title.bestTitleOrNull() ?: deletedMediaTitle,
-        userName = user?.name,
+        // Every text field is normalized: a blank never reaches LanguageStrings,
+        // which relies on null to pick its fallback wording.
+        mediaTitle = (media?.title.bestTitleOrNull() ?: deletedMediaTitle)?.takeIf { it.isNotBlank() },
+        threadTitle = thread?.title?.takeIf { it.isNotBlank() },
+        userName = user?.name?.takeIf { it.isNotBlank() },
+        subjectName = submissionSubject(kind),
+        reason = reason,
+        notes = notes,
+        status = status,
+        deletedMediaTitles = deletedMediaTitles.filter { it.isNotBlank() },
     )
+}
+
+/** The submitted item's name: the submitted title (falling back to the media
+ *  title), or the staff/character name. Only the submission kinds carry one. */
+private fun NotificationNodeDto.submissionSubject(kind: NotificationKind): String? = when (kind) {
+    NotificationKind.MEDIA_SUBMISSION_UPDATE ->
+        submittedTitle?.takeIf { it.isNotBlank() } ?: media?.title.bestTitleOrNull()
+    NotificationKind.STAFF_SUBMISSION_UPDATE -> staff?.name?.bestName?.takeIf { it.isNotBlank() }
+    NotificationKind.CHARACTER_SUBMISSION_UPDATE -> character?.name?.bestName?.takeIf { it.isNotBlank() }
+    else -> null
 }
 
 /** Fallback destination: any notification without a usable id still opens the feed. */
@@ -63,10 +70,11 @@ private const val AniListNotificationsUrl = "https://anilist.co/notifications"
  *    `activityId` → that activity;
  *  - a forum reply/like/subscribed has `thread { id }` (+ `commentId`) or a
  *    thread like has `threadId` → the thread, with `/comment/{id}` when known;
- *  - a follow has no id, only the actor → the user profile.
- * Anything else (e.g. a deleted media with no id) falls back to the feed.
+ *  - a follow has no id, only the actor → the user profile;
+ *  - anything else (an unmodelled type) → the notifications feed, the only place
+ *    the user can see what it is.
  */
-private fun NotificationNodeDto.webTarget(category: NotificationCategory): NotificationTarget {
+private fun NotificationNodeDto.webTarget(kind: NotificationKind): NotificationTarget {
     activityId?.let { return NotificationTarget.Web("https://anilist.co/activity/$it") }
     val forumThreadId = thread?.id ?: threadId
     if (forumThreadId != null) {
@@ -75,23 +83,12 @@ private fun NotificationNodeDto.webTarget(category: NotificationCategory): Notif
         return NotificationTarget.Web("https://anilist.co/forum/thread/$forumThreadId$commentPath")
     }
     val name = user?.name
-    if (category == NotificationCategory.FOLLOWING && !name.isNullOrBlank()) {
+    if (kind == NotificationKind.FOLLOWING && !name.isNullOrBlank()) {
         return NotificationTarget.Web("https://anilist.co/user/$name")
     }
     return NotificationTarget.Web(AniListNotificationsUrl)
 }
 
-internal fun NotificationFilter.toAniListTypes(): List<String>? = when (this) {
-    NotificationFilter.ALL -> null
-    NotificationFilter.AIRING -> NotificationBucket.AIRING.apiTypes
-    // The activity filter historically includes direct messages as well; preserved.
-    // Reply types live under REPLIES now, so they are excluded here (and
-    // THREAD_COMMENT_REPLY from FORUM below) to keep filters exclusive.
-    NotificationFilter.ACTIVITY -> NotificationBucket.ACTIVITY.apiTypes +
-        NotificationBucket.MESSAGE.apiTypes -
-        ReplyTypes.toSet()
-    NotificationFilter.REPLIES -> ReplyTypes
-    NotificationFilter.FORUM -> NotificationBucket.FORUM.apiTypes - ReplyTypes.toSet()
-    NotificationFilter.FOLLOWS -> NotificationBucket.FOLLOWING.apiTypes
-    NotificationFilter.MEDIA -> NotificationBucket.MEDIA.apiTypes
-}
+/** The API `type_in` list of a filter, or null for ALL (the unfiltered feed). */
+internal fun NotificationFilter.toAniListTypes(): List<String>? =
+    kinds()?.mapNotNull { it.apiType }

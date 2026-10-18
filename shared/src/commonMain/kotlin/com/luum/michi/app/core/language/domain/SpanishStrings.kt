@@ -180,8 +180,8 @@ object SpanishStrings : LanguageStrings {
         val hourUnit = if (hours == 1) "hora" else "horas"
         val minuteUnit = if (minutes == 1) "minuto" else "minutos"
         return when {
-            days > 0 -> "en $days $dayUnit $hours $hourUnit"
-            hours > 0 -> "en $hours $hourUnit $minutes $minuteUnit"
+            days > 0 -> if (hours > 0) "en $days $dayUnit $hours $hourUnit" else "en $days $dayUnit"
+            hours > 0 -> if (minutes > 0) "en $hours $hourUnit $minutes $minuteUnit" else "en $hours $hourUnit"
             else -> "en $minutes $minuteUnit"
         }
     }
@@ -351,9 +351,18 @@ object SpanishStrings : LanguageStrings {
     override val notificationsErrorLabel = "No se pudieron cargar las notificaciones."
     override val notificationsLoadingLabel = "Cargando notificaciones…"
     override val timeJustNowLabel = "ahora"
-    override fun timeMinutesAgoLabel(minutes: Int) = "hace ${minutes}min"
-    override fun timeHoursAgoLabel(hours: Int) = "hace ${hours}h"
-    override fun timeDaysAgoLabel(days: Int) = "hace ${days}d"
+    override fun timeAgoLabel(days: Int, hours: Int, minutes: Int): String {
+        val dayUnit = if (days == 1) "día" else "días"
+        val hourUnit = if (hours == 1) "hora" else "horas"
+        val minuteUnit = if (minutes == 1) "minuto" else "minutos"
+        return when {
+            days > 0 -> if (hours > 0) "hace $days $dayUnit $hours $hourUnit" else "hace $days $dayUnit"
+            hours > 0 -> if (minutes > 0) "hace $hours $hourUnit $minutes $minuteUnit" else "hace $hours $hourUnit"
+            else -> "hace $minutes $minuteUnit"
+        }
+    }
+    override fun notificationTimeLabel(date: String, relative: String?) =
+        if (relative != null) "$date ($relative)" else date
     override val notificationFilterAll = "Todo"
     override val notificationFilterAiring = "Emisión"
     override val notificationFilterReplies = "Respuestas"
@@ -369,11 +378,36 @@ object SpanishStrings : LanguageStrings {
     override val calendarStatusNotInList = "Fuera de mis listas"
     override val notifAiringPrefix = "Episodio"
     override val notifAiringAired = "de"
-    override val notifFollowingLabel = "comenzó a seguirte"
-    override val notifActivityLabel = "Nueva actividad"
-    override val notifForumLabel = "Respuesta en el foro"
-    override val notifMessageLabel = "Nuevo mensaje"
-    override val notifMediaChangeLabel = "Cambió un título de tu lista"
+    override fun notifFollowingText(user: String?) = "${user ?: "Alguien"} empezó a seguirte"
+    override fun notifActivityLikeText(user: String?) = "A ${user ?: "alguien"} le gustó tu actividad"
+    override fun notifActivityReplyText(user: String?) = "${user ?: "Alguien"} respondió a tu actividad"
+    override fun notifActivityReplyLikeText(user: String?) = "A ${user ?: "alguien"} le gustó tu respuesta"
+    override fun notifActivityReplySubscribedText(user: String?) =
+        "${user ?: "Alguien"} respondió en una actividad que sigues"
+    override fun notifActivityMentionText(user: String?) = "${user ?: "Alguien"} te mencionó en una actividad"
+    override fun notifActivityMessageText(user: String?) = "${user ?: "Alguien"} te envió un mensaje"
+    override fun notifThreadCommentReplyText(user: String?, thread: String?) =
+        "${user ?: "Alguien"} respondió a tu comentario en ${thread ?: "un hilo"}"
+    override fun notifThreadCommentMentionText(user: String?, thread: String?) =
+        "${user ?: "Alguien"} te mencionó en ${thread ?: "un hilo"}"
+    override fun notifThreadSubscribedText(user: String?, thread: String?) =
+        "${user ?: "Alguien"} comentó en ${thread ?: "un hilo"}, que sigues"
+    override fun notifThreadCommentLikeText(user: String?, thread: String?) =
+        "A ${user ?: "alguien"} le gustó tu comentario en ${thread ?: "un hilo"}"
+    override fun notifThreadLikeText(user: String?, thread: String?): String {
+        val who = user ?: "Alguien"
+        return if (thread != null) "A $who le gustó tu hilo $thread" else "A $who le gustó tu hilo"
+    }
+    override fun notifRelatedMediaAdditionText(media: String?) =
+        "Se agregó ${media ?: "un título"} a AniList"
+    override fun notifMediaDataChangeText(media: String?) = "${media ?: "Un título"} recibió cambios"
+    override fun notifMediaMergeText(media: String?, deletedTitles: List<String>): String {
+        val merged = "Fusionado en ${media ?: "un título"}"
+        return if (deletedTitles.isEmpty()) merged else "$merged: ${deletedTitles.joinToString(", ")}"
+    }
+    override fun notifMediaDeletionText(media: String?) = "Se eliminó ${media ?: "un título"} de AniList"
+    override fun notifSubmissionText(name: String?, status: String?) =
+        "Tu envío de ${name ?: "un título"}: ${status?.takeIf { it.isNotBlank() } ?: "actualizado"}"
 
     // Staff detail
     override val yearsActivePresent = "presente"

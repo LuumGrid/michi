@@ -3,10 +3,10 @@ package com.luum.michi.app.core.model
 /**
  * Neutral buckets grouping the AniList `NotificationType` values.
  *
- * Single source of truth for which API type belongs to which bucket. Both the
- * notifications feature (display category + server-side filter) and the settings
- * feature (notification preference buckets) derive from here, so the three lists
- * cannot drift apart again: adding a type means adding it to exactly one bucket.
+ * Single source of truth for the settings feature's notification preference
+ * buckets. The notifications feature keeps its own exact-type vocabulary
+ * (`NotificationKind`), so filters can overlap (like Otraku) without changing
+ * what settings writes to AniList.
  */
 internal enum class NotificationBucket { AIRING, ACTIVITY, FOLLOWING, FORUM, MESSAGE, MEDIA }
 
@@ -36,7 +36,3 @@ internal val NotificationBucket.apiTypes: List<String>
             "MEDIA_DELETION",
         )
     }
-
-/** Reverse lookup: which bucket an AniList notification type belongs to, or null if unknown. */
-internal fun notificationBucketFor(apiType: String): NotificationBucket? =
-    NotificationBucket.entries.firstOrNull { apiType in it.apiTypes }

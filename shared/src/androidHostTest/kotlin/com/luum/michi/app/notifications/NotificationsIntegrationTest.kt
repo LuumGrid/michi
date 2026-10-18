@@ -4,10 +4,12 @@ import com.luum.michi.app.DeferredDispatcher
 import com.luum.michi.app.FakeGraphQL
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
 import com.luum.michi.app.core.network.domain.NetworkResult
-import com.luum.michi.app.notifications.domain.model.NotificationCategory
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
+import com.luum.michi.app.notifications.domain.model.NotificationKind
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
+import com.luum.michi.app.notifications.domain.model.kinds
 import com.luum.michi.app.notifications.repository.NotificationsRepositoryImpl
+import com.luum.michi.app.notifications.repository.toAniListTypes
 import com.luum.michi.app.notifications.ui.state.NotificationsStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -35,19 +37,61 @@ private fun node(
     commentId: Int? = null,
     threadId: Int? = null,
     thread: Int? = null,
+    threadTitle: String? = null,
     userName: String? = null,
+    mediaId: Int? = null,
+    deletedMediaTitle: String? = null,
+    deletedMediaTitles: List<String> = emptyList(),
+    status: String? = null,
+    notes: String? = null,
+    submittedTitle: String? = null,
+    staffName: String? = null,
+    characterName: String? = null,
 ): JsonObject = buildJsonObject {
     put("id", id)
     put("type", type)
     if (activityId != null) put("activityId", activityId)
     if (commentId != null) put("commentId", commentId)
     if (threadId != null) put("threadId", threadId)
-    if (thread != null) put("thread", buildJsonObject { put("id", thread) })
+    if (thread != null || threadTitle != null) {
+        put("thread", buildJsonObject {
+            if (thread != null) put("id", thread)
+            if (threadTitle != null) put("title", threadTitle)
+        })
+    }
     if (userName != null) {
         put("user", buildJsonObject {
             put("id", id)
             put("name", userName)
             put("avatar", buildJsonObject { put("large", "https://img/$id.jpg") })
+        })
+    }
+    if (mediaId != null) {
+        put("media", buildJsonObject {
+            put("id", mediaId)
+            put("title", buildJsonObject { put("userPreferred", "Media $mediaId") })
+            put("coverImage", buildJsonObject { put("large", "https://img/media$mediaId.jpg") })
+        })
+    }
+    if (deletedMediaTitle != null) put("deletedMediaTitle", deletedMediaTitle)
+    if (deletedMediaTitles.isNotEmpty()) {
+        put("deletedMediaTitles", JsonArray(deletedMediaTitles.map { JsonPrimitive(it) }))
+    }
+    if (status != null) put("status", status)
+    if (notes != null) put("notes", notes)
+    if (submittedTitle != null) put("submittedTitle", submittedTitle)
+    if (staffName != null) {
+        put("staff", buildJsonObject {
+            put("id", id)
+            put("name", buildJsonObject { put("userPreferred", staffName) })
+            put("image", buildJsonObject { put("large", "https://img/staff$id.jpg") })
+        })
+    }
+    if (characterName != null) {
+        put("character", buildJsonObject {
+            put("id", id)
+            put("name", buildJsonObject { put("userPreferred", characterName) })
+            put("image", buildJsonObject { put("large", "https://img/char$id.jpg") })
         })
     }
     put("createdAt", 1_700_000_000L)
@@ -80,6 +124,8 @@ private fun withCount(request: AniListGraphQLRequest): Boolean? =
 private fun resetFlag(request: AniListGraphQLRequest): Boolean? =
     (request.variables?.get("reset") as? JsonPrimitive)?.booleanOrNull
 
+private fun unconfined() = CoroutineScope(Dispatchers.Unconfined)
+
 /**
  * Notifications at the repository seam: a scripted [FakeGraphQL] (canned JSON)
  * behind the real repository and holder. Race tests drive [DeferredDispatcher]
@@ -88,10 +134,33 @@ private fun resetFlag(request: AniListGraphQLRequest): Boolean? =
  */
 class NotificationsIntegrationTest {
 
+    private val allKinds = listOf(
+        "AIRING" to NotificationKind.AIRING,
+        "FOLLOWING" to NotificationKind.FOLLOWING,
+        "ACTIVITY_LIKE" to NotificationKind.ACTIVITY_LIKE,
+        "ACTIVITY_REPLY" to NotificationKind.ACTIVITY_REPLY,
+        "ACTIVITY_REPLY_LIKE" to NotificationKind.ACTIVITY_REPLY_LIKE,
+        "ACTIVITY_REPLY_SUBSCRIBED" to NotificationKind.ACTIVITY_REPLY_SUBSCRIBED,
+        "ACTIVITY_MENTION" to NotificationKind.ACTIVITY_MENTION,
+        "ACTIVITY_MESSAGE" to NotificationKind.ACTIVITY_MESSAGE,
+        "THREAD_COMMENT_REPLY" to NotificationKind.THREAD_COMMENT_REPLY,
+        "THREAD_COMMENT_MENTION" to NotificationKind.THREAD_COMMENT_MENTION,
+        "THREAD_SUBSCRIBED" to NotificationKind.THREAD_SUBSCRIBED,
+        "THREAD_COMMENT_LIKE" to NotificationKind.THREAD_COMMENT_LIKE,
+        "THREAD_LIKE" to NotificationKind.THREAD_LIKE,
+        "RELATED_MEDIA_ADDITION" to NotificationKind.RELATED_MEDIA_ADDITION,
+        "MEDIA_DATA_CHANGE" to NotificationKind.MEDIA_DATA_CHANGE,
+        "MEDIA_MERGE" to NotificationKind.MEDIA_MERGE,
+        "MEDIA_DELETION" to NotificationKind.MEDIA_DELETION,
+        "MEDIA_SUBMISSION_UPDATE" to NotificationKind.MEDIA_SUBMISSION_UPDATE,
+        "STAFF_SUBMISSION_UPDATE" to NotificationKind.STAFF_SUBMISSION_UPDATE,
+        "CHARACTER_SUBMISSION_UPDATE" to NotificationKind.CHARACTER_SUBMISSION_UPDATE,
+    )
+
     // ────────────── query shape ──────────────
 
     @Test
-    fun queryAsksTheCountOnPageOneAndCarriesTheMissingFragments() = runBlocking {
+    fun queryAsksTheCountOnPageOneAndCarriesEveryFragment() = runBlocking {
         val client = FakeGraphQL(listOf(
             notificationPage(listOf(node(1, "AIRING")), hasNextPage = true, unreadCount = 3),
             notificationPage(listOf(node(2, "AIRING"))),
@@ -105,21 +174,42 @@ class NotificationsIntegrationTest {
         assertEquals(true, withCount(first), "page 1 always asks the unread count")
         assertEquals(false, resetFlag(first))
         listOf(
-            "ActivityReplySubscribedNotification",
+            "MediaSubmissionUpdateNotification",
+            "StaffSubmissionUpdateNotification",
+            "CharacterSubmissionUpdateNotification",
             "ThreadCommentSubscribedNotification",
-            "ThreadCommentLikeNotification",
             "ThreadLikeNotification",
         ).forEach { assertTrue(first.query.contains("... on $it"), "missing fragment for $it") }
-        assertTrue(first.query.contains("commentId"), "forum fragments need commentId")
-        assertTrue(first.query.contains("threadId"), "ThreadLikeNotification needs threadId")
+        assertTrue(first.query.contains("thread { id title }"), "forum fragments need the thread title")
+        assertTrue(first.query.contains("deletedMediaTitles"), "MediaMerge needs the deleted titles")
+        assertTrue(first.query.contains("submittedTitle"), "media submission needs the submitted title")
 
         assertEquals(false, withCount(client.requests[1]), "later pages do not ask the count")
     }
 
-    // ────────────── mapper targets ──────────────
+    // ────────────── mapper: kind ──────────────
 
     @Test
-    fun mapsEachTargetFamilyAndFallsBackToTheFeed() = runBlocking {
+    fun mapsEveryTypeToItsKindAndNeverDropsAnUnknownOne() = runBlocking {
+        val nodes = allKinds.mapIndexed { index, (type, _) -> node(index + 1, type) }
+            .plus(node(99, "SOMETHING_NEW"))
+        val client = FakeGraphQL(listOf(notificationPage(nodes)))
+
+        val page = successValue(
+            NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL),
+        )
+        val byId = page.notifications.associateBy { it.id }
+
+        allKinds.forEachIndexed { index, (type, kind) ->
+            assertEquals(kind, byId.getValue(index + 1).kind, type)
+        }
+        assertEquals(NotificationKind.UNKNOWN, byId.getValue(99).kind, "an unknown type is kept")
+    }
+
+    // ────────────── mapper: targets ──────────────
+
+    @Test
+    fun mapsEachTargetFamilyAndDeletionHasNoDestination() = runBlocking {
         val client = FakeGraphQL(listOf(
             notificationPage(listOf(
                 node(1, "ACTIVITY_LIKE", activityId = 5),
@@ -127,38 +217,145 @@ class NotificationsIntegrationTest {
                 node(3, "THREAD_COMMENT_REPLY", thread = 9, commentId = 3),
                 node(4, "FOLLOWING", userName = "bob"),
                 node(5, "MEDIA_DELETION"),
+                node(6, "SOMETHING_NEW"),
+                node(7, "MEDIA_DATA_CHANGE", mediaId = 11),
+                node(8, "STAFF_SUBMISSION_UPDATE", staffName = "Anno"),
+                node(9, "CHARACTER_SUBMISSION_UPDATE", characterName = "Luffy"),
+                node(10, "MEDIA_SUBMISSION_UPDATE", submittedTitle = "New", mediaId = 12),
+                node(11, "MEDIA_SUBMISSION_UPDATE", submittedTitle = "Rejected"),
             )),
         ))
-        val page = successValue(NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL))
+        val page = successValue(
+            NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL),
+        )
         val byId = page.notifications.associateBy { it.id }
 
         assertEquals("https://anilist.co/activity/5", webUrl(byId.getValue(1).target))
         assertEquals("https://anilist.co/forum/thread/9", webUrl(byId.getValue(2).target))
         assertEquals("https://anilist.co/forum/thread/9/comment/3", webUrl(byId.getValue(3).target))
         assertEquals("https://anilist.co/user/bob", webUrl(byId.getValue(4).target))
-        assertEquals("https://anilist.co/notifications", webUrl(byId.getValue(5).target))
+        assertEquals(NotificationTarget.None, byId.getValue(5).target)
+        assertEquals("https://anilist.co/notifications", webUrl(byId.getValue(6).target))
+        assertEquals(NotificationTarget.Media(11), byId.getValue(7).target)
+        assertEquals(NotificationTarget.Staff(8), byId.getValue(8).target)
+        assertEquals(NotificationTarget.Character(9), byId.getValue(9).target)
+        assertEquals(NotificationTarget.Media(12), byId.getValue(10).target)
+        assertEquals(NotificationTarget.None, byId.getValue(11).target, "a rejected submission has no media")
     }
 
     @Test
-    fun theFourPreviouslyMissingTypesAreMapped() = runBlocking {
+    fun carriesTheThreadTitleMergedTitlesAndSubmissionFields() = runBlocking {
         val client = FakeGraphQL(listOf(
             notificationPage(listOf(
-                node(1, "ACTIVITY_REPLY_SUBSCRIBED", activityId = 11),
-                node(2, "THREAD_SUBSCRIBED", thread = 7, commentId = 21),
-                node(3, "THREAD_COMMENT_LIKE", thread = 7, commentId = 22),
-                node(4, "THREAD_LIKE", threadId = 8),
+                node(1, "THREAD_LIKE", threadId = 9, threadTitle = "Best of 2026", userName = "bob"),
+                node(2, "MEDIA_MERGE", mediaId = 4, deletedMediaTitles = listOf("A", "B")),
+                node(3, "MEDIA_SUBMISSION_UPDATE", submittedTitle = "My show", status = "PENDING", notes = "n"),
+                node(4, "STAFF_SUBMISSION_UPDATE", staffName = "Anno", status = "REJECTED"),
+                node(5, "CHARACTER_SUBMISSION_UPDATE", characterName = "Luffy", status = "ACCEPTED"),
             )),
         ))
-        val page = successValue(NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL))
+        val page = successValue(
+            NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL),
+        )
         val byId = page.notifications.associateBy { it.id }
 
-        assertEquals(4, page.notifications.size, "none of the four is dropped")
-        assertEquals(NotificationCategory.ACTIVITY, byId.getValue(1).category)
-        assertEquals("https://anilist.co/activity/11", webUrl(byId.getValue(1).target))
-        assertEquals(NotificationCategory.FORUM, byId.getValue(2).category)
-        assertEquals("https://anilist.co/forum/thread/7/comment/21", webUrl(byId.getValue(2).target))
-        assertEquals("https://anilist.co/forum/thread/7/comment/22", webUrl(byId.getValue(3).target))
-        assertEquals("https://anilist.co/forum/thread/8", webUrl(byId.getValue(4).target))
+        assertEquals("Best of 2026", byId.getValue(1).threadTitle)
+        assertEquals(listOf("A", "B"), byId.getValue(2).deletedMediaTitles)
+        assertEquals("My show", byId.getValue(3).subjectName)
+        assertEquals("PENDING", byId.getValue(3).status)
+        assertEquals("n", byId.getValue(3).notes)
+        assertEquals("Anno", byId.getValue(4).subjectName)
+        assertEquals("Luffy", byId.getValue(5).subjectName)
+    }
+
+    @Test
+    fun blanksAreNormalizedToNullSoTheFallbackIsUsed() = runBlocking {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(
+                node(1, "FOLLOWING", userName = ""),
+                node(2, "THREAD_LIKE", threadId = 9, threadTitle = "   "),
+                node(3, "MEDIA_MERGE", mediaId = 4, deletedMediaTitles = listOf("", "A", "  ")),
+                node(4, "MEDIA_SUBMISSION_UPDATE", submittedTitle = "", mediaId = 12),
+            )),
+        ))
+        val page = successValue(
+            NotificationsRepositoryImpl(client).loadNotifications(1, false, NotificationFilter.ALL),
+        )
+        val byId = page.notifications.associateBy { it.id }
+
+        assertNull(byId.getValue(1).userName, "a blank actor falls back")
+        assertNull(byId.getValue(2).threadTitle, "a blank thread title falls back")
+        assertEquals(listOf("A"), byId.getValue(3).deletedMediaTitles, "blank entries are dropped")
+        assertEquals(
+            "Media 12",
+            byId.getValue(4).subjectName,
+            "a blank submitted title falls back to the media title",
+        )
+    }
+
+    // ────────────── filters ──────────────
+
+    @Test
+    fun filtersCarryTheExactOverlappingKindsWithoutUnknown() {
+        assertEquals(null, NotificationFilter.ALL.kinds())
+        assertEquals(listOf(NotificationKind.AIRING), NotificationFilter.AIRING.kinds())
+        assertEquals(listOf(NotificationKind.FOLLOWING), NotificationFilter.FOLLOWS.kinds())
+        assertEquals(
+            listOf(
+                NotificationKind.ACTIVITY_LIKE,
+                NotificationKind.ACTIVITY_REPLY,
+                NotificationKind.ACTIVITY_REPLY_LIKE,
+                NotificationKind.ACTIVITY_MENTION,
+                NotificationKind.ACTIVITY_REPLY_SUBSCRIBED,
+                NotificationKind.ACTIVITY_MESSAGE,
+            ),
+            NotificationFilter.ACTIVITY.kinds(),
+        )
+        assertEquals(
+            listOf(
+                NotificationKind.ACTIVITY_MESSAGE,
+                NotificationKind.ACTIVITY_REPLY,
+                NotificationKind.ACTIVITY_REPLY_SUBSCRIBED,
+                NotificationKind.ACTIVITY_MENTION,
+                NotificationKind.THREAD_COMMENT_REPLY,
+                NotificationKind.THREAD_COMMENT_MENTION,
+                NotificationKind.THREAD_SUBSCRIBED,
+            ),
+            NotificationFilter.REPLIES.kinds(),
+        )
+        assertEquals(
+            listOf(
+                NotificationKind.THREAD_COMMENT_REPLY,
+                NotificationKind.THREAD_COMMENT_MENTION,
+                NotificationKind.THREAD_SUBSCRIBED,
+                NotificationKind.THREAD_COMMENT_LIKE,
+                NotificationKind.THREAD_LIKE,
+            ),
+            NotificationFilter.FORUM.kinds(),
+        )
+        assertEquals(
+            listOf(
+                NotificationKind.RELATED_MEDIA_ADDITION,
+                NotificationKind.MEDIA_DATA_CHANGE,
+                NotificationKind.MEDIA_MERGE,
+                NotificationKind.MEDIA_DELETION,
+                NotificationKind.MEDIA_SUBMISSION_UPDATE,
+                NotificationKind.STAFF_SUBMISSION_UPDATE,
+                NotificationKind.CHARACTER_SUBMISSION_UPDATE,
+            ),
+            NotificationFilter.MEDIA.kinds(),
+        )
+
+        NotificationFilter.entries.forEach { filter ->
+            assertFalse(
+                filter.kinds()?.contains(NotificationKind.UNKNOWN) == true,
+                "$filter must never ask for UNKNOWN",
+            )
+            assertTrue(
+                filter.toAniListTypes()?.all { it.isNotBlank() } != false,
+                "$filter must only send real API types",
+            )
+        }
     }
 
     // ────────────── holder: unread count ──────────────
@@ -222,17 +419,40 @@ class NotificationsIntegrationTest {
         }
     }
 
-    // ────────────── holder: open (reset + TTL) ──────────────
+    @Test
+    fun selectFilterEmptiesTheListAtOnce() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(listOf(
+                notificationPage(listOf(node(1, "AIRING"))),
+                notificationPage(listOf(node(5, "THREAD_LIKE"))),
+            ))
+            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
+
+            holder.load()
+            dispatcher.runAll()
+            assertEquals(listOf(1), idsOf(holder))
+
+            client.gate = CompletableDeferred()
+            holder.selectFilter(NotificationFilter.FORUM)
+            assertTrue(holder.notifications.isEmpty(), "the old filter's items are dropped at once")
+            assertTrue(holder.isLoading)
+
+            client.gate!!.complete(Unit)
+            dispatcher.runAll()
+            assertEquals(listOf(5), idsOf(holder))
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    // ────────────── holder: open / refresh ──────────────
 
     @Test
     fun openingResetsTheCountAndReopeningWithinTheTtlDoesNotRequest() {
-        val client = FakeGraphQL(listOf(
-            notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
-        ))
-        val holder = NotificationsStateHolder(
-            NotificationsRepositoryImpl(client),
-            CoroutineScope(Dispatchers.Unconfined),
-        )
+        val client = FakeGraphQL(listOf(notificationPage(listOf(node(1, "AIRING")), unreadCount = 5)))
+        val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), unconfined())
 
         holder.onOpen()
 
@@ -251,10 +471,7 @@ class NotificationsIntegrationTest {
             notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
             notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
         ))
-        val holder = NotificationsStateHolder(
-            NotificationsRepositoryImpl(client),
-            CoroutineScope(Dispatchers.Unconfined),
-        )
+        val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), unconfined())
 
         holder.onOpen()
         assertEquals(1, client.calls)
@@ -269,15 +486,58 @@ class NotificationsIntegrationTest {
     }
 
     @Test
+    fun openingWithAPreviousFilterReturnsToAllAndLoadsEvenWhenFresh() {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+            notificationPage(listOf(node(9, "THREAD_LIKE"))),
+            notificationPage(listOf(node(1, "AIRING")), unreadCount = 0),
+        ))
+        val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), unconfined())
+
+        holder.onOpen() // ALL, reset: fresh + read afterwards
+        assertEquals(1, client.calls)
+        holder.selectFilter(NotificationFilter.FORUM)
+        assertEquals(2, client.calls)
+        assertEquals(false, resetFlag(client.requests[1]), "a filter change does not reset")
+
+        holder.onOpen() // back to ALL, the list was cleared → must load even if fresh
+
+        assertEquals(3, client.calls, "a cleared list must not be left empty")
+        assertEquals(NotificationFilter.ALL, holder.selectedFilter)
+        assertEquals(true, resetFlag(client.requests[2]))
+        assertEquals(listOf(1), idsOf(holder))
+    }
+
+    @Test
+    fun refreshResetsOnlyOnTheAllFilter() {
+        val client = FakeGraphQL(listOf(
+            notificationPage(listOf(node(5, "THREAD_LIKE"))),
+            notificationPage(listOf(node(5, "THREAD_LIKE"))),
+            notificationPage(listOf(node(1, "AIRING"))),
+            notificationPage(listOf(node(1, "AIRING"))),
+        ))
+        val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), unconfined())
+
+        holder.selectFilter(NotificationFilter.FORUM)
+        holder.refresh()
+        assertEquals(2, client.calls)
+        assertEquals(false, resetFlag(client.requests[1]), "a filter refresh does not reset")
+
+        holder.selectFilter(NotificationFilter.ALL)
+        holder.refresh()
+        assertEquals(4, client.calls)
+        assertEquals(true, resetFlag(client.requests[3]), "the ALL refresh resets the count")
+    }
+
+    // ────────────── holder: pagination ──────────────
+
+    @Test
     fun loadMoreAppendsTheNextPage() {
         val client = FakeGraphQL(listOf(
             notificationPage(listOf(node(1, "AIRING")), hasNextPage = true),
             notificationPage(listOf(node(2, "AIRING")), hasNextPage = false),
         ))
-        val holder = NotificationsStateHolder(
-            NotificationsRepositoryImpl(client),
-            CoroutineScope(Dispatchers.Unconfined),
-        )
+        val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), unconfined())
 
         holder.load()
         holder.loadMore()
@@ -367,7 +627,7 @@ class NotificationsIntegrationTest {
             assertEquals(listOf(1), idsOf(holder))
 
             client.gate = CompletableDeferred()
-            holder.load()
+            holder.refresh()
             dispatcher.runAll()
             assertTrue(holder.isLoading)
             assertEquals(listOf(1), idsOf(holder), "a refresh keeps the loaded items visible")
@@ -375,34 +635,6 @@ class NotificationsIntegrationTest {
             client.gate!!.complete(Unit)
             dispatcher.runAll()
             assertEquals(listOf(2), idsOf(holder))
-        } finally {
-            scope.cancel()
-        }
-    }
-
-    @Test
-    fun selectFilterEmptiesTheListAtOnce() {
-        val dispatcher = DeferredDispatcher()
-        val scope = CoroutineScope(dispatcher)
-        try {
-            val client = FakeGraphQL(listOf(
-                notificationPage(listOf(node(1, "AIRING"))),
-                notificationPage(listOf(node(5, "THREAD_LIKE"))),
-            ))
-            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
-
-            holder.load()
-            dispatcher.runAll()
-            assertEquals(listOf(1), idsOf(holder))
-
-            client.gate = CompletableDeferred()
-            holder.selectFilter(NotificationFilter.FORUM)
-            assertTrue(holder.notifications.isEmpty(), "the old filter's items are dropped at once")
-            assertTrue(holder.isLoading)
-
-            client.gate!!.complete(Unit)
-            dispatcher.runAll()
-            assertEquals(listOf(5), idsOf(holder))
         } finally {
             scope.cancel()
         }
