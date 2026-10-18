@@ -25,6 +25,8 @@ import com.luum.michi.app.core.session.repository.AniListViewerRepositoryImpl
 import com.luum.michi.app.core.session.domain.SessionManager
 import com.luum.michi.app.core.session.repository.SettingsStoreCachedViewerStore
 import com.luum.michi.app.core.storage.domain.SettingsStore
+import com.luum.michi.app.core.storage.domain.FileStore
+import com.luum.michi.app.mediaList.repository.MediaListDiskCache
 import com.luum.michi.app.core.platform.domain.AlwaysUnmeteredConnectivity
 import com.luum.michi.app.core.platform.domain.Connectivity
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
@@ -72,6 +74,8 @@ class MichiDependencies internal constructor(
     internal val urlOpener: UrlOpener,
     internal val shareLauncher: ShareLauncher,
     internal val settingsStore: SettingsStore,
+    /** Cache-sized files (saved lists); see [FileStore]. */
+    internal val fileStore: FileStore,
     /** Network metering for AUTO image quality; platform impls override it. */
     internal val connectivity: Connectivity = AlwaysUnmeteredConnectivity(),
     /** Debug builds log GraphQL timing; platform entries pass the real flag. */
@@ -102,11 +106,14 @@ class MichiDependencies internal constructor(
     internal val viewerRepository: AniListViewerRepository =
         AniListViewerRepositoryImpl(graphQLClient)
 
+    /** One cache instance serves both list repositories and the session wipe. */
+    private val mediaListCache: MediaListDiskCache = MediaListDiskCache(fileStore)
+
     internal val animeListRepository: AnimeListRepository =
-        AnimeListRepositoryImpl(graphQLClient)
+        AnimeListRepositoryImpl(graphQLClient, mediaListCache)
 
     internal val mangaListRepository: MangaListRepository =
-        MangaListRepositoryImpl(graphQLClient)
+        MangaListRepositoryImpl(graphQLClient, mediaListCache)
 
     internal val profileRepository: ProfileRepository =
         ProfileRepositoryImpl(graphQLClient)
@@ -148,7 +155,12 @@ class MichiDependencies internal constructor(
         SettingsRepositoryImpl(graphQLClient)
 
     internal val sessionManager: SessionManager =
-        SessionManager(tokenStorage, viewerRepository, SettingsStoreCachedViewerStore(settingsStore))
+        SessionManager(
+            tokenStorage = tokenStorage,
+            viewerRepository = viewerRepository,
+            cachedViewerStore = SettingsStoreCachedViewerStore(settingsStore),
+            onClearUserData = { mediaListCache.clear() },
+        )
 
     /**
      * Bootstraps the app: clears the removed dashboard disk cache, then checks

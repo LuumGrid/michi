@@ -2,6 +2,7 @@ package com.luum.michi.app.mediaList
 
 import com.luum.michi.app.core.medialist.domain.SortPersistence
 import com.luum.michi.app.core.medialist.domain.SortScope
+import com.luum.michi.app.core.storage.domain.FileStore
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -106,5 +107,36 @@ internal class MemorySortPersistence : SortPersistence {
     override fun clearSort(scope: SortScope) {
         slots.remove(scope)
         cleared += scope
+    }
+}
+
+/** In-memory [FileStore]: synchronous, so tests stay deterministic. */
+internal class InMemoryFileStore : FileStore {
+    private val files = mutableMapOf<String, String>()
+
+    /** Number of [clear] calls; lets a test assert the privacy wipe ran. */
+    var clearCount = 0
+        private set
+
+    /** Seed / corrupt a file directly, bypassing the writer. */
+    fun put(name: String, content: String) {
+        files[name] = content
+    }
+
+    fun contains(name: String): Boolean = files.containsKey(name)
+
+    override suspend fun read(name: String): String? = files[name]
+
+    override suspend fun write(name: String, content: String) {
+        files[name] = content
+    }
+
+    override suspend fun delete(name: String) {
+        files.remove(name)
+    }
+
+    override suspend fun clear() {
+        files.clear()
+        clearCount++
     }
 }

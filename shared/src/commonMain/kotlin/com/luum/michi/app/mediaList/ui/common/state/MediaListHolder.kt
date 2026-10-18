@@ -16,6 +16,8 @@ internal interface MediaListHolder<T, S> {
     val isLoading: Boolean
     val error: NetworkError?
     val actionError: NetworkError?
+    /** False while the entries are only hydrated from disk: edits (`+1`) must wait. */
+    val canEditEntries: Boolean
     val currentSortOption: UserListSort
     val currentSortOrder: UserListOrder
     val filterSeason: MediaSeason?

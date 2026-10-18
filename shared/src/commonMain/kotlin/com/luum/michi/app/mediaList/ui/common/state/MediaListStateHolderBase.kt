@@ -31,9 +31,11 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
     private val sortScope: SortScope,
     onEntrySaved: () -> Unit = {},
 ) : MediaListHolder<T, S> {
-    private val loader = MediaListLoader(scope) { userId ->
-        fetchList(userId, lastSplitCompleted)
-    }
+    private val loader = MediaListLoader(
+        scope = scope,
+        fetch = { userId -> fetchList(userId, lastSplitCompleted) },
+        hydrate = { userId -> loadCachedList(userId, lastSplitCompleted) },
+    )
     private val progressSaver = ListProgressSaver(
         loader = loader,
         scope = scope,
@@ -62,6 +64,9 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
     override val isLoading: Boolean get() = loader.isLoading
     val isRefreshing: Boolean get() = loader.isRefreshing
     override val error: NetworkError? get() = loader.error
+
+    /** True only once the network confirmed the entries (see [MediaListLoader]). */
+    override val canEditEntries: Boolean get() = loader.isConfirmed
 
     /** Non-blocking failure of a `+1` save, shown as a compact dismissible row. */
     override val actionError: NetworkError? get() = progressSaver.actionError
@@ -102,6 +107,9 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
 
     /** Applies an optimistic `+1` (the subclasses' increment ops call this). */
     protected fun enqueue(id: Int, transform: (T) -> T) {
+        // Hydrated-only entries are not confirmed by the network: a `+1` would
+        // send progress calculated from stale data. Wait for the revalidation.
+        if (!canEditEntries) return
         progressSaver.enqueue(id, transform)
     }
 
@@ -141,6 +149,9 @@ internal abstract class MediaListStateHolderBase<T : SortableMediaListEntry, S>(
 
     /** Fetches the whole list (both lists are full `MediaListCollection`s). */
     protected abstract suspend fun fetchList(userId: Int, splitCompleted: Boolean): NetworkResult<List<T>>
+
+    /** The persisted list already mapped for [splitCompleted], or null. */
+    protected abstract suspend fun loadCachedList(userId: Int, splitCompleted: Boolean): List<T>?
 
     /** Sends one entry's progress (each list maps its own shape). */
     protected abstract suspend fun saveProgress(entry: T): NetworkResult<Unit>

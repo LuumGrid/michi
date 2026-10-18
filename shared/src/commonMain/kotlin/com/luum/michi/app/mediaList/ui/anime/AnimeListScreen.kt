@@ -65,6 +65,9 @@ internal fun AnimeListScreen(
             AnimeListEntryContent(
                 entry = entry,
                 onIncrement = {
+                    // Hydrated-only entries cannot be edited: neither save nor
+                    // open the editor from a stale progress value.
+                    if (!holder.canEditEntries) return@AnimeListEntryContent
                     val total = entry.totalEpisodes
                     if (total != null && entry.completesOnIncrement()) {
                         // The completing step is the editor's write, not a list save.
@@ -76,6 +79,7 @@ internal fun AnimeListScreen(
                 strings = strings,
                 isSmileyFormat = settings.isSmileyFormat,
                 formatSmiley = settings.formatSmiley,
+                canEdit = holder.canEditEntries,
             )
         },
         settings = settings,

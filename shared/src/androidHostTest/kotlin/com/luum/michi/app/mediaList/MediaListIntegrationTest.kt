@@ -718,6 +718,8 @@ private class LateAnimeRepository : AnimeListRepository {
             else -> NetworkResult.Success(listOf(lateAnimeEntry(102)))
         }
     }
+
+    override suspend fun loadCachedList(userId: Int, splitCompleted: Boolean): List<AnimeListEntry>? = null
 }
 
 private fun lateWired(repository: AnimeListRepository) = AnimeListStateHolder(

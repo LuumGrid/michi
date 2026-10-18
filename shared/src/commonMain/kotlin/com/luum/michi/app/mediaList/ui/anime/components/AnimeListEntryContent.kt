@@ -35,6 +35,8 @@ internal fun ColumnScope.AnimeListEntryContent(
     modifier: Modifier = Modifier,
     isSmileyFormat: Boolean = false,
     formatSmiley: (Float) -> String = { "" },
+    // False while the list is only hydrated: the `+1` is unsafe until confirmed.
+    canEdit: Boolean = true,
 ) {
     // weight(1f), not fillMaxHeight: inside the card's bounded column it
     // takes the remainder, so SpaceBetween pins the bottom row flush with
@@ -84,7 +86,7 @@ internal fun ColumnScope.AnimeListEntryContent(
                 progress = entry.progressLabel(),
                 action = strings.listsIncrementEpisodeAction,
                 showAction = entry.status == AnimeListSection.WATCHING,
-                enabled = entry.canIncrement(),
+                enabled = entry.canIncrement() && canEdit,
                 onIncrement = onIncrement,
             )
         }

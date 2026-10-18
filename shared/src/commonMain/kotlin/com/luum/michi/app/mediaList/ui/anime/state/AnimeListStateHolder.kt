@@ -36,6 +36,9 @@ internal class AnimeListStateHolder(
     override suspend fun fetchList(userId: Int, splitCompleted: Boolean): NetworkResult<List<AnimeListEntry>> =
         repository.loadList(userId, splitCompleted)
 
+    override suspend fun loadCachedList(userId: Int, splitCompleted: Boolean): List<AnimeListEntry>? =
+        repository.loadCachedList(userId, splitCompleted)
+
     override suspend fun saveProgress(entry: AnimeListEntry): NetworkResult<Unit> =
         entryRepository.saveProgress(
             mediaId = entry.id,

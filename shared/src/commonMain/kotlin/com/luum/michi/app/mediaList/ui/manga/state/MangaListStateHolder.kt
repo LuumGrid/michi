@@ -38,6 +38,9 @@ internal class MangaListStateHolder(
     override suspend fun fetchList(userId: Int, splitCompleted: Boolean): NetworkResult<List<MangaListEntry>> =
         repository.loadList(userId, splitCompleted)
 
+    override suspend fun loadCachedList(userId: Int, splitCompleted: Boolean): List<MangaListEntry>? =
+        repository.loadCachedList(userId, splitCompleted)
+
     override suspend fun saveProgress(entry: MangaListEntry): NetworkResult<Unit> =
         entryRepository.saveProgress(
             mediaId = entry.id,

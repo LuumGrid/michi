@@ -68,6 +68,8 @@ internal fun MangaListScreen(
             MangaListEntryContent(
                 entry = entry,
                 onIncrementChapters = {
+                    // Hydrated-only entries cannot be edited (see AnimeListScreen).
+                    if (!holder.canEditEntries) return@MangaListEntryContent
                     val total = entry.totalChapters
                     if (total != null && entry.completesOnChapterIncrement()) {
                         // The completing step is the editor's write, not a list save.
@@ -77,6 +79,7 @@ internal fun MangaListScreen(
                     }
                 },
                 onIncrementVolumes = {
+                    if (!holder.canEditEntries) return@MangaListEntryContent
                     if (entry.completesOnVolumeIncrement()) {
                         // The editor tracks chapters; Completed fills volumes
                         // (and chapters to the total when known).
@@ -88,6 +91,7 @@ internal fun MangaListScreen(
                 strings = strings,
                 isSmileyFormat = settings.isSmileyFormat,
                 formatSmiley = settings.formatSmiley,
+                canEdit = holder.canEditEntries,
             )
         },
         settings = settings,

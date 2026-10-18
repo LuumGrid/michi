@@ -6,6 +6,7 @@ import com.luum.michi.app.core.auth.repository.SafariOAuthLauncher
 import com.luum.michi.app.core.platform.repository.IosUrlOpener
 import com.luum.michi.app.core.platform.repository.IosShareLauncher
 import com.luum.michi.app.core.storage.repository.NSUserDefaultsSettingsStore
+import com.luum.michi.app.core.storage.repository.IosFileStore
 import com.luum.michi.app.core.platform.repository.IosConnectivity
 import kotlin.native.Platform
 import platform.UIKit.UIViewController
@@ -43,6 +44,7 @@ private object IosMichiDependencies {
             urlOpener = IosUrlOpener(),
             shareLauncher = IosShareLauncher(),
             settingsStore = NSUserDefaultsSettingsStore(),
+            fileStore = IosFileStore(),
             connectivity = IosConnectivity(),
             isDebug = Platform.isDebugBinary,
         ).also {

@@ -30,11 +30,16 @@ import kotlinx.coroutines.sync.withLock
  *
  * The state is exposed as a `StateFlow<SessionState>` that `App.kt` observes to
  * route between `AuthLandingScreen` and `Root`.
+ *
+ * [onClearUserData] wipes user-scoped caches (the saved lists) at every point
+ * the cached viewer is dropped, so a logout/401 never leaves another user's
+ * data on disk.
  */
 internal class SessionManager(
     private val tokenStorage: AniListTokenStorage,
     private val viewerRepository: AniListViewerRepository,
     private val cachedViewerStore: CachedViewerStore,
+    private val onClearUserData: suspend () -> Unit = {},
 ) {
     private val _state = MutableStateFlow<SessionState>(SessionState.Loading)
     val state: StateFlow<SessionState> = _state.asStateFlow()
@@ -49,7 +54,7 @@ internal class SessionManager(
             val gen = ++generation
             val stored = tokenStorage.load()
             if (stored == null || stored.isExpired) {
-                cachedViewerStore.clear()
+                clearUserData()
                 _state.value = SessionState.Anonymous
                 return
             }
@@ -76,7 +81,7 @@ internal class SessionManager(
     suspend fun logout() = mutex.withLock {
         generation++
         tokenStorage.clear()
-        cachedViewerStore.clear()
+        clearUserData()
         _state.value = SessionState.Anonymous
     }
 
@@ -89,8 +94,14 @@ internal class SessionManager(
         if (tokenStorage.load()?.accessToken != token.accessToken) return@withLock
         generation++
         tokenStorage.clear()
-        cachedViewerStore.clear()
+        clearUserData()
         _state.value = SessionState.Anonymous
+    }
+
+    /** Drops the cached viewer and every user-scoped file (lists) together. */
+    private suspend fun clearUserData() {
+        cachedViewerStore.clear()
+        onClearUserData()
     }
 
     private suspend fun refreshViewer(gen: Int, keepCachedOnNetworkError: Boolean) {
@@ -106,7 +117,7 @@ internal class SessionManager(
                     is NetworkError.Unauthorized -> {
                         // Token is no longer valid: drop it and the cached viewer.
                         tokenStorage.clear()
-                        cachedViewerStore.clear()
+                        clearUserData()
                         _state.value = SessionState.Anonymous
                     }
                     else -> if (!keepCachedOnNetworkError) {

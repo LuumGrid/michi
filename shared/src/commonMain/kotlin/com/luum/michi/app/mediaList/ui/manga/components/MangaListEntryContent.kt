@@ -38,6 +38,8 @@ internal fun ColumnScope.MangaListEntryContent(
     modifier: Modifier = Modifier,
     isSmileyFormat: Boolean = false,
     formatSmiley: (Float) -> String = { "" },
+    // False while the list is only hydrated: the `+1` is unsafe until confirmed.
+    canEdit: Boolean = true,
 ) {
     Column(
         modifier = modifier.weight(1f),
@@ -73,7 +75,7 @@ internal fun ColumnScope.MangaListEntryContent(
                     progress = entry.volumesProgressLabel(),
                     action = strings.listsIncrementVolumeAction,
                     showAction = entry.status == MangaListSection.CURRENT,
-                    enabled = entry.canIncrementVolumes(),
+                    enabled = entry.canIncrementVolumes() && canEdit,
                     onIncrement = onIncrementVolumes,
                 )
             } else {
@@ -81,7 +83,7 @@ internal fun ColumnScope.MangaListEntryContent(
                     progress = entry.chaptersProgressLabel(),
                     action = strings.listsIncrementChapterAction,
                     showAction = entry.status == MangaListSection.CURRENT,
-                    enabled = entry.canIncrementChapters(),
+                    enabled = entry.canIncrementChapters() && canEdit,
                     onIncrement = onIncrementChapters,
                 )
             }
