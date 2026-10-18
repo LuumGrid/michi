@@ -26,9 +26,10 @@ import com.luum.michi.app.mediaList.repository.anime.AnimeListRepositoryImpl
 import com.luum.michi.app.mediaList.repository.manga.MangaListRepositoryImpl
 import com.luum.michi.app.mediaList.ui.anime.state.AnimeListStateHolder
 import com.luum.michi.app.mediaList.ui.manga.state.MangaListStateHolder
-import com.luum.michi.app.root.hydrateSort
-import com.luum.michi.app.root.resolveInitialSort
+import com.luum.michi.app.core.medialist.domain.hydrateSort
+import com.luum.michi.app.core.medialist.domain.resolveInitialSort
 import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.toUserSort
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -474,12 +475,12 @@ class MediaListIntegrationTest {
     @Test
     fun resolveInitialSortPrefersSavedThenDefault() {
         val saved = UserListSort.SCORE to UserListOrder.ASCENDING
-        val restored = resolveInitialSort(saved, ListSort.TITLE)
+        val restored = resolveInitialSort(saved, ListSort.TITLE.toUserSort())
         assertEquals(UserListSort.SCORE, restored.option)
         assertEquals(UserListOrder.ASCENDING, restored.order)
         assertTrue(restored.persist)
 
-        val defaulted = resolveInitialSort(null, ListSort.TITLE)
+        val defaulted = resolveInitialSort(null, ListSort.TITLE.toUserSort())
         assertEquals(UserListSort.TITLE, defaulted.option)
         assertEquals(UserListOrder.ASCENDING, defaulted.order)
         assertFalse(defaulted.persist)
@@ -487,7 +488,7 @@ class MediaListIntegrationTest {
 
     @Test
     fun resolveInitialSortMapsEveryDefaultSort() {
-        fun mapped(sort: ListSort) = resolveInitialSort(null, sort).let { it.option to it.order }
+        fun mapped(sort: ListSort) = resolveInitialSort(null, sort.toUserSort()).let { it.option to it.order }
         assertEquals(UserListSort.TITLE to UserListOrder.ASCENDING, mapped(ListSort.TITLE))
         assertEquals(UserListSort.SCORE to UserListOrder.DESCENDING, mapped(ListSort.SCORE))
         assertEquals(UserListSort.LAST_UPDATED to UserListOrder.DESCENDING, mapped(ListSort.UPDATED))

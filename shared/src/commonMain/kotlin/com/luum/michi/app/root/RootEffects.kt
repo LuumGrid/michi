@@ -11,6 +11,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.medialist.domain.SortPersistence
 import com.luum.michi.app.core.medialist.domain.SortScope
+import com.luum.michi.app.core.medialist.domain.hydrateSort
+import com.luum.michi.app.core.medialist.domain.resolveInitialSort
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
@@ -19,6 +21,7 @@ import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.detailSurfaceKeys
+import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.PlatformBackHandler
 
@@ -238,7 +241,7 @@ internal fun RootEffects(
         sortTargets.forEach { (scope, holder) ->
             val initial = resolveInitialSort(
                 saved = hydrateSort(sortPersistence, scope).takeIf { persistSort },
-                defaultSort = defaultSort,
+                defaultSort = defaultSort.toUserSort(),
             )
             holder?.updateSort(initial.option, initial.order, persist = initial.persist)
         }

@@ -1,7 +1,6 @@
 package com.luum.michi.app.root
 
 import com.luum.michi.app.core.navigation.domain.DetailDestination
-import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.State
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,15 +14,7 @@ import kotlin.test.assertTrue
  */
 class StateOpenMediaTest {
 
-    private fun state() = State(
-        initialProfile = ProfileDraft(
-            username = "",
-            displayName = "",
-            avatarUrl = null,
-            bannerUrl = null,
-            bio = "",
-        ),
-    )
+    private fun state() = State()
 
     @Test
     fun openingMediaClosesSettingsAndStacksTheDetail() {

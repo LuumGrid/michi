@@ -2,7 +2,6 @@ package com.luum.michi.app.root
 
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
-import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.State
 import kotlin.test.Test
@@ -10,15 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private fun stateForLists() = State(
-    initialProfile = ProfileDraft(
-        username = "",
-        displayName = "",
-        avatarUrl = null,
-        bannerUrl = null,
-        bio = "",
-    ),
-)
+private fun stateForLists() = State()
 
 /**
  * The "View all" list is a detail-stack layer of its own: it pushes over its

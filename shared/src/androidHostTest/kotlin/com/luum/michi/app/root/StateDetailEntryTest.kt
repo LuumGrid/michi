@@ -1,7 +1,6 @@
 package com.luum.michi.app.root
 
 import com.luum.michi.app.core.navigation.domain.TabSection
-import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.detailSurfaceKey
 import com.luum.michi.app.root.state.detailSurfaceKeys
@@ -17,15 +16,7 @@ import kotlin.test.assertTrue
  */
 class StateDetailEntryTest {
 
-    private fun state() = State(
-        initialProfile = ProfileDraft(
-            username = "",
-            displayName = "",
-            avatarUrl = null,
-            bannerUrl = null,
-            bio = "",
-        ),
-    )
+    private fun state() = State()
 
     @Test
     fun eachPushGetsItsOwnEntryIdentity() {

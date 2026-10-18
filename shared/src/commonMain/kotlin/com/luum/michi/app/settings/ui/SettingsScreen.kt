@@ -96,8 +96,6 @@ internal fun SettingsScreen(
     surfaces: SurfaceStyle,
     onSurfacesChange: (SurfaceStyle) -> Unit,
     startDestination: StartDestinationChoice = StartDestinationChoice(),
-    onStartTabChange: (StartTabOption) -> Unit = {},
-    onStartSectionChange: (String) -> Unit = {},
     viewer: Viewer?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
@@ -105,20 +103,7 @@ internal fun SettingsScreen(
     strings: LanguageStrings = Strings.current,
     modifier: Modifier = Modifier,
 ) {
-    var languageSheet by remember { mutableStateOf(false) }
-    var themeSheet by remember { mutableStateOf(false) }
-    var fontSheet by remember { mutableStateOf(false) }
-    var surfaceSheet by remember { mutableStateOf(false) }
-    var styleSheet by remember { mutableStateOf(false) }
-    var imageQualitySheet by remember { mutableStateOf(false) }
-    var startTabSheet by remember { mutableStateOf(false) }
-    var startSectionSheet by remember { mutableStateOf(false) }
-    var titleLanguageSheet by remember { mutableStateOf(false) }
-    var staffNameLanguageSheet by remember { mutableStateOf(false) }
-    var scoreFormatSheet by remember { mutableStateOf(false) }
-    var sortSheet by remember { mutableStateOf(false) }
-    var aboutSheet by remember { mutableStateOf(false) }
-    var accountSheet by remember { mutableStateOf(false) }
+    var openSheet: SettingsSheet? by remember { mutableStateOf(null) }
     var signOutConfirmSheet by remember { mutableStateOf(false) }
 
     val listContent: @Composable () -> Unit = {
@@ -139,7 +124,7 @@ internal fun SettingsScreen(
                     viewer = viewer,
                     strings = strings,
                     onSignIn = onLogin,
-                    onAccountSettings = { accountSheet = true },
+                    onAccountSettings = { openSheet = SettingsSheet.Account },
                 )
             }
             item {
@@ -147,38 +132,38 @@ internal fun SettingsScreen(
                     SettingsRow(
                         label = strings.languageLabel,
                         value = language.displayName,
-                        onClick = { languageSheet = true },
+                        onClick = { openSheet = SettingsSheet.Language },
                         divider = false,
                     )
                     SettingsRow(
                         label = strings.settingsThemeTitle,
                         value = "${themeType.label(strings)} · ${paletteDisplayName(palette)}",
-                        onClick = { themeSheet = true },
+                        onClick = { openSheet = SettingsSheet.Theme },
                     )
                     SettingsRow(
                         label = strings.themeFontSection,
                         value = font.displayName,
-                        onClick = { fontSheet = true },
+                        onClick = { openSheet = SettingsSheet.Font },
                     )
                     SettingsRow(
                         label = strings.settingsSurfaceTitle,
                         value = surfaces.label(strings),
-                        onClick = { surfaceSheet = true },
+                        onClick = { openSheet = SettingsSheet.Surface },
                     )
                     SettingsRow(
                         label = strings.settingsStyleTitle,
                         value = paletteStyleDisplayName(themeStyle),
-                        onClick = { styleSheet = true },
+                        onClick = { openSheet = SettingsSheet.Style },
                     )
                     SettingsRow(
                         label = strings.settingsImageQualityTitle,
                         value = imageQualityLabel(settingsState.imageQuality, strings),
-                        onClick = { imageQualitySheet = true },
+                        onClick = { openSheet = SettingsSheet.ImageQuality },
                     )
                     SettingsRow(
                         label = strings.settingsStartTabTitle,
                         value = startDestination.tab.label(strings),
-                        onClick = { startTabSheet = true },
+                        onClick = { openSheet = SettingsSheet.StartTab },
                     )
                     // Dependent sub-choice: only the tabs that have one show it.
                     startDestination.sectionTitle?.let { sectionTitle ->
@@ -188,7 +173,7 @@ internal fun SettingsScreen(
                                 .firstOrNull { it.value == startDestination.sectionValue }
                                 ?.label
                                 .orEmpty(),
-                            onClick = { startSectionSheet = true },
+                            onClick = { openSheet = SettingsSheet.StartSection },
                         )
                     }
                 }
@@ -209,13 +194,13 @@ internal fun SettingsScreen(
                         SettingsRow(
                             label = strings.settingsTitleLanguageTitle,
                             value = settingsState.titleLanguage.label(strings),
-                            onClick = { titleLanguageSheet = true },
+                            onClick = { openSheet = SettingsSheet.TitleLanguage },
                             divider = false,
                         )
                         SettingsRow(
                             label = strings.settingsStaffNameTitle,
                             value = settingsState.staffNameLanguage.label(strings),
-                            onClick = { staffNameLanguageSheet = true },
+                            onClick = { openSheet = SettingsSheet.StaffNameLanguage },
                         )
                         ToggleRow(
                             title = strings.settingsAdultContentTitle,
@@ -226,7 +211,7 @@ internal fun SettingsScreen(
                         SettingsRow(
                             label = strings.settingsScoreFormatTitle,
                             value = settingsState.scoreFormat.label(strings),
-                            onClick = { scoreFormatSheet = true },
+                            onClick = { openSheet = SettingsSheet.ScoreFormat },
                         )
                     }
                 }
@@ -235,7 +220,7 @@ internal fun SettingsScreen(
                         SettingsRow(
                             label = strings.settingsListSortTitle,
                             value = settingsState.listSort.label(strings),
-                            onClick = { sortSheet = true },
+                            onClick = { openSheet = SettingsSheet.Sort },
                             divider = false,
                         )
                         ToggleRow(
@@ -308,7 +293,7 @@ internal fun SettingsScreen(
                     SettingsRow(
                         label = strings.settingsAboutTitle,
                         value = strings.settingsAboutSubtitle,
-                        onClick = { aboutSheet = true },
+                        onClick = { openSheet = SettingsSheet.About },
                     )
                 }
             }
@@ -329,11 +314,11 @@ internal fun SettingsScreen(
         listContent()
     }
 
-    if (languageSheet) {
+    if (openSheet == SettingsSheet.Language) {
         PickerSheet(
             title = strings.languageLabel,
             dismissLabel = strings.dismissAction,
-            onDismiss = { languageSheet = false },
+            onDismiss = { openSheet = null },
             options = AppLanguage.available,
             selected = language,
             label = { it.displayName },
@@ -341,11 +326,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (themeSheet) {
+    if (openSheet == SettingsSheet.Theme) {
         ModalSheet(
             title = strings.settingsThemeTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { themeSheet = false },
+            onDismiss = { openSheet = null },
         ) {
             ThemeModeSection(
                 themeType = themeType,
@@ -361,11 +346,11 @@ internal fun SettingsScreen(
         }
     }
 
-    if (fontSheet) {
+    if (openSheet == SettingsSheet.Font) {
         PickerSheet(
             title = strings.themeFontSection,
             dismissLabel = strings.dismissAction,
-            onDismiss = { fontSheet = false },
+            onDismiss = { openSheet = null },
             options = AppFont.entries,
             selected = font,
             label = { it.displayName },
@@ -381,11 +366,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (surfaceSheet) {
+    if (openSheet == SettingsSheet.Surface) {
         PickerSheet(
             title = strings.settingsSurfaceTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { surfaceSheet = false },
+            onDismiss = { openSheet = null },
             options = SurfaceStyle.entries,
             selected = surfaces,
             label = { it.label(strings) },
@@ -393,11 +378,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (styleSheet) {
+    if (openSheet == SettingsSheet.Style) {
         PickerSheet(
             title = strings.settingsStyleTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { styleSheet = false },
+            onDismiss = { openSheet = null },
             options = PaletteStyles,
             selected = themeStyle,
             label = { paletteStyleDisplayName(it) },
@@ -405,11 +390,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (imageQualitySheet) {
+    if (openSheet == SettingsSheet.ImageQuality) {
         PickerSheet(
             title = strings.settingsImageQualityTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { imageQualitySheet = false },
+            onDismiss = { openSheet = null },
             options = ImageQuality.entries,
             selected = settingsState.imageQuality,
             label = { imageQualityLabel(it, strings) },
@@ -417,40 +402,40 @@ internal fun SettingsScreen(
         )
     }
 
-    if (startTabSheet) {
+    if (openSheet == SettingsSheet.StartTab) {
         PickerSheet(
             title = strings.settingsStartTabTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { startTabSheet = false },
+            onDismiss = { openSheet = null },
             options = StartTabOption.entries,
             selected = startDestination.tab,
             label = { it.label(strings) },
-            onSelect = { onStartTabChange(it) },
+            onSelect = { settingsState.startTab = it },
         )
     }
 
-    if (startSectionSheet) {
+    if (openSheet == SettingsSheet.StartSection) {
         val sectionTitle = startDestination.sectionTitle
         val choices = startDestination.sectionChoices
         if (sectionTitle != null && choices.isNotEmpty()) {
             PickerSheet(
                 title = sectionTitle,
                 dismissLabel = strings.dismissAction,
-                onDismiss = { startSectionSheet = false },
+                onDismiss = { openSheet = null },
                 options = choices,
                 selected = choices.first(),
                 label = { it.label },
-                onSelect = { onStartSectionChange(it.value) },
+                onSelect = { settingsState.setStartSection(it.value) },
                 isSelected = { it.value == startDestination.sectionValue },
             )
         }
     }
 
-    if (titleLanguageSheet) {
+    if (openSheet == SettingsSheet.TitleLanguage) {
         PickerSheet(
             title = strings.settingsTitleLanguageTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { titleLanguageSheet = false },
+            onDismiss = { openSheet = null },
             options = TitleLanguage.entries,
             selected = settingsState.titleLanguage,
             label = { it.label(strings) },
@@ -458,11 +443,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (staffNameLanguageSheet) {
+    if (openSheet == SettingsSheet.StaffNameLanguage) {
         PickerSheet(
             title = strings.settingsStaffNameTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { staffNameLanguageSheet = false },
+            onDismiss = { openSheet = null },
             options = StaffNameLanguage.entries,
             selected = settingsState.staffNameLanguage,
             label = { it.label(strings) },
@@ -470,11 +455,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (scoreFormatSheet) {
+    if (openSheet == SettingsSheet.ScoreFormat) {
         PickerSheet(
             title = strings.settingsScoreFormatTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { scoreFormatSheet = false },
+            onDismiss = { openSheet = null },
             options = ScoreFormat.entries,
             selected = settingsState.scoreFormat,
             label = { it.label(strings) },
@@ -482,11 +467,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (sortSheet) {
+    if (openSheet == SettingsSheet.Sort) {
         PickerSheet(
             title = strings.settingsListSortTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { sortSheet = false },
+            onDismiss = { openSheet = null },
             options = ListSort.entries,
             selected = settingsState.listSort,
             label = { it.label(strings) },
@@ -494,11 +479,11 @@ internal fun SettingsScreen(
         )
     }
 
-    if (aboutSheet) {
+    if (openSheet == SettingsSheet.About) {
         ModalSheet(
             title = strings.settingsAboutTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { aboutSheet = false },
+            onDismiss = { openSheet = null },
         ) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -551,11 +536,11 @@ internal fun SettingsScreen(
         }
     }
 
-    if (accountSheet && viewer != null) {
+    if (openSheet == SettingsSheet.Account && viewer != null) {
         ModalSheet(
             title = strings.settingsAccountSettingsTitle,
             dismissLabel = strings.dismissAction,
-            onDismiss = { accountSheet = false },
+            onDismiss = { openSheet = null },
         ) {
             OptionGroup(title = null) {
                 SettingsRow(
@@ -579,7 +564,7 @@ internal fun SettingsScreen(
                     label = strings.settingsSignOutConfirmAction,
                     onClick = {
                         signOutConfirmSheet = false
-                        accountSheet = false
+                        openSheet = null
                         onLogout()
                     },
                     emphasis = ButtonEmphasis.Secondary,
@@ -810,6 +795,25 @@ private fun SettingsRow(
             }
         }
     }
+}
+
+/** The one settings sheet open at a time; null = none. The sign-out confirm
+ *  stacks on the account sheet through its own flag. */
+private enum class SettingsSheet {
+    Language,
+    Theme,
+    Font,
+    Surface,
+    Style,
+    ImageQuality,
+    StartTab,
+    StartSection,
+    TitleLanguage,
+    StaffNameLanguage,
+    ScoreFormat,
+    Sort,
+    About,
+    Account,
 }
 
 private fun ThemeType.label(strings: LanguageStrings): String = when (this) {

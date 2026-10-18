@@ -37,64 +37,64 @@ internal fun RootToolbar(
     Box(modifier = Modifier.fillMaxWidth()) {
         TopEdgeFade(modifier = Modifier.matchParentSize())
         Toolbar(
-        title = detailToolbarTitle(state.currentDetail, strings)
-            ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
-        navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
-            ToolbarNavigation.Back(strings.backButton)
-        } else {
-            ToolbarNavigation.None
-        },
-        actions = toolbarActions(
-            tab = tab,
-            isSearching = search != null,
-            isSettingsOpen = state.isSettingsOpen,
-            isCalendarOpen = state.isCalendarOpen,
-            isDetailOpen = state.isDetailOpen,
-            isMediaDetail = state.currentDetail is DetailDestination.Media,
-            isStudioDetail = state.currentDetail is DetailDestination.Studio,
-            isGenreDetail = state.currentDetail is DetailDestination.Genre,
-            isDetailList = state.currentDetail is DetailDestination.DetailList,
-            isDetailFavourite = isDetailFavourite,
-            isGuest = isGuest,
-            strings = strings,
-        ),
-        search = search,
-        backContentDescription = strings.backButton,
-        clearContentDescription = strings.clearSearchAction,
-        onNavigation = { state.applyBackStep() },
-        onAction = { id ->
-            when (id) {
-                ACTION_SEARCH -> state.openSearch(tab)
-                ACTION_SETTINGS -> state.openSettings()
-                // List tools only exist on ANIME/MANGA (see
-                // toolbarActions), so ACTION_FILTER always targets a
-                // list tab. ACTION_SORT also belongs to the studio
-                // detail page while it is open.
-                ACTION_FILTER -> state.openSectionFilter()
-                ACTION_SORT -> when (state.currentDetail) {
-                    // The studio and genre grids are ordered by the
-                    // server, so the sheet targets their holder.
-                    is DetailDestination.Studio,
-                    is DetailDestination.Genre -> state.openDetailSort()
-                    else -> state.openListSort()
+            title = detailToolbarTitle(state.currentDetail, strings)
+                ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
+            navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
+                ToolbarNavigation.Back(strings.backButton)
+            } else {
+                ToolbarNavigation.None
+            },
+            actions = toolbarActions(
+                tab = tab,
+                isSearching = search != null,
+                isSettingsOpen = state.isSettingsOpen,
+                isCalendarOpen = state.isCalendarOpen,
+                isDetailOpen = state.isDetailOpen,
+                isMediaDetail = state.currentDetail is DetailDestination.Media,
+                isStudioDetail = state.currentDetail is DetailDestination.Studio,
+                isGenreDetail = state.currentDetail is DetailDestination.Genre,
+                isDetailList = state.currentDetail is DetailDestination.DetailList,
+                isDetailFavourite = isDetailFavourite,
+                isGuest = isGuest,
+                strings = strings,
+            ),
+            search = search,
+            backContentDescription = strings.backButton,
+            clearContentDescription = strings.clearSearchAction,
+            onNavigation = { state.applyBackStep() },
+            onAction = { id ->
+                when (id) {
+                    ACTION_SEARCH -> state.openSearch(tab)
+                    ACTION_SETTINGS -> state.openSettings()
+                    // List tools only exist on ANIME/MANGA (see
+                    // toolbarActions), so ACTION_FILTER always targets a
+                    // list tab. ACTION_SORT also belongs to the studio
+                    // detail page while it is open.
+                    ACTION_FILTER -> state.openSectionFilter()
+                    ACTION_SORT -> when (state.currentDetail) {
+                        // The studio and genre grids are ordered by the
+                        // server, so the sheet targets their holder.
+                        is DetailDestination.Studio,
+                        is DetailDestination.Genre -> state.openDetailSort()
+                        else -> state.openListSort()
+                    }
+                    ACTION_CALENDAR -> state.openCalendar()
+                    ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
+                    ACTION_EDIT -> if (!isGuest) {
+                        holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
+                    }
+                    ACTION_FAVOURITE -> if (!isGuest) {
+                        holders.detailHolderFor(state.currentDetail)?.toggleFavourite()
+                    }
+                    ACTION_MORE -> state.openDetailMenu()
                 }
-                ACTION_CALENDAR -> state.openCalendar()
-                ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
-                ACTION_EDIT -> if (!isGuest) {
-                    holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
-                }
-                ACTION_FAVOURITE -> if (!isGuest) {
-                    holders.detailHolderFor(state.currentDetail)?.toggleFavourite()
-                }
-                ACTION_MORE -> state.openDetailMenu()
-            }
-        },
-        onSearchChange = { query ->
-            searchTab?.let { state.updateSearch(it, query) }
-        },
-        onSearchSubmit = {},
-        onSearchClose = { state.applyBackStep() },
-    )
+            },
+            onSearchChange = { query ->
+                searchTab?.let { state.updateSearch(it, query) }
+            },
+            onSearchSubmit = {},
+            onSearchClose = { state.applyBackStep() },
+        )
     }
 }
 

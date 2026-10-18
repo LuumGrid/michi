@@ -175,6 +175,22 @@ internal class SettingsState(
     private val startMangaSectionPref = localString(SettingsStoreKeys.StartMangaSection, "ALL")
     var startMangaSectionId: String by startMangaSectionPref
 
+    /**
+     * Sub-choice of the active start tab: DISCOVER parses a [StartCatalogOption]
+     * name (unknown = no-op), ANIME/MANGA store the raw section id, PROFILE has
+     * none. Root supplies the localized options; the id is validated when Root
+     * resolves the startup state.
+     */
+    fun setStartSection(value: String) {
+        when (startTab) {
+            StartTabOption.DISCOVER -> StartCatalogOption.entries.firstOrNull { it.name == value }
+                ?.let { startCatalogType = it }
+            StartTabOption.ANIME -> startAnimeSectionId = value
+            StartTabOption.MANGA -> startMangaSectionId = value
+            StartTabOption.PROFILE -> Unit
+        }
+    }
+
     /** Every pref (hydrated together); synced ones also reset together. */
     private val allPrefs: List<StoredPref<*>> = listOf(
         titleLanguagePref,
@@ -394,14 +410,4 @@ internal fun rememberSettingsState(
     canSync: Boolean,
 ): SettingsState = remember(canSync) {
     SettingsState(repository, store, scope, canSync)
-}
-
-/** Pure-logic factory (placeholder for UI wiring). */
-internal fun createSettingsState(
-    repository: SettingsRepository,
-    store: SettingsStore,
-    scope: CoroutineScope,
-    canSync: Boolean = true,
-): SettingsState {
-    return SettingsState(repository, store, scope, canSync)
 }

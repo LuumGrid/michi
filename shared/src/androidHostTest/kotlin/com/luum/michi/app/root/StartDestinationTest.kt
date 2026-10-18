@@ -7,6 +7,7 @@ import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 import com.luum.michi.app.root.state.resolveStartDestination
 import com.luum.michi.app.root.state.startDestinationChoice
+import com.luum.michi.app.root.state.toDashboardMediaType
 import com.luum.michi.app.settings.domain.model.StartCatalogOption
 import com.luum.michi.app.settings.domain.model.StartTabOption
 import kotlin.test.Test
@@ -23,7 +24,6 @@ class StartDestinationTest {
 
     private fun resolve(
         tab: StartTabOption = StartTabOption.DISCOVER,
-        catalog: StartCatalogOption = StartCatalogOption.ANIME,
         animeSection: String = "ALL",
         mangaSection: String = "ALL",
         splitAnime: Boolean = true,
@@ -31,7 +31,6 @@ class StartDestinationTest {
         isGuest: Boolean = false,
     ) = resolveStartDestination(
         startTab = tab,
-        startCatalogType = catalog,
         animeSectionId = animeSection,
         mangaSectionId = mangaSection,
         splitCompletedAnime = splitAnime,
@@ -46,7 +45,7 @@ class StartDestinationTest {
         assertEquals(TabSection.DISCOVER, destination.tab)
         assertEquals(AnimeListSection.ALL, destination.animeSection)
         assertEquals(MangaListSection.ALL, destination.mangaSection)
-        assertEquals(DashboardMediaType.ANIME, destination.catalogType)
+        assertEquals(DashboardMediaType.ANIME, StartCatalogOption.ANIME.toDashboardMediaType())
     }
 
     @Test
@@ -89,7 +88,7 @@ class StartDestinationTest {
     fun theCatalogSubChoiceSelectsTheDashboardType() {
         assertEquals(
             DashboardMediaType.MANGA,
-            resolve(catalog = StartCatalogOption.MANGA).catalogType,
+            StartCatalogOption.MANGA.toDashboardMediaType(),
         )
     }
 

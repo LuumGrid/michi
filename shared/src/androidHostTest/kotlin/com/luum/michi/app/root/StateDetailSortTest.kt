@@ -1,6 +1,5 @@
 package com.luum.michi.app.root
 
-import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.root.state.BackStep
 import com.luum.michi.app.root.state.State
 import kotlin.test.Test
@@ -8,15 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-private fun newState() = State(
-    initialProfile = ProfileDraft(
-        username = "",
-        displayName = "",
-        avatarUrl = null,
-        bannerUrl = null,
-        bio = "",
-    ),
-)
+private fun newState() = State()
 
 class StateDetailSortTest {
 

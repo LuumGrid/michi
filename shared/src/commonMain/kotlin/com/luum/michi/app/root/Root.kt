@@ -23,9 +23,6 @@ import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.SortPersistence
-import com.luum.michi.app.core.medialist.domain.SortScope
-import com.luum.michi.app.core.medialist.domain.UserListOrder
-import com.luum.michi.app.core.medialist.domain.UserListSort
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.core.platform.domain.UrlOpener
@@ -44,10 +41,6 @@ import com.luum.michi.app.root.state.detailSurfaceKey
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.root.state.resolveStartDestination
 import com.luum.michi.app.root.state.startDestinationChoice
-import com.luum.michi.app.settings.domain.model.ListSort
-import com.luum.michi.app.settings.domain.model.StartCatalogOption
-import com.luum.michi.app.settings.domain.model.StartTabOption
-import com.luum.michi.app.settings.domain.model.toUserSort
 import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.SearchScrim
@@ -121,7 +114,6 @@ internal fun Root(
         startDestination = remember {
             resolveStartDestination(
                 startTab = settingsState.startTab,
-                startCatalogType = settingsState.startCatalogType,
                 animeSectionId = settingsState.startAnimeSectionId,
                 mangaSectionId = settingsState.startMangaSectionId,
                 splitCompletedAnime = settingsState.splitCompletedAnime,
@@ -161,16 +153,6 @@ internal fun Root(
         splitCompletedManga = settingsState.splitCompletedManga,
         strings = strings,
     )
-    val onStartTabChange: (StartTabOption) -> Unit = { settingsState.startTab = it }
-    val onStartSectionChange: (String) -> Unit = { value ->
-        when (settingsState.startTab) {
-            StartTabOption.DISCOVER -> StartCatalogOption.entries.firstOrNull { it.name == value }
-                ?.let { settingsState.startCatalogType = it }
-            StartTabOption.ANIME -> settingsState.startAnimeSectionId = value
-            StartTabOption.MANGA -> settingsState.startMangaSectionId = value
-            StartTabOption.PROFILE -> Unit
-        }
-    }
 
     // Per-surface saveable state (scroll positions): Root owns the holder so a
     // tab, each detail entry and the overlays keep their own position. A popped
@@ -272,8 +254,6 @@ internal fun Root(
                                 surfaces = surfaces,
                                 onSurfacesChange = onSurfacesChange,
                                 startDestination = startChoice,
-                                onStartTabChange = onStartTabChange,
-                                onStartSectionChange = onStartSectionChange,
                                 viewer = viewer,
                                 onLogin = { state.openSignIn() },
                                 onLogout = onLogout,
@@ -341,44 +321,6 @@ internal fun Root(
             )
         }
     }
-}
-
-/** Sort memory restore: unknown/corrupt names fall back to null (holder
- * defaults), never crash. Pure for tests. */
-internal fun hydrateSort(
-    persistence: SortPersistence,
-    scope: SortScope,
-): Pair<UserListSort, UserListOrder>? {
-    val (sort, order) = persistence.loadSort(scope) ?: return null
-    val option = UserListSort.entries.firstOrNull { it.name == sort } ?: return null
-    val direction = UserListOrder.entries.firstOrNull { it.name == order } ?: return null
-    return option to direction
-}
-
-/** Session-start sort per tab. Pure for tests. */
-internal data class InitialSort(
-    val option: UserListSort,
-    val order: UserListOrder,
-    /** True only when restoring the user's own saved sort. */
-    val persist: Boolean,
-)
-
-/**
- * Precedence: saved persist-sort wins, then the Settings default sort, then
- * holder defaults (handled by the caller when this returns the default —
- * persist is false so defaults are never written back as user choices).
- * Explicit always beats default: changing Default sort while a saved sort
- * exists leaves the lists on the saved sort.
- */
-internal fun resolveInitialSort(
-    saved: Pair<UserListSort, UserListOrder>?,
-    defaultSort: ListSort,
-): InitialSort {
-    if (saved != null) {
-        return InitialSort(saved.first, saved.second, persist = true)
-    }
-    val (option, order) = defaultSort.toUserSort()
-    return InitialSort(option, order, persist = false)
 }
 
 /** Which saved surface the content area shows: the slot's tab + the view. */

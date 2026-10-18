@@ -15,12 +15,11 @@ import com.luum.michi.app.settings.domain.model.label
 import com.luum.michi.app.settings.ui.model.SettingsChoice
 import com.luum.michi.app.settings.ui.model.StartDestinationChoice
 
-/** What the shell opens on: the tab plus its dependent sub-choice, resolved. */
+/** What the shell opens on: the tab plus its dependent list sub-choice, resolved. */
 internal data class StartDestination(
     val tab: TabSection = TabSection.DISCOVER,
     val animeSection: AnimeListSection = AnimeListSection.ALL,
     val mangaSection: MangaListSection = MangaListSection.ALL,
-    val catalogType: DashboardMediaType = DashboardMediaType.ANIME,
 )
 
 /** Dashboard type of the "Pestaña al abrir" sub-choice (settings keeps the enum). */
@@ -90,7 +89,6 @@ internal fun startDestinationChoice(
  */
 internal fun resolveStartDestination(
     startTab: StartTabOption,
-    startCatalogType: StartCatalogOption,
     animeSectionId: String,
     mangaSectionId: String,
     splitCompletedAnime: Boolean,
@@ -111,6 +109,5 @@ internal fun resolveStartDestination(
         mangaSection = mangaStartSections(splitCompletedManga)
             .firstOrNull { it.name == mangaSectionId }
             ?: MangaListSection.ALL,
-        catalogType = startCatalogType.toDashboardMediaType(),
     )
 }

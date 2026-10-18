@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.luum.michi.app.profile.domain.model.ProfileDraft
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
@@ -32,7 +31,6 @@ internal sealed interface BackStep {
 }
 
 internal class State(
-    initialProfile: ProfileDraft,
     initialTab: TabSection = TabSection.DISCOVER,
     initialAnimeSection: AnimeListSection = AnimeListSection.ALL,
     initialMangaSection: MangaListSection = MangaListSection.ALL,
@@ -40,7 +38,6 @@ internal class State(
     var selectedTab: TabSection by mutableStateOf(initialTab)
     var selectedAnimeSection by mutableStateOf(initialAnimeSection)
     var selectedMangaSection by mutableStateOf(initialMangaSection)
-    var currentProfile: ProfileDraft by mutableStateOf(initialProfile)
     private val detailStack = mutableStateListOf<DetailDestination>()
     // Monotonic identity per stack entry: each detail page keeps its own
     // scroll state, and a re-push of the same media is a different entry.
@@ -77,8 +74,6 @@ internal class State(
 
     /** Live entry identities, in stack order: Root keys and prunes per-entry state. */
     val detailEntryIds: List<Long> get() = entryIds
-    // Compat: several places compare against the open media id
-    val selectedMediaId: Int? get() = (currentDetail as? DetailDestination.Media)?.id
 
     val isEditorOpen: Boolean
         get() = editorMediaId != null
@@ -329,19 +324,12 @@ internal class State(
     }
 }
 
-/** Composition factory: shell preview entry (empty profile until session routing lands). */
+/** Composition factory: the shell's startup state, seeded from "Pestaña al abrir". */
 @Composable
 internal fun rememberState(
     startDestination: StartDestination = StartDestination(),
 ): State = remember {
     State(
-        initialProfile = ProfileDraft(
-            username = "",
-            displayName = "",
-            avatarUrl = null,
-            bannerUrl = null,
-            bio = "",
-        ),
         initialTab = startDestination.tab,
         initialAnimeSection = startDestination.animeSection,
         initialMangaSection = startDestination.mangaSection,

@@ -84,4 +84,31 @@ class StartDestinationSettingsTest {
         assertEquals("MANGA", store.getString(SettingsStoreKeys.StartTab))
         assertEquals("COMPLETED", store.getString(SettingsStoreKeys.StartMangaSection))
     }
+
+    @Test
+    fun setStartSectionRoutesToTheActiveTabSubChoice() {
+        val state = stateWith(FakeSettingsStore())
+
+        // DISCOVER: a catalog type name sets the dashboard type; an unknown one
+        // is a no-op.
+        state.startTab = StartTabOption.DISCOVER
+        state.setStartSection(StartCatalogOption.MANGA.name)
+        assertEquals(StartCatalogOption.MANGA, state.startCatalogType)
+        state.setStartSection("NOT_A_TYPE")
+        assertEquals(StartCatalogOption.MANGA, state.startCatalogType)
+
+        // ANIME/MANGA store the section id as-is.
+        state.startTab = StartTabOption.ANIME
+        state.setStartSection("WATCHING")
+        assertEquals("WATCHING", state.startAnimeSectionId)
+        state.startTab = StartTabOption.MANGA
+        state.setStartSection("CURRENT")
+        assertEquals("CURRENT", state.startMangaSectionId)
+
+        // PROFILE has no sub-choice: nothing changes.
+        state.startTab = StartTabOption.PROFILE
+        state.setStartSection("WHATEVER")
+        assertEquals("WATCHING", state.startAnimeSectionId)
+        assertEquals("CURRENT", state.startMangaSectionId)
+    }
 }

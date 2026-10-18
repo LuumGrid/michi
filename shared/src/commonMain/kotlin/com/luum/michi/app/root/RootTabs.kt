@@ -79,10 +79,10 @@ internal fun RootTabBar(tab: TabSection, state: State, strings: LanguageStrings)
         Box(modifier = Modifier.fillMaxWidth()) {
             BottomEdgeFade(modifier = Modifier.matchParentSize())
             TabBar(
-            selected = tab,
-            tabs = tabs(strings),
-            onSelect = { state.selectTab(it) },
-        )
+                selected = tab,
+                tabs = tabs(strings),
+                onSelect = { state.selectTab(it) },
+            )
         }
     }
 }
