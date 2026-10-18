@@ -11,6 +11,7 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.core.storage.domain.SettingsStore
 import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
 import com.luum.michi.app.core.model.ImageQuality
+import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.settings.domain.model.SettingsData
 import com.luum.michi.app.settings.domain.SettingsRepository
 import com.luum.michi.app.settings.domain.model.ListSort
@@ -23,6 +24,15 @@ import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.domain.model.parseScoreFormat
 import com.luum.michi.app.settings.domain.model.parseTitleLanguage
 import com.luum.michi.app.ui.state.LatestRequest
+import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.ThemeColors
+import com.luum.michi.app.ui.theme.ThemeType
+import com.luum.michi.app.ui.theme.paletteForId
+import com.luum.michi.app.ui.theme.paletteIdOf
+import com.luum.michi.app.ui.theme.paletteStyleForId
+import com.luum.michi.app.ui.theme.paletteStyleIdOf
+import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -145,7 +155,7 @@ internal class SettingsState(
     var notifications: NotificationPreferences by notificationsPref
 
     // ── Local-only prefs: AniList has no field for these, so they never join
-    //    currentData()/scheduleSave — store only, like App theme/language. ──
+    //    currentData()/scheduleSave — store only. ──
 
     // Sort memory. ON by default: sort is set-and-forget, and non-changers
     // save nothing (fallback stays FOLLOW_LIST), so nobody is surprised.
@@ -156,6 +166,37 @@ internal class SettingsState(
     private val imageQualityPref =
         localEnum(SettingsPrefKeys.ImageQuality, ImageQuality.AUTO, ImageQuality.entries)
     var imageQuality: ImageQuality by imageQualityPref
+
+    // App appearance (local-only, same store keys App used to read): language,
+    // palette, color style, theme mode, font and surfaces. Never synced.
+    private val languagePref =
+        codedPref(
+            key = SettingsStoreKeys.Language,
+            store = store,
+            decode = AppLanguage::fromCode,
+            encode = { it.code },
+        )
+    var language: AppLanguage by languagePref
+
+    private val palettePref =
+        codedPref(SettingsStoreKeys.ThemePalette, store, ::paletteForId, ::paletteIdOf)
+    var palette: ThemeColors by palettePref
+
+    private val themeStylePref =
+        codedPref(SettingsStoreKeys.ThemeStyle, store, ::paletteStyleForId, ::paletteStyleIdOf)
+    var themeStyle: PaletteStyle by themeStylePref
+
+    private val themeTypePref =
+        localEnum(SettingsStoreKeys.ThemeMode, ThemeType.SYSTEM, ThemeType.entries)
+    var themeType: ThemeType by themeTypePref
+
+    private val fontPref =
+        localEnum(SettingsStoreKeys.Font, AppFont.JAKARTA, AppFont.entries)
+    var font: AppFont by fontPref
+
+    private val surfacesPref =
+        localEnum(SettingsStoreKeys.SurfaceStyle, SurfaceStyle.GLASS, SurfaceStyle.entries)
+    var surfaces: SurfaceStyle by surfacesPref
 
     // "Pestaña al abrir": where the shell opens and the dependent sub-choice for
     // that tab. The section ids are the feature enums' names — settings never
@@ -206,6 +247,12 @@ internal class SettingsState(
         notificationsPref,
         persistListSortPref,
         imageQualityPref,
+        languagePref,
+        palettePref,
+        themeStylePref,
+        themeTypePref,
+        fontPref,
+        surfacesPref,
         startTabPref,
         startCatalogTypePref,
         startAnimeSectionPref,

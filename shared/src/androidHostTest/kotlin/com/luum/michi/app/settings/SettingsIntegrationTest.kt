@@ -2,6 +2,7 @@ package com.luum.michi.app.settings
 
 import com.luum.michi.app.DeferredDispatcher
 import com.luum.michi.app.FakeGraphQL
+import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.model.ImageQuality
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -14,6 +15,12 @@ import com.luum.michi.app.settings.domain.model.StartTabOption
 import com.luum.michi.app.settings.domain.model.TitleLanguage
 import com.luum.michi.app.settings.repository.SettingsRepositoryImpl
 import com.luum.michi.app.settings.ui.state.SettingsState
+import com.luum.michi.app.ui.theme.AppFont
+import com.luum.michi.app.ui.theme.OceanTheme
+import com.luum.michi.app.ui.theme.SurfaceStyle
+import com.luum.michi.app.ui.theme.ThemeType
+import com.luum.michi.app.ui.theme.paletteIdOf
+import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
@@ -423,6 +430,12 @@ class SettingsIntegrationTest {
             state.startTab = StartTabOption.MANGA
             state.imageQuality = ImageQuality.LOW
             state.persistListSort = false
+            state.language = AppLanguage.available.first { it.code == "es" }
+            state.palette = OceanTheme()
+            state.themeStyle = PaletteStyle.Vibrant
+            state.themeType = ThemeType.DARK
+            state.font = AppFont.MANROPE
+            state.surfaces = SurfaceStyle.SOLID
 
             state.clearSynced()
 
@@ -457,6 +470,107 @@ class SettingsIntegrationTest {
             assertEquals("LOW", store.getString("image_quality"))
             assertEquals(false, state.persistListSort)
             assertEquals(false, store.getBoolean("persist_list_sort", true))
+
+            // App appearance prefs are local-only too: logout never resets them.
+            assertEquals("es", state.language.code)
+            assertEquals("ocean", paletteIdOf(state.palette))
+            assertEquals(PaletteStyle.Vibrant, state.themeStyle)
+            assertEquals(ThemeType.DARK, state.themeType)
+            assertEquals(AppFont.MANROPE, state.font)
+            assertEquals(SurfaceStyle.SOLID, state.surfaces)
+            assertEquals("es", store.getString(SettingsStoreKeys.Language))
+            assertEquals("ocean", store.getString(SettingsStoreKeys.ThemePalette))
+            assertEquals("vibrant", store.getString(SettingsStoreKeys.ThemeStyle))
+            assertEquals("DARK", store.getString(SettingsStoreKeys.ThemeMode))
+            assertEquals("MANROPE", store.getString(SettingsStoreKeys.Font))
+            assertEquals("SOLID", store.getString(SettingsStoreKeys.SurfaceStyle))
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun appAppearancePrefsHydrateFromTheirExistingStoreKeys() {
+        setUp()
+        try {
+            val store = FakeSettingsStore().apply {
+                preload(SettingsStoreKeys.Language, "es")
+                preload(SettingsStoreKeys.ThemePalette, "ocean")
+                preload(SettingsStoreKeys.ThemeStyle, "vibrant")
+                preload(SettingsStoreKeys.ThemeMode, "DARK")
+                preload(SettingsStoreKeys.Font, "MANROPE")
+                preload(SettingsStoreKeys.SurfaceStyle, "SOLID")
+            }
+            val state = stateWith(ScriptedSettingsGraphQL(emptyList()), store)
+
+            assertEquals("es", state.language.code)
+            assertEquals("ocean", paletteIdOf(state.palette))
+            assertEquals(PaletteStyle.Vibrant, state.themeStyle)
+            assertEquals(ThemeType.DARK, state.themeType)
+            assertEquals(AppFont.MANROPE, state.font)
+            assertEquals(SurfaceStyle.SOLID, state.surfaces)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun unknownOrMissingAppAppearancePrefsFallBackToDefaults() {
+        setUp()
+        try {
+            val absent = stateWith(ScriptedSettingsGraphQL(emptyList()), FakeSettingsStore())
+            assertEquals(AppLanguage.default, absent.language)
+            assertEquals("default", paletteIdOf(absent.palette))
+            assertEquals(PaletteStyle.TonalSpot, absent.themeStyle)
+            assertEquals(ThemeType.SYSTEM, absent.themeType)
+            assertEquals(AppFont.JAKARTA, absent.font)
+            assertEquals(SurfaceStyle.GLASS, absent.surfaces)
+
+            val corrupt = FakeSettingsStore().apply {
+                preload(SettingsStoreKeys.Language, "xx")
+                preload(SettingsStoreKeys.ThemePalette, "nope")
+                preload(SettingsStoreKeys.ThemeStyle, "nope")
+                preload(SettingsStoreKeys.ThemeMode, "NOPE")
+                preload(SettingsStoreKeys.Font, "NOPE")
+                preload(SettingsStoreKeys.SurfaceStyle, "NOPE")
+            }
+            val state = stateWith(ScriptedSettingsGraphQL(emptyList()), corrupt)
+
+            assertEquals(AppLanguage.default, state.language)
+            assertEquals("default", paletteIdOf(state.palette))
+            assertEquals(PaletteStyle.TonalSpot, state.themeStyle)
+            assertEquals(ThemeType.SYSTEM, state.themeType)
+            assertEquals(AppFont.JAKARTA, state.font)
+            assertEquals(SurfaceStyle.GLASS, state.surfaces)
+        } finally {
+            tearDown()
+        }
+    }
+
+    @Test
+    fun appAppearanceSettersPersistWithTheAppsStoreFormat() {
+        setUp()
+        try {
+            val store = FakeSettingsStore()
+            val state = stateWith(ScriptedSettingsGraphQL(emptyList()), store)
+
+            state.language = AppLanguage.available.first { it.code == "es" }
+            assertEquals("es", store.getString(SettingsStoreKeys.Language))
+
+            state.palette = OceanTheme()
+            assertEquals("ocean", store.getString(SettingsStoreKeys.ThemePalette))
+
+            state.themeStyle = PaletteStyle.Vibrant
+            assertEquals("vibrant", store.getString(SettingsStoreKeys.ThemeStyle))
+
+            state.themeType = ThemeType.DARK
+            assertEquals("DARK", store.getString(SettingsStoreKeys.ThemeMode))
+
+            state.font = AppFont.MANROPE
+            assertEquals("MANROPE", store.getString(SettingsStoreKeys.Font))
+
+            state.surfaces = SurfaceStyle.SOLID
+            assertEquals("SOLID", store.getString(SettingsStoreKeys.SurfaceStyle))
         } finally {
             tearDown()
         }

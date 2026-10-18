@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.auth.domain.AniListOAuthConfig
-import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.getLanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.session.domain.SessionState
@@ -47,16 +46,8 @@ import com.luum.michi.app.ui.installImageLoader
 import com.luum.michi.app.ui.LocalImageQuality
 import com.luum.michi.app.core.model.resolved
 import com.luum.michi.app.ui.icons.AppIcons
-import com.luum.michi.app.ui.theme.paletteForId
-import com.luum.michi.app.ui.theme.paletteIdOf
-import com.luum.michi.app.ui.theme.paletteStyleForId
-import com.luum.michi.app.ui.theme.paletteStyleIdOf
 import com.luum.michi.app.ui.language.LocalStrings
-import com.luum.michi.app.ui.theme.AppFont
-import com.luum.michi.app.ui.theme.SurfaceStyle
 import com.luum.michi.app.ui.theme.Theme
-import com.luum.michi.app.ui.theme.ThemeColors
-import com.luum.michi.app.ui.theme.ThemeType
 import kotlinx.coroutines.launch
 
 /**
@@ -71,45 +62,23 @@ fun App(
     // Coil setup + reactive network metering for the AUTO image-quality mode.
     installImageLoader()
     val unmeteredConnection by dependencies.connectivity.isUnmetered.collectAsState()
-    // Local prefs: hydrated from the store once, persisted on every change.
-    // Unknown/corrupt values fall back to defaults, never crash.
     val store = dependencies.settingsStore
-    var language by remember {
-        mutableStateOf(AppLanguage.fromCode(store.getString(SettingsStoreKeys.Language)))
-    }
-    var palette: ThemeColors by remember {
-        mutableStateOf(paletteForId(store.getString(SettingsStoreKeys.ThemePalette)))
-    }
-    var themeStyle by remember {
-        mutableStateOf(paletteStyleForId(store.getString(SettingsStoreKeys.ThemeStyle)))
-    }
-    var themeType by remember {
-        mutableStateOf(
-            ThemeType.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.ThemeMode) }
-                ?: ThemeType.SYSTEM,
-        )
-    }
-    var font by remember {
-        mutableStateOf(
-            AppFont.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.Font) }
-                ?: AppFont.JAKARTA,
-        )
-    }
-    var surfaces by remember {
-        mutableStateOf(
-            SurfaceStyle.entries.firstOrNull { it.name == store.getString(SettingsStoreKeys.SurfaceStyle) }
-                ?: SurfaceStyle.GLASS,
-        )
-    }
-    val onLanguageChange: (AppLanguage) -> Unit = {
-        language = it
-        store.putString(SettingsStoreKeys.Language, it.code)
-    }
-
-    val strings = getLanguageStrings(language)
     val session by dependencies.sessionManager.state.collectAsState()
     val deepLinkMediaId by dependencies.pendingMediaId.collectAsState()
     val scope = rememberCoroutineScope()
+
+    // Synced settings holder: one per session. Guests get canSync = false
+    // (local-only, never touches the network); login/logout recreates it. It
+    // also owns the app appearance prefs (language, theme, font, surfaces),
+    // hydrated from the store once and persisted on every change.
+    val settingsState = rememberSettingsState(
+        repository = dependencies.settingsRepository,
+        store = dependencies.settingsStore,
+        scope = scope,
+        canSync = session is SessionState.Authenticated,
+    )
+
+    val strings = getLanguageStrings(settingsState.language)
 
     // Login services (AniList today; MAL appends here tomorrow): shared by
     // the sign-in modal everywhere it opens.
@@ -121,15 +90,6 @@ fun App(
             icon = AppIcons.AniList,
             brandHex = ANILIST_BRAND_HEX,
         ),
-    )
-
-    // Synced settings holder: one per session. Guests get canSync = false
-    // (local-only, never touches the network); login/logout recreates it.
-    val settingsState = rememberSettingsState(
-        repository = dependencies.settingsRepository,
-        store = dependencies.settingsStore,
-        scope = scope,
-        canSync = session is SessionState.Authenticated,
     )
     // Sort memory backing (Settings persist toggle, per tab): store-owned,
     // session-independent — Root hydrates holders from it, holders save
@@ -167,11 +127,11 @@ fun App(
         LocalImageQuality provides settingsState.imageQuality.resolved(unmeteredConnection),
     ) {
         Theme(
-            palette = palette,
-            type = themeType,
-            font = font,
-            surfaces = surfaces,
-            style = themeStyle,
+            palette = settingsState.palette,
+            type = settingsState.themeType,
+            font = settingsState.font,
+            surfaces = settingsState.surfaces,
+            style = settingsState.themeStyle,
         ) {
             val current = session
             // No login wall: anonymous users enter the shell as guests
@@ -222,33 +182,6 @@ fun App(
                     AppRoute.SHELL -> {
                         Root(
                             settingsState = settingsState,
-                            language = language,
-                            onLanguageChange = onLanguageChange,
-                            palette = palette,
-                            onPaletteChange = {
-                                palette = it
-                                store.putString(SettingsStoreKeys.ThemePalette, paletteIdOf(it))
-                            },
-                            themeStyle = themeStyle,
-                            onThemeStyleChange = { style ->
-                                themeStyle = style
-                                store.putString(SettingsStoreKeys.ThemeStyle, paletteStyleIdOf(style))
-                            },
-                            themeType = themeType,
-                            onThemeTypeChange = {
-                                themeType = it
-                                store.putString(SettingsStoreKeys.ThemeMode, it.name)
-                            },
-                            font = font,
-                            onFontChange = {
-                                font = it
-                                store.putString(SettingsStoreKeys.Font, it.name)
-                            },
-                            surfaces = surfaces,
-                            onSurfacesChange = {
-                                surfaces = it
-                                store.putString(SettingsStoreKeys.SurfaceStyle, it.name)
-                            },
                             viewer = (current as? SessionState.Authenticated)?.viewer,
                             onLogout = {
                                 dependencies.logout()

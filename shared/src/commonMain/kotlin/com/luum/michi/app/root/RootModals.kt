@@ -3,7 +3,6 @@ package com.luum.michi.app.root
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.navigation.domain.DetailDestination
@@ -46,8 +45,6 @@ internal fun RootModals(
     holders: RootHolders,
     viewerId: Int?,
     settingsState: SettingsState,
-    language: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
     authServices: List<AuthService>,
     isAuthConfigured: Boolean,
     mediaListEntryRepository: MediaListEntryRepository,
@@ -70,8 +67,8 @@ internal fun RootModals(
             services = authServices,
             isConfigured = isAuthConfigured,
             configMissingLabel = strings.authConfigurationMissing,
-            language = language,
-            onLanguageChange = onLanguageChange,
+            language = settingsState.language,
+            onLanguageChange = { settingsState.language = it },
             guestLabel = strings.authContinueAsGuestAction,
             onDismiss = { state.closeSignIn() },
         )

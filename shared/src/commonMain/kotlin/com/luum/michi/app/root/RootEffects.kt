@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
-import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.medialist.domain.SortPersistence
 import com.luum.michi.app.core.medialist.domain.SortScope
 import com.luum.michi.app.core.medialist.domain.hydrateSort
@@ -37,7 +36,6 @@ internal fun RootEffects(
     holders: RootHolders,
     settingsState: SettingsState,
     viewer: Viewer?,
-    language: AppLanguage,
     sortPersistence: SortPersistence,
     surfaceStates: SaveableStateHolder,
     autoOpenSignIn: Boolean,
@@ -155,10 +153,10 @@ internal fun RootEffects(
     // The cached rail meta is localized: a language change drops disk + memory
     // and bumps the holder's generation, which reloads the screen only when it
     // is visible (the screen's effect keys on the generation).
-    var lastDashboardLanguage by remember { mutableStateOf(language) }
-    LaunchedEffect(language) {
-        if (language != lastDashboardLanguage) {
-            lastDashboardLanguage = language
+    var lastDashboardLanguage by remember { mutableStateOf(settingsState.language) }
+    LaunchedEffect(settingsState.language) {
+        if (settingsState.language != lastDashboardLanguage) {
+            lastDashboardLanguage = settingsState.language
             holders.dashboard.invalidate()
         }
     }

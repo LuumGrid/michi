@@ -19,7 +19,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import com.luum.michi.app.calendar.domain.CalendarRepository
 import com.luum.michi.app.calendar.ui.CalendarScreen
-import com.luum.michi.app.core.language.domain.AppLanguage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.SortPersistence
@@ -48,11 +47,6 @@ import com.luum.michi.app.ui.components.ToolbarSearch
 import com.luum.michi.app.ui.components.tabFadeSpec
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.ui.language.searchHintFor
-import com.luum.michi.app.ui.theme.AppFont
-import com.luum.michi.app.ui.theme.SurfaceStyle
-import com.luum.michi.app.ui.theme.ThemeColors
-import com.luum.michi.app.ui.theme.ThemeType
-import com.materialkolor.PaletteStyle
 
 /**
  * Slim app orchestrator: owns the [State], derives the topbar per tab and
@@ -70,18 +64,6 @@ internal fun Root(
     viewer: Viewer? = null,
     providedState: State? = null,
     strings: LanguageStrings = Strings.current,
-    language: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
-    palette: ThemeColors,
-    onPaletteChange: (ThemeColors) -> Unit,
-    themeStyle: PaletteStyle,
-    onThemeStyleChange: (PaletteStyle) -> Unit,
-    themeType: ThemeType,
-    onThemeTypeChange: (ThemeType) -> Unit,
-    font: AppFont,
-    onFontChange: (AppFont) -> Unit,
-    surfaces: SurfaceStyle,
-    onSurfacesChange: (SurfaceStyle) -> Unit,
     onLogout: () -> Unit = {},
     animeListRepository: AnimeListRepository,
     mangaListRepository: MangaListRepository,
@@ -182,7 +164,6 @@ internal fun Root(
         holders = holders,
         settingsState = settingsState,
         viewer = viewer,
-        language = language,
         sortPersistence = sortPersistence,
         surfaceStates = surfaceStates,
         autoOpenSignIn = autoOpenSignIn,
@@ -241,18 +222,6 @@ internal fun Root(
                         if (state.isSettingsOpen) {
                             SettingsScreen(
                                 settingsState = settingsState,
-                                language = language,
-                                onLanguageChange = onLanguageChange,
-                                palette = palette,
-                                onPaletteChange = onPaletteChange,
-                                themeStyle = themeStyle,
-                                onThemeStyleChange = onThemeStyleChange,
-                                themeType = themeType,
-                                onThemeTypeChange = onThemeTypeChange,
-                                font = font,
-                                onFontChange = onFontChange,
-                                surfaces = surfaces,
-                                onSurfacesChange = onSurfacesChange,
                                 startDestination = startChoice,
                                 viewer = viewer,
                                 onLogin = { state.openSignIn() },
@@ -309,8 +278,6 @@ internal fun Root(
                 holders = holders,
                 viewerId = viewerId,
                 settingsState = settingsState,
-                language = language,
-                onLanguageChange = onLanguageChange,
                 authServices = authServices,
                 isAuthConfigured = isAuthConfigured,
                 mediaListEntryRepository = mediaListEntryRepository,

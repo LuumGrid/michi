@@ -72,29 +72,16 @@ import com.luum.michi.app.ui.theme.paletteDisplayName
 import com.luum.michi.app.ui.theme.paletteIdOf
 import com.luum.michi.app.ui.theme.PaletteStyles
 import com.luum.michi.app.ui.theme.paletteStyleDisplayName
-import com.materialkolor.PaletteStyle
 
 /**
  * App settings. Root owns the toolbar (back + title, no actions);
- * this screen never draws its own header. App prefs are hoisted to `App`
- * (same pattern as the auth landing) and synced prefs live in
- * [settingsState]; only sheet visibility lives here.
+ * this screen never draws its own header. App appearance prefs (language,
+ * theme, font, surfaces) live in [settingsState] as local prefs, like the
+ * synced ones; only sheet visibility lives here.
  */
 @Composable
 internal fun SettingsScreen(
     settingsState: SettingsState,
-    language: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
-    palette: ThemeColors,
-    onPaletteChange: (ThemeColors) -> Unit,
-    themeStyle: PaletteStyle,
-    onThemeStyleChange: (PaletteStyle) -> Unit,
-    themeType: ThemeType,
-    onThemeTypeChange: (ThemeType) -> Unit,
-    font: AppFont,
-    onFontChange: (AppFont) -> Unit,
-    surfaces: SurfaceStyle,
-    onSurfacesChange: (SurfaceStyle) -> Unit,
     startDestination: StartDestinationChoice = StartDestinationChoice(),
     viewer: Viewer?,
     onLogin: () -> Unit,
@@ -131,28 +118,28 @@ internal fun SettingsScreen(
                 OptionGroup(title = strings.settingsGeneralSection) {
                     SettingsRow(
                         label = strings.languageLabel,
-                        value = language.displayName,
+                        value = settingsState.language.displayName,
                         onClick = { openSheet = SettingsSheet.Language },
                         divider = false,
                     )
                     SettingsRow(
                         label = strings.settingsThemeTitle,
-                        value = "${themeType.label(strings)} · ${paletteDisplayName(palette)}",
+                        value = "${settingsState.themeType.label(strings)} · ${paletteDisplayName(settingsState.palette)}",
                         onClick = { openSheet = SettingsSheet.Theme },
                     )
                     SettingsRow(
                         label = strings.themeFontSection,
-                        value = font.displayName,
+                        value = settingsState.font.displayName,
                         onClick = { openSheet = SettingsSheet.Font },
                     )
                     SettingsRow(
                         label = strings.settingsSurfaceTitle,
-                        value = surfaces.label(strings),
+                        value = settingsState.surfaces.label(strings),
                         onClick = { openSheet = SettingsSheet.Surface },
                     )
                     SettingsRow(
                         label = strings.settingsStyleTitle,
-                        value = paletteStyleDisplayName(themeStyle),
+                        value = paletteStyleDisplayName(settingsState.themeStyle),
                         onClick = { openSheet = SettingsSheet.Style },
                     )
                     SettingsRow(
@@ -320,9 +307,9 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { openSheet = null },
             options = AppLanguage.available,
-            selected = language,
+            selected = settingsState.language,
             label = { it.displayName },
-            onSelect = { onLanguageChange(it) },
+            onSelect = { settingsState.language = it },
         )
     }
 
@@ -333,14 +320,14 @@ internal fun SettingsScreen(
             onDismiss = { openSheet = null },
         ) {
             ThemeModeSection(
-                themeType = themeType,
-                onThemeTypeChange = onThemeTypeChange,
+                themeType = settingsState.themeType,
+                onThemeTypeChange = { settingsState.themeType = it },
                 strings = strings,
             )
             Spacer(modifier = Modifier.height(16.dp))
             ThemePaletteSection(
-                palette = palette,
-                onPaletteChange = onPaletteChange,
+                palette = settingsState.palette,
+                onPaletteChange = { settingsState.palette = it },
                 strings = strings,
             )
         }
@@ -352,9 +339,9 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { openSheet = null },
             options = AppFont.entries,
-            selected = font,
+            selected = settingsState.font,
             label = { it.displayName },
-            onSelect = { onFontChange(it) },
+            onSelect = { settingsState.font = it },
             leading = { option ->
                 Text(
                     text = "Ag",
@@ -372,9 +359,9 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { openSheet = null },
             options = SurfaceStyle.entries,
-            selected = surfaces,
+            selected = settingsState.surfaces,
             label = { it.label(strings) },
-            onSelect = { onSurfacesChange(it) },
+            onSelect = { settingsState.surfaces = it },
         )
     }
 
@@ -384,9 +371,9 @@ internal fun SettingsScreen(
             dismissLabel = strings.dismissAction,
             onDismiss = { openSheet = null },
             options = PaletteStyles,
-            selected = themeStyle,
+            selected = settingsState.themeStyle,
             label = { paletteStyleDisplayName(it) },
-            onSelect = { onThemeStyleChange(it) },
+            onSelect = { settingsState.themeStyle = it },
         )
     }
 

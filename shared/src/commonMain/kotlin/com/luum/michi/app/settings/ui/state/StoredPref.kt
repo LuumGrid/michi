@@ -82,6 +82,24 @@ internal fun <E : Enum<E>> enumPref(
     onChanged = onChanged,
 )
 
+/**
+ * A value persisted through an explicit codec instead of an enum name: themes
+ * and language use stable ids/codes so a class or enum rename never loses what
+ * the user already has saved.
+ */
+internal fun <T> codedPref(
+    key: String,
+    store: SettingsStore,
+    decode: (String?) -> T,
+    encode: (T) -> String,
+    onChanged: () -> Unit = {},
+): StoredPref<T> = StoredPref(
+    default = decode(null),
+    read = { decode(store.getString(key)) },
+    write = { store.putString(key, encode(it)) },
+    onChanged = onChanged,
+)
+
 internal fun stringPref(
     key: String,
     default: String = "",
