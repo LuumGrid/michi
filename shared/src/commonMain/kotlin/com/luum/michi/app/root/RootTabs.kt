@@ -18,6 +18,7 @@ import com.luum.michi.app.discover.ui.dashboard.DashboardScreen
 import com.luum.michi.app.mediaList.ui.anime.AnimeListScreen
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenSettings
 import com.luum.michi.app.mediaList.ui.manga.MangaListScreen
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.settings.domain.model.ScoreFormat
 import com.luum.michi.app.settings.domain.model.formatScoreValue
@@ -63,7 +64,7 @@ internal fun tabs(strings: LanguageStrings): List<TabItem> = listOf(
  * hide it (full-screen surfaces like Settings). Default is visible.
  */
 private fun showsTabBar(tab: TabSection, state: State): Boolean =
-    !state.isSettingsOpen && !state.isCalendarOpen && !state.isDetailOpen
+    !state.isOpen(RootOverlay.Settings) && !state.isOpen(RootOverlay.Calendar) && !state.isDetailOpen
 
 /** The bottom tab bar, over the edge fade, hidden by full-screen surfaces. */
 @Composable
@@ -169,10 +170,10 @@ internal fun RootTabContent(
             bottomPadding = bottomPadding,
             isRefreshing = holders.anime.isRefreshing,
             settings = animeListSettings,
-            isFilterOpen = state.isSectionFilterOpen,
-            onDismissFilter = { state.closeSectionFilter() },
-            isSortOpen = state.isListSortOpen,
-            onDismissSort = { state.closeListSort() },
+            isFilterOpen = state.isOpen(RootOverlay.SectionFilter),
+            onDismissFilter = { state.close(RootOverlay.SectionFilter) },
+            isSortOpen = state.isOpen(RootOverlay.ListSort),
+            onDismissSort = { state.close(RootOverlay.ListSort) },
             onOpenDetail = { state.openMedia(it) },
             onEditEntry = { state.openEditor(it) },
             onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
@@ -192,10 +193,10 @@ internal fun RootTabContent(
             bottomPadding = bottomPadding,
             isRefreshing = holders.manga.isRefreshing,
             settings = mangaListSettings,
-            isFilterOpen = state.isSectionFilterOpen,
-            onDismissFilter = { state.closeSectionFilter() },
-            isSortOpen = state.isListSortOpen,
-            onDismissSort = { state.closeListSort() },
+            isFilterOpen = state.isOpen(RootOverlay.SectionFilter),
+            onDismissFilter = { state.close(RootOverlay.SectionFilter) },
+            isSortOpen = state.isOpen(RootOverlay.ListSort),
+            onDismissSort = { state.close(RootOverlay.ListSort) },
             onOpenDetail = { state.openMedia(it) },
             onEditEntry = { state.openEditor(it) },
             onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
@@ -229,7 +230,7 @@ internal fun RootTabContent(
             message = strings.authGuestPrompt,
             icon = tabItem.icon,
             actionLabel = strings.settingsSignInTitle,
-            onAction = { state.openSignIn() },
+            onAction = { state.open(RootOverlay.SignIn) },
         )
     } else {
         val tabItem = tabs(strings).first { it.section == activeTab }

@@ -18,6 +18,7 @@ import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.mediaList.ui.common.state.MediaListHolder
 import com.luum.michi.app.root.state.BackStep
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.detailSurfaceKeys
 import com.luum.michi.app.settings.domain.model.toUserSort
@@ -54,20 +55,20 @@ internal fun RootEffects(
 
     // Synced settings load once per session, on first open — never on
     // composition, never for guests (canSync). The holder dedups repeats.
-    LaunchedEffect(state.isSettingsOpen) {
-        if (state.isSettingsOpen) settingsState.refresh()
+    LaunchedEffect(state.isOpen(RootOverlay.Settings)) {
+        if (state.isOpen(RootOverlay.Settings)) settingsState.refresh()
     }
 
     // Sign-in modal lifecycle: opens once on first anonymous launch,
     // closes on login (viewer appears) wherever it was opened from.
     LaunchedEffect(autoOpenSignIn) {
         if (autoOpenSignIn) {
-            state.openSignIn()
+            state.open(RootOverlay.SignIn)
             onAutoSignInShown()
         }
     }
     LaunchedEffect(viewer) {
-        if (viewer != null) state.closeSignIn()
+        if (viewer != null) state.close(RootOverlay.SignIn)
     }
 
     // Keyboard follows search: every close path (chevron, scrim, system

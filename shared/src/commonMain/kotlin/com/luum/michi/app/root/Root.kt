@@ -34,6 +34,7 @@ import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
 import com.luum.michi.app.mediaList.domain.anime.AnimeListRepository
 import com.luum.michi.app.mediaList.domain.manga.MangaListRepository
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.root.state.detailSurfaceKey
 import com.luum.michi.app.root.state.rememberState
@@ -216,12 +217,12 @@ internal fun Root(
                 val surface = surfaceKey(activeTab, state)
                 surfaceStates.SaveableStateProvider(surface) {
                     key(surface) {
-                        if (state.isSettingsOpen) {
+                        if (state.isOpen(RootOverlay.Settings)) {
                             SettingsScreen(
                                 settingsState = settingsState,
                                 startDestination = startChoice,
                                 viewer = viewer,
-                                onLogin = { state.openSignIn() },
+                                onLogin = { state.open(RootOverlay.SignIn) },
                                 onLogout = onLogout,
                                 bottomPadding = padding.calculateBottomPadding(),
                             )
@@ -236,7 +237,7 @@ internal fun Root(
                                 bottomPadding = padding.calculateBottomPadding(),
                                 urlOpener = urlOpener,
                             )
-                        } else if (state.isCalendarOpen) {
+                        } else if (state.isOpen(RootOverlay.Calendar)) {
                             // Airing schedule overlay (fullscreen, tab bar hidden):
                             // public feed, so guests render the same surface.
                             CalendarScreen(
@@ -245,8 +246,8 @@ internal fun Root(
                                 bottomPadding = padding.calculateBottomPadding(),
                                 isRefreshing = holders.calendar.isLoading,
                                 onRefresh = { holders.calendar.reloadSelected() },
-                                isFilterOpen = state.isCalendarFilterOpen,
-                                onDismissFilter = { state.closeCalendarFilter() },
+                                isFilterOpen = state.isOpen(RootOverlay.CalendarFilter),
+                                onDismissFilter = { state.close(RootOverlay.CalendarFilter) },
                                 onOpenDetail = { state.openMedia(it) },
                                 onOpenUrl = { urlOpener.open(it) },
                             )
@@ -289,10 +290,10 @@ internal fun Root(
 
 /** Which saved surface the content area shows: the slot's tab + the view. */
 private fun surfaceKey(tab: TabSection, state: State): String = when {
-    state.isSettingsOpen -> "${tab.name}:settings"
+    state.isOpen(RootOverlay.Settings) -> "${tab.name}:settings"
     state.isDetailOpen -> detailSurfaceKey(tab, state.currentDetailEntryId)
-    state.isCalendarOpen -> "${tab.name}:calendar"
-    state.isExploreOpen -> "${tab.name}:explore"
-    state.isNotificationsOpen -> "${tab.name}:notifications"
+    state.isOpen(RootOverlay.Calendar) -> "${tab.name}:calendar"
+    state.isOpen(RootOverlay.Explore) -> "${tab.name}:explore"
+    state.isOpen(RootOverlay.Notifications) -> "${tab.name}:notifications"
     else -> "${tab.name}:tab"
 }

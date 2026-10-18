@@ -1,6 +1,7 @@
 package com.luum.michi.app.root
 
 import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,12 +20,12 @@ class StateOpenMediaTest {
     @Test
     fun openingMediaClosesSettingsAndStacksTheDetail() {
         val state = state()
-        state.openSettings()
-        assertTrue(state.isSettingsOpen)
+        state.open(RootOverlay.Settings)
+        assertTrue(state.isOpen(RootOverlay.Settings))
 
         state.openMedia(1)
 
-        assertFalse(state.isSettingsOpen, "the detail must not stay hidden behind Settings")
+        assertFalse(state.isOpen(RootOverlay.Settings), "the detail must not stay hidden behind Settings")
         assertTrue(state.isDetailOpen)
         assertEquals(DetailDestination.Media(1), state.currentDetail)
     }
@@ -35,7 +36,7 @@ class StateOpenMediaTest {
 
         state.openMedia(7)
 
-        assertFalse(state.isSettingsOpen)
+        assertFalse(state.isOpen(RootOverlay.Settings))
         assertEquals(DetailDestination.Media(7), state.currentDetail)
     }
 }

@@ -1,6 +1,7 @@
 package com.luum.michi.app.root
 
 import com.luum.michi.app.root.state.BackStep
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,12 +16,12 @@ class StateDetailSortTest {
     fun detailSortClosesBeforeThePageItSitsOn() {
         val state = newState()
         state.openStudio(5)
-        state.openDetailSort()
+        state.open(RootOverlay.DetailSort)
 
         assertEquals(BackStep.CloseSheet, state.nextBackStep())
         assertTrue(state.applyBackStep())
 
-        assertFalse(state.isDetailSortOpen)
+        assertFalse(state.isOpen(RootOverlay.DetailSort))
         assertTrue(state.isDetailOpen, "the first back only closes the sheet")
         assertEquals(BackStep.CloseDetail, state.nextBackStep())
     }
@@ -29,13 +30,13 @@ class StateDetailSortTest {
     fun leavingOrReplacingTheDetailDropsTheSortFlag() {
         val state = newState()
         state.openStudio(5)
-        state.openDetailSort()
+        state.open(RootOverlay.DetailSort)
         state.openMedia(9)
-        assertFalse(state.isDetailSortOpen)
+        assertFalse(state.isOpen(RootOverlay.DetailSort))
 
         state.openStudio(6)
-        state.openDetailSort()
+        state.open(RootOverlay.DetailSort)
         state.closeDetail()
-        assertFalse(state.isDetailSortOpen)
+        assertFalse(state.isOpen(RootOverlay.DetailSort))
     }
 }

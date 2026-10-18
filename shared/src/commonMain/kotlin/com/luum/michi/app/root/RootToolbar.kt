@@ -9,6 +9,7 @@ import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.ui.components.Toolbar
 import com.luum.michi.app.ui.components.ToolbarAction
@@ -39,7 +40,7 @@ internal fun RootToolbar(
         Toolbar(
             title = detailToolbarTitle(state.currentDetail, strings)
                 ?: if (state.isDetailOpen) "" else toolbarTitle(state, tab, strings),
-            navigation = if (search != null || state.isDetailOpen || state.isSettingsOpen || state.isCalendarOpen) {
+            navigation = if (search != null || state.isDetailOpen || state.isOpen(RootOverlay.Settings) || state.isOpen(RootOverlay.Calendar)) {
                 ToolbarNavigation.Back(strings.backButton)
             } else {
                 ToolbarNavigation.None
@@ -47,8 +48,8 @@ internal fun RootToolbar(
             actions = toolbarActions(
                 tab = tab,
                 isSearching = search != null,
-                isSettingsOpen = state.isSettingsOpen,
-                isCalendarOpen = state.isCalendarOpen,
+                isSettingsOpen = state.isOpen(RootOverlay.Settings),
+                isCalendarOpen = state.isOpen(RootOverlay.Calendar),
                 isDetailOpen = state.isDetailOpen,
                 isMediaDetail = state.currentDetail is DetailDestination.Media,
                 isStudioDetail = state.currentDetail is DetailDestination.Studio,
@@ -65,28 +66,28 @@ internal fun RootToolbar(
             onAction = { id ->
                 when (id) {
                     ACTION_SEARCH -> state.openSearch(tab)
-                    ACTION_SETTINGS -> state.openSettings()
+                    ACTION_SETTINGS -> state.open(RootOverlay.Settings)
                     // List tools only exist on ANIME/MANGA (see
                     // toolbarActions), so ACTION_FILTER always targets a
                     // list tab. ACTION_SORT also belongs to the studio
                     // detail page while it is open.
-                    ACTION_FILTER -> state.openSectionFilter()
+                    ACTION_FILTER -> state.open(RootOverlay.SectionFilter)
                     ACTION_SORT -> when (state.currentDetail) {
                         // The studio and genre grids are ordered by the
                         // server, so the sheet targets their holder.
                         is DetailDestination.Studio,
-                        is DetailDestination.Genre -> state.openDetailSort()
-                        else -> state.openListSort()
+                        is DetailDestination.Genre -> state.open(RootOverlay.DetailSort)
+                        else -> state.open(RootOverlay.ListSort)
                     }
-                    ACTION_CALENDAR -> state.openCalendar()
-                    ACTION_CALENDAR_FILTER -> state.openCalendarFilter()
+                    ACTION_CALENDAR -> state.open(RootOverlay.Calendar)
+                    ACTION_CALENDAR_FILTER -> state.open(RootOverlay.CalendarFilter)
                     ACTION_EDIT -> if (!isGuest) {
                         holders.mediaDetail.detail?.id?.let { state.openEditor(it) }
                     }
                     ACTION_FAVOURITE -> if (!isGuest) {
                         holders.detailHolderFor(state.currentDetail)?.toggleFavourite()
                     }
-                    ACTION_MORE -> state.openDetailMenu()
+                    ACTION_MORE -> state.open(RootOverlay.DetailMenu)
                 }
             },
             onSearchChange = { query ->
@@ -250,9 +251,9 @@ private fun toolbarTitle(
     state: State,
     tab: TabSection,
     strings: LanguageStrings,
-): String = if (state.isSettingsOpen) {
+): String = if (state.isOpen(RootOverlay.Settings)) {
     strings.settingsTitle
-} else if (state.isCalendarOpen) {
+} else if (state.isOpen(RootOverlay.Calendar)) {
     strings.calendarTitle
 } else {
     tab.label(strings)

@@ -21,6 +21,7 @@ import com.luum.michi.app.mediaDetail.domain.studio.model.aniListUrl as studioAn
 import com.luum.michi.app.mediaDetail.domain.studio.model.shareText as studioShareText
 import com.luum.michi.app.mediaDetail.ui.media.MediaEntryEditorSheet
 import com.luum.michi.app.mediaDetail.ui.media.state.createMediaEntryEditorState
+import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
 import com.luum.michi.app.settings.domain.model.formatScoreValue
 import com.luum.michi.app.settings.domain.model.parseScoreValue
@@ -62,7 +63,7 @@ internal fun RootModals(
     val scoreMax: Float = scoreMaxFor(editorScoreFormat)
     val scoreStep: Float = scoreStepFor(editorScoreFormat)
 
-    if (state.isSignInOpen) {
+    if (state.isOpen(RootOverlay.SignIn)) {
         AuthModal(
             services = authServices,
             isConfigured = isAuthConfigured,
@@ -70,7 +71,7 @@ internal fun RootModals(
             language = settingsState.language,
             onLanguageChange = { settingsState.language = it },
             guestLabel = strings.authContinueAsGuestAction,
-            onDismiss = { state.closeSignIn() },
+            onDismiss = { state.close(RootOverlay.SignIn) },
         )
     }
     val editorId = state.editorMediaId
@@ -110,7 +111,7 @@ internal fun RootModals(
             onDismiss = { state.closeEditor() },
         )
     }
-    val gridSortHolder = if (state.isDetailOpen && state.isDetailSortOpen) {
+    val gridSortHolder = if (state.isDetailOpen && state.isOpen(RootOverlay.DetailSort)) {
         holders.gridSortHolderFor(state.currentDetail)
     } else {
         null
@@ -125,21 +126,21 @@ internal fun RootModals(
             onSelect = { gridSortHolder.changeSort(it, gridSortHolder.sortOrder) },
             order = gridSortHolder.sortOrder,
             onSelectOrder = { gridSortHolder.changeSort(gridSortHolder.sortOption, it) },
-            onDismiss = { state.closeDetailSort() },
+            onDismiss = { state.close(RootOverlay.DetailSort) },
         )
     }
     val detailMenu = detailOverflowFor(state.currentDetail, holders)
-    if (state.isDetailOpen && state.isDetailMenuOpen && detailMenu != null) {
+    if (state.isDetailOpen && state.isOpen(RootOverlay.DetailMenu) && detailMenu != null) {
         ModalSheet(
             title = detailMenu.title,
             dismissLabel = strings.dismissAction,
-            onDismiss = { state.closeDetailMenu() },
+            onDismiss = { state.close(RootOverlay.DetailMenu) },
         ) {
             OptionGroup(title = null) {
                 ActionRow(
                     label = strings.mediaDetailOpenInAniListAction,
                     onClick = {
-                        state.closeDetailMenu()
+                        state.close(RootOverlay.DetailMenu)
                         urlOpener.open(detailMenu.url)
                     },
                     divider = false,
@@ -147,7 +148,7 @@ internal fun RootModals(
                 ActionRow(
                     label = strings.mediaDetailShareAction,
                     onClick = {
-                        state.closeDetailMenu()
+                        state.close(RootOverlay.DetailMenu)
                         shareLauncher.share(text = detailMenu.shareText, subject = detailMenu.title)
                     },
                 )

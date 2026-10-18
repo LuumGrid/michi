@@ -46,19 +46,25 @@ internal class State(
     var editorMediaId: Int? by mutableStateOf(null)
     var editorInitialStatus: MediaListStatus? by mutableStateOf(null)
     var editorInitialProgress: Int? by mutableStateOf(null)
-    var isExploreOpen by mutableStateOf(false)
-    var isCalendarOpen by mutableStateOf(false)
-    var isNotificationsOpen by mutableStateOf(false)
-    var isSectionFilterOpen by mutableStateOf(false)
-    var isCalendarFilterOpen by mutableStateOf(false)
-    var isDetailMenuOpen by mutableStateOf(false)
-    /** Sort sheet of the open detail page (studio today). Closes with the page. */
-    var isDetailSortOpen by mutableStateOf(false)
-    var isListSortOpen by mutableStateOf(false)
-    var isExploreFilterOpen by mutableStateOf(false)
-    var isShareProfileOpen by mutableStateOf(false)
-    var isSettingsOpen by mutableStateOf(false)
-    var isSignInOpen by mutableStateOf(false)
+
+    /**
+     * Overlays and sheets open right now. Not exclusive within a layer: SignIn
+     * opens from Settings, and one back closes a whole layer at once (see
+     * [nextBackStep]). The editor is not part of the set: it carries data and
+     * keeps its own fields.
+     */
+    var openOverlays: Set<RootOverlay> by mutableStateOf(emptySet())
+        private set
+
+    fun isOpen(overlay: RootOverlay): Boolean = overlay in openOverlays
+
+    fun open(overlay: RootOverlay) {
+        openOverlays = openOverlays + overlay
+    }
+
+    fun close(overlay: RootOverlay) {
+        openOverlays = openOverlays - overlay
+    }
 
     /** In-context search: one active tab at a time, query preserved per tab. */
     var searchActiveTab: TabSection? by mutableStateOf(null)
@@ -105,14 +111,14 @@ internal class State(
 
     fun nextBackStep(): BackStep = when {
         isSearchActive -> BackStep.CloseSearch
-        isExploreFilterOpen || isSectionFilterOpen || isListSortOpen || isCalendarFilterOpen ||
-            isDetailMenuOpen || isDetailSortOpen -> BackStep.CloseSheet
-        // Surfaces drawn ABOVE the detail page (modal sheets + settings).
-        isEditorOpen || isShareProfileOpen || isSettingsOpen || isSignInOpen -> BackStep.CloseOverlay
+        openOverlays.any { it.layer == OverlayLayer.SHEET } -> BackStep.CloseSheet
+        // Surfaces drawn ABOVE the detail page (modal sheets + settings), plus
+        // the editor, which is not part of the overlay set.
+        isEditorOpen || openOverlays.any { it.layer == OverlayLayer.ABOVE_DETAIL } -> BackStep.CloseOverlay
         // The detail page sits over the tab content and over the overlays
         // below, so it closes before them (one back per visible layer).
         isDetailOpen -> BackStep.CloseDetail
-        isExploreOpen || isCalendarOpen || isNotificationsOpen -> BackStep.CloseOverlay
+        openOverlays.any { it.layer == OverlayLayer.BELOW_DETAIL } -> BackStep.CloseOverlay
         else -> BackStep.SystemDefault
     }
 
@@ -126,22 +132,15 @@ internal class State(
             true
         }
         BackStep.CloseSheet -> {
-            isExploreFilterOpen = false
-            isSectionFilterOpen = false
-            isListSortOpen = false
-            isCalendarFilterOpen = false
-            isDetailMenuOpen = false
-            isDetailSortOpen = false
+            openOverlays = openOverlays.filter { it.layer != OverlayLayer.SHEET }.toSet()
             true
         }
         BackStep.CloseOverlay -> {
-            closeExplore()
-            closeCalendar()
-            closeNotifications()
+            // No sheet can be open here (the sheet branch runs first), so this
+            // closes both the above-detail and below-detail layers, exactly as
+            // the previous per-flag close calls did.
+            openOverlays = openOverlays.filter { it.layer == OverlayLayer.SHEET }.toSet()
             closeEditor()
-            closeShareProfile()
-            closeSettings()
-            closeSignIn()
             true
         }
         BackStep.CloseDetail -> {
@@ -152,8 +151,8 @@ internal class State(
     }
 
     private fun push(dest: DetailDestination) {
-        isDetailMenuOpen = false
-        isDetailSortOpen = false
+        close(RootOverlay.DetailMenu)
+        close(RootOverlay.DetailSort)
         if (detailStack.lastOrNull() != dest) {
             detailStack.add(dest)
             entryIds.add(nextEntryId++)
@@ -163,7 +162,7 @@ internal class State(
     fun openMedia(id: Int) {
         // A detail supersedes the settings surface (a deep link can arrive
         // while Settings is open): close it so the detail is actually visible.
-        closeSettings()
+        close(RootOverlay.Settings)
         push(DetailDestination.Media(id))
     }
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
@@ -173,28 +172,12 @@ internal class State(
     fun openDetailList(kind: DetailListKind, parentId: Int) =
         push(DetailDestination.DetailList(kind, parentId))
     fun closeDetail() {
-        isDetailMenuOpen = false
-        isDetailSortOpen = false
+        close(RootOverlay.DetailMenu)
+        close(RootOverlay.DetailSort)
         if (detailStack.isNotEmpty()) {
             detailStack.removeAt(detailStack.lastIndex)
             entryIds.removeAt(entryIds.lastIndex)
         }
-    }
-
-    fun openDetailMenu() {
-        isDetailMenuOpen = true
-    }
-
-    fun closeDetailMenu() {
-        isDetailMenuOpen = false
-    }
-
-    fun openDetailSort() {
-        isDetailSortOpen = true
-    }
-
-    fun closeDetailSort() {
-        isDetailSortOpen = false
     }
 
     fun openEditor(id: Int) {
@@ -215,86 +198,6 @@ internal class State(
         editorInitialProgress = null
     }
 
-    fun openExplore() {
-        isExploreOpen = true
-    }
-
-    fun closeExplore() {
-        isExploreOpen = false
-    }
-
-    fun openCalendar() {
-        isCalendarOpen = true
-    }
-
-    fun closeCalendar() {
-        isCalendarOpen = false
-    }
-
-    fun openNotifications() {
-        isNotificationsOpen = true
-    }
-
-    fun closeNotifications() {
-        isNotificationsOpen = false
-    }
-
-    fun openSectionFilter() {
-        isSectionFilterOpen = true
-    }
-
-    fun closeSectionFilter() {
-        isSectionFilterOpen = false
-    }
-
-    fun openListSort() {
-        isListSortOpen = true
-    }
-
-    fun closeListSort() {
-        isListSortOpen = false
-    }
-
-    fun openExploreFilter() {
-        isExploreFilterOpen = true
-    }
-
-    fun closeExploreFilter() {
-        isExploreFilterOpen = false
-    }
-
-    fun openCalendarFilter() {
-        isCalendarFilterOpen = true
-    }
-
-    fun closeCalendarFilter() {
-        isCalendarFilterOpen = false
-    }
-
-    fun openShareProfile() {
-        isShareProfileOpen = true
-    }
-
-    fun closeShareProfile() {
-        isShareProfileOpen = false
-    }
-
-    fun openSettings() {
-        isSettingsOpen = true
-    }
-
-    fun closeSettings() {
-        isSettingsOpen = false
-    }
-
-    fun openSignIn() {
-        isSignInOpen = true
-    }
-
-    fun closeSignIn() {
-        isSignInOpen = false
-    }
-
     /**
      * Drops every transient navigation surface when the session changes user
      * (login, logout, account switch): the detail stack, searches, the editor
@@ -309,18 +212,7 @@ internal class State(
         editorInitialProgress = null
         searchActiveTab = null
         searchQueries.clear()
-        isExploreOpen = false
-        isCalendarOpen = false
-        isNotificationsOpen = false
-        isSectionFilterOpen = false
-        isCalendarFilterOpen = false
-        isDetailMenuOpen = false
-        isDetailSortOpen = false
-        isListSortOpen = false
-        isExploreFilterOpen = false
-        isShareProfileOpen = false
-        isSettingsOpen = false
-        isSignInOpen = false
+        openOverlays = emptySet()
     }
 }
 
