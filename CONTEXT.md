@@ -344,6 +344,7 @@ A rail inside a card gets boxed in (first/last cards clip on the rounded corners
 - **Font scale cap**: dense cards (`MediaCoverCard` rows and `PosterCard` cards, via `ui/components/CardDensity`) cap the OS font scale at 1.3× so content degrades to ellipsis instead of clipping and cover badges never collide; rail titles reserve two lines so the row stays even. Full-scale text lives on the detail screens (unbounded layouts). Validate at 200% OS font size.
 - **Card pill priority**: in card bodies the action pills are measured first and pinned to the cover bottom (placed with `Arrangement.SpaceBetween`, like the lists); text slots are weighted (`weight(1f, fill = false)`) so overflow drops the last tertiary line (behind, `maxLines = 2`) instead of pushing the pills out.
 - Reading: separate `+1 CH` and `+1 VO` buttons (manga has chapters and volumes). Animation: `+1 EP`.
+- **Completing `+1`**: when a `+1` lands on the total (episodes/chapters/volumes), the card opens the entry editor pre-set to Completed (`State.openEditorForCompletion`) instead of saving from the list; the editor's Save is the only write, so cancelling leaves the entry at total − 1.
 - Counters are numeric-only next to their buttons, styled with stronger weight.
 - Account stats: compact count label (e.g. `1.8K`) via the shared `core/model`'s `Int.compactCount()`.
 - `MediaReleaseDateTime` prepares next-release and behind-label support.

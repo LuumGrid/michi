@@ -55,6 +55,16 @@ internal fun AnimeListEntry.canIncrement(): Boolean {
     return total == null || progress < total
 }
 
+/**
+ * True when the next `+1` lands the entry on its episode total. Mirrors the
+ * completion rule in [incremented] exactly, so the UI can open the editor
+ * instead of saving the completing step from the list.
+ */
+internal fun AnimeListEntry.completesOnIncrement(): Boolean {
+    val total = totalEpisodes
+    return total != null && progress + 1 >= total
+}
+
 internal fun AnimeListEntry.releaseLabel(strings: LanguageStrings): String? {
     return nextEpisodeRelease?.let { release ->
         strings.nextEpisodeReleaseLabel(episodeNumber = nextEpisodeNumber ?: (progress + 1), releaseDateTime = release)

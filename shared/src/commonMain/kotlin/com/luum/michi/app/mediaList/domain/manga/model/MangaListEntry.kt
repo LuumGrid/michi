@@ -65,6 +65,24 @@ internal fun MangaListEntry.canIncrementVolumes(): Boolean {
     return total == null || volumesProgress < total
 }
 
+/**
+ * True when the next `+1` lands the entry on its chapter total. Mirrors the
+ * completion rule in [incrementedChapters] exactly.
+ */
+internal fun MangaListEntry.completesOnChapterIncrement(): Boolean {
+    val total = totalChapters
+    return total != null && chaptersProgress + 1 >= total
+}
+
+/**
+ * True when the next `+1` lands the entry on its volume total. Mirrors the
+ * completion rule in [incrementedVolumes] exactly.
+ */
+internal fun MangaListEntry.completesOnVolumeIncrement(): Boolean {
+    val total = totalVolumes
+    return total != null && volumesProgress + 1 >= total
+}
+
 /** Whether the entry is fully read, evaluating the chapters or volumes total according to [tracksByVolume]. */
 internal fun MangaListEntry.isComplete(): Boolean =
     if (tracksByVolume) !canIncrementVolumes() else !canIncrementChapters()

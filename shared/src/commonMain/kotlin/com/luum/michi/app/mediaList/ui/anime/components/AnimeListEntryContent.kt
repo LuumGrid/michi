@@ -22,9 +22,10 @@ import com.luum.michi.app.mediaList.ui.common.EntryScorePill
 import com.luum.michi.app.mediaList.ui.common.ProgressGroup
 
 /**
- * Anime entry body for [MediaCoverCard]: title, airing date and note stay
- * top-anchored (the card pins them), this slot owns the vertical space between
- * and pins the bottom row (score pill + progress group) to the cover bottom.
+ * Anime entry body for [MediaCoverCard]: the title stays top-anchored (the
+ * card pins it); this slot stacks the airing date and the behind note at the
+ * top and pins the bottom row (score pill + progress group) to the cover
+ * bottom.
  */
 @Composable
 internal fun ColumnScope.AnimeListEntryContent(

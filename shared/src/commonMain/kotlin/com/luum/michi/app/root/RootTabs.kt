@@ -175,6 +175,7 @@ internal fun RootTabContent(
             onDismissSort = { state.closeListSort() },
             onOpenDetail = { state.openMedia(it) },
             onEditEntry = { state.openEditor(it) },
+            onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
         )
     } else if (activeTab == TabSection.MANGA && holders.manga != null && viewerId != null) {
         MangaListScreen(
@@ -197,6 +198,7 @@ internal fun RootTabContent(
             onDismissSort = { state.closeListSort() },
             onOpenDetail = { state.openMedia(it) },
             onEditEntry = { state.openEditor(it) },
+            onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
         )
     } else if (isSearching && activeQuery.isNotEmpty()) {
         // DISCOVER (and guests): server search lands in a later step.

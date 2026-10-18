@@ -10,6 +10,8 @@ import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListEntry
 import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
+import com.luum.michi.app.mediaList.domain.manga.model.completesOnChapterIncrement
+import com.luum.michi.app.mediaList.domain.manga.model.completesOnVolumeIncrement
 import com.luum.michi.app.mediaList.domain.manga.model.label
 import com.luum.michi.app.mediaList.domain.manga.model.mangaStatusSections
 import com.luum.michi.app.mediaList.ui.common.MediaListScreenScaffold
@@ -47,6 +49,9 @@ internal fun MangaListScreen(
     // Card tap opens media detail, pencil opens the entry editor.
     onOpenDetail: (Int) -> Unit = {},
     onEditEntry: (Int) -> Unit = {},
+    // The `+1` that lands on the total opens the editor in Completed instead of
+    // saving from the list (Otraku/AL-chan): cancelling leaves the entry as is.
+    onCompleteEntry: (mediaId: Int, progress: Int) -> Unit,
 ) {
     MediaListScreenScaffold(
         holder = holder,
@@ -62,8 +67,24 @@ internal fun MangaListScreen(
         cardContent = { entry ->
             MangaListEntryContent(
                 entry = entry,
-                onIncrementChapters = { holder.incrementChapters(entry) },
-                onIncrementVolumes = { holder.incrementVolumes(entry) },
+                onIncrementChapters = {
+                    val total = entry.totalChapters
+                    if (total != null && entry.completesOnChapterIncrement()) {
+                        // The completing step is the editor's write, not a list save.
+                        onCompleteEntry(entry.id, total)
+                    } else {
+                        holder.incrementChapters(entry)
+                    }
+                },
+                onIncrementVolumes = {
+                    if (entry.completesOnVolumeIncrement()) {
+                        // The editor tracks chapters; Completed fills volumes
+                        // (and chapters to the total when known).
+                        onCompleteEntry(entry.id, entry.chaptersProgress)
+                    } else {
+                        holder.incrementVolumes(entry)
+                    }
+                },
                 strings = strings,
                 isSmileyFormat = settings.isSmileyFormat,
                 formatSmiley = settings.formatSmiley,

@@ -10,6 +10,7 @@ import com.luum.michi.app.core.media.domain.label
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListEntry
 import com.luum.michi.app.mediaList.domain.anime.model.AnimeListSection
 import com.luum.michi.app.mediaList.domain.anime.model.animeStatusSections
+import com.luum.michi.app.mediaList.domain.anime.model.completesOnIncrement
 import com.luum.michi.app.mediaList.domain.anime.model.label
 import com.luum.michi.app.mediaList.domain.common.mediaListFormatOptions
 import com.luum.michi.app.mediaList.ui.anime.components.AnimeListEntryContent
@@ -45,6 +46,9 @@ internal fun AnimeListScreen(
     // Card tap opens media detail, pencil opens the entry editor.
     onOpenDetail: (Int) -> Unit = {},
     onEditEntry: (Int) -> Unit = {},
+    // The `+1` that lands on the total opens the editor in Completed instead of
+    // saving from the list (Otraku/AL-chan): cancelling leaves the entry as is.
+    onCompleteEntry: (mediaId: Int, progress: Int) -> Unit,
 ) {
     MediaListScreenScaffold(
         holder = holder,
@@ -60,7 +64,15 @@ internal fun AnimeListScreen(
         cardContent = { entry ->
             AnimeListEntryContent(
                 entry = entry,
-                onIncrement = { holder.incrementProgress(entry) },
+                onIncrement = {
+                    val total = entry.totalEpisodes
+                    if (total != null && entry.completesOnIncrement()) {
+                        // The completing step is the editor's write, not a list save.
+                        onCompleteEntry(entry.id, total)
+                    } else {
+                        holder.incrementProgress(entry)
+                    }
+                },
                 strings = strings,
                 isSmileyFormat = settings.isSmileyFormat,
                 formatSmiley = settings.formatSmiley,
