@@ -33,6 +33,8 @@ import com.luum.michi.app.ui.icons.generated.SettingsRounded
 import com.luum.michi.app.ui.icons.generated.SortRounded
 import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
 import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
+import com.luum.michi.app.ui.icons.generated.VisibilityOffRounded
+import com.luum.michi.app.ui.icons.generated.VisibilityRounded
 import com.luum.michi.app.ui.icons.generated.WebRounded
 
 /**
@@ -135,6 +137,14 @@ internal object AppIcons {
     /** Globe/web: official-site external links. */
     val Web: ImageVector
         get() = IconPack.WebRounded
+
+    /** Eye: shows a closed spoiler paragraph. */
+    val Visibility: ImageVector
+        get() = IconPack.VisibilityRounded
+
+    /** Crossed-out eye: hides an open spoiler paragraph. */
+    val VisibilityOff: ImageVector
+        get() = IconPack.VisibilityOffRounded
 
     // ---- Misc: catalogued, wired when their surface lands ----
     /** Chevron-right: rows that open a picker sheet. */

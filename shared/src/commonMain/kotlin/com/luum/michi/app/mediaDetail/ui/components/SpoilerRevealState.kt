@@ -21,6 +21,11 @@ internal class SpoilerRevealState {
     fun reveal(index: Int) {
         if (index !in revealed) revealed = revealed + index
     }
+
+    /** Blocks can be closed again; inline spoilers only ever reveal. */
+    fun toggle(index: Int) {
+        revealed = if (index in revealed) revealed - index else revealed + index
+    }
 }
 
 /**

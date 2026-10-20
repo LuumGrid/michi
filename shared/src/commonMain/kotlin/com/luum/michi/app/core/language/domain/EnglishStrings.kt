@@ -85,6 +85,8 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailRelationsTitle = "Related"
     override val mediaDetailReadMoreAction = "Read more"
     override val mediaDetailSpoilerHidden = "Spoiler, tap to reveal"
+    override val mediaDetailSpoilerShowAction = "Show spoiler"
+    override val mediaDetailSpoilerHideAction = "Hide spoiler"
     override fun mediaDetailSpoilersShowLabel(count: Int) = "Spoilers ($count)"
     override val mediaDetailSpoilersHideAction = "Hide spoilers"
     override val mediaDetailReadLessAction = "Read less"

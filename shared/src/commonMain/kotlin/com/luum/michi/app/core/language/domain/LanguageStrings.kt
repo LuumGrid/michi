@@ -93,6 +93,10 @@ interface LanguageStrings {
     val mediaDetailReadLessAction: String
     /** Replacement label painted in place of a hidden spoiler range. */
     val mediaDetailSpoilerHidden: String
+    /** Header action of a closed spoiler paragraph. */
+    val mediaDetailSpoilerShowAction: String
+    /** Header action of an open spoiler paragraph. */
+    val mediaDetailSpoilerHideAction: String
     /** "Spoilers (N)" pill that reveals the media's spoiler tags. */
     fun mediaDetailSpoilersShowLabel(count: Int): String
     val mediaDetailSpoilersHideAction: String

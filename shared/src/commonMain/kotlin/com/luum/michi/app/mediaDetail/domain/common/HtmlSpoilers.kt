@@ -9,6 +9,29 @@ internal data class SpoilerText(
     val spoilers: List<IntRange>,
 )
 
+/** One piece of the rendered text: plain prose or a whole spoiler paragraph. */
+internal sealed interface SpoilerSegment {
+    data class Prose(
+        val text: String,
+        val inlineSpoilers: List<InlineSpoiler>,
+    ) : SpoilerSegment
+
+    data class Block(
+        val text: String,
+        val spoilerIndex: Int,
+    ) : SpoilerSegment
+}
+
+/**
+ * An inline spoiler inside a [SpoilerSegment.Prose]: [range] is rebased to the
+ * prose text, while [spoilerIndex] still points at the original `spoilers`
+ * entry so the positional reveal state stays valid.
+ */
+internal data class InlineSpoiler(
+    val spoilerIndex: Int,
+    val range: IntRange,
+)
+
 /**
  * Private-use markers: they survive tag stripping/entity decoding untouched, so
  * the spoiler boundaries can be reconstructed once the text is clean.
@@ -131,3 +154,60 @@ internal fun String.finalizeSpoilers(): SpoilerText {
 
 private fun Char.isSpoilerMarker(): Boolean =
     this == SpoilerStartMarker || this == SpoilerEndMarker
+
+/**
+ * Splits cleaned text into prose and spoiler-paragraph blocks. A range is a
+ * block when it occupies whole lines (starts at the text start or after a
+ * newline, and ends at the text end or before a newline); anything else stays
+ * inline inside its prose. Original range indices are preserved in both shapes.
+ */
+internal fun SpoilerText.toSegments(): List<SpoilerSegment> {
+    val blocks = mutableListOf<Pair<Int, IntRange>>()
+    val inline = mutableListOf<Pair<Int, IntRange>>()
+    spoilers.forEachIndexed { index, range ->
+        if (range.isWholeLineBlock(text)) blocks += index to range else inline += index to range
+    }
+
+    val segments = mutableListOf<SpoilerSegment>()
+    var cursor = 0
+
+    fun addProse(rawStart: Int, rawEnd: Int) {
+        var start = rawStart.coerceIn(0, text.length)
+        var end = rawEnd.coerceIn(start, text.length)
+        while (start < end && text[start] == '\n') start++
+        while (end > start && text[end - 1] == '\n') end--
+        if (end <= start) return
+        val inlineSpoilers = inline.mapNotNull { (index, range) ->
+            if (range.first >= start && range.last < end) {
+                InlineSpoiler(
+                    spoilerIndex = index,
+                    range = (range.first - start) until (range.last + 1 - start),
+                )
+            } else {
+                null
+            }
+        }
+        segments += SpoilerSegment.Prose(text = text.substring(start, end), inlineSpoilers = inlineSpoilers)
+    }
+
+    blocks.forEach { (index, range) ->
+        addProse(cursor, range.first)
+        val blockEnd = (range.last + 1).coerceAtMost(text.length)
+        if (range.first < blockEnd) {
+            segments += SpoilerSegment.Block(
+                text = text.substring(range.first, blockEnd),
+                spoilerIndex = index,
+            )
+        }
+        cursor = blockEnd
+    }
+    addProse(cursor, text.length)
+    return segments
+}
+
+private fun IntRange.isWholeLineBlock(text: String): Boolean {
+    if (first !in text.indices || last !in text.indices) return false
+    val startsAtLine = first == 0 || text[first - 1] == '\n'
+    val endsAtLine = last == text.lastIndex || text[last + 1] == '\n'
+    return startsAtLine && endsAtLine
+}

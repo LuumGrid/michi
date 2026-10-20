@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.common.BiographyStat
+import com.luum.michi.app.mediaDetail.domain.common.InlineSpoiler
+import com.luum.michi.app.mediaDetail.domain.common.SpoilerSegment
+import com.luum.michi.app.mediaDetail.domain.common.SpoilerText
+import com.luum.michi.app.mediaDetail.domain.common.toSegments
 import com.luum.michi.app.ui.components.SectionHeader
 
 /** Baked 16dp matching the full-width layout (panels are already inset). */
@@ -65,12 +70,9 @@ internal fun MediaDetailExpandableText(
         color = MaterialTheme.colorScheme.primary,
         background = MaterialTheme.colorScheme.surfaceVariant,
     )
-    val annotated = text.withHiddenSpoilers(
-        spoilers = spoilers,
-        spoilerState = spoilerState,
-        hiddenLabel = strings.mediaDetailSpoilerHidden,
-        hiddenStyle = hiddenStyle,
-    )
+    val segments = remember(text, spoilers) { SpoilerText(text, spoilers).toSegments() }
+    val visibleSegments = if (expanded) segments else segments.collapsedSegments()
+    val hasMoreSegments = visibleSegments.size < segments.size
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -81,20 +83,41 @@ internal fun MediaDetailExpandableText(
         if (stats.isNotEmpty()) {
             BiographyStats(stats)
         }
-        if (text.isNotBlank()) {
-            Text(
-                text = annotated,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_LINES,
-                overflow = TextOverflow.Ellipsis,
-                // Measured only while collapsed: once expanded there is no
-                // overflow to report, and the link stays via [expanded].
-                onTextLayout = { result ->
-                    if (!expanded) overflows = result.hasVisualOverflow
-                },
-            )
+        if (segments.isNotEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                visibleSegments.forEach { segment ->
+                    when (segment) {
+                        is SpoilerSegment.Prose -> Text(
+                            text = segment.text.withHiddenSpoilers(
+                                inlineSpoilers = segment.inlineSpoilers,
+                                spoilerState = spoilerState,
+                                hiddenLabel = strings.mediaDetailSpoilerHidden,
+                                hiddenStyle = hiddenStyle,
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_LINES,
+                            overflow = TextOverflow.Ellipsis,
+                            // Measured only while collapsed: once expanded there
+                            // is no overflow to report, and the link stays via
+                            // [expanded].
+                            onTextLayout = { result ->
+                                if (!expanded) overflows = result.hasVisualOverflow
+                            },
+                        )
+                        is SpoilerSegment.Block -> SpoilerBlock(
+                            text = segment.text,
+                            isRevealed = spoilerState.isRevealed(segment.spoilerIndex),
+                            onToggle = { spoilerState.toggle(segment.spoilerIndex) },
+                            strings = strings,
+                        )
+                    }
+                }
+            }
         }
-        if (expanded || overflows) {
+        if (expanded || overflows || hasMoreSegments) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = if (expanded) strings.mediaDetailReadLessAction else strings.mediaDetailReadMoreAction,
@@ -114,7 +137,7 @@ internal fun MediaDetailExpandableText(
  * revealed range keeps its real text, and only its own index is revealed.
  */
 private fun String.withHiddenSpoilers(
-    spoilers: List<IntRange>,
+    inlineSpoilers: List<InlineSpoiler>,
     spoilerState: SpoilerRevealState,
     hiddenLabel: String,
     hiddenStyle: SpanStyle,
@@ -122,18 +145,20 @@ private fun String.withHiddenSpoilers(
     val source = this
     return buildAnnotatedString {
         var cursor = 0
-        spoilers.forEachIndexed { index, range ->
-            val start = range.first.coerceIn(cursor, source.length)
-            val end = (range.last + 1).coerceIn(start, source.length)
+        inlineSpoilers.forEach { inline ->
+            val start = inline.range.first.coerceIn(cursor, source.length)
+            val end = (inline.range.last + 1).coerceIn(start, source.length)
             if (start > cursor) append(source.substring(cursor, start))
-            if (spoilerState.isRevealed(index)) {
+            if (spoilerState.isRevealed(inline.spoilerIndex)) {
                 append(source.substring(start, end))
             } else {
                 withLink(
                     LinkAnnotation.Clickable(
-                        tag = "spoiler:$index",
+                        tag = "spoiler:${inline.spoilerIndex}",
                         styles = TextLinkStyles(style = hiddenStyle),
-                        linkInteractionListener = LinkInteractionListener { spoilerState.reveal(index) },
+                        linkInteractionListener = LinkInteractionListener {
+                            spoilerState.reveal(inline.spoilerIndex)
+                        },
                     ),
                 ) {
                     append(hiddenLabel)
@@ -143,6 +168,16 @@ private fun String.withHiddenSpoilers(
         }
         if (cursor < source.length) append(source.substring(cursor))
     }
+}
+
+/**
+ * Collapsed view: everything through the first prose paragraph. Blocks before
+ * it stay visible (closed and toggleable); prose and blocks after it need "read
+ * more". A text made only of blocks shows all of them.
+ */
+private fun List<SpoilerSegment>.collapsedSegments(): List<SpoilerSegment> {
+    val firstProse = indexOfFirst { it is SpoilerSegment.Prose }
+    return if (firstProse == -1) this else take(firstProse + 1)
 }
 
 /** The stat block: the label in bold, the value in `onSurface` (wrapping). */
