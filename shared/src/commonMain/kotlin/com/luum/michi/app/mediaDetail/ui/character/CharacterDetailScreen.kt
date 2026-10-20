@@ -27,6 +27,7 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.components.addInfo
 import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
 import com.luum.michi.app.mediaDetail.ui.components.personBiography
+import com.luum.michi.app.mediaDetail.ui.components.rememberSpoilerRevealState
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
@@ -95,6 +96,7 @@ private fun CharacterDetailContent(
     modifier: Modifier = Modifier,
 ) {
     var isVoiceLanguageOpen by remember { mutableStateOf(false) }
+    val spoilerState = rememberSpoilerRevealState(detail.id, detail.descriptionPlain)
     DetailPageColumn(bottomPadding = bottomPadding, modifier = modifier) {
         item(key = "hero") {
             MediaDetailPersonHero(
@@ -111,6 +113,8 @@ private fun CharacterDetailContent(
             title = strings.mediaDetailCharacterDescriptionTitle,
             text = detail.descriptionPlain,
             stats = detail.stats,
+            spoilers = detail.descriptionSpoilers,
+            spoilerState = spoilerState,
             links = detail.links,
             strings = strings,
             onOpenUrl = onOpenUrl,

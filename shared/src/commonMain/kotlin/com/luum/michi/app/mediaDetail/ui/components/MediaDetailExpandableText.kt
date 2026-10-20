@@ -14,10 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -36,18 +41,36 @@ private val HorizontalPadding = 16.dp
  * [stats] are the biography's `Label: value` lines AniList marked in bold (read
  * by `core/util`): they become a stat block above the prose, with the label in
  * bold and the value in `onSurface`. A synopsis passes none.
+ *
+ * [spoilers] are hidden ranges of [text]. Each one is painted as [strings]'
+ * spoiler label and becomes a link: tapping it reveals only that range, through
+ * [spoilerState]. The body text is deliberately not clickable and the container
+ * is not either — expansion stays on the read more/less row, so revealing a
+ * spoiler can never also expand or collapse the block.
  */
 @Composable
 internal fun MediaDetailExpandableText(
     title: String,
     text: String,
     strings: LanguageStrings,
+    spoilerState: SpoilerRevealState,
     modifier: Modifier = Modifier,
     // Person biographies carry the bold stats; a synopsis does not.
     stats: List<BiographyStat> = emptyList(),
+    spoilers: List<IntRange> = emptyList(),
 ) {
     var expanded by remember(text) { mutableStateOf(false) }
     var overflows by remember(text) { mutableStateOf(false) }
+    val hiddenStyle = SpanStyle(
+        color = MaterialTheme.colorScheme.primary,
+        background = MaterialTheme.colorScheme.surfaceVariant,
+    )
+    val annotated = text.withHiddenSpoilers(
+        spoilers = spoilers,
+        spoilerState = spoilerState,
+        hiddenLabel = strings.mediaDetailSpoilerHidden,
+        hiddenStyle = hiddenStyle,
+    )
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -60,7 +83,7 @@ internal fun MediaDetailExpandableText(
         }
         if (text.isNotBlank()) {
             Text(
-                text = text,
+                text = annotated,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_LINES,
                 overflow = TextOverflow.Ellipsis,
@@ -83,6 +106,42 @@ internal fun MediaDetailExpandableText(
                     .padding(vertical = 4.dp),
             )
         }
+    }
+}
+
+/**
+ * Replaces every hidden range with the spoiler label as a clickable link. A
+ * revealed range keeps its real text, and only its own index is revealed.
+ */
+private fun String.withHiddenSpoilers(
+    spoilers: List<IntRange>,
+    spoilerState: SpoilerRevealState,
+    hiddenLabel: String,
+    hiddenStyle: SpanStyle,
+): AnnotatedString {
+    val source = this
+    return buildAnnotatedString {
+        var cursor = 0
+        spoilers.forEachIndexed { index, range ->
+            val start = range.first.coerceIn(cursor, source.length)
+            val end = (range.last + 1).coerceIn(start, source.length)
+            if (start > cursor) append(source.substring(cursor, start))
+            if (spoilerState.isRevealed(index)) {
+                append(source.substring(start, end))
+            } else {
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "spoiler:$index",
+                        styles = TextLinkStyles(style = hiddenStyle),
+                        linkInteractionListener = LinkInteractionListener { spoilerState.reveal(index) },
+                    ),
+                ) {
+                    append(hiddenLabel)
+                }
+            }
+            cursor = end
+        }
+        if (cursor < source.length) append(source.substring(cursor))
     }
 }
 

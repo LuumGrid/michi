@@ -13,10 +13,14 @@ import com.luum.michi.app.ui.icons.AppIcons
 internal val RailHorizontalPadding = 16.dp
 
 /**
- * The one rail header: a [SectionHeader] with an optional "View all"
- * [TrailingPill] on the same row, carrying the standard rail insets. Level-1
- * rails ([MediaRail]) and the profile's studio-favourites section both draw it,
- * so a section header measures the same wherever it appears.
+ * The one rail header: a [SectionHeader] with an optional trailing control on
+ * the same row, carrying the standard rail insets. Level-1 rails ([MediaRail]),
+ * the profile's studio-favourites section and the media tags section draw it, so
+ * a section header measures the same wherever it appears.
+ *
+ * [viewAllLabel]/[onViewAll] are the standard "View all" pill. [trailing] is a
+ * generic slot for any other tool (e.g. the tags spoiler toggle); when both are
+ * supplied, [trailing] wins.
  */
 @Composable
 internal fun RailHeader(
@@ -24,6 +28,7 @@ internal fun RailHeader(
     modifier: Modifier = Modifier,
     viewAllLabel: String? = null,
     onViewAll: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -32,8 +37,9 @@ internal fun RailHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionHeader(title = title, modifier = Modifier.weight(1f))
-        if (onViewAll != null && viewAllLabel != null) {
-            TrailingPill(
+        when {
+            trailing != null -> trailing()
+            onViewAll != null && viewAllLabel != null -> TrailingPill(
                 label = viewAllLabel,
                 onClick = onViewAll,
                 trailingIcon = AppIcons.ChevronRight,

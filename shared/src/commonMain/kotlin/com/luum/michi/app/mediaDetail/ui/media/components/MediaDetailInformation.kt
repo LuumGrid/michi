@@ -32,6 +32,8 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
+import com.luum.michi.app.mediaDetail.domain.media.model.hasTags
+import com.luum.michi.app.mediaDetail.domain.media.model.orderedTags
 import com.luum.michi.app.mediaDetail.domain.media.model.toMediaType
 
 
@@ -41,10 +43,13 @@ import com.luum.michi.app.mediaDetail.ui.components.InfoPanel
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
 import com.luum.michi.app.mediaDetail.ui.components.addInfo
 import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
-import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.ChipEmphasis
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
 import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.RailHeader
+import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.TrailingPill
 import com.luum.michi.app.ui.components.flatBorder
 
 /**
@@ -180,22 +185,52 @@ internal fun MediaDetailGenres(
     }
 }
 
-/** Non-spoiler tag pills: `"name rank%"`, flat and display-only. */
+/**
+ * Tag pills: `"name rank%"`, flat and display-only. The section exists whenever
+ * the media has any tag. Spoiler tags come after the regular ones, in the error
+ * color, and stay hidden behind the header pill until the viewer asks for them;
+ * with only spoilers, the header (and its pill) is all that paints.
+ */
 @Composable
-internal fun MediaDetailTags(detail: MediaDetail, strings: LanguageStrings) {
-    val tags = detail.tags.filter { !it.isMediaSpoiler }
-    if (tags.isEmpty()) return
+internal fun MediaDetailTags(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    showSpoilers: Boolean,
+    onToggleSpoilers: () -> Unit,
+) {
+    if (!detail.tags.hasTags()) return
+    val spoilerCount = detail.tags.count { it.isMediaSpoiler }
+    val tags = detail.tags.orderedTags(showSpoilers)
+    val spoilerAction: (@Composable () -> Unit)? = if (spoilerCount > 0) {
+        {
+            TrailingPill(
+                label = if (showSpoilers) {
+                    strings.mediaDetailSpoilersHideAction
+                } else {
+                    strings.mediaDetailSpoilersShowLabel(spoilerCount)
+                },
+                onClick = onToggleSpoilers,
+            )
+        }
+    } else {
+        null
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
-        SectionHeader(
-            title = strings.mediaDetailTagsTitle,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-        ChipRail(
-            tabs = tags.map { ChipTab(value = it.name, label = "${it.name} ${it.rank}%") },
-            selected = null,
-            onSelect = {},
-            interactive = false,
-        )
+        RailHeader(title = strings.mediaDetailTagsTitle, trailing = spoilerAction)
+        if (tags.isNotEmpty()) {
+            ChipRail(
+                tabs = tags.map {
+                    ChipTab(
+                        value = it.name,
+                        label = "${it.name} ${it.rank}%",
+                        emphasis = if (it.isMediaSpoiler) ChipEmphasis.ALERT else ChipEmphasis.DEFAULT,
+                    )
+                },
+                selected = null,
+                onSelect = {},
+                interactive = false,
+            )
+        }
     }
 }
 

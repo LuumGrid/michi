@@ -10,7 +10,7 @@ import com.luum.michi.app.core.media.domain.parseMediaSeason
 import com.luum.michi.app.core.media.domain.parseMediaWorkStatus
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.language.domain.LanguageStrings
-import com.luum.michi.app.mediaDetail.domain.common.stripHtml
+import com.luum.michi.app.mediaDetail.domain.common.toSpoilerText
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
@@ -32,6 +32,7 @@ import com.luum.michi.app.core.person.repository.toCoverSizes
 
 internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
     val studioEdges = studios.toStudioEdges()
+    val description = description?.toSpoilerText()
     return MediaDetail(
         id = id,
         type = parseType(type),
@@ -56,7 +57,8 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
         meanScore = meanScore?.takeIf { it > 0 },
         popularity = popularity?.takeIf { it > 0 },
         favourites = favourites?.takeIf { it > 0 },
-        descriptionPlain = description?.stripHtml().orEmpty(),
+        descriptionPlain = description?.text.orEmpty(),
+        descriptionSpoilers = description?.spoilers.orEmpty(),
         isAdult = isAdult ?: false,
         isFavourite = isFavourite ?: false,
         nextEpisode = nextAiringEpisode?.let {

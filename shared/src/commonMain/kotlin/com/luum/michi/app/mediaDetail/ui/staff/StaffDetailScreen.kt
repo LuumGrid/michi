@@ -15,6 +15,7 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.components.addInfo
 import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
 import com.luum.michi.app.mediaDetail.ui.components.personBiography
+import com.luum.michi.app.mediaDetail.ui.components.rememberSpoilerRevealState
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
@@ -77,6 +78,7 @@ private fun StaffDetailContent(
     onViewAll: (DetailListKind) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val spoilerState = rememberSpoilerRevealState(detail.id, detail.descriptionPlain)
     DetailPageColumn(bottomPadding = bottomPadding, modifier = modifier) {
         item(key = "hero") {
             MediaDetailPersonHero(
@@ -93,6 +95,8 @@ private fun StaffDetailContent(
             title = strings.mediaDetailBiographyTitle,
             text = detail.descriptionPlain,
             stats = detail.stats,
+            spoilers = detail.descriptionSpoilers,
+            spoilerState = spoilerState,
             links = detail.links,
             strings = strings,
             onOpenUrl = onOpenUrl,

@@ -32,7 +32,13 @@ data class ChipTab<T>(
     // Platform logo (calendar chips): 16dp image ahead of the label,
     // hidden when null, blank or failed (text alone still reads).
     val iconUrl: String? = null,
+    // Display-only chips (tags): semantic emphasis, translated to a theme color
+    // by [FlatChip]. Interactive chips ignore it.
+    val emphasis: ChipEmphasis = ChipEmphasis.DEFAULT,
 )
+
+/** Semantic emphasis of a flat chip; the actual theme color lives in [FlatChip]. */
+enum class ChipEmphasis { DEFAULT, ALERT }
 
 @Composable
 internal fun <T> ChipRail(
@@ -71,6 +77,7 @@ internal fun <T> ChipRail(
             } else {
                 FlatChip(
                     label = if (tab.count != null) "${tab.label} · ${tab.count}" else tab.label,
+                    emphasis = tab.emphasis,
                 )
             }
         }
@@ -84,7 +91,11 @@ internal fun <T> ChipRail(
  * carries only a label: `iconUrl`/`compact` belong to the interactive rail.
  */
 @Composable
-internal fun FlatChip(label: String, modifier: Modifier = Modifier) {
+internal fun FlatChip(
+    label: String,
+    modifier: Modifier = Modifier,
+    emphasis: ChipEmphasis = ChipEmphasis.DEFAULT,
+) {
     Surface(
         shape = PillShape,
         color = MaterialTheme.colorScheme.surface,
@@ -94,7 +105,10 @@ internal fun FlatChip(label: String, modifier: Modifier = Modifier) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = when (emphasis) {
+                ChipEmphasis.DEFAULT -> MaterialTheme.colorScheme.onSurfaceVariant
+                ChipEmphasis.ALERT -> MaterialTheme.colorScheme.error
+            },
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
     }

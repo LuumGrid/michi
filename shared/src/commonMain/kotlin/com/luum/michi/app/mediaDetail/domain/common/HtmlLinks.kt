@@ -7,11 +7,12 @@ import com.luum.michi.app.core.util.urlHost
 /** One `Label: value` line AniList marked in bold inside a biography. */
 internal data class BiographyStat(val label: String, val value: String)
 
-/** Cleaned biography text plus the external links and bold stats the HTML carried. */
+/** Cleaned biography text plus the external links, bold stats and spoiler ranges. */
 internal data class HtmlContent(
     val text: String,
     val links: List<ExternalLink>,
     val stats: List<BiographyStat>,
+    val spoilers: List<IntRange>,
 )
 
 private val AnchorRegex = Regex(
@@ -19,25 +20,26 @@ private val AnchorRegex = Regex(
     setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
 )
 private val BreakRegex = Regex("<br\\s*/?>", RegexOption.IGNORE_CASE)
-private val BareUrlRegex = Regex("https?://[^\\s<>\"']+", RegexOption.IGNORE_CASE)
-// AniList's spoiler wrapper: `<span class='markdown_spoiler'><span>…</span></span>`
-// (inline, or opened on one line and closed on a later one).
-private val SpoilerOpenRegex = Regex("""<span\b[^>]*markdown_spoiler[^>]*>""", RegexOption.IGNORE_CASE)
-private val SpoilerCloseRegex = Regex("""</span>\s*</span>""", RegexOption.IGNORE_CASE)
+// The spoiler markers are not part of a URL; stop the match before them.
+private val BareUrlRegex = Regex(
+    "https?://[^\\s<>\"'$SpoilerStartMarker$SpoilerEndMarker]+",
+    RegexOption.IGNORE_CASE,
+)
 // A bold stat label: `<strong>Height:</strong>`, `<strong>Height</strong>:` or `<b>…</b>`.
 private val BoldLabelRegex = Regex(
     """<(?:b|strong)\b[^>]*>(.*?)</(?:b|strong)>\s*(:?)\s*""",
     setOf(RegexOption.IGNORE_CASE),
 )
-// Everything before the first bold label must be tags/whitespace, so a bold word
-// inside a sentence is not mistaken for a stat.
-private val TagsOnlyRegex = Regex("""^\s*(?:<[^>]+>\s*)*$""")
+// Everything before the first bold label must be tags/whitespace/markers, so a
+// bold word inside a sentence is not mistaken for a stat.
+private val TagsOnlyRegex = Regex(
+    "^\\s*(?:<[^>]+>|[$SpoilerStartMarker$SpoilerEndMarker])*\\s*$",
+)
 // A rótulo ("Twitter:", "Website:") at line start or right after a separator.
 private val LabelTokenRegex = Regex("(^|[|·•/,–-])\\s*[A-Za-z][A-Za-z0-9_.]{0,20}:\\s*")
 private val PipeSeparatorRegex = Regex("\\s*[|·•]\\s*")
 private val SpacedSeparatorRegex = Regex("\\s+[/,–]\\s+")
 private val SpacesRegex = Regex("[ \\t]+")
-private val BlankLinesRegex = Regex("\n{3,}")
 
 /**
  * Splits HTML into clean text + external links + bold stats (before stripping
@@ -55,14 +57,17 @@ private val BlankLinesRegex = Regex("\n{3,}")
  * the top, and one line can carry several); its value is cleaned like any other
  * text and any external link it carried still lands in [HtmlContent.links]. A
  * line inside a `markdown_spoiler` is left as prose — promoting it would put a
- * spoiler at the top of the biography.
+ * spoiler at the top of the biography — and its range lands in
+ * [HtmlContent.spoilers] after the markers are removed.
  */
 internal fun String.toHtmlContent(): HtmlContent {
+    // Mark before anything else: the same markers then survive every clean step.
+    val marked = markSpoilers()
     val links = mutableListOf<ExternalLink>()
     val seen = mutableSetOf<String>()
     // Texts of the anchors we are about to extract: a line made only of them is
     // the link list left behind, not prose.
-    val linkTexts = AnchorRegex.findAll(this)
+    val linkTexts = AnchorRegex.findAll(marked)
         .filter { isExternalHttpUrl(it.groupValues[1].trim()) }
         .map { cleanLine(it.groupValues[2], stripLabels = true).lowercase() }
         .filter { it.isNotEmpty() }
@@ -111,9 +116,9 @@ internal fun String.toHtmlContent(): HtmlContent {
     // A stat hidden inside a `markdown_spoiler` stays as prose: promoting it
     // would put a spoiler at the top of the biography.
     var spoilerDepth = 0
-    val kept = replace(BreakRegex, "\n").split('\n').mapNotNull { line ->
-        val inSpoiler = spoilerDepth > 0 || SpoilerOpenRegex.containsMatchIn(line)
-        spoilerDepth = (spoilerDepth + line.spoilerBalance()).coerceAtLeast(0)
+    val kept = marked.replace(BreakRegex, "\n").split('\n').mapNotNull { line ->
+        val inSpoiler = spoilerDepth > 0 || line.contains(SpoilerStartMarker)
+        spoilerDepth = (spoilerDepth + line.spoilerMarkerBalance()).coerceAtLeast(0)
         if (!inSpoiler) {
             // A bold stat line (or several on one line): keep the label/value
             // pairs and drop the line from the prose. A bold line without a
@@ -130,17 +135,26 @@ internal fun String.toHtmlContent(): HtmlContent {
             }
         }
         val cleaned = extractText(line)
-        if (cleaned.isBlank() || cleaned.isOnlyLinkText(linkTexts)) null else cleaned
+        // A dropped line must not take its spoiler markers with it: keep them as
+        // a marker-only line and [foldMarkerOnlyLines] attaches them to the right
+        // neighbour, so the resulting range still covers the real prose.
+        if (cleaned.isBlank() || cleaned.isOnlyLinkText(linkTexts)) {
+            cleaned.filter { it == SpoilerStartMarker || it == SpoilerEndMarker }
+                .takeIf { it.isNotEmpty() }
+        } else {
+            cleaned
+        }
     }
-    val text = kept.joinToString("\n").replace(BlankLinesRegex, "\n\n").trim()
-    return HtmlContent(text = text, links = links, stats = stats)
+    val spoilerText = kept.joinToString("\n").foldMarkerOnlyLines().finalizeSpoilers()
+    return HtmlContent(
+        text = spoilerText.text,
+        links = links,
+        stats = stats,
+        spoilers = spoilerText.spoilers,
+    )
 }
 
 private data class RawStat(val label: String, val valueHtml: String)
-
-/** `markdown_spoiler` wrappers the line opens minus the ones it closes. */
-private fun String.spoilerBalance(): Int =
-    SpoilerOpenRegex.findAll(this).count() - SpoilerCloseRegex.findAll(this).count()
 
 /** The bold label of a match, or null when it is not a `Label:` shape. */
 private fun MatchResult.statLabel(): String? {

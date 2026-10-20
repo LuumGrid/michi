@@ -51,6 +51,8 @@ internal data class MediaDetail(
     val popularity: Int?,
     val favourites: Int?,
     val descriptionPlain: String,
+    /** Hidden spoiler ranges over [descriptionPlain] (inclusive, empty when none). */
+    val descriptionSpoilers: List<IntRange> = emptyList(),
     val isAdult: Boolean,
     val isFavourite: Boolean,
     val viewerEntry: MediaListViewerEntry?,
@@ -86,6 +88,19 @@ internal data class MediaTag(
     val rank: Int,
     val isMediaSpoiler: Boolean,
 )
+
+/** The Tags section exists whenever the media has any tag, spoilers included. */
+internal fun List<MediaTag>.hasTags(): Boolean = isNotEmpty()
+
+/**
+ * Tags to paint: without [showSpoilers] the spoiler ones are filtered out, and
+ * spoiler tags always come after the regular ones (the sort is stable, so each
+ * group keeps the server order).
+ */
+internal fun List<MediaTag>.orderedTags(showSpoilers: Boolean): List<MediaTag> {
+    val visible = if (showSpoilers) this else filterNot { it.isMediaSpoiler }
+    return visible.sortedBy { it.isMediaSpoiler }
+}
 
 internal data class MediaTrailer(
     val videoId: String,

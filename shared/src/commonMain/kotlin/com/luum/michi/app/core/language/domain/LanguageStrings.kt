@@ -91,6 +91,11 @@ interface LanguageStrings {
     val mediaDetailRelationsTitle: String
     val mediaDetailReadMoreAction: String
     val mediaDetailReadLessAction: String
+    /** Replacement label painted in place of a hidden spoiler range. */
+    val mediaDetailSpoilerHidden: String
+    /** "Spoilers (N)" pill that reveals the media's spoiler tags. */
+    fun mediaDetailSpoilersShowLabel(count: Int): String
+    val mediaDetailSpoilersHideAction: String
     val mediaRelationSequel: String
     val mediaRelationPrequel: String
     val mediaRelationSideStory: String

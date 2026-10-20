@@ -13,6 +13,8 @@ internal data class StaffDetail(
     val alternativeNames: List<String>,
     val image: CoverSizes?,
     val descriptionPlain: String,
+    /** Hidden spoiler ranges over [descriptionPlain] (inclusive, empty when none). */
+    val descriptionSpoilers: List<IntRange> = emptyList(),
     val stats: List<BiographyStat>,
     val links: List<ExternalLink>,
     val gender: String?,

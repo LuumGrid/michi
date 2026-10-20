@@ -1,6 +1,10 @@
 package com.luum.michi.app.mediaDetail.ui.media
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -9,12 +13,14 @@ import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.hasTags
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
 import com.luum.michi.app.mediaDetail.ui.components.DetailPageColumn
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailExpandableText
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkGroup
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkPanel
+import com.luum.michi.app.mediaDetail.ui.components.rememberSpoilerRevealState
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
 import com.luum.michi.app.ui.components.MediaRail
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
@@ -101,6 +107,10 @@ private fun MediaDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val isManga = detail.type == MediaDetailType.MANGA
+    // Memory only, keyed by text: a refresh that changes the synopsis starts
+    // hidden again instead of revealing the wrong range index.
+    val spoilerState = rememberSpoilerRevealState(detail.id, detail.descriptionPlain)
+    var showSpoilerTags by remember(detail.id) { mutableStateOf(false) }
     // Streaming (Crunchyroll…) and everything else (social/official) share one
     // framed panel with two subtitles; AniList marks the difference by `type`.
     val streamingLinks = detail.externalLinks.filter { it.type.equals("STREAMING", ignoreCase = true) }
@@ -125,6 +135,8 @@ private fun MediaDetailContent(
                     title = strings.mediaDetailDescriptionTitle,
                     text = detail.descriptionPlain,
                     strings = strings,
+                    spoilerState = spoilerState,
+                    spoilers = detail.descriptionSpoilers,
                 )
             }
         }
@@ -195,8 +207,15 @@ private fun MediaDetailContent(
                 )
             }
         }
-        if (detail.tags.any { !it.isMediaSpoiler }) {
-            item(key = "tags") { MediaDetailTags(detail = detail, strings = strings) }
+        if (detail.tags.hasTags()) {
+            item(key = "tags") {
+                MediaDetailTags(
+                    detail = detail,
+                    strings = strings,
+                    showSpoilers = showSpoilerTags,
+                    onToggleSpoilers = { showSpoilerTags = !showSpoilerTags },
+                )
+            }
         }
     }
 }

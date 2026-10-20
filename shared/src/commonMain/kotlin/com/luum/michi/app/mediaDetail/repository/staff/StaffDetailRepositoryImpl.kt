@@ -304,6 +304,7 @@ internal class StaffDetailRepositoryImpl(
                         ?.filter { it.isNotBlank() }.orEmpty(),
                     image = staff.image?.let { personCoverSizes(it.large, it.medium) },
                     descriptionPlain = bio?.text.orEmpty(),
+                    descriptionSpoilers = bio?.spoilers.orEmpty(),
                     stats = bio?.stats.orEmpty(),
                     links = bio?.links.orEmpty().resolveWithCatalog(externalLinkCatalog),
                     gender = staff.gender?.takeIf { it.isNotBlank() },

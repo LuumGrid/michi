@@ -14,6 +14,8 @@ internal fun LazyListScope.personBiography(
     title: String,
     text: String,
     stats: List<BiographyStat>,
+    spoilers: List<IntRange>,
+    spoilerState: SpoilerRevealState,
     links: List<ExternalLink>,
     strings: LanguageStrings,
     onOpenUrl: (String) -> Unit,
@@ -24,7 +26,9 @@ internal fun LazyListScope.personBiography(
                 title = title,
                 text = text,
                 strings = strings,
+                spoilerState = spoilerState,
                 stats = stats,
+                spoilers = spoilers,
             )
         }
     }
