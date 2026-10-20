@@ -9,10 +9,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
+import com.luum.michi.app.mediaDetail.domain.studio.model.studioWorkSections
 import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailPersonHero
 import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
 import com.luum.michi.app.ui.components.DetailPosterGrid
+import com.luum.michi.app.ui.components.PosterGridSection
 import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
@@ -67,6 +69,19 @@ private fun StudioDetailGrid(
     modifier: Modifier = Modifier,
 ) {
     val posterItems = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
+    val noYearLabel = strings.mediaDetailStudioWorksNoYearLabel
+    val workSections = remember(holder.media.items, holder.sortOption, noYearLabel) {
+        holder.media.items.studioWorkSections(holder.sortOption, noYearLabel)
+    }
+    val posterSections = remember(workSections) {
+        workSections?.map { section ->
+            PosterGridSection(
+                key = section.key,
+                title = section.title,
+                items = section.items.map { it.toPosterItem() },
+            )
+        }
+    }
     DetailPosterGrid(
         items = posterItems,
         onSelect = onOpenMedia,
@@ -80,6 +95,7 @@ private fun StudioDetailGrid(
         // Scroll rule: a sort change returns the grid to the top.
         resetKey = listOf(holder.sortOption, holder.sortOrder),
         bottomPadding = bottomPadding,
+        sections = posterSections,
         header = {
             item(key = "hero", span = { GridItemSpan(maxLineSpan) }) {
                 // Same type layout as the person heroes; a studio has no image.

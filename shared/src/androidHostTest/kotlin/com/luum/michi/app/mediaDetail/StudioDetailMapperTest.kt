@@ -12,6 +12,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -41,10 +42,6 @@ private fun studioDetailJson() = buildJsonObject {
                     put("favourites", 500)
                     put("genres", JsonArray(listOf(JsonPrimitive("Action"), JsonPrimitive("Comedy"))))
                     put("startDate", buildJsonObject { put("year", 2016) })
-                    put("mediaListEntry", buildJsonObject {
-                        put("id", 3)
-                        put("status", "CURRENT")
-                    })
                 },
             )))
         })
@@ -70,7 +67,6 @@ class StudioDetailMapperTest {
         assertEquals(81, item.averageScore)
         assertEquals(500, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
-        assertEquals("CURRENT", item.viewerStatus)
     }
 
     @Test
@@ -81,5 +77,6 @@ class StudioDetailMapperTest {
         val query = graphQL.requests.single().query
         assertTrue(query.contains("genres"), query)
         assertTrue(query.contains("favourites"), query)
+        assertFalse(query.contains("mediaListEntry"), "the grid no longer reads a viewer list status")
     }
 }

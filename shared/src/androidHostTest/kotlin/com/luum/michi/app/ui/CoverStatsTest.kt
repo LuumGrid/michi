@@ -48,7 +48,6 @@ class CoverStatsTest {
             format = "TV",
             year = 2020,
             averageScore = 85,
-            viewerStatus = null,
             favourites = 1800,
             genres = listOf("Action", "Comedy", "Drama"),
         )
@@ -72,7 +71,6 @@ class CoverStatsTest {
             format = null,
             year = null,
             averageScore = null,
-            viewerStatus = null,
         )
 
         val poster = item.toPosterItem()

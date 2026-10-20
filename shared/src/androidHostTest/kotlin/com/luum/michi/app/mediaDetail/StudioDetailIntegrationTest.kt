@@ -29,7 +29,6 @@ private fun studioMediaItem(
     format = format,
     year = 2020,
     averageScore = null,
-    viewerStatus = null,
     favourites = 42,
     genres = listOf("Action", "Comedy"),
 )

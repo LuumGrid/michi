@@ -32,7 +32,6 @@ internal fun gridItem(id: Int) = MediaGridItem(
     format = "TV",
     year = 2020,
     averageScore = null,
-    viewerStatus = null,
     favourites = 42,
     genres = listOf("Action", "Comedy"),
 )

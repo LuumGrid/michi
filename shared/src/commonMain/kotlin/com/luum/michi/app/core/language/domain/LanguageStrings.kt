@@ -445,6 +445,7 @@ interface LanguageStrings {
     val mediaDetailAppearancesTitle: String
     val mediaDetailRolesTitle: String
     val mediaDetailWorksTitle: String
+    val mediaDetailStudioWorksNoYearLabel: String
     val mediaDetailNoMediaLabel: String
     val mediaDetailAnimeStudioLabel: String
     val mediaDetailProducerLabel: String

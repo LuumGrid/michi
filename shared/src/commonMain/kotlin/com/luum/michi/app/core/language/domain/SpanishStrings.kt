@@ -475,6 +475,7 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailAppearancesTitle = "Apariciones"
     override val mediaDetailRolesTitle = "Roles"
     override val mediaDetailWorksTitle = "Obras"
+    override val mediaDetailStudioWorksNoYearLabel = "Sin fecha"
     override val mediaDetailNoMediaLabel = "Sin series"
     override val mediaDetailAnimeStudioLabel = "Estudio de anime"
     override val mediaDetailProducerLabel = "Productora"

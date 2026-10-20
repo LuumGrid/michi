@@ -33,7 +33,6 @@ private const val StudioMediaNodeSelection = """
         favourites
         genres
         startDate { year }
-        mediaListEntry { id status }
 """
 
 private const val StudioDetailQuery = """

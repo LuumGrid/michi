@@ -17,6 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/** One full-width section of a poster grid; [key] identifies its header. */
+internal data class PosterGridSection(
+    val key: String,
+    val title: String,
+    val items: List<MediaRailItem>,
+)
+
 /**
  * The one poster grid of a detail page (studio works, genre works, the "View
  * all" people grids): token-sized cells over [MediaRailItem] that page
@@ -25,6 +32,10 @@ import androidx.compose.ui.unit.dp
  * own header without forking the grid; [resetKey] is the holder state that must
  * send the grid back to the top (a sort change, a catalog switch). [emptyLabel]
  * null paints no empty row (the caller has its own empty handling).
+ *
+ * [sections] is optional: null keeps the flat grid unchanged (genre, catalog,
+ * favourites). When present, each section paints a full-span [SectionHeader]
+ * above its cards, using the same horizontal inset as the rails.
  */
 @Composable
 internal fun DetailPosterGrid(
@@ -43,6 +54,7 @@ internal fun DetailPosterGrid(
     resetKey: Any? = null,
     bottomPadding: Dp = 0.dp,
     header: (LazyGridScope.() -> Unit)? = null,
+    sections: List<PosterGridSection>? = null,
     // Painted over each card's cover (e.g. an edit-mode remove button). When set,
     // the card no longer navigates: the overlay owns the interaction.
     cardOverlay: (@Composable BoxScope.(MediaRailItem) -> Unit)? = null,
@@ -82,29 +94,42 @@ internal fun DetailPosterGrid(
                     )
                 }
             } else {
-                itemsIndexed(
-                    items = items,
-                    // Index-suffixed: the same media can appear more than once
-                    // (a staff/character with multiple roles in one title), and
-                    // a bare id would make duplicate lazy keys and crash.
-                    key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
-                ) { _, item ->
-                    PosterCard(
-                        cover = item.image,
-                        title = item.title,
-                        size = coverSize,
-                        onClick = if (cardOverlay == null) {
-                            { onSelect(item.id) }
-                        } else {
-                            null
-                        },
-                        subtitle = item.subtitle,
-                        placeholderHex = item.placeholderHex,
-                        stats = item.stats,
-                        // A grid cell lets the subtitle hug the title.
-                        reserveTitleLines = false,
-                        overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
-                    )
+                if (sections == null) {
+                    itemsIndexed(
+                        items = items,
+                        // Index-suffixed: the same media can appear more than once
+                        // (a staff/character with multiple roles in one title), and
+                        // a bare id would make duplicate lazy keys and crash.
+                        key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
+                    ) { _, item ->
+                        PosterGridCard(item, coverSize, onSelect, cardOverlay)
+                    }
+                } else {
+                    var globalIndex = 0
+                    sections.forEachIndexed { sectionIndex, section ->
+                        item(
+                            key = "section-$sectionIndex-${section.key}",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            SectionHeader(
+                                title = section.title,
+                                modifier = Modifier.padding(
+                                    horizontal = RailHorizontalPadding,
+                                    vertical = 4.dp,
+                                ),
+                            )
+                        }
+                        val startIndex = globalIndex
+                        itemsIndexed(
+                            items = section.items,
+                            key = { index, item ->
+                                "${item.key.ifBlank { item.id.toString() }}#${startIndex + index}"
+                            },
+                        ) { _, item ->
+                            PosterGridCard(item, coverSize, onSelect, cardOverlay)
+                        }
+                        globalIndex += section.items.size
+                    }
                 }
                 if (hasNextPage) {
                     item(key = LoadMoreKey, span = { GridItemSpan(maxLineSpan) }) {
@@ -114,4 +139,29 @@ internal fun DetailPosterGrid(
             }
         }
     }
+}
+
+@Composable
+private fun PosterGridCard(
+    item: MediaRailItem,
+    coverSize: CoverSize,
+    onSelect: (Int) -> Unit,
+    cardOverlay: (@Composable BoxScope.(MediaRailItem) -> Unit)?,
+) {
+    PosterCard(
+        cover = item.image,
+        title = item.title,
+        size = coverSize,
+        onClick = if (cardOverlay == null) {
+            { onSelect(item.id) }
+        } else {
+            null
+        },
+        subtitle = item.subtitle,
+        placeholderHex = item.placeholderHex,
+        stats = item.stats,
+        // A grid cell lets the subtitle hug the title.
+        reserveTitleLines = false,
+        overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
+    )
 }

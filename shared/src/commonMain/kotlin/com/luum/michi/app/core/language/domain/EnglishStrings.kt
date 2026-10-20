@@ -473,6 +473,7 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailAppearancesTitle = "Appearances"
     override val mediaDetailRolesTitle = "Roles"
     override val mediaDetailWorksTitle = "Works"
+    override val mediaDetailStudioWorksNoYearLabel = "TBA"
     override val mediaDetailNoMediaLabel = "No media"
     override val mediaDetailAnimeStudioLabel = "Anime studio"
     override val mediaDetailProducerLabel = "Producer"

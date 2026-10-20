@@ -38,10 +38,6 @@ private fun genrePageJson(includeCurrentPage: Boolean = true) = buildJsonObject 
                 put("favourites", 500)
                 put("genres", JsonArray(listOf(JsonPrimitive("Action"), JsonPrimitive("Comedy"))))
                 put("startDate", buildJsonObject { put("year", 2016) })
-                put("mediaListEntry", buildJsonObject {
-                    put("id", 3)
-                    put("status", "CURRENT")
-                })
             },
         )))
     })
@@ -68,7 +64,6 @@ class GenreMediaGridMapperTest {
         assertEquals(81, item.averageScore)
         assertEquals(500, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
-        assertEquals("CURRENT", item.viewerStatus)
     }
 
     @Test
@@ -84,6 +79,8 @@ class GenreMediaGridMapperTest {
 
         val request = graphQL.requests.single()
         assertTrue(request.query.contains("genre_in"), request.query)
+        assertTrue(request.query.contains("mediaListEntry { id score }"), request.query)
+        assertFalse(request.query.contains("mediaListEntry { id score status }"), request.query)
         val variables = request.variables!!
         assertEquals("[\"Action\"]", variables["genre_in"].toString())
         assertEquals("MANGA", (variables["type"] as JsonPrimitive).content)

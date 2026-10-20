@@ -30,8 +30,8 @@ import com.luum.michi.app.core.media.repository.toMediaGridItem
 /**
  * One catalog query for both types: `$type` decides the API `type` and the year
  * filter (`season`/`seasonYear` for anime, `startDate_greater`/`lesser` for
- * manga). `mediaListEntry` carries `status` so the shared grid can read the
- * viewer's list status.
+ * manga). `mediaListEntry.score` feeds Explore's "in your list" mark; the shared
+ * grid no longer reads a list status.
  */
 private const val MediaCatalogQuery = """
 query MediaCatalog(
@@ -87,7 +87,7 @@ query MediaCatalog(
       startDate { year month day }
       isAdult
       isFavourite
-      mediaListEntry { id score status }
+      mediaListEntry { id score }
     }
   }
 }
