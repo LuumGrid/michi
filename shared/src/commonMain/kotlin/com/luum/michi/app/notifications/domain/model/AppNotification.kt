@@ -29,7 +29,7 @@ internal data class AppNotification(
     val userName: String? = null,
     /** Submissions: the submitted title / staff / character name. */
     val subjectName: String? = null,
-    // Carried for a later UI; not painted yet.
+    /** Detail sheet: the media-change/submission reason. */
     val reason: String? = null,
     val notes: String? = null,
     val status: String? = null,

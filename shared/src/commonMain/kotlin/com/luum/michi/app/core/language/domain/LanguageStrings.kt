@@ -396,6 +396,14 @@ interface LanguageStrings {
     fun notifMediaMergeText(media: String?, deletedTitles: List<String>): String
     fun notifMediaDeletionText(media: String?): String
     fun notifSubmissionText(name: String?, status: String?): String
+    val notificationDetailReasonLabel: String
+    val notificationDetailAffectedTitlesLabel: String
+    val notificationDetailOpenAction: String
+    /** Accessibility label of the unread dot on a highlighted notification row. */
+    val notificationNewContentDescription: String
+    val notificationStatusAccepted: String
+    val notificationStatusRejected: String
+    val notificationStatusPartiallyAccepted: String
 
     // Staff detail
     val yearsActivePresent: String

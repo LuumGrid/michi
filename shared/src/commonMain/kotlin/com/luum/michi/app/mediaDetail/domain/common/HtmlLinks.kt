@@ -2,6 +2,7 @@ package com.luum.michi.app.mediaDetail.domain.common
 
 import com.luum.michi.app.core.util.canonicalHost
 import com.luum.michi.app.core.util.isAniListHost
+import com.luum.michi.app.core.util.stripHtml
 import com.luum.michi.app.core.util.urlHost
 
 /** One `Label: value` line AniList marked in bold inside a biography. */

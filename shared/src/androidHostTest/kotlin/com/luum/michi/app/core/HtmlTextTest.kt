@@ -1,6 +1,6 @@
-package com.luum.michi.app.mediaDetail
+package com.luum.michi.app.core
 
-import com.luum.michi.app.mediaDetail.domain.common.stripHtml
+import com.luum.michi.app.core.util.stripHtml
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

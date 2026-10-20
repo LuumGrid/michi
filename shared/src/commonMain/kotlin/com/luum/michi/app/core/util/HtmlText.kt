@@ -1,4 +1,4 @@
-package com.luum.michi.app.mediaDetail.domain.common
+package com.luum.michi.app.core.util
 
 private val HtmlTagRegex = Regex("<[^>]+>")
 private val HtmlBreakRegex = Regex("<br\\s*/?>", RegexOption.IGNORE_CASE)

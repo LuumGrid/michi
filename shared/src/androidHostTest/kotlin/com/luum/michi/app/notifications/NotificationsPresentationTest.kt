@@ -4,13 +4,17 @@ import com.luum.michi.app.core.language.domain.EnglishStrings
 import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.notifications.domain.model.AppNotification
+import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.NotificationKind
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
 import com.luum.michi.app.notifications.ui.model.dispatch
 import com.luum.michi.app.notifications.ui.model.notificationTimeLabel
+import com.luum.michi.app.notifications.ui.model.shouldHighlightNotification
+import com.luum.michi.app.notifications.ui.model.submissionStatusLabel
 import com.luum.michi.app.notifications.ui.model.toRowItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private const val Now = 1_800_000_000L
@@ -238,5 +242,33 @@ class NotificationsPresentationTest {
         assertEquals(2, characterId)
         assertEquals(3, staffId)
         assertEquals("https://anilist.co/activity/7", url)
+    }
+
+    // ────────────── submission status + unread highlight ──────────────
+
+    @Test
+    fun submissionStatusIsNormalizedBeforeTranslating() {
+        assertEquals("Accepted", submissionStatusLabel("accepted", EnglishStrings))
+        assertEquals("Aceptado", submissionStatusLabel("ACCEPTED", SpanishStrings))
+        assertEquals("Partially accepted", submissionStatusLabel("partially accepted", EnglishStrings))
+        assertEquals("Parcialmente aceptado", submissionStatusLabel("PARTIALLY-ACCEPTED", SpanishStrings))
+        assertEquals(
+            "Partially accepted",
+            submissionStatusLabel("  partially   accepted  ", EnglishStrings),
+        )
+        assertEquals(
+            "REJECTED_BY_SOMETHING",
+            submissionStatusLabel("REJECTED_BY_SOMETHING", EnglishStrings),
+            "an unknown status falls back to the raw value",
+        )
+    }
+
+    @Test
+    fun highlightOnlyAppliesToTheFirstRowsOfTheAllFilter() {
+        assertTrue(shouldHighlightNotification(0, NotificationFilter.ALL, highlightCount = 2))
+        assertTrue(shouldHighlightNotification(1, NotificationFilter.ALL, highlightCount = 2))
+        assertFalse(shouldHighlightNotification(2, NotificationFilter.ALL, highlightCount = 2))
+        assertFalse(shouldHighlightNotification(0, NotificationFilter.MEDIA, highlightCount = 2))
+        assertFalse(shouldHighlightNotification(0, NotificationFilter.ALL, highlightCount = 0))
     }
 }

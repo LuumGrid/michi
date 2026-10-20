@@ -385,6 +385,86 @@ class NotificationsIntegrationTest {
         }
     }
 
+    // ────────────── holder: highlight count ──────────────
+
+    @Test
+    fun highlightCountTakesTheLargerOfThePreviousAndReportedCounts() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(listOf(
+                notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+                notificationPage(listOf(node(2, "AIRING")), unreadCount = 4),
+            ))
+            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
+
+            holder.updateUnreadCount(3)
+            holder.load(resetCount = true)
+            dispatcher.runAll()
+            assertEquals(5, holder.highlightCount, "the page reported more than the previous count")
+            assertEquals(0, holder.unreadCount)
+
+            holder.updateUnreadCount(7)
+            holder.load(resetCount = true)
+            dispatcher.runAll()
+            assertEquals(7, holder.highlightCount, "the previous count was larger than the page's")
+            assertEquals(0, holder.unreadCount)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun aRefreshOutsideAllLeavesTheHighlightAlone() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(listOf(
+                notificationPage(listOf(node(1, "AIRING")), unreadCount = 5),
+                notificationPage(listOf(node(2, "MEDIA_DATA_CHANGE")), unreadCount = 2),
+                notificationPage(listOf(node(3, "MEDIA_DATA_CHANGE")), unreadCount = 1),
+            ))
+            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
+
+            holder.load(resetCount = true)
+            dispatcher.runAll()
+            assertEquals(5, holder.highlightCount)
+
+            holder.selectFilter(NotificationFilter.MEDIA)
+            dispatcher.runAll()
+            assertEquals(false, resetFlag(client.requests[1]), "a filter change does not reset")
+            assertEquals(5, holder.highlightCount)
+
+            holder.refresh()
+            dispatcher.runAll()
+            assertEquals(false, resetFlag(client.requests[2]), "a filtered refresh does not reset")
+            assertEquals(5, holder.highlightCount)
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
+    fun aResetLoadWithZeroUnreadClearsTheHighlight() {
+        val dispatcher = DeferredDispatcher()
+        val scope = CoroutineScope(dispatcher)
+        try {
+            val client = FakeGraphQL(listOf(
+                notificationPage(listOf(node(1, "AIRING")), unreadCount = 0),
+            ))
+            val holder = NotificationsStateHolder(NotificationsRepositoryImpl(client), scope)
+
+            holder.updateUnreadCount(0)
+            holder.load(resetCount = true)
+            dispatcher.runAll()
+
+            assertEquals(0, holder.highlightCount)
+            assertEquals(0, holder.unreadCount)
+        } finally {
+            scope.cancel()
+        }
+    }
+
     // ────────────── holder: filter ──────────────
 
     @Test

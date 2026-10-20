@@ -4,8 +4,11 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.core.model.CoverSizes
 import com.luum.michi.app.notifications.domain.model.AppNotification
+import com.luum.michi.app.notifications.domain.model.NotificationDetails
+import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.NotificationKind
 import com.luum.michi.app.notifications.domain.model.NotificationTarget
+import com.luum.michi.app.notifications.domain.model.notificationDetails
 
 /** One notification shaped for the row: image, text, relative time, destination. */
 internal data class NotificationRowItem(
@@ -14,6 +17,8 @@ internal data class NotificationRowItem(
     val text: String,
     val time: String,
     val target: NotificationTarget,
+    /** Non-null when tapping opens the detail sheet instead of navigating. */
+    val details: NotificationDetails? = null,
 )
 
 internal fun AppNotification.toRowItem(
@@ -25,6 +30,7 @@ internal fun AppNotification.toRowItem(
     text = notificationText(strings),
     time = notificationTimeLabel(nowEpochSeconds, createdAtEpochSeconds, strings),
     target = target,
+    details = notificationDetails(),
 )
 
 /**
@@ -95,6 +101,32 @@ internal fun notificationTimeLabel(
         relative,
     )
 }
+
+/**
+ * Submission status as AniList sends it: the schema types it as a free string,
+ * so normalize before matching (`partially accepted`, `PARTIALLY-ACCEPTED`, …)
+ * but keep the raw value when it is a status we do not know.
+ */
+internal fun submissionStatusLabel(status: String, strings: LanguageStrings): String =
+    when (status.trim().uppercase().replace(StatusSeparatorRegex, "_")) {
+        "ACCEPTED" -> strings.notificationStatusAccepted
+        "REJECTED" -> strings.notificationStatusRejected
+        "PARTIALLY_ACCEPTED" -> strings.notificationStatusPartiallyAccepted
+        else -> status
+    }
+
+private val StatusSeparatorRegex = Regex("[\\s-]+")
+
+/**
+ * Only the unfiltered feed knows which rows were unread; a filtered page cannot
+ * tell, so it never highlights. The first [highlightCount] rows of ALL are the
+ * ones that were unread before the page opened.
+ */
+internal fun shouldHighlightNotification(
+    index: Int,
+    filter: NotificationFilter,
+    highlightCount: Int,
+): Boolean = filter == NotificationFilter.ALL && index >= 0 && index < highlightCount
 
 /** Sends a tapped notification to the right destination ([None] does nothing). */
 internal fun NotificationTarget.dispatch(

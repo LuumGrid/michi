@@ -1,5 +1,7 @@
 package com.luum.michi.app.mediaDetail.domain.common
 
+import com.luum.michi.app.core.util.stripHtml
+
 /**
  * Clean text plus the ranges AniList wrapped in `markdown_spoiler`. Ranges are
  * inclusive and point into [text] after every tag has been stripped.

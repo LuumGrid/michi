@@ -1,15 +1,25 @@
 package com.luum.michi.app.notifications.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.auth.domain.currentEpochSeconds
@@ -17,7 +27,10 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.notifications.domain.model.NotificationFilter
 import com.luum.michi.app.notifications.domain.model.label
+import com.luum.michi.app.notifications.ui.components.NotificationDetailsSheet
+import com.luum.michi.app.notifications.ui.model.NotificationRowItem
 import com.luum.michi.app.notifications.ui.model.dispatch
+import com.luum.michi.app.notifications.ui.model.shouldHighlightNotification
 import com.luum.michi.app.notifications.ui.model.toRowItem
 import com.luum.michi.app.notifications.ui.state.NotificationsStateHolder
 import com.luum.michi.app.ui.components.ChipRail
@@ -81,6 +94,9 @@ private fun NotificationsContent(
 ) {
     val errorMessage = holder.error?.let { strings.networkErrorMessage(it) }
     val hasContent = holder.notifications.isNotEmpty()
+    // Page-scoped sheet: only a row can open it, and its payload never leaves
+    // this screen (the RootOverlay layer is for Root-driven surfaces).
+    var detailsItem by remember { mutableStateOf<NotificationRowItem?>(null) }
     val chips = remember(strings) {
         NotificationFilter.entries.map { ChipTab(value = it, label = it.label(strings)) }
     }
@@ -136,20 +152,35 @@ private fun NotificationsContent(
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(
+                itemsIndexed(
                     items = items,
-                    key = { item -> item.id },
-                ) { item ->
+                    key = { _, item -> item.id },
+                ) { index, item ->
+                    val highlighted = shouldHighlightNotification(
+                        index = index,
+                        filter = holder.selectedFilter,
+                        highlightCount = holder.highlightCount,
+                    )
+                    val unreadDot: (@Composable () -> Unit)? = if (highlighted) {
+                        { NotificationNewDot(strings.notificationNewContentDescription) }
+                    } else {
+                        null
+                    }
                     MediaCoverCard(
                         cover = item.image,
                         title = item.text,
                         subtitle = item.time,
+                        titleTrailing = unreadDot,
                         // Long phrases (a thread title) and the full date with its
                         // countdown need more than the list default.
                         titleMaxLines = 3,
                         subtitleMaxLines = 2,
                         onClick = {
-                            item.target.dispatch(onOpenMedia, onOpenCharacter, onOpenStaff, onOpenUrl)
+                            if (item.details != null) {
+                                detailsItem = item
+                            } else {
+                                item.target.dispatch(onOpenMedia, onOpenCharacter, onOpenStaff, onOpenUrl)
+                            }
                         },
                     )
                 }
@@ -159,4 +190,26 @@ private fun NotificationsContent(
             }
         }
     }
+    detailsItem?.let { item ->
+        NotificationDetailsSheet(
+            item = item,
+            strings = strings,
+            onDismiss = { detailsItem = null },
+            onOpenTarget = {
+                detailsItem = null
+                item.target.dispatch(onOpenMedia, onOpenCharacter, onOpenStaff, onOpenUrl)
+            },
+        )
+    }
+}
+
+/** 8dp unread dot, same language as the toolbar's notification badge. */
+@Composable
+private fun NotificationNewDot(contentDescription: String) {
+    Box(
+        modifier = Modifier
+            .size(8.dp)
+            .semantics { this.contentDescription = contentDescription }
+            .background(MaterialTheme.colorScheme.primary, CircleShape),
+    )
 }

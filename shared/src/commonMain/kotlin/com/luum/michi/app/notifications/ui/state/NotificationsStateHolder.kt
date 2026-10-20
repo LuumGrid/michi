@@ -47,6 +47,13 @@ internal class NotificationsStateHolder(
         private set
     var unreadCount by mutableStateOf(0)
         private set
+    /**
+     * Rows that were unread when the page was opened. Recomputed on every
+     * successful reset load; untouched by filter loads and refreshes. Only the
+     * ALL filter paints it (a filtered page cannot know which rows were new).
+     */
+    var highlightCount by mutableStateOf(0)
+        private set
     var selectedFilter by mutableStateOf(NotificationFilter.ALL)
         private set
 
@@ -97,12 +104,15 @@ internal class NotificationsStateHolder(
      *
      * [resetCount] marks the feed read: on success the count is forced to 0 even
      * if AniList reports the pre-reset value (the query asks it on page 1 always).
+     * The same success records [highlightCount] as the larger of the count before
+     * the request and the one the page reports (AniList may answer with either).
      */
     fun load(resetCount: Boolean = false) {
         invalidate()
         isLoading = true
         error = null
         actionError = null
+        val unreadBeforeLoad = unreadCount
         val filter = selectedFilter
         loadRequest.launch(
             scope = scope,
@@ -112,7 +122,12 @@ internal class NotificationsStateHolder(
                 is NetworkResult.Success -> if (isCurrent()) {
                     val page = result.value
                     paginated.set(Page(page.notifications, page.hasNextPage, 1))
-                    unreadCount = if (resetCount) 0 else page.unreadCount ?: unreadCount
+                    if (resetCount) {
+                        highlightCount = maxOf(unreadBeforeLoad, page.unreadCount ?: unreadBeforeLoad)
+                        unreadCount = 0
+                    } else {
+                        unreadCount = page.unreadCount ?: unreadCount
+                    }
                     hasLoaded = true
                     lastLoaded = timeMark.markNow()
                     error = null

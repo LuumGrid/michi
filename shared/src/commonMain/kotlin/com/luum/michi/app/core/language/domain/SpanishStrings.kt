@@ -427,6 +427,13 @@ object SpanishStrings : LanguageStrings {
     override fun notifMediaDeletionText(media: String?) = "Se eliminó ${media ?: "un título"} de AniList"
     override fun notifSubmissionText(name: String?, status: String?) =
         "Tu envío de ${name ?: "un título"}: ${status?.takeIf { it.isNotBlank() } ?: "actualizado"}"
+    override val notificationDetailReasonLabel = "Motivo"
+    override val notificationDetailAffectedTitlesLabel = "Títulos afectados"
+    override val notificationDetailOpenAction = "Abrir"
+    override val notificationNewContentDescription = "Nueva"
+    override val notificationStatusAccepted = "Aceptado"
+    override val notificationStatusRejected = "Rechazado"
+    override val notificationStatusPartiallyAccepted = "Parcialmente aceptado"
 
     // Staff detail
     override val yearsActivePresent = "presente"
