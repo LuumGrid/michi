@@ -14,7 +14,8 @@ import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
 import com.luum.michi.app.core.auth.domain.AniListOAuthLauncher
 import com.luum.michi.app.core.platform.domain.UrlOpener
 import com.luum.michi.app.core.platform.domain.ShareLauncher
-import com.luum.michi.app.core.navigation.domain.parseAniListMediaId
+import com.luum.michi.app.core.navigation.domain.DetailDestination
+import com.luum.michi.app.core.navigation.domain.parseAniListDestination
 import com.luum.michi.app.core.auth.domain.AniListTokenStorage
 import com.luum.michi.app.core.auth.domain.parseAniListOAuthCallback
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
@@ -206,19 +207,19 @@ class MichiDependencies internal constructor(
     }
 
     /**
-     * Deep-linked media id from an AniList web link, or null. The UI collects
+     * Deep-linked AniList destination from a web link, or null. The UI collects
      * this and opens the detail page, then calls [consumeDeepLink].
      */
-    private val _pendingMediaId = MutableStateFlow<Int?>(null)
-    internal val pendingMediaId: StateFlow<Int?> = _pendingMediaId.asStateFlow()
+    private val _pendingDeepLink = MutableStateFlow<DetailDestination?>(null)
+    internal val pendingDeepLink: StateFlow<DetailDestination?> = _pendingDeepLink.asStateFlow()
 
-    /** Called by the platform when an AniList media link is opened. No-op otherwise. */
+    /** Called by the platform when an AniList entity link is opened. No-op otherwise. */
     fun onDeepLink(url: String) {
-        parseAniListMediaId(url)?.let { _pendingMediaId.value = it }
+        parseAniListDestination(url)?.let { _pendingDeepLink.value = it }
     }
 
     fun consumeDeepLink() {
-        _pendingMediaId.value = null
+        _pendingDeepLink.value = null
     }
 
     fun logout() {

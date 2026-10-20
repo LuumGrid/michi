@@ -46,7 +46,7 @@ internal fun RootEffects(
     surfaceStates: SaveableStateHolder,
     autoOpenSignIn: Boolean,
     onAutoSignInShown: () -> Unit,
-    deepLinkMediaId: Int?,
+    deepLinkDestination: DetailDestination?,
     onDeepLinkHandled: () -> Unit,
 ) {
     val tab = state.selectedTab
@@ -266,11 +266,12 @@ internal fun RootEffects(
         }
     }
 
-    // Deep link (anilist.co/anime|manga/{id}): open the media detail once the
-    // shell composes, then clear the pending id so it never reopens.
-    LaunchedEffect(deepLinkMediaId) {
-        deepLinkMediaId?.let {
-            state.openMedia(it)
+    // Deep link (anilist.co/{anime|manga|character|staff|studio}/{id}): open the
+    // detail once the shell composes, then clear the pending destination so it
+    // never reopens.
+    LaunchedEffect(deepLinkDestination) {
+        deepLinkDestination?.let {
+            state.openDeepLink(it)
             onDeepLinkHandled()
         }
     }

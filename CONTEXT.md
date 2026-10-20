@@ -168,7 +168,7 @@ core/
                                 consumed by settings, root and the profile statistics)
   storage/domain/               settings/filter keys and stores, plus `FileStore` (cache-sized text files)
   language/domain/              string tables only (LanguageStrings, EN/ES, AppLanguage) — no CompositionLocal
-  navigation/domain/            routes, AniList deep-link parsing (`parseAniListMediaId`),
+  navigation/domain/            routes, AniList deep-link parsing (`parseAniListDestination`),
                                 pushed-detail holder contracts (`DetailHolder`, `GridSortHolder`)
   favourite/domain|repository/  one favourite toggle for every entity type (media/person/studio)
                                 + a monotonic `revision` bumped after each successful toggle
@@ -229,7 +229,7 @@ com.luum.michi.app
                                 `SharedPreferencesSettingsStore`/`AndroidFileStore` on Android,
                                 `NSUserDefaultsSettingsStore`/`IosFileStore` on iOS)
     language/domain/          string tables only (LanguageStrings, EN/ES, AppLanguage)
-    navigation/domain/        routes, back-handler contracts, deep-link parsing (`parseAniListMediaId`), the pushed-detail holder contract (`DetailHolder`, `GridSortHolder`)
+    navigation/domain/        routes, back-handler contracts, deep-link parsing (`parseAniListDestination`), the pushed-detail holder contract (`DetailHolder`, `GridSortHolder`)
     favourite/domain|repository/ one favourite toggle for every entity type
     model/                    neutral domain vocabulary (CoverSizes, FilterOption, compact count, ImageQuality, Page, calendar dates, notification buckets, page sizes)
     util/                     pure helpers with no feature owner (DetailCache, URL parsing/host normalization)
@@ -407,7 +407,7 @@ A rail inside a card gets boxed in (first/last cards clip on the rounded corners
 - API DTOs must not leak into presentation state — map at feature/core boundaries.
 - Model network errors, GraphQL errors, rate limits, and empty states explicitly for consistent UI rendering.
 - Android system back uses `androidx.activity.compose.BackHandler`. iOS system back is no-op until native behavior is needed.
-- Android deep links: the manifest registers `https://anilist.co/anime|manga/*` plus a `text/plain` `ACTION_SEND` share target (and the `michi://oauth/callback` filter). `MainActivity` routes OAuth vs media; the media id flows through `MichiDependencies.pendingMediaId` and `Root` opens the detail. The web link is not verifiable (we don't own anilist.co), so Android sends it to the browser; **sharing** the link (Share → Michi) is the reliable path. `parseAniListMediaId` extracts the id from free text. iOS universal links are parked for the same reason.
+- Android deep links: the manifest registers `https://anilist.co|www.anilist.co/{anime|manga|character|staff|studio}/*` plus a `text/plain` `ACTION_SEND` share target (and the `michi://oauth/callback` filter). `MainActivity` routes OAuth vs links; `parseAniListDestination` returns a `DetailDestination` (Media/Character/Staff/Studio) from a URL or free text, it flows through `MichiDependencies.pendingDeepLink`, and `Root` calls `state.openDeepLink(destination)` before consuming it. `openDeepLink` closes Settings and pushes with the same no-duplicate-on-top rule as `openMedia` (which now delegates to it); the UI-only `openCharacter`/`openStaff`/`openStudio` are untouched. The web link is not verifiable (we don't own anilist.co), so Android sends it to the browser; **sharing** the link (Share → Michi) is the reliable path. iOS universal links are parked for the same reason.
 
 ## Naming
 

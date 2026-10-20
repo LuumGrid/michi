@@ -23,6 +23,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.SortPersistence
+import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.platform.domain.ShareLauncher
 import com.luum.michi.app.core.platform.domain.UrlOpener
@@ -89,7 +90,7 @@ internal fun Root(
     isAuthConfigured: Boolean,
     autoOpenSignIn: Boolean = false,
     onAutoSignInShown: () -> Unit = {},
-    deepLinkMediaId: Int? = null,
+    deepLinkDestination: DetailDestination? = null,
     onDeepLinkHandled: () -> Unit = {},
 ) {
     // The "Pestaña al abrir" setting seeds the shell state once (startup only):
@@ -179,7 +180,7 @@ internal fun Root(
         surfaceStates = surfaceStates,
         autoOpenSignIn = autoOpenSignIn,
         onAutoSignInShown = onAutoSignInShown,
-        deepLinkMediaId = deepLinkMediaId,
+        deepLinkDestination = deepLinkDestination,
         onDeepLinkHandled = onDeepLinkHandled,
     )
 

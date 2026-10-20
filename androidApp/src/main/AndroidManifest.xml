@@ -33,9 +33,10 @@
                     android:host="oauth"
                     android:path="/callback" />
             </intent-filter>
-            <!-- AniList media links open the app's detail page. Not verifiable
-                 (we don't own anilist.co), so Android offers the app in the
-                 "open with" chooser next to the browser. -->
+            <!-- AniList entity links (anime/manga/character/staff/studio) open
+                 the app's detail page. Not verifiable (we don't own anilist.co),
+                 so Android offers the app in the "open with" chooser next to the
+                 browser. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -50,6 +51,38 @@
                     android:scheme="https"
                     android:host="anilist.co"
                     android:pathPrefix="/manga/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/character/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/staff/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/studio/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/anime/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/manga/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/character/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/staff/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/studio/" />
             </intent-filter>
             <!-- Share target: sharing an AniList link (Share → Michi) captures
                  it reliably, unlike unverifiable web links. -->

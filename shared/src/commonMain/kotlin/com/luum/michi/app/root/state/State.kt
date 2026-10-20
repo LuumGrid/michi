@@ -248,12 +248,17 @@ internal class State(
         }
     }
 
-    fun openMedia(id: Int) {
-        // A detail supersedes the settings surface (a deep link can arrive
-        // while Settings is open): close it so the detail is actually visible.
+    /**
+     * Opens a destination coming from outside the UI (an AniList deep link). A
+     * detail supersedes the settings surface: close it so the detail is actually
+     * visible. [push] keeps the existing no-duplicate-on-top rule.
+     */
+    fun openDeepLink(destination: DetailDestination) {
         close(RootOverlay.Settings)
-        push(DetailDestination.Media(id))
+        push(destination)
     }
+
+    fun openMedia(id: Int) = openDeepLink(DetailDestination.Media(id))
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))

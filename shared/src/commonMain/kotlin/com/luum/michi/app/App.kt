@@ -65,7 +65,7 @@ fun App(
     val unmeteredConnection by dependencies.connectivity.isUnmetered.collectAsState()
     val store = dependencies.settingsStore
     val session by dependencies.sessionManager.state.collectAsState()
-    val deepLinkMediaId by dependencies.pendingMediaId.collectAsState()
+    val deepLinkDestination by dependencies.pendingDeepLink.collectAsState()
     val scope = rememberCoroutineScope()
 
     // Synced settings holder: one per session. Guests get canSync = false
@@ -210,7 +210,7 @@ fun App(
                             onAutoSignInShown = {
                                 store.putBoolean(SettingsStoreKeys.SeenSignIn, true)
                             },
-                            deepLinkMediaId = deepLinkMediaId,
+                            deepLinkDestination = deepLinkDestination,
                             onDeepLinkHandled = { dependencies.consumeDeepLink() },
                         )
                     }
