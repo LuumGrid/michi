@@ -143,8 +143,6 @@ private fun mediaDetailPageJson() = buildJsonObject {
             })
             put("nodes", JsonArray(listOf(
                 buildJsonObject {
-                    put("id", 5)
-                    put("rating", 7)
                     put("mediaRecommendation", buildJsonObject {
                         put("id", 99)
                         put("title", buildJsonObject { put("romaji", "Recommended Show") })
@@ -152,8 +150,6 @@ private fun mediaDetailPageJson() = buildJsonObject {
                 },
                 // Same media recommended by another user: must collapse by id.
                 buildJsonObject {
-                    put("id", 6)
-                    put("rating", 3)
                     put("mediaRecommendation", buildJsonObject {
                         put("id", 99)
                         put("title", buildJsonObject { put("romaji", "Recommended Show") })
@@ -309,7 +305,6 @@ class MediaDetailMapperTest {
         assertEquals(listOf(99), recommendations.items.map { it.id }, "collapsed by media id")
         assertTrue(recommendations.hasNextPage)
         assertEquals(1, recommendations.currentPage)
-        assertEquals(7, recommendations.items.single().likesCount)
     }
 
     @Test
@@ -324,8 +319,6 @@ class MediaDetailMapperTest {
                     })
                     put("nodes", JsonArray(listOf(
                         buildJsonObject {
-                            put("id", 5)
-                            put("rating", 7)
                             put("mediaRecommendation", buildJsonObject {
                                 put("id", 99)
                                 put("title", buildJsonObject { put("romaji", "Recommended") })

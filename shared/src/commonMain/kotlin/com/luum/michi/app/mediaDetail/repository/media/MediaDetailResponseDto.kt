@@ -9,7 +9,6 @@ import com.luum.michi.app.core.media.repository.dto.MediaViewerListEntryDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import com.luum.michi.app.core.person.repository.dto.PersonNameDto
-import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -21,12 +20,12 @@ import kotlinx.serialization.Serializable
  * query MediaDetail($id: Int!) {
  *   Media(id: $id) {
  *     id type title { ... } description format status episodes chapters
- *     volumes duration genres averageScore meanScore popularity favourites
+ *     volumes duration genres averageScore popularity favourites
  *     coverImage { ... } bannerImage source season seasonYear
  *     startDate { year month day } endDate { year month day }
  *     studios(sort: [NAME]) { edges { isMain node { id name isAnimationStudio } } }
  *     nextAiringEpisode { episode airingAt timeUntilAiring }
- *     countryOfOrigin isAdult
+ *     isAdult
  *   }
  * }
  * ```
@@ -50,7 +49,6 @@ internal data class MediaDetailDto(
     val duration: Int? = null,
     val genres: List<String> = emptyList(),
     val averageScore: Int? = null,
-    val meanScore: Int? = null,
     val popularity: Int? = null,
     val favourites: Int? = null,
     val coverImage: MediaCoverImageDto? = null,
@@ -62,7 +60,6 @@ internal data class MediaDetailDto(
     val endDate: FuzzyDateDto? = null,
     val studios: MediaStudioConnectionDto? = null,
     val nextAiringEpisode: MediaNextAiringEpisodeDto? = null,
-    val countryOfOrigin: String? = null,
     val isAdult: Boolean? = null,
     val isFavourite: Boolean? = null,
     val mediaListEntry: MediaViewerListEntryDto? = null,
@@ -184,8 +181,6 @@ internal data class MediaRecommendationsConnectionDto(
 
 @Serializable
 internal data class MediaRecommendationNodeDto(
-    val id: Int,
-    val rating: Int = 0,
     val mediaRecommendation: MediaRecommendationMediaDto? = null,
 )
 
@@ -203,5 +198,4 @@ internal data class MediaRecommendationMediaDto(
     val volumes: Int? = null,
     val averageScore: Int? = null,
     val favourites: Int? = null,
-    val mediaListEntry: MediaListStatusDto? = null,
 )

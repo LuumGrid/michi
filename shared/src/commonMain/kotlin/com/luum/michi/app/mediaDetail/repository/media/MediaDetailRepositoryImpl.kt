@@ -35,7 +35,6 @@ query MediaDetail(${'$'}id: Int!) {
     duration
     genres
     averageScore
-    meanScore
     popularity
     favourites
     coverImage { extraLarge large medium color }
@@ -47,7 +46,6 @@ query MediaDetail(${'$'}id: Int!) {
     endDate { year month day }
     studios(sort: [NAME]) { edges { isMain node { id name isAnimationStudio } } }
     nextAiringEpisode { episode airingAt timeUntilAiring }
-    countryOfOrigin
     isAdult
     isFavourite
     tags { name rank isMediaSpoiler }
@@ -89,8 +87,6 @@ query MediaDetail(${'$'}id: Int!) {
     recommendations(page: 1, perPage: $RailPageSize, sort: [RATING_DESC]) {
       pageInfo { hasNextPage currentPage }
       nodes {
-        id
-        rating
         mediaRecommendation {
           id
           type
@@ -105,7 +101,6 @@ query MediaDetail(${'$'}id: Int!) {
           favourites
           title { romaji english native userPreferred }
           coverImage { extraLarge large medium color }
-          mediaListEntry { status }
         }
       }
     }
@@ -167,8 +162,6 @@ query MediaRecommendationsPage(${'$'}mediaId: Int!, ${'$'}page: Int!) {
     recommendations(page: ${'$'}page, perPage: $RailPageSize, sort: [RATING_DESC]) {
       pageInfo { hasNextPage currentPage }
       nodes {
-        id
-        rating
         mediaRecommendation {
           id
           type
@@ -183,7 +176,6 @@ query MediaRecommendationsPage(${'$'}mediaId: Int!, ${'$'}page: Int!) {
           favourites
           title { romaji english native userPreferred }
           coverImage { extraLarge large medium color }
-          mediaListEntry { status }
         }
       }
     }

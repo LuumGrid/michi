@@ -2,7 +2,6 @@ package com.luum.michi.app.profile.ui.favorites
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -101,9 +100,7 @@ internal fun ProfileFavoritesGridScreen(
                             contentDescription = strings.profileRemoveFavoriteAction,
                             onClick = { onRemove(favorite.id) },
                             enabled = !holder.isRemoving(favorite.id),
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(4.dp),
+                            modifier = Modifier.align(Alignment.TopEnd),
                         )
                     }
                 } else {

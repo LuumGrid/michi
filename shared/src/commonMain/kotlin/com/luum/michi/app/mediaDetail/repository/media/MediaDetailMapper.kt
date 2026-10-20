@@ -54,7 +54,6 @@ internal fun MediaDetailDto.toDomain(strings: LanguageStrings): MediaDetail {
         startedLabel = startDate?.format(strings),
         endedLabel = endDate?.format(strings),
         averageScore = averageScore?.takeIf { it > 0 },
-        meanScore = meanScore?.takeIf { it > 0 },
         popularity = popularity?.takeIf { it > 0 },
         favourites = favourites?.takeIf { it > 0 },
         descriptionPlain = description?.text.orEmpty(),
@@ -173,8 +172,6 @@ internal fun MediaRecommendationsConnectionDto?.toRecommendationsPage(
             volumesCount = recMedia.volumes,
             averageScore = recMedia.averageScore,
             favouritesCount = recMedia.favourites,
-            likesCount = node.rating,
-            viewerStatus = recMedia.mediaListEntry?.status,
         )
     }.distinctBy { it.id }
     return Page(

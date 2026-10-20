@@ -28,7 +28,6 @@ private fun characterMediaItem(id: Int) = CharacterMediaItem(
     format = null,
     year = null,
     averageScore = null,
-    viewerStatus = null,
     voiceActorName = null,
     voiceActorImage = null,
     voiceActorLanguage = null,

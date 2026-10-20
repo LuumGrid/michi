@@ -63,7 +63,6 @@ private fun sampleDetail(
     startedLabel = null,
     endedLabel = null,
     averageScore = null,
-    meanScore = null,
     popularity = null,
     favourites = null,
     descriptionPlain = "",
@@ -109,8 +108,6 @@ private fun recommendation(id: Int) = MediaRecommendationEntry(
     volumesCount = null,
     averageScore = null,
     favouritesCount = null,
-    likesCount = 0,
-    viewerStatus = null,
 )
 
 /**

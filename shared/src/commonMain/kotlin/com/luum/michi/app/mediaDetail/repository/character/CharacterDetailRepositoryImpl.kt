@@ -11,7 +11,6 @@ import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.media.repository.bestTitle
 import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
-import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import com.luum.michi.app.core.person.repository.dto.PersonNameDto
@@ -67,7 +66,6 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
           coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
-          mediaListEntry { status }
         }
       }
     }
@@ -97,7 +95,6 @@ query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, 
           coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
-          mediaListEntry { status }
         }
       }
     }
@@ -168,7 +165,6 @@ private data class CharacterMediaNodeDto(
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
     val startDate: FuzzyDateDto? = null,
-    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 // ────────────── mapper helpers ──────────────
@@ -191,7 +187,6 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
         format = node.format?.toTitleCase(),
         year = node.startDate?.year,
         averageScore = node.averageScore?.takeIf { it > 0 },
-        viewerStatus = node.mediaListEntry?.status,
         voiceActorName = va?.name?.userPreferred,
         voiceActorImage = va?.image?.let { personCoverSizes(it.large, it.medium) },
         voiceActorLanguage = va?.languageV2,

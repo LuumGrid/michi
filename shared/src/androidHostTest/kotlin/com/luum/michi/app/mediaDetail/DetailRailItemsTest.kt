@@ -76,7 +76,5 @@ class DetailRailItemsTest {
         volumesCount = 5,
         averageScore = null,
         favouritesCount = null,
-        likesCount = 0,
-        viewerStatus = null,
     )
 }

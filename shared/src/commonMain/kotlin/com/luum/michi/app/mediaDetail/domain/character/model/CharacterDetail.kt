@@ -35,7 +35,6 @@ internal data class CharacterMediaItem(
     val format: String?,
     val year: Int?,
     val averageScore: Int?,
-    val viewerStatus: String?,
     val voiceActorName: String?,
     val voiceActorImage: CoverSizes?,
     val voiceActorLanguage: String?,

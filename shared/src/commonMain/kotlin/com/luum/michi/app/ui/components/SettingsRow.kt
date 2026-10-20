@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,41 +35,56 @@ internal fun SettingsRow(
     divider: Boolean = true,
     valueColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     // Trailing widget instead of the chevron (e.g. an edit-mode remove button).
+    // It is painted as a centered end overlay, so a 48dp control never grows
+    // the row (the same row measures the same height in both modes).
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = valueColor,
-            )
-            if (trailing != null) {
-                Spacer(modifier = Modifier.width(8.dp))
-                trailing()
-            } else if (onClick != null) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = AppIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
                 )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = valueColor,
+                )
+                if (trailing != null) {
+                    // The overlay's footprint: 48dp touch target + the usual 8dp gap.
+                    Spacer(modifier = Modifier.width(TrailingSlotWidth))
+                } else if (onClick != null) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = AppIcons.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            if (trailing != null) {
+                Box(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    trailing()
+                }
             }
         }
     }
 }
+
+/** 48dp touch target + 8dp gap, reserved inside the text row. */
+private val TrailingSlotWidth = 56.dp

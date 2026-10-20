@@ -8,7 +8,6 @@ import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
-import com.luum.michi.app.mediaDetail.repository.MediaListStatusDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
 import com.luum.michi.app.core.person.repository.dto.PersonNameDto
@@ -65,7 +64,6 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
           coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
-          mediaListEntry { status }
         }
       }
     }
@@ -95,7 +93,6 @@ query StaffMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
           coverImage { extraLarge large medium color }
           averageScore
           startDate { year }
-          mediaListEntry { status }
         }
       }
     }
@@ -199,7 +196,6 @@ private data class StaffMediaNodeDto(
     val coverImage: MediaCoverImageDto? = null,
     val averageScore: Int? = null,
     val startDate: FuzzyDateDto? = null,
-    val mediaListEntry: MediaListStatusDto? = null,
 )
 
 @Serializable

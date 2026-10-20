@@ -47,7 +47,6 @@ internal data class MediaDetail(
     val startedLabel: String?,
     val endedLabel: String?,
     val averageScore: Int?,
-    val meanScore: Int?,
     val popularity: Int?,
     val favourites: Int?,
     val descriptionPlain: String,
@@ -182,6 +181,4 @@ internal data class MediaRecommendationEntry(
     val volumesCount: Int?,
     val averageScore: Int?,
     val favouritesCount: Int?,
-    val likesCount: Int,
-    val viewerStatus: String?,
 )
