@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.AppLanguage
@@ -22,6 +23,8 @@ import com.luum.michi.app.ui.components.PickerSheet
 import com.luum.michi.app.ui.components.ToolbarAction
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
+import com.luum.michi.app.ui.testTagsAsResourceIds
+import com.luum.michi.app.ui.TestTags
 
 /**
  * The single sign-in surface (list/Profile placeholders, Settings
@@ -47,7 +50,7 @@ internal fun AuthModal(
         title = "Michi",
         dismissLabel = strings.dismissAction,
         onDismiss = onDismiss,
-        modifier = modifier,
+        modifier = modifier.testTagsAsResourceIds(),
         headerActions = listOf(
             ToolbarAction(
                 id = ACTION_LANGUAGE,
@@ -84,6 +87,7 @@ internal fun AuthModal(
             onClick = onDismiss,
             emphasis = ButtonEmphasis.Secondary,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag(TestTags.AuthGuest),
         )
     }
 

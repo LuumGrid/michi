@@ -22,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.navigation.domain.TabSection
+import com.luum.michi.app.ui.TestTags
 
 /**
  * Bottom tab bar: 4 top-level destinations (Apple HIG tab bar + UITabBar:
@@ -70,7 +72,9 @@ internal fun TabBar(
                         tab = tab,
                         selected = tab.section == selected,
                         onClick = { onSelect(tab.section) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(TestTags.tab(tab.section)),
                     )
                 }
             }

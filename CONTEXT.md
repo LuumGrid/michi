@@ -415,6 +415,16 @@ A rail inside a card gets boxed in (first/last cards clip on the rounded corners
 - Good examples: `SettingsScreen`, `AnimeListStateHolder`, `MediaDetailStateHolder`, `ExploreStateHolder`, `ProfileRepositoryImpl`, `NotificationPreferences`.
 - Avoid generic names: `ViewModel.kt`, `Repository.kt`, `Screen.kt`, `TopBar.kt`, `UserForm`, `LanguageSelector`.
 
+## Baseline Profile y benchmark de arranque
+
+- Módulo `:baselineprofile` (`com.android.test` + `androidx.baselineprofile` 1.5.0) con `targetProjectPath = ":androidApp"`. `:androidApp` aplica el mismo plugin, declara `androidx.profileinstaller` y `baselineProfile(projects.baselineprofile)`.
+- El plugin crea las variantes sintéticas `nonMinifiedRelease` (perfil con nombres legibles, minify/shrink off) y `benchmarkRelease` (release-like, `profileable`); la `release` real sigue minificada y R8 reescribe las reglas del perfil. No hay que tocar `buildTypes` ni el manifest.
+- El perfil se guarda por defecto (`saveInSrc=true`) en `androidApp/src/release/generated/baselineProfiles/baseline-prof.txt` y `startup-prof.txt`, y se commitea con el resto del código.
+- `BaselineProfileGenerator` corre como invitado: `resolveStartDestination` fuerza DISCOVER sin sesión, cierra el modal de acceso si aparece, espera contenido, hace fling horizontal de un rail, vertical del dashboard, abre un media, hace scroll y vuelve. No depende del login.
+- Regenerarlo con un dispositivo API 33+ (o root) conectado: `./gradlew :androidApp:generateBaselineProfile`. Conviene hacerlo tras cambios grandes de UI/navegación o de dependencias que afecten al arranque.
+- `StartupBenchmark` compara `CompilationMode.None` frente a `CompilationMode.Partial(BaselineProfileMode.Require)` con `StartupTimingMetric`, 10 iteraciones por modo y TTID (mediana/mín/máx). Comando: `./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=Macrobenchmark`.
+- Los selectores de UiAutomator son testTags estables en `shared/.../ui/TestTags.kt`; el módulo de test repite sus literales porque no puede importar `internal` de la app. `testTagsAsResourceId` se activa solo en Android, en la raíz y en la hoja de acceso, y no cambia el aspecto.
+
 ## Workflow & Validation
 
 - Before structural edits, read nearby code first.

@@ -48,6 +48,7 @@ import com.luum.michi.app.core.model.resolved
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.LocalStrings
 import com.luum.michi.app.ui.network.LocalNetworkThrottle
+import com.luum.michi.app.ui.testTagsAsResourceIds
 import com.luum.michi.app.ui.theme.Theme
 import kotlinx.coroutines.launch
 
@@ -154,7 +155,8 @@ fun App(
                 targetState = route,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(MaterialTheme.colorScheme.background)
+                    .testTagsAsResourceIds(),
                 transitionSpec = {
                     (fadeIn(animationSpec = tabFadeSpec()) +
                         slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 } togetherWith

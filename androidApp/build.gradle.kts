@@ -4,6 +4,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.baselineprofile)
     alias(libs.plugins.composeCompiler)
 }
 
@@ -17,6 +18,13 @@ dependencies {
 
     // Compose entry point: setContent + activity-compose APIs.
     implementation(libs.androidx.activity.compose)
+
+    // Installs the generated Baseline Profile at install time and lets
+    // Macrobenchmark's CompilationMode.Partial find it.
+    implementation(libs.androidx.profileinstaller)
+
+    // Generates the profile and the startup benchmark for this app.
+    baselineProfile(projects.baselineprofile)
 }
 
 val keystoreProperties = Properties().apply {

@@ -12,8 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.ui.TestTags
 
 /** One item of a [MediaRail]: cover + two lines, plus an optional accent. */
 internal data class MediaRailItem(
@@ -80,6 +82,7 @@ internal fun MediaRail(
         } else {
             LazyRow(
                 state = rowState,
+                modifier = Modifier.testTag(TestTags.Rail),
                 contentPadding = PaddingValues(horizontal = RailHorizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {

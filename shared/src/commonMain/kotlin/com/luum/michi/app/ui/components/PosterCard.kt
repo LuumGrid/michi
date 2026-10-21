@@ -12,9 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.model.CoverSizes
+import com.luum.michi.app.ui.TestTags
 
 /**
  * The one poster card of the app: a portrait cover (token-sized) + up to two
@@ -51,7 +53,8 @@ internal fun PosterCard(
         Column(
             modifier = modifier
                 .width(size.width)
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .testTag(TestTags.Poster),
         ) {
             CoverImage(
                 cover = cover,

@@ -7,12 +7,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.ui.components.LoadStateContainer
+import com.luum.michi.app.ui.TestTags
 
 /**
  * The load/error/refresh switch shared by the four detail scopes (media,
@@ -63,7 +65,7 @@ internal fun DetailPageColumn(
     content: LazyListScope.() -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().testTag(TestTags.Detail),
         contentPadding = PaddingValues(bottom = 24.dp + bottomPadding),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         content = content,

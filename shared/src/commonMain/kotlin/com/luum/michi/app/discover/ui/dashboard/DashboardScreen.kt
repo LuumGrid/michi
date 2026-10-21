@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -33,6 +34,7 @@ import com.luum.michi.app.ui.components.scoreBadge
 import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.TestTags
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -128,6 +130,7 @@ private fun DashboardContent(
         ) {
             LazyColumn(
                 state = listState,
+                modifier = Modifier.testTag(TestTags.Dashboard),
                 contentPadding = PaddingValues(
                     top = 8.dp,
                     bottom = 16.dp + bottomPadding,
