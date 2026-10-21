@@ -25,6 +25,19 @@ internal fun voiceLanguageOptions(strings: LanguageStrings): List<VoiceLanguageO
 )
 
 /**
+ * The actor's AniList `languageV2` as the picker's localized label ("Japanese"
+ * → "Japonés"). Null or blank stays null; a language outside the picker falls
+ * through raw so it is never hidden.
+ */
+internal fun voiceLanguageLabel(value: String?, strings: LanguageStrings): String? {
+    val language = value?.takeIf { it.isNotBlank() } ?: return null
+    return voiceLanguageOptions(strings)
+        .firstOrNull { it.value.equals(language, ignoreCase = true) }
+        ?.label
+        ?: language
+}
+
+/**
  * Compact trailing control of the characters header: the shared [TrailingPill]
  * with a globe and a chevron.
  */

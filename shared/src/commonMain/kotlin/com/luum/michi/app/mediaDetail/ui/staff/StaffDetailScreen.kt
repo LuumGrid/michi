@@ -16,7 +16,9 @@ import com.luum.michi.app.mediaDetail.ui.components.addInfo
 import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
 import com.luum.michi.app.mediaDetail.ui.components.personBiography
 import com.luum.michi.app.mediaDetail.ui.components.rememberSpoilerRevealState
-import com.luum.michi.app.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaCardRail
+import com.luum.michi.app.ui.components.PersonCardRail
+import com.luum.michi.app.mediaDetail.ui.components.toPersonItem
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.staff.state.StaffDetailStateHolder
 import com.luum.michi.app.ui.language.Strings
@@ -83,7 +85,7 @@ private fun StaffDetailContent(
         item(key = "hero") {
             MediaDetailPersonHero(
                 name = detail.name,
-                nativeName = detail.nativeName,
+                secondaryLine = detail.nativeName,
                 image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
@@ -170,7 +172,7 @@ private fun RolesSection(
     onOpenMedia: (Int) -> Unit,
     onViewAll: () -> Unit,
 ) {
-    MediaRail(
+    MediaCardRail(
         title = strings.mediaDetailRolesTitle,
         items = holder.media.items.take(RailPageSize).map { it.toRailItem() },
         onSelect = onOpenMedia,
@@ -186,10 +188,10 @@ private fun CharactersSection(
     onOpenCharacter: (Int) -> Unit,
     onViewAll: () -> Unit,
 ) {
-    MediaRail(
+    PersonCardRail(
         title = strings.mediaDetailCharactersTitle,
-        items = holder.characters.items.take(RailPageSize).map { it.toRailItem() },
-        onSelect = onOpenCharacter,
+        items = holder.characters.items.take(RailPageSize).map { it.toPersonItem() },
+        onSelectPrimary = onOpenCharacter,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,
     )

@@ -115,7 +115,16 @@ internal data class MediaCharacterConnectionDto(
 internal data class MediaCharacterEdgeDto(
     val id: Int? = null,
     val role: String? = null,
+    val voiceActors: List<MediaVoiceActorDto> = emptyList(),
     val node: MediaCharacterNodeDto? = null,
+)
+
+@Serializable
+internal data class MediaVoiceActorDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
+    val languageV2: String? = null,
 )
 
 @Serializable

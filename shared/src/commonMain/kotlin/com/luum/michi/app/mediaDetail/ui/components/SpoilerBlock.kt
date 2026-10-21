@@ -29,6 +29,10 @@ import com.luum.michi.app.ui.icons.AppIcons
  * the text. Closed, the spoiler text is not composed at all — not even
  * transparent. The header carries a Button role and the action label for
  * accessibility; the icon is decorative.
+ *
+ * Inside another panel (the synopsis/biography prose) [bordered] false drops the
+ * outline and steps the fill to `surfaceVariant`, so the block never draws a
+ * panel inside a panel.
  */
 @Composable
 internal fun SpoilerBlock(
@@ -36,6 +40,7 @@ internal fun SpoilerBlock(
     isRevealed: Boolean,
     onToggle: () -> Unit,
     strings: LanguageStrings,
+    bordered: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val action = if (isRevealed) {
@@ -45,8 +50,12 @@ internal fun SpoilerBlock(
     }
     Surface(
         shape = PanelShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = flatBorder(),
+        color = if (bordered) {
+            MaterialTheme.colorScheme.surface
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        border = if (bordered) flatBorder() else null,
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {

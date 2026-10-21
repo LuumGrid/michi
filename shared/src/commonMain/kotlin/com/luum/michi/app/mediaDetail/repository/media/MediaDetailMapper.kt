@@ -26,6 +26,7 @@ import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaVoiceActor
 import com.luum.michi.app.core.medialist.domain.parseMediaListStatus
 import com.luum.michi.app.core.media.repository.toCoverSizes
 import com.luum.michi.app.core.person.repository.toCoverSizes
@@ -190,8 +191,16 @@ private fun MediaCharacterEdgeDto.toEntry(page: Int, index: Int): MediaCharacter
         name = node.name?.bestName.orEmpty(),
         image = node.image?.toCoverSizes(),
         role = parseCharacterRole(role),
+        voiceActor = voiceActors.firstOrNull()?.toEntry(),
     )
 }
+
+private fun MediaVoiceActorDto.toEntry(): MediaVoiceActor = MediaVoiceActor(
+    staffId = id,
+    name = name?.userPreferred.orEmpty(),
+    image = image?.toCoverSizes(),
+    language = languageV2?.takeIf { it.isNotBlank() },
+)
 
 private fun MediaStaffEdgeDto.toEntry(page: Int, index: Int): MediaStaffEntry? {
     val node = node ?: return null

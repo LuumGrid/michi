@@ -73,6 +73,12 @@ query MediaDetail(${'$'}id: Int!) {
       edges {
         id
         role
+        voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
+          id
+          name { userPreferred }
+          image { large medium }
+          languageV2
+        }
         node { id name { full native userPreferred } image { large medium } }
       }
     }
@@ -132,6 +138,12 @@ query MediaCharactersPage(${'$'}id: Int!, ${'$'}page: Int!) {
       edges {
         id
         role
+        voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
+          id
+          name { userPreferred }
+          image { large medium }
+          languageV2
+        }
         node { id name { full native userPreferred } image { large medium } }
       }
     }

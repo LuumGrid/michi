@@ -13,10 +13,14 @@ import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.flatBorder
 
 /**
- * Framed panel shared by the detail information sections (media info,
- * character info, staff info). Flat, like the list cards: `surface` fill +
- * `outlineVariant` border, never glass — the panel marks a data block, it does
- * not float. Callers own the `ColumnScope` content.
+ * Framed panel shared by the detail data blocks — the information sections
+ * (media info, character info, staff info), the link rows — and the prose
+ * sections (media synopsis, character/staff biographies). Flat, like the list
+ * cards: `surface` fill + `outlineVariant` border, never glass — the panel marks
+ * a data block, it does not float. A prose section's [SpoilerBlock] passes
+ * `bordered = false` so it does not box a panel inside this one.
+ *
+ * Callers own the `ColumnScope` content.
  */
 @Composable
 internal fun MediaDetailPanel(

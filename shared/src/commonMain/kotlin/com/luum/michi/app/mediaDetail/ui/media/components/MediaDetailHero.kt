@@ -23,13 +23,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.components.CoverImage
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.HeroCoverOverlap
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailHeroIdentity
 import com.luum.michi.app.core.media.domain.airingCountdown
 import com.luum.michi.app.core.media.domain.toLocalMediaReleaseDateTime
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
@@ -41,66 +42,53 @@ import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.icons.AppIcons
 
 /**
- * Full-bleed banner (230dp) with a bottom gradient into `surface`. The cover is
- * centered over the banner on both axes; the title/meta live just under the
- * banner (the studios are chips in the information panel, not a hero line).
- * Falls back to the entry's palette color (or `surfaceVariant`) when there is no
- * banner image.
+ * Full-bleed hero: a [MediaDetailBannerHeight] backdrop with a bottom gradient
+ * into `surface`, the [CoverSize.Featured] cover overlapping its bottom edge by
+ * [HeroCoverOverlap], and the title/meta identity to the right of the cover
+ * (the studios are chips in the information panel, not a hero line). Padding —
+ * not offset — places the cover, so the Box grows with whatever hangs lowest
+ * (a long title can push it past the banner). Falls back to the entry's palette
+ * color (or `surfaceVariant`) when there is no banner image.
  */
 @Composable
 internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
     val meta = listOfNotNull(detail.format, detail.season, detail.workStatusLabel(strings)).joinToString(" · ")
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
+    Box(modifier = Modifier.fillMaxWidth()) {
+        BannerBackdrop(
+            bannerUrl = detail.bannerUrl,
+            paletteHex = detail.paletteHex,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(BANNER_HEIGHT),
-            // Cover dead-center over the backdrop, both axes.
-            contentAlignment = Alignment.Center,
-        ) {
-            BannerBackdrop(
-                bannerUrl = detail.bannerUrl,
-                paletteHex = detail.paletteHex,
-                modifier = Modifier.fillMaxSize(),
-            )
-            CoverImage(
-                cover = detail.cover,
-                size = CoverSize.Featured,
-                bordered = true,
-            )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Column(
+                .height(MediaDetailBannerHeight),
+        )
+        CoverImage(
+            cover = detail.cover,
+            size = CoverSize.Featured,
+            bordered = true,
+            modifier = Modifier.padding(
+                start = 16.dp,
+                top = MediaDetailBannerHeight - HeroCoverOverlap,
+            ),
+        )
+        MediaDetailHeroIdentity(
+            name = detail.title,
+            secondaryLine = meta,
+            favourites = null,
+            strings = strings,
+            chips = emptyList(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = detail.title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (meta.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = meta,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
+                .padding(
+                    start = 16.dp + CoverSize.Featured.width + 16.dp,
+                    end = 16.dp,
+                    top = MediaDetailBannerHeight + 12.dp,
+                ),
+        )
     }
 }
 
-private val BANNER_HEIGHT = 230.dp
+private val MediaDetailBannerHeight = 180.dp
+
 @Composable
 private fun BannerBackdrop(
     bannerUrl: String?,

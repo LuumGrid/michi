@@ -43,6 +43,13 @@ internal fun Modifier.coverSize(size: CoverSize): Modifier =
     this.width(size.width).height(size.height)
 
 /**
+ * How far the hero's cover rises above the banner's bottom edge: half the
+ * [CoverSize.Featured] height, so the poster hangs into the content below
+ * instead of floating dead-center over the backdrop.
+ */
+internal val HeroCoverOverlap = CoverSize.Featured.height / 2
+
+/**
  * The standard avatar diameters: a settings/list **row** avatar, and the larger
  * **header** avatar (the profile card). Tokens so no surface invents a size.
  */

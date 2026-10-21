@@ -102,7 +102,7 @@ private fun StudioDetailGrid(
                 MediaDetailPersonHero(
                     name = detail.name,
                     // The animation flag reads as the line under the name.
-                    nativeName = if (detail.isAnimeStudio) {
+                    secondaryLine = if (detail.isAnimeStudio) {
                         strings.mediaDetailAnimeStudioLabel
                     } else {
                         strings.mediaDetailProducerLabel
@@ -113,11 +113,13 @@ private fun StudioDetailGrid(
                     showPortrait = false,
                 )
             }
-            item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
-                SectionHeader(
-                    title = strings.mediaDetailWorksTitle,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                )
+            if (workSections == null) {
+                item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
+                    SectionHeader(
+                        title = strings.mediaDetailWorksTitle,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
             }
         },
     )

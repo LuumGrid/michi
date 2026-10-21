@@ -1,6 +1,7 @@
 package com.luum.michi.app.mediaDetail
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.SpanishStrings
 import com.luum.michi.app.core.media.domain.MediaSeason
 import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
@@ -8,6 +9,7 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntr
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
+import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageLabel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -50,6 +52,15 @@ class DetailRailItemsTest {
 
         assertNull(item.subtitle)
         assertEquals("MANGA · Fall 2025 · Finished", item.meta)
+    }
+
+    @Test
+    fun voiceLanguageLabelLocalizesTheAniListLanguage() {
+        assertEquals("Japonés", voiceLanguageLabel("Japanese", SpanishStrings))
+        assertEquals("Japanese", voiceLanguageLabel("JAPANESE", EnglishStrings))
+        assertEquals("Klingon", voiceLanguageLabel("Klingon", SpanishStrings))
+        assertNull(voiceLanguageLabel(null, SpanishStrings))
+        assertNull(voiceLanguageLabel("  ", SpanishStrings))
     }
 
     private fun relation() = MediaDetailRelation(

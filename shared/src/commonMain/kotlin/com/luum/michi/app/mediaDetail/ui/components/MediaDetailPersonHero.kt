@@ -32,7 +32,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 /**
  * Shared person hero (character/staff/studio). With a portrait it is a row —
  * the cover (the [CoverSize.Featured] token) on the left, the identity column
- * (name, native name, favourites, chips) filling the rest — so the page stops
+ * (name, secondary line, favourites, chips) filling the rest — so the page stops
  * wasting the side air a centered portrait left. A studio has no portrait: it
  * passes [showPortrait] false and the identity goes full width. Neutral on
  * purpose, so every scope reuses the same shape without importing each other.
@@ -43,7 +43,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 @Composable
 internal fun MediaDetailPersonHero(
     name: String,
-    nativeName: String?,
+    secondaryLine: String?,
     image: CoverSizes?,
     favourites: Int?,
     strings: LanguageStrings,
@@ -60,9 +60,9 @@ internal fun MediaDetailPersonHero(
         ) {
             PersonPortrait(image)
             Spacer(modifier = Modifier.width(16.dp))
-            HeroIdentity(
+            MediaDetailHeroIdentity(
                 name = name,
-                nativeName = nativeName,
+                secondaryLine = secondaryLine,
                 favourites = favourites,
                 strings = strings,
                 chips = chips,
@@ -74,9 +74,9 @@ internal fun MediaDetailPersonHero(
             )
         }
     } else {
-        HeroIdentity(
+        MediaDetailHeroIdentity(
             name = name,
-            nativeName = nativeName,
+            secondaryLine = secondaryLine,
             favourites = favourites,
             strings = strings,
             chips = chips,
@@ -88,12 +88,12 @@ internal fun MediaDetailPersonHero(
 }
 
 /**
- * The detail-page title: the person heroes' name (headline, bold, wrapping to
- * three lines). Private to this file — the genre page's name lives in the
- * toolbar, so the hero is its only caller.
+ * The detail-page title: the person heroes' name and the media hero's title
+ * (headline, bold, wrapping to three lines). Shared by both heroes so a name
+ * reads the same wherever it is the page's identity.
  */
 @Composable
-private fun MediaDetailPageTitle(text: String, modifier: Modifier = Modifier) {
+internal fun MediaDetailPageTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.headlineSmall,
@@ -115,9 +115,9 @@ private fun PersonPortrait(image: CoverSizes?) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HeroIdentity(
+internal fun MediaDetailHeroIdentity(
     name: String,
-    nativeName: String?,
+    secondaryLine: String?,
     favourites: Int?,
     strings: LanguageStrings,
     chips: List<String>,
@@ -125,7 +125,7 @@ private fun HeroIdentity(
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.Start) {
         MediaDetailPageTitle(name)
-        nativeName?.takeIf { it.isNotBlank() }?.let {
+        secondaryLine?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = it,

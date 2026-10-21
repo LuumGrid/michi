@@ -128,6 +128,15 @@ internal data class MediaCharacterEntry(
     val name: String,
     val image: CoverSizes?,
     val role: MediaCharacterRole,
+    val voiceActor: MediaVoiceActor? = null,
+)
+
+/** The first Japanese voice actor of a character edge, when AniList sends one. */
+internal data class MediaVoiceActor(
+    val staffId: Int,
+    val name: String,
+    val image: CoverSizes?,
+    val language: String?,
 )
 
 internal data class MediaStaffEntry(

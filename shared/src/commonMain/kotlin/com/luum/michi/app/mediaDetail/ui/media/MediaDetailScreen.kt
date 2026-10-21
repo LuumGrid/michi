@@ -22,8 +22,10 @@ import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkGroup
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailLinkPanel
 import com.luum.michi.app.mediaDetail.ui.components.rememberSpoilerRevealState
 import com.luum.michi.app.mediaDetail.ui.components.toLinkItem
-import com.luum.michi.app.ui.components.MediaRail
-import com.luum.michi.app.mediaDetail.ui.components.toRailItem
+import com.luum.michi.app.ui.components.MediaCardRail
+import com.luum.michi.app.ui.components.PersonCardRail
+import com.luum.michi.app.mediaDetail.ui.components.toCardRailItem
+import com.luum.michi.app.mediaDetail.ui.components.toPersonItem
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailGenres
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailHero
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailHeroStats
@@ -42,9 +44,9 @@ import com.luum.michi.app.core.model.RailPageSize
  * → synopsis → information → genres → characters → staff → trailer → links
  * (streaming + external) → related → recommendations → tags.
  * Reached from any card via `State.openMedia`; back pops the detail stack.
- * Framed cards mark the data blocks (information, links); the media rails, the
- * trailer, the synopsis and the genre/tag chip rows stay edge-to-edge. The
- * editor pencil in the toolbar opens the entry editor for signed-in viewers;
+ * Framed panels mark the data blocks (synopsis, information, links); the media
+ * rails, the hero, the trailer and the genre/tag chip rows stay edge-to-edge.
+ * The editor pencil in the toolbar opens the entry editor for signed-in viewers;
  * the +1 lives on the list cards, not here.
  */
 @Composable
@@ -157,10 +159,11 @@ private fun MediaDetailContent(
         }
         if (holder.characters.items.isNotEmpty()) {
             item(key = "characters") {
-                MediaRail(
+                PersonCardRail(
                     title = strings.mediaDetailCharactersTitle,
-                    items = holder.characters.items.take(RailPageSize).map { it.toRailItem(strings) },
-                    onSelect = onOpenCharacter,
+                    items = holder.characters.items.take(RailPageSize).map { it.toPersonItem(strings) },
+                    onSelectPrimary = onOpenCharacter,
+                    onSelectSecondary = onOpenStaff,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_CHARACTERS) },
                     viewAllLabel = strings.viewAllAction,
                 )
@@ -168,10 +171,10 @@ private fun MediaDetailContent(
         }
         if (holder.staff.items.isNotEmpty()) {
             item(key = "staff") {
-                MediaRail(
+                PersonCardRail(
                     title = strings.mediaDetailTabStaff,
-                    items = holder.staff.items.take(RailPageSize).map { it.toRailItem() },
-                    onSelect = onOpenStaff,
+                    items = holder.staff.items.take(RailPageSize).map { it.toPersonItem() },
+                    onSelectPrimary = onOpenStaff,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_STAFF) },
                     viewAllLabel = strings.viewAllAction,
                 )
@@ -187,9 +190,9 @@ private fun MediaDetailContent(
         }
         if (detail.relations.isNotEmpty()) {
             item(key = "related") {
-                MediaRail(
+                MediaCardRail(
                     title = strings.mediaDetailRelationsTitle,
-                    items = detail.relations.take(RailPageSize).map { it.toRailItem(strings, isManga) },
+                    items = detail.relations.take(RailPageSize).map { it.toCardRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RELATED) },
                     viewAllLabel = strings.viewAllAction,
@@ -198,9 +201,10 @@ private fun MediaDetailContent(
         }
         if (holder.recommendations.items.isNotEmpty()) {
             item(key = "recommendations") {
-                MediaRail(
+                MediaCardRail(
                     title = strings.mediaDetailTabRecommendations,
-                    items = holder.recommendations.items.take(RailPageSize).map { it.toRailItem(strings, isManga) },
+                    items = holder.recommendations.items.take(RailPageSize)
+                        .map { it.toCardRailItem(strings, isManga) },
                     onSelect = onOpenMedia,
                     onViewAll = { onViewAll(DetailListKind.MEDIA_RECOMMENDATIONS) },
                     viewAllLabel = strings.viewAllAction,

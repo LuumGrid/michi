@@ -121,6 +121,46 @@ private fun mediaDetailPageJson() = buildJsonObject {
                 studioEdge(id = 10, name = "Madhouse", isMain = false, isAnimation = false),
             )))
         })
+        put("characters", buildJsonObject {
+            put("pageInfo", buildJsonObject {
+                put("hasNextPage", false)
+                put("currentPage", 1)
+            })
+            put("edges", JsonArray(listOf(
+                buildJsonObject {
+                    put("id", 1)
+                    put("role", "MAIN")
+                    put("node", buildJsonObject {
+                        put("id", 100)
+                        put("name", buildJsonObject { put("userPreferred", "Tanjiro") })
+                        put("image", buildJsonObject {
+                            put("large", "https://img.example/character-large.jpg")
+                            put("medium", "https://img.example/character-medium.jpg")
+                        })
+                    })
+                    put("voiceActors", JsonArray(listOf(
+                        buildJsonObject {
+                            put("id", 501)
+                            put("name", buildJsonObject { put("userPreferred", "Natsuki Hanae") })
+                            put("image", buildJsonObject {
+                                put("large", "https://img.example/actor-large.jpg")
+                                put("medium", "https://img.example/actor-medium.jpg")
+                            })
+                            put("languageV2", "Japanese")
+                        },
+                    )))
+                },
+                // No voiceActors at all: the character still maps, actor null.
+                buildJsonObject {
+                    put("id", 2)
+                    put("role", "SUPPORTING")
+                    put("node", buildJsonObject {
+                        put("id", 101)
+                        put("name", buildJsonObject { put("userPreferred", "Nezuko") })
+                    })
+                },
+            )))
+        })
         put("relations", buildJsonObject {
             put("edges", JsonArray(listOf(
                 buildJsonObject {
@@ -289,6 +329,43 @@ class MediaDetailMapperTest {
         assertEquals(MediaSeason.SUMMER, relation.season)
         assertEquals(2026, relation.year)
         assertEquals(MediaWorkStatus.RELEASING, relation.workStatus)
+    }
+
+    @Test
+    fun mapsTheFirstJapaneseVoiceActorAndLeavesMissingCastNull() = runBlocking {
+        val detail = loadDetail()
+
+        val withActor = detail.characters.items[0]
+        assertEquals(501, withActor.voiceActor?.staffId)
+        assertEquals("Natsuki Hanae", withActor.voiceActor?.name)
+        assertEquals("https://img.example/actor-large.jpg", withActor.voiceActor?.image?.large)
+        assertEquals("Japanese", withActor.voiceActor?.language)
+        assertNull(detail.characters.items[1].voiceActor)
+    }
+
+    @Test
+    fun detailQueryRequestsJapaneseVoiceActors() = runBlocking {
+        val graphQL = FakeGraphQL(listOf(mediaDetailPageJson()))
+        MediaDetailRepositoryImpl(graphQL).loadDetail(42, strings = EnglishStrings)
+
+        val query = graphQL.requests.single().query
+        assertTrue(query.contains("voiceActors(language: JAPANESE, sort: [RELEVANCE, ID])"), query)
+    }
+
+    @Test
+    fun charactersPageQueryAlsoRequestsJapaneseVoiceActors() = runBlocking {
+        val page = buildJsonObject {
+            put("Media", buildJsonObject { put("id", 42) })
+        }
+        val graphQL = FakeGraphQL(listOf(page))
+        MediaDetailRepositoryImpl(graphQL).loadCharactersPage(42, page = 2)
+
+        val request = graphQL.requests.single()
+        assertEquals("MediaCharactersPage", request.operationName)
+        assertTrue(
+            request.query.contains("voiceActors(language: JAPANESE, sort: [RELEVANCE, ID])"),
+            request.query,
+        )
     }
 
     @Test

@@ -54,6 +54,11 @@ private val MediaCardRailRowGap = 8.dp
  * nothing; the caller passes the first items it already has. [resetKey]
  * re-creates the scroll state in place when the item set changes (the app-wide
  * scroll rule).
+ *
+ * The subtitle is the item's [MediaRailItem.meta] when it has one (the same
+ * catalog line the "View all" rows use), otherwise its subtitle. An explicit
+ * [MediaRailItem.tag] becomes a text chip after the rank and before the stats —
+ * the rail never deduces a chip from the meta or the subtitle.
  */
 @Composable
 internal fun MediaCardRail(
@@ -151,14 +156,14 @@ private fun MediaCardRailCard(
     MediaCoverCard(
         cover = item.image,
         title = item.title,
-        subtitle = item.subtitle,
+        subtitle = item.meta ?: item.subtitle,
         onClick = onClick,
         modifier = Modifier.testTag(TestTags.Poster),
         titleMaxLines = if (compact) 1 else 2,
         subtitleMaxLines = 1,
         coverSize = if (compact) CoverSize.Compact else CoverSize.List,
         content = {
-            if (numbered || visibleStats.isNotEmpty()) {
+            if (numbered || item.tag != null || visibleStats.isNotEmpty()) {
                 Spacer(modifier = Modifier.weight(1f))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -167,6 +172,9 @@ private fun MediaCardRailCard(
                     // Ranking chips lead the stats, beside the rating.
                     if (numbered) {
                         MediaCardRailRankChip(rank)
+                    }
+                    item.tag?.let { tag ->
+                        StatPill(value = tag, icon = null)
                     }
                     visibleStats.forEach { stat ->
                         StatPill(value = stat.value, icon = stat.icon)

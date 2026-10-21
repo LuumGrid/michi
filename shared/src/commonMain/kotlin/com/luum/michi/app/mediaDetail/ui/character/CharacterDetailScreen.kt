@@ -32,10 +32,11 @@ import com.luum.michi.app.ui.components.SectionHeader
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguagePill
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailVoiceLanguageSheet
 import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageOptions
-import com.luum.michi.app.ui.components.MediaRail
-import com.luum.michi.app.ui.components.MediaRailItem
+import com.luum.michi.app.ui.components.MediaCardRail
+import com.luum.michi.app.ui.components.PersonCardRail
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
-import com.luum.michi.app.mediaDetail.ui.components.toRailItem
+import com.luum.michi.app.mediaDetail.ui.components.toAppearanceCardItem
+import com.luum.michi.app.mediaDetail.ui.components.toVoiceActorItem
 import com.luum.michi.app.ui.language.Strings
 import com.luum.michi.app.core.model.RailPageSize
 
@@ -101,7 +102,7 @@ private fun CharacterDetailContent(
         item(key = "hero") {
             MediaDetailPersonHero(
                 name = detail.name,
-                nativeName = detail.nativeName,
+                secondaryLine = detail.nativeName,
                 image = detail.image,
                 favourites = detail.favourites,
                 strings = strings,
@@ -215,18 +216,10 @@ private fun VoiceActorsSection(
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        MediaRail(
+        PersonCardRail(
             title = null,
-            items = voiceActors.mapNotNull { item ->
-                // Only actors with an id are reachable; the rest are dropped.
-                val actorId = item.voiceActorId ?: return@mapNotNull null
-                MediaRailItem(
-                    id = actorId,
-                    title = item.voiceActorName.orEmpty(),
-                    image = item.voiceActorImage,
-                )
-            },
-            onSelect = onOpenStaff,
+            items = voiceActors.mapNotNull { it.toVoiceActorItem() },
+            onSelectPrimary = onOpenStaff,
             // No cast in the chosen language: say so instead of dropping the
             // whole section (which would hide the language picker).
             emptyLabel = strings.mediaDetailNoVoiceActorsLabel,
@@ -243,9 +236,9 @@ private fun AppearancesSection(
     onOpenMedia: (Int) -> Unit,
     onViewAll: () -> Unit,
 ) {
-    MediaRail(
+    MediaCardRail(
         title = strings.mediaDetailAppearancesTitle,
-        items = holder.media.items.take(RailPageSize).map { it.toRailItem(strings) },
+        items = holder.media.items.take(RailPageSize).map { it.toAppearanceCardItem(strings) },
         onSelect = onOpenMedia,
         onViewAll = onViewAll,
         viewAllLabel = strings.viewAllAction,

@@ -34,14 +34,12 @@ import com.luum.michi.app.mediaDetail.domain.common.SpoilerText
 import com.luum.michi.app.mediaDetail.domain.common.toSegments
 import com.luum.michi.app.ui.components.SectionHeader
 
-/** Baked 16dp matching the full-width layout (panels are already inset). */
-private val HorizontalPadding = 16.dp
-
 /**
  * Collapsible long-text section shared by every detail scope (media
- * synopsis, character/staff biography). Collapsed to five lines; the
- * read more/less link only appears when the collapsed text actually
- * overflows (or while expanded, so it can always be folded back).
+ * synopsis, character/staff biography). Painted inside [MediaDetailPanel]: the
+ * prose is a data block, like the information grid and the link rows. Collapsed
+ * to five lines; the read more/less link only appears when the collapsed text
+ * actually overflows (or while expanded, so it can always be folded back).
  *
  * [stats] are the biography's `Label: value` lines AniList marked in bold (read
  * by `core/util`): they become a stat block above the prose, with the label in
@@ -73,11 +71,7 @@ internal fun MediaDetailExpandableText(
     val segments = remember(text, spoilers) { SpoilerText(text, spoilers).toSegments() }
     val visibleSegments = if (expanded) segments else segments.collapsedSegments()
     val hasMoreSegments = visibleSegments.size < segments.size
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = HorizontalPadding),
-    ) {
+    MediaDetailPanel(modifier = modifier) {
         SectionHeader(title)
         Spacer(modifier = Modifier.height(8.dp))
         if (stats.isNotEmpty()) {
@@ -112,6 +106,7 @@ internal fun MediaDetailExpandableText(
                             isRevealed = spoilerState.isRevealed(segment.spoilerIndex),
                             onToggle = { spoilerState.toggle(segment.spoilerIndex) },
                             strings = strings,
+                            bordered = false,
                         )
                     }
                 }

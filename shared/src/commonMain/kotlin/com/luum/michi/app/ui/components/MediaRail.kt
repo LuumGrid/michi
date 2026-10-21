@@ -23,9 +23,12 @@ internal data class MediaRailItem(
     val title: String,
     val image: CoverSizes?,
     val subtitle: String? = null,
-    // Extra catalog line shown only in the "View all" rows (format · season
-    // year · status); the rail stays compact and ignores it.
+    // Extra catalog line: the "View all" rows take it as the subtitle and the
+    // card rail paints it as the subtitle when present.
     val meta: String? = null,
+    // Explicit text chip for the card rail; null = no chip. The rail never
+    // derives a chip from meta or subtitle.
+    val tag: String? = null,
     // Stable identity for LazyRow. Defaults to the id, but callers whose id
     // can repeat (staff with multiple roles) pass a unique edge key.
     val key: String = "",

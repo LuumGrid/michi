@@ -2,6 +2,7 @@ package com.luum.michi.app.ui
 
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.HeroCoverOverlap
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,6 +24,11 @@ class CoverSizeTest {
     fun theRailIsTheExactMidpointOfTheOtherTwo() {
         assertEquals((CoverSize.List.width + CoverSize.Featured.width) / 2, CoverSize.Rail.width)
         assertEquals(131.5.dp, CoverSize.Rail.width)
+    }
+
+    @Test
+    fun theHeroCoverOverlapIsHalfTheFeaturedCover() {
+        assertEquals(CoverSize.Featured.height / 2, HeroCoverOverlap)
     }
 
     @Test
