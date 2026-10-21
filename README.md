@@ -20,7 +20,7 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 
 | Anime list | Manga list | Discover | Calendar |
 |:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-manga.webp" width="200" alt="Manga list (Current)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
+| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-manga.webp" width="200" alt="Manga list (Reading)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
 
 | Profile | Completed list |
 |:---:|:---:|
