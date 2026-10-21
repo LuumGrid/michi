@@ -22,9 +22,13 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 |:---:|:---:|:---:|:---:|
 | <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-manga.webp" width="200" alt="Manga list (Reading)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
 
-| Profile | Completed list |
-|:---:|:---:|
-| <img src="docs/screenshots/07-profile.webp" width="200" alt="Profile with favorites" /> | <img src="docs/screenshots/02-anime-completed.webp" width="200" alt="Anime list (Completed TV)" /> |
+| Profile | Notifications | Completed list |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/07-profile.webp" width="200" alt="Profile with favorites" /> | <img src="docs/screenshots/06-notifications.webp" width="200" alt="Notifications feed" /> | <img src="docs/screenshots/02-anime-completed.webp" width="200" alt="Anime list (Completed TV)" /> |
+
+| Media detail | Character detail | Staff detail | Studio detail |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/08-media-detail.webp" width="200" alt="Media detail: hero, stats and synopsis" /> | <img src="docs/screenshots/09-character-detail.webp" width="200" alt="Character detail with voice actors" /> | <img src="docs/screenshots/10-staff-detail.webp" width="200" alt="Staff detail with roles" /> | <img src="docs/screenshots/11-studio-detail.webp" width="200" alt="Studio detail with works grouped by year" /> |
 
 ## Features
 
