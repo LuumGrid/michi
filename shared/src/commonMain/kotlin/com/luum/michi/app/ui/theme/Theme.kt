@@ -27,7 +27,7 @@ internal fun ThemeType.resolveDarkTheme(systemDark: Boolean): Boolean = when (th
  */
 @Composable
 internal fun Theme(
-    palette: AppPalette = AppPalette.DEFAULT,
+    palette: AppPalette = AppPalette.MONO,
     type: ThemeType = ThemeType.SYSTEM,
     font: AppFont = AppFont.JAKARTA,
     surfaces: SurfaceStyle = SurfaceStyle.GLASS,

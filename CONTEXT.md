@@ -358,6 +358,7 @@ Reglas rápidas; cada una apunta a su componente. Si algo no encaja, se arregla 
 
 ## UI Decisions
 
+- **Marca**: símbolo negro sobre blanco en `docs/brand/michi-symbol-black.svg`; paleta por defecto `Mono`; estilos disponibles: Tonal spot, Neutral, Vibrant, Rainbow y Fidelity.
 - Bottom tab labels (4):
   - Spanish: `Descubrir`, `Anime`, `Manga`, `Perfil`.
   - English: `Discover`, `Anime`, `Manga`, `Profile`.

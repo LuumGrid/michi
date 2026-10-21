@@ -7,12 +7,13 @@
     <application
         android:name=".MichiApplication"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="Michi"
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.Michi">
         <activity
             android:exported="true"
             android:launchMode="singleTask"

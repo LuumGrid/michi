@@ -17,17 +17,13 @@ internal enum class AppPaletteStyle(
     TONAL_SPOT("tonal_spot", "Tonal spot", PaletteStyle.TonalSpot),
     NEUTRAL("neutral", "Neutral", PaletteStyle.Neutral),
     VIBRANT("vibrant", "Vibrant", PaletteStyle.Vibrant),
-    EXPRESSIVE("expressive", "Expressive", PaletteStyle.Expressive),
     RAINBOW("rainbow", "Rainbow", PaletteStyle.Rainbow),
-    FRUIT_SALAD("fruit_salad", "Fruit salad", PaletteStyle.FruitSalad),
-    MONOCHROME("monochrome", "Monochrome", PaletteStyle.Monochrome),
     FIDELITY("fidelity", "Fidelity", PaletteStyle.Fidelity),
-    CONTENT("content", "Content", PaletteStyle.Content),
 }
 
 /**
  * The one style lookup. Ids are explicit strings on purpose (stable under a
- * rename); unknown or null falls back to [AppPaletteStyle.TONAL_SPOT].
+ * rename); unknown, removed or null ids fall back to [AppPaletteStyle.TONAL_SPOT].
  */
 internal fun paletteStyleForId(id: String?): AppPaletteStyle =
     AppPaletteStyle.entries.firstOrNull { it.id == id } ?: AppPaletteStyle.TONAL_SPOT

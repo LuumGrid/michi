@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="michi_window_background">#FF0F0F0F</color>
+    <color name="michi_splash_background">#FF000000</color>
+    <color name="michi_splash_icon">#FFFFFFFF</color>
+</resources>

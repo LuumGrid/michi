@@ -49,6 +49,7 @@ import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.LocalStrings
 import com.luum.michi.app.ui.network.LocalNetworkThrottle
 import com.luum.michi.app.ui.testTagsAsResourceIds
+import com.luum.michi.app.ui.theme.PlatformThemeModeEffect
 import com.luum.michi.app.ui.theme.Theme
 import kotlinx.coroutines.launch
 
@@ -81,6 +82,10 @@ fun App(
     )
 
     val strings = getLanguageStrings(settingsState.language)
+
+    // Keep Android's per-app night mode in sync with the user's choice: the
+    // next cold start's splash/window background then uses the same mode.
+    PlatformThemeModeEffect(settingsState.themeType)
 
     // Login services (AniList today; MAL appends here tomorrow): shared by
     // the sign-in modal everywhere it opens.

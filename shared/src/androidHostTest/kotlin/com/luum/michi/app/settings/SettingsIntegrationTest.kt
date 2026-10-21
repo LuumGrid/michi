@@ -519,7 +519,7 @@ class SettingsIntegrationTest {
         try {
             val absent = stateWith(ScriptedSettingsGraphQL(emptyList()), FakeSettingsStore())
             assertEquals(AppLanguage.default, absent.language)
-            assertEquals(AppPalette.DEFAULT, absent.palette)
+            assertEquals(AppPalette.MONO, absent.palette)
             assertEquals(AppPaletteStyle.TONAL_SPOT, absent.themeStyle)
             assertEquals(ThemeType.SYSTEM, absent.themeType)
             assertEquals(AppFont.JAKARTA, absent.font)
@@ -536,7 +536,7 @@ class SettingsIntegrationTest {
             val state = stateWith(ScriptedSettingsGraphQL(emptyList()), corrupt)
 
             assertEquals(AppLanguage.default, state.language)
-            assertEquals(AppPalette.DEFAULT, state.palette)
+            assertEquals(AppPalette.MONO, state.palette)
             assertEquals(AppPaletteStyle.TONAL_SPOT, state.themeStyle)
             assertEquals(ThemeType.SYSTEM, state.themeType)
             assertEquals(AppFont.JAKARTA, state.font)

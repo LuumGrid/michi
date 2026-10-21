@@ -139,7 +139,18 @@ internal fun SettingsScreen(
                     SettingsRow(
                         label = strings.settingsStyleTitle,
                         value = settingsState.themeStyle.displayName,
-                        onClick = { openSheet = SettingsSheet.Style },
+                        // MONO always renders Monochrome, so the style choice
+                        // does not apply. The stored value is left untouched.
+                        onClick = if (settingsState.palette == AppPalette.MONO) {
+                            null
+                        } else {
+                            { openSheet = SettingsSheet.Style }
+                        },
+                        valueColor = if (settingsState.palette == AppPalette.MONO) {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                     SettingsRow(
                         label = strings.settingsImageQualityTitle,
