@@ -7,6 +7,14 @@ import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.domain.model.MediaItem
 
 /**
+ * Items per dashboard rail: 12 fills four columns of the three-row card rail,
+ * so the last column never paints a lonely card. Kept separate from the
+ * detail/profile `RailPageSize` (10) because only the dashboard stacks cards in
+ * threes.
+ */
+internal const val DashboardRailPageSize = 12
+
+/**
  * Dashboard rails for one media type, keyed by [DashboardSectionKind]. The
  * type-scoped load keeps each request to one type's aliases (≈10), instead of
  * firing every rail in a single heavy query.

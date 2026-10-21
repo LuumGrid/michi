@@ -1,7 +1,7 @@
 package com.luum.michi.app.discover
 
 import com.luum.michi.app.core.language.domain.EnglishStrings
-import com.luum.michi.app.core.model.RailPageSize
+import com.luum.michi.app.discover.domain.DashboardRailPageSize
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
 import com.luum.michi.app.discover.domain.model.DashboardSectionKind
 import com.luum.michi.app.discover.repository.DashboardRepositoryImpl
@@ -236,13 +236,13 @@ class DashboardIntegrationTest {
     }
 
     @Test
-    fun queryPagesEveryAnimeRailAtRailPageSize() {
+    fun queryPagesEveryAnimeRailAtDashboardRailPageSize() {
         val graphQL = FakeGraphQL(listOf(dashboardJson(trendingAnime = listOf(mediaJson(1, "A")))))
         val holder = wired(graphQL)
 
         holder.load()
 
-        assertEquals(9, Regex("perPage: $RailPageSize").findAll(graphQL.requests.single().query).count())
+        assertEquals(9, Regex("perPage: $DashboardRailPageSize").findAll(graphQL.requests.single().query).count())
     }
 
     @Test

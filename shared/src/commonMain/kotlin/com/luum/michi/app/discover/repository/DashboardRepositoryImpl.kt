@@ -2,6 +2,7 @@ package com.luum.michi.app.discover.repository
 
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.discover.domain.DashboardFeed
+import com.luum.michi.app.discover.domain.DashboardRailPageSize
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.model.BestRatedMinPopularity
 import com.luum.michi.app.discover.domain.model.DashboardMediaType
@@ -12,7 +13,6 @@ import com.luum.michi.app.core.media.domain.currentSeasonAndYear
 import com.luum.michi.app.core.media.domain.next
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
-import com.luum.michi.app.core.model.RailPageSize
 import com.luum.michi.app.core.network.repository.AniListJson
 import com.luum.michi.app.core.network.domain.NetworkResult
 import com.luum.michi.app.core.network.domain.map
@@ -36,47 +36,47 @@ query AnimeDashboard(
   ${'$'}recentStart: FuzzyDateInt,
   ${'$'}isAdult: Boolean
 ) {
-  seasonal: Page(perPage: $RailPageSize) {
+  seasonal: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, season: ${'$'}currentSeason, seasonYear: ${'$'}currentYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  upcomingSeason: Page(perPage: $RailPageSize) {
+  upcomingSeason: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, season: ${'$'}nextSeason, seasonYear: ${'$'}nextYear, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  trendingAnime: Page(perPage: $RailPageSize) {
+  trendingAnime: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, sort: TRENDING_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularAnime: Page(perPage: $RailPageSize) {
+  popularAnime: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularMovie: Page(perPage: $RailPageSize) {
+  popularMovie: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format: MOVIE, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestAnime: Page(perPage: $RailPageSize) {
+  bestAnime: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestMovie: Page(perPage: $RailPageSize) {
+  bestMovie: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format: MOVIE, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestAnimeNow: Page(perPage: $RailPageSize) {
+  bestAnimeNow: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format_in: [TV, TV_SHORT, OVA, ONA, SPECIAL], status: RELEASING, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestMovieNow: Page(perPage: $RailPageSize) {
+  bestMovieNow: Page(perPage: $DashboardRailPageSize) {
     media(type: ANIME, format: MOVIE, startDate_greater: ${'$'}recentStart, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
@@ -89,52 +89,52 @@ query MangaDashboard(
   ${'$'}recentMangaStart: FuzzyDateInt,
   ${'$'}isAdult: Boolean
 ) {
-  newReleasesManga: Page(perPage: $RailPageSize) {
+  newReleasesManga: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, startDate_greater: ${'$'}recentMangaStart, popularity_greater: $NewReleasesMinPopularity, sort: SCORE_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  trendingManga: Page(perPage: $RailPageSize) {
+  trendingManga: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, sort: TRENDING_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularManga: Page(perPage: $RailPageSize) {
+  popularManga: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin: JP, format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularLightNovel: Page(perPage: $RailPageSize) {
+  popularLightNovel: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, format: NOVEL, sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularManhwa: Page(perPage: $RailPageSize) {
+  popularManhwa: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin: KR, format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  popularManhua: Page(perPage: $RailPageSize) {
+  popularManhua: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin_in: [CN, TW], format_in: [MANGA, ONE_SHOT], sort: POPULARITY_DESC, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestManga: Page(perPage: $RailPageSize) {
+  bestManga: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin: JP, format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestLightNovel: Page(perPage: $RailPageSize) {
+  bestLightNovel: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, format: NOVEL, sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestManhwa: Page(perPage: $RailPageSize) {
+  bestManhwa: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin: KR, format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }
   }
-  bestManhua: Page(perPage: $RailPageSize) {
+  bestManhua: Page(perPage: $DashboardRailPageSize) {
     media(type: MANGA, countryOfOrigin_in: [CN, TW], format_in: [MANGA, ONE_SHOT], sort: SCORE_DESC, popularity_greater: $BestRatedMinPopularity, isAdult: ${'$'}isAdult) {
 $MediaFields
     }

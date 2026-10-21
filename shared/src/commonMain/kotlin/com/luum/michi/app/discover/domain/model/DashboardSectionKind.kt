@@ -37,6 +37,28 @@ internal enum class DashboardSectionKind(val mediaType: DashboardMediaType) {
     BEST_LIGHT_NOVEL(DashboardMediaType.MANGA),
     BEST_MANHWA(DashboardMediaType.MANGA),
     BEST_MANHUA(DashboardMediaType.MANGA),
+    ;
+
+    /**
+     * "Best rated" shelves are rankings: their card rail paints the position as
+     * a chip beside the score. Explicit list (never a name prefix), so renaming
+     * a kind cannot silently drop or add numbering.
+     */
+    val isRanked: Boolean
+        get() = this in RankedSections
+
+    private companion object {
+        val RankedSections = setOf(
+            BEST_ANIME,
+            BEST_MOVIE,
+            BEST_ANIME_NOW,
+            BEST_MOVIE_NOW,
+            BEST_MANGA,
+            BEST_LIGHT_NOVEL,
+            BEST_MANHWA,
+            BEST_MANHUA,
+        )
+    }
 }
 
 /** Resolves a `DetailDestination.Catalog` kind id (the enum name) back to its enum. */

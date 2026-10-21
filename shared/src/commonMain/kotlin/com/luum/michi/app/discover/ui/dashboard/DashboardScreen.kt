@@ -25,13 +25,13 @@ import com.luum.michi.app.discover.domain.model.title
 import com.luum.michi.app.discover.ui.dashboard.state.DashboardStateHolder
 import com.luum.michi.app.ui.components.CatalogChipRail
 import com.luum.michi.app.ui.components.CoverStat
-import com.luum.michi.app.ui.components.CoverSize
 import com.luum.michi.app.ui.components.LoadStateContainer
-import com.luum.michi.app.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaCardRail
+import com.luum.michi.app.ui.components.MediaCardRailRows
 import com.luum.michi.app.ui.components.MediaRailItem
+import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.popularityBadge
 import com.luum.michi.app.ui.components.scoreBadge
-import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.rememberResetListState
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.TestTags
@@ -143,18 +143,21 @@ private fun DashboardContent(
                 ) { (kind, media) ->
                     // Rails stay edge-to-edge (card vs edge-to-edge rule):
                     // a rail boxed in a card clips on the rounded corners.
-                    MediaRail(
+                    MediaCardRail(
                         title = kind.title(strings, current, next),
                         items = media.mapNotNull { it.toRailItem(kind) },
+                        // The leading rail of each selector is one big card;
+                        // the "best" shelves are ranked columns of three.
+                        rows = if (kind.isFeatured) {
+                            MediaCardRailRows.ONE
+                        } else {
+                            MediaCardRailRows.THREE
+                        },
+                        numbered = kind.isRanked,
                         onSelect = onOpenMedia,
                         // "View all" opens the same catalog as a full page.
                         onViewAll = { onOpenCatalog(kind.name) },
                         viewAllLabel = strings.viewAllAction,
-                        size = if (kind.isFeatured) {
-                            CoverSize.Featured
-                        } else {
-                            CoverSize.Rail
-                        },
                     )
                 }
             }
@@ -162,7 +165,7 @@ private fun DashboardContent(
     }
 }
 
-/** The leading, featured rail of each selector. */
+/** The leading rail of each selector (one row instead of three). */
 private val DashboardSectionKind.isFeatured: Boolean
     get() = this == DashboardSectionKind.SEASONAL || this == DashboardSectionKind.NEW_RELEASES_MANGA
 
@@ -174,12 +177,12 @@ private fun MediaItem.toRailItem(kind: DashboardSectionKind): MediaRailItem? = i
         image = cover,
         subtitle = meta,
         placeholderHex = placeholderHex,
-        stats = badges(kind),
+        stats = statChips(kind),
     )
 }
 
-/** The rail's cover badges for one item, in paint order; a null value paints nothing. */
-private fun MediaItem.badges(kind: DashboardSectionKind): List<CoverStat> =
+/** The rail's chips for one item, in paint order; a null value paints nothing. */
+private fun MediaItem.statChips(kind: DashboardSectionKind): List<CoverStat> =
     kind.cardStats().mapNotNull { stat ->
         when (stat) {
             DashboardCardStat.SCORE -> scoreBadge(averageScore)

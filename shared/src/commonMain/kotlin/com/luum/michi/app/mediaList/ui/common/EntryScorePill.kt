@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.luum.michi.app.mediaList.domain.common.formattedScore
+import com.luum.michi.app.ui.components.StatPill
 
 /**
  * The card's score slot, shared by the anime/manga entry bodies inside their
@@ -20,9 +21,9 @@ internal fun RowScope.EntryScorePill(
 ) {
     if (score > 0.0) {
         if (isSmileyFormat) {
-            ScorePill(score = formatSmiley(score.toFloat()), icon = null)
+            StatPill(value = formatSmiley(score.toFloat()), icon = null)
         } else {
-            ScorePill(score = formattedScore(score))
+            StatPill(value = formattedScore(score))
         }
     } else {
         Spacer(modifier = Modifier.weight(1f))

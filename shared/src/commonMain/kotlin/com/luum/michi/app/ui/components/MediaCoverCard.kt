@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.model.CoverSizes
 
@@ -38,8 +39,10 @@ import com.luum.michi.app.core.model.CoverSizes
  * on the text side keeps longer content from clipping. OS font scale is
  * capped inside the card (see CardCappedDensity).
  *
- * The cover is drawn from [CoverSize.List] (width **and** height) and the row
+ * The cover is drawn from [coverSize] (width **and** height) and the row
  * height derives from it, so the rendered poster always matches the token.
+ * [CoverSize.List] is the default, keeping every existing row byte-identical;
+ * a card rail may pass a smaller token.
  */
 @Composable
 internal fun MediaCoverCard(
@@ -53,6 +56,9 @@ internal fun MediaCoverCard(
     // budget only spends the air the row already reserves (still ellipsized).
     titleMaxLines: Int = 2,
     subtitleMaxLines: Int = 1,
+    // Token for the cover (and the row height); the default keeps every
+    // existing list/calendar/notification row identical.
+    coverSize: CoverSize = CoverSize.List,
     content: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     CardCappedDensity {
@@ -69,13 +75,13 @@ internal fun MediaCoverCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(CardHeight)
-                    .padding(12.dp),
+                    .height(mediaCoverCardHeight(coverSize))
+                    .padding(MediaCoverCardPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Both dimensions come from the token; the row height derives
                 // from it, so the cover and the card can never drift apart.
-                CoverImage(cover = cover, size = CoverSize.List)
+                CoverImage(cover = cover, size = coverSize)
                 Spacer(modifier = Modifier.width(12.dp))
                 // Header top-anchored, slot filling the rest: bottom pills
                 // terminate flush with the cover bottom. Bounded by the fixed Row
@@ -120,5 +126,9 @@ internal fun MediaCoverCard(
     }
 }
 
-/** List-row height so its cover is exactly [CoverSize.List] plus the row padding. */
-private val CardHeight = CoverSize.List.height + 24.dp
+/** Inner air of a row card; the cover and the row share it. */
+internal val MediaCoverCardPadding = 12.dp
+
+/** Row height for [coverSize]: the token's 3:4 plus the card's own air. */
+internal fun mediaCoverCardHeight(coverSize: CoverSize): Dp =
+    coverSize.height + MediaCoverCardPadding * 2
