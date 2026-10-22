@@ -15,7 +15,8 @@ internal data class MediaRailItem(
     // Explicit text chip for the card rail; null = no chip. The rail never
     // derives a chip from meta or subtitle.
     val tag: String? = null,
-    // Stable identity for the grids' lazy keys.
+    // Stable identity for the grids' lazy keys. Defaults to the id, but callers
+    // whose id can repeat (staff with multiple roles) pass a unique edge key.
     val key: String = "",
     /** Cover color painted while a poster-grid image loads. */
     val placeholderHex: String? = null,
