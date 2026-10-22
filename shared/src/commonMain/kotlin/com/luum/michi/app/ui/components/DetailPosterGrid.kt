@@ -160,8 +160,6 @@ private fun PosterGridCard(
         subtitle = item.subtitle,
         placeholderHex = item.placeholderHex,
         stats = item.stats,
-        // A grid cell lets the subtitle hug the title.
-        reserveTitleLines = false,
         overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
     )
 }

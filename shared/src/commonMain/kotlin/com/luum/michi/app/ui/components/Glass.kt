@@ -44,7 +44,6 @@ internal val GlassCircleCompactSize = 32.dp
 internal val GlassTouchTargetSize = 48.dp
 
 /** Icon inside [GlassCircleSize] / [GlassCircleCompactSize]. */
-internal val GlassCircleIconSize = 24.dp
 internal val GlassCircleCompactIconSize = 18.dp
 
 /**

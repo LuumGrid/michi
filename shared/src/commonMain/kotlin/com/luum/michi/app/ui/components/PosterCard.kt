@@ -20,14 +20,13 @@ import com.luum.michi.app.ui.TestTags
 
 /**
  * The one poster card of the app: a portrait cover (token-sized) + up to two
- * cover badges + two reserved title lines + an optional subtitle. Rails, the
- * "View all" grids and the studio grid all draw this card, so a poster looks the
+ * cover badges + up to two title lines + an optional subtitle. "View all"
+ * grids and the studio grid all draw this card, so a poster looks the
  * same everywhere (one radius; the type scale steps with the token: a [CoverSize.Rail]
  * card reads `bodySmall`/`labelSmall`, a [CoverSize.Featured] one `bodyMedium`/
  * `bodySmall`). Takes only primitives, so no feature model crosses into `ui`. A
- * null [onClick] renders a display-only card. [reserveTitleLines] keeps two title
- * lines even for a one-line title (rails stay even); grids pass false so the
- * subtitle hugs the title.
+ * null [onClick] renders a display-only card. The subtitle sits right under the
+ * title.
  */
 @Composable
 internal fun PosterCard(
@@ -39,7 +38,6 @@ internal fun PosterCard(
     subtitle: String? = null,
     placeholderHex: String? = null,
     stats: List<CoverStat> = emptyList(),
-    reserveTitleLines: Boolean = true,
     // Extra cover overlay painted after the badges (e.g. an edit-mode remove
     // button); a null keeps every existing card byte-identical.
     overlay: (@Composable BoxScope.() -> Unit)? = null,
@@ -85,9 +83,8 @@ internal fun PosterCard(
             Text(
                 text = title,
                 style = if (isLarge) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
-                // Rails reserve both lines (the row stays even); a grid lets the
-                // subtitle hug the title.
-                minLines = if (reserveTitleLines) 2 else 1,
+                // The subtitle hugs the title (no reserved second line).
+                minLines = 1,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -50,11 +50,6 @@ internal fun MangaListEntry.volumesProgressLabel(): String {
     return "$volumesProgress / $total"
 }
 
-internal fun MangaListEntry.chaptersProgressRatio(): Float {
-    val total = totalChapters ?: return 0f
-    return if (total == 0) 0f else (chaptersProgress.toFloat() / total).coerceIn(0f, 1f)
-}
-
 internal fun MangaListEntry.canIncrementChapters(): Boolean {
     val total = totalChapters
     return total == null || chaptersProgress < total

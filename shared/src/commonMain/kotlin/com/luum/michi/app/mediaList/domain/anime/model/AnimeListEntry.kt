@@ -45,11 +45,6 @@ internal fun AnimeListEntry.progressLabel(): String {
     return "$progress / $total"
 }
 
-internal fun AnimeListEntry.progressRatio(): Float {
-    val total = totalEpisodes ?: return 0f
-    return if (total == 0) 0f else (progress.toFloat() / total).coerceIn(0f, 1f)
-}
-
 internal fun AnimeListEntry.canIncrement(): Boolean {
     val total = totalEpisodes
     return total == null || progress < total
