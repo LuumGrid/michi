@@ -98,6 +98,37 @@ class ProfileCacheTest {
     }
 
     @Test
+    fun aFavoriteSubtitleSurvivesTheDiskRoundTrip() {
+        val store = InMemoryFileStore()
+        val cache = diskCache(store)
+        val profile = richProfile().let { data ->
+            data.copy(
+                favorites = data.favorites.copy(
+                    anime = listOf(
+                        ProfileFavorite(
+                            id = 1,
+                            name = "A",
+                            image = CoverSizes(large = "l"),
+                            paletteHex = "#123456",
+                            subtitle = "TV · 2013",
+                        ),
+                    ),
+                ),
+            )
+        }
+
+        runBlocking {
+            cache.write(7, profile)
+            assertEquals("TV · 2013", cache.read(7)?.favorites?.anime?.single()?.subtitle)
+        }
+    }
+
+    @Test
+    fun theCacheFileNameCarriesTheCurrentFormatVersion() {
+        assertEquals("profile_v2_7.json", profileCacheFileName(7))
+    }
+
+    @Test
     fun theUnreadNotificationCountIsNotPersisted() {
         val store = InMemoryFileStore()
         val cache = diskCache(store)

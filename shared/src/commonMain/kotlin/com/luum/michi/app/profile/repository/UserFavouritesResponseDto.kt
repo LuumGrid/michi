@@ -1,9 +1,9 @@
 package com.luum.michi.app.profile.repository
 
-import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.media.repository.dto.MediaDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
-import com.luum.michi.app.core.person.repository.dto.StaffDto
+import com.luum.michi.app.core.person.repository.dto.PersonImageDto
+import com.luum.michi.app.core.person.repository.dto.PersonNameDto
 import com.luum.michi.app.core.person.repository.dto.StudioDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,8 +19,8 @@ import kotlinx.serialization.Serializable
  *     favourites {
  *       anime(perPage: 12) { nodes { id title { ... } coverImage { ... } } }
  *       manga(perPage: 12) { nodes { ... } }
- *       characters(perPage: 12) { nodes { id name { ... } image { ... } } }
- *       staff(perPage: 12) { nodes { id name { ... } image { ... } } }
+ *       characters(perPage: 12) { nodes { id name { ... } image { ... } media { ... } } }
+ *       staff(perPage: 12) { nodes { id name { ... } image { ... } primaryOccupations } }
  *       studios(perPage: 12) { nodes { id name } }
  *     }
  *   }
@@ -55,14 +55,39 @@ internal data class MediaConnectionDto(
 
 @Serializable
 internal data class CharacterConnectionDto(
-    val nodes: List<CharacterDto> = emptyList(),
+    val nodes: List<FavoriteCharacterDto> = emptyList(),
     val pageInfo: PageInfoDto? = null,
 )
 
 @Serializable
 internal data class StaffConnectionDto(
-    val nodes: List<StaffDto> = emptyList(),
+    val nodes: List<FavoriteStaffDto> = emptyList(),
     val pageInfo: PageInfoDto? = null,
+)
+
+/** A favourited character plus the one media the profile uses for its second
+ *  line (the character's most popular anime). */
+@Serializable
+internal data class FavoriteCharacterDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
+    val media: FavoriteCharacterMediaDto? = null,
+)
+
+@Serializable
+internal data class FavoriteCharacterMediaDto(
+    val nodes: List<MediaDto> = emptyList(),
+)
+
+/** A favourited staff member plus the occupations the profile uses for its
+ *  second line. */
+@Serializable
+internal data class FavoriteStaffDto(
+    val id: Int,
+    val name: PersonNameDto? = null,
+    val image: PersonImageDto? = null,
+    val primaryOccupations: List<String?>? = null,
 )
 
 @Serializable

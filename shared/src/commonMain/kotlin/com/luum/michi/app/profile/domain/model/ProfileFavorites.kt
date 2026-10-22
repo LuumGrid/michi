@@ -3,12 +3,14 @@ import com.luum.michi.app.core.model.CoverSizes
 
 
 /** One favourited entity of any kind (anime/manga/character/staff/studio).
- *  Studios have no image on AniList, so [image]/[paletteHex] stay null for them. */
+ *  Studios have no image on AniList, so [image]/[paletteHex] stay null for them.
+ *  [subtitle] is the card's second line; null means the card has no second line. */
 internal data class ProfileFavorite(
     val id: Int,
     val name: String,
     val image: CoverSizes?,
     val paletteHex: String?,
+    val subtitle: String? = null,
 )
 
 internal data class ProfileFavorites(

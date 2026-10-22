@@ -17,9 +17,9 @@ import androidx.compose.ui.unit.dp
  *   all" rows) and leads a one-row card rail.
  * - [Compact]: the short cover inside a three-row card rail, where the cover
  *   shares a 120dp card with a one-line title, the meta line and a chip.
- * - [Rail]: a poster rail card, where the cover **is** the card (detail and
- *   people rails) — the middle step, exactly halfway between [List] and
- *   [Featured].
+ * - [Rail]: the fallback step of the poster grids ("View all", studio, genre)
+ *   when [Featured] does not fit in two columns — the middle step, exactly
+ *   halfway between [List] and [Featured].
  * - [Featured]: the largest standard cover (the media and person heroes) and
  *   the base of a grid cell (grown up to +25% by `gridCoverSize`), so grids
  *   reuse it instead of adding another size.
@@ -45,7 +45,8 @@ internal fun Modifier.coverSize(size: CoverSize): Modifier =
 /**
  * How far the hero's cover rises above the banner's bottom edge: half the
  * [CoverSize.Featured] height, so the poster hangs into the content below
- * instead of floating dead-center over the backdrop.
+ * instead of floating dead-center over the backdrop. The banner is [HeroBanner]
+ * ([HeroBannerHeight]).
  */
 internal val HeroCoverOverlap = CoverSize.Featured.height / 2
 

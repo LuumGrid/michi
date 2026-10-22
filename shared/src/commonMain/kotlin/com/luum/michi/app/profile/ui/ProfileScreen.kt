@@ -2,6 +2,7 @@ package com.luum.michi.app.profile.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,9 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,26 +35,30 @@ import com.luum.michi.app.profile.domain.model.ProfileStats
 import com.luum.michi.app.profile.domain.model.itemsFor
 import com.luum.michi.app.profile.domain.model.nonEmptyCategories
 import com.luum.michi.app.profile.ui.model.title
+import com.luum.michi.app.profile.ui.model.toPersonItem
 import com.luum.michi.app.profile.ui.model.toRailItem
 import com.luum.michi.app.profile.ui.state.ProfileStateHolder
 import com.luum.michi.app.ui.components.Avatar
 import com.luum.michi.app.ui.components.AvatarSize
+import com.luum.michi.app.ui.components.HeroBanner
+import com.luum.michi.app.ui.components.HeroBannerHeight
 import com.luum.michi.app.ui.components.LoadStateContainer
-import com.luum.michi.app.ui.components.MediaRail
+import com.luum.michi.app.ui.components.MediaCardRail
 import com.luum.michi.app.ui.components.OptionGroup
-import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.PersonCardRail
 import com.luum.michi.app.ui.components.RailHeader
 import com.luum.michi.app.ui.components.RailHorizontalPadding
 import com.luum.michi.app.ui.components.SettingsRow
-import com.luum.michi.app.ui.components.flatBorder
-import com.luum.michi.app.ui.components.solidContainerColor
 import com.luum.michi.app.ui.language.Strings
 
 /**
- * PROFILE tab: the viewer's header (avatar + name + counters) over their
- * favourites, one rail per category with a "View all" page. Only the viewer's
- * own profile is loaded ([ProfileStateHolder.load] with the viewer id); the
- * name/avatar come from the already-loaded [Viewer] — no extra request.
+ * PROFILE tab: the viewer's hero (banner, avatar over its bottom edge, name and
+ * frameless counters) over their favourites, one rail per category with a
+ * "View all" page. Anime/manga use the shared [MediaCardRail], characters/staff
+ * the simple [PersonCardRail], and every card carries a second line. Only the
+ * viewer's own profile is loaded ([ProfileStateHolder.load] with the viewer id);
+ * the name/avatar/banner come from the already-loaded [Viewer] — no extra
+ * request.
  * Read-only: favourites are removed from each category's "View all" page.
  */
 @Composable
@@ -122,7 +127,7 @@ private fun ProfileContent(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp + bottomPadding),
+            contentPadding = PaddingValues(top = 0.dp, bottom = 16.dp + bottomPadding),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item(key = "profile-header") {
@@ -160,21 +165,29 @@ private fun ProfileContent(
             categories.forEach { category ->
                 val items = favorites.itemsFor(category)
                 item(key = "profile-favorites-${category.name}") {
-                    if (category == ProfileFavoritesCategory.STUDIOS) {
-                        ProfileStudioSection(
-                            items = items,
-                            title = category.title(strings),
-                            viewAllLabel = strings.viewAllAction,
-                            onSelect = { id -> onOpenFavorite(category, id) },
-                            onViewAll = { onViewAll(category) },
-                        )
-                    } else {
-                        MediaRail(
+                    when (category) {
+                        ProfileFavoritesCategory.ANIME,
+                        ProfileFavoritesCategory.MANGA -> MediaCardRail(
                             title = category.title(strings),
                             items = items.map { it.toRailItem() },
                             onSelect = { id -> onOpenFavorite(category, id) },
                             onViewAll = { onViewAll(category) },
                             viewAllLabel = strings.viewAllAction,
+                        )
+                        ProfileFavoritesCategory.CHARACTERS,
+                        ProfileFavoritesCategory.STAFF -> PersonCardRail(
+                            title = category.title(strings),
+                            items = items.map { it.toPersonItem() },
+                            onSelectPrimary = { id -> onOpenFavorite(category, id) },
+                            onViewAll = { onViewAll(category) },
+                            viewAllLabel = strings.viewAllAction,
+                        )
+                        ProfileFavoritesCategory.STUDIOS -> ProfileStudioSection(
+                            items = items,
+                            title = category.title(strings),
+                            viewAllLabel = strings.viewAllAction,
+                            onSelect = { id -> onOpenFavorite(category, id) },
+                            onViewAll = { onViewAll(category) },
                         )
                     }
                 }
@@ -183,9 +196,9 @@ private fun ProfileContent(
     }
 }
 
-/** Flat header panel: avatar + name + the four counters (no hero, no banner).
- *  Each counter is a button that opens Statistics (anime/manga) or the
- *  following/followers list. */
+/** Hero header: the viewer's banner, the avatar over its bottom edge with the
+ *  name to the right, and the four frameless counters below. Each counter is a
+ *  button that opens Statistics (anime/manga) or the following/followers list. */
 @Composable
 private fun ProfileHeader(
     viewer: Viewer,
@@ -196,65 +209,72 @@ private fun ProfileHeader(
     onOpenFollowers: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-    ) {
-        Surface(
-            shape = PanelShape,
-            color = solidContainerColor(),
-            border = flatBorder(),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            HeroBanner(
+                bannerUrl = viewer.bannerUrl,
+                paletteHex = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .height(HeroBannerHeight),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = HeroBannerHeight - AvatarSize.Header / 2,
+                    ),
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Avatar(
-                        imageUrl = viewer.avatarUrl,
-                        initials = viewer.initials(),
-                        size = AvatarSize.Header,
-                    )
-                    Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                        Text(
-                            text = viewer.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    ProfileStatColumn(
-                        value = stats.animeCount.compactCount(),
-                        label = strings.animeLabel,
-                        onClick = { onOpenStatistics(MediaType.ANIME) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    ProfileStatColumn(
-                        value = stats.mangaCount.compactCount(),
-                        label = strings.mangaLabel,
-                        onClick = { onOpenStatistics(MediaType.MANGA) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    ProfileStatColumn(
-                        value = stats.followingCount.compactCount(),
-                        label = strings.profileFollowingLabel,
-                        onClick = onOpenFollowing,
-                        modifier = Modifier.weight(1f),
-                    )
-                    ProfileStatColumn(
-                        value = stats.followersCount.compactCount(),
-                        label = strings.profileFollowersLabel,
-                        onClick = onOpenFollowers,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                Avatar(
+                    imageUrl = viewer.avatarUrl,
+                    initials = viewer.initials(),
+                    size = AvatarSize.Header,
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = viewer.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 8.dp),
+                )
             }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        ) {
+            ProfileStatColumn(
+                value = stats.animeCount.compactCount(),
+                label = strings.animeLabel,
+                onClick = { onOpenStatistics(MediaType.ANIME) },
+                modifier = Modifier.weight(1f),
+            )
+            ProfileStatColumn(
+                value = stats.mangaCount.compactCount(),
+                label = strings.mangaLabel,
+                onClick = { onOpenStatistics(MediaType.MANGA) },
+                modifier = Modifier.weight(1f),
+            )
+            ProfileStatColumn(
+                value = stats.followingCount.compactCount(),
+                label = strings.profileFollowingLabel,
+                onClick = onOpenFollowing,
+                modifier = Modifier.weight(1f),
+            )
+            ProfileStatColumn(
+                value = stats.followersCount.compactCount(),
+                label = strings.profileFollowersLabel,
+                onClick = onOpenFollowers,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

@@ -92,6 +92,39 @@ class ProfileRepositoryLoadTest {
         assertNull(studio.paletteHex)
     }
 
+    @Test
+    fun profileAndPersonFavoritesAskForTheSecondLineFields() {
+        val client = FakeProfileGraphQL(
+            listOf(
+                profileData(),
+                favouritesPage("characters", "C", false),
+                favouritesPage("staff", "S", false),
+            ),
+        )
+        val repository = ProfileRepositoryImpl(client)
+        runBlocking {
+            repository.loadProfile(1)
+            repository.loadFavoritesPage(1, ProfileFavoritesCategory.CHARACTERS, 1)
+            repository.loadFavoritesPage(1, ProfileFavoritesCategory.STAFF, 1)
+        }
+
+        val mediaFields = "media(sort: [POPULARITY_DESC], perPage: 1) { " +
+            "nodes { id title { romaji english native userPreferred } } }"
+        val profile = normalized(client.requests[0].query)
+        assertTrue(profile.contains(mediaFields), "the profile asks for the character's media")
+        assertTrue(profile.contains("primaryOccupations"), "the profile asks for staff occupations")
+        assertTrue(profile.contains("startDate { year }"), "the profile asks for the media year")
+
+        assertTrue(
+            normalized(client.requests[1].query).contains(mediaFields),
+            "the characters page asks for the character's media",
+        )
+        assertTrue(
+            normalized(client.requests[2].query).contains("primaryOccupations"),
+            "the staff page asks for staff occupations",
+        )
+    }
+
     /**
      * Tripwire: the studios selection is exactly `{ id name }` — the old
      * `media { nodes { coverImage } }` trick must never come back. Asserted on the

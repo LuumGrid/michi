@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
  * Bump when the persisted [ProfileCacheDto] shape changes: the version travels
  * in the file name, so an old file is simply never read again (no migration).
  */
-private const val ProfileCacheFormatVersion = 1
+private const val ProfileCacheFormatVersion = 2
 
 /** The one place the on-disk profile file name is built (tests seed/corrupt with it). */
 internal fun profileCacheFileName(userId: Int): String =

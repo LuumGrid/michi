@@ -15,9 +15,7 @@ import com.luum.michi.app.profile.domain.model.ProfileFollowsKind
 import com.luum.michi.app.profile.domain.model.ProfileListPageSize
 import com.luum.michi.app.profile.domain.model.ProfileReview
 import com.luum.michi.app.profile.domain.model.ProfileStats
-import com.luum.michi.app.core.person.repository.dto.CharacterDto
 import com.luum.michi.app.core.media.repository.dto.MediaDto
-import com.luum.michi.app.core.person.repository.dto.StaffDto
 import com.luum.michi.app.core.person.repository.dto.StudioDto
 import com.luum.michi.app.core.network.domain.AniListGraphQLClient
 import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
@@ -31,13 +29,25 @@ private const val MediaFavoriteNodeFields = """
   id
   title { romaji english native userPreferred }
   coverImage { extraLarge large medium color }
+  format
+  seasonYear
+  startDate { year }
 """
 
-/** Shared node fields for character/staff favourites. Single source of truth for both profile queries. */
-private const val PersonFavoriteNodeFields = """
+/** Shared node fields for character favourites. Single source of truth for both profile queries. */
+private const val CharacterFavoriteNodeFields = """
   id
   name { full userPreferred }
   image { large medium }
+  media(sort: [POPULARITY_DESC], perPage: 1) { nodes { id title { romaji english native userPreferred } } }
+"""
+
+/** Shared node fields for staff favourites. Single source of truth for both profile queries. */
+private const val StaffFavoriteNodeFields = """
+  id
+  name { full userPreferred }
+  image { large medium }
+  primaryOccupations
 """
 
 /** Shared node fields for studio favourites. Single source of truth for both
@@ -87,12 +97,12 @@ query UserProfile(${'$'}userId: Int!) {
       }
       characters(perPage: 12) {
         nodes {
-          $PersonFavoriteNodeFields
+          $CharacterFavoriteNodeFields
         }
       }
       staff(perPage: 12) {
         nodes {
-          $PersonFavoriteNodeFields
+          $StaffFavoriteNodeFields
         }
       }
       studios(perPage: 12) {
@@ -137,13 +147,13 @@ private fun favoritesPageQuery(category: ProfileFavoritesCategory): String {
         ProfileFavoritesCategory.CHARACTERS -> """
             characters(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage currentPage }
-              nodes { $PersonFavoriteNodeFields }
+              nodes { $CharacterFavoriteNodeFields }
             }
         """.trimIndent()
         ProfileFavoritesCategory.STAFF -> """
             staff(page: ${'$'}page, perPage: ${'$'}perPage) {
               pageInfo { hasNextPage currentPage }
-              nodes { $PersonFavoriteNodeFields }
+              nodes { $StaffFavoriteNodeFields }
             }
         """.trimIndent()
         ProfileFavoritesCategory.STUDIOS -> """
@@ -282,13 +292,13 @@ internal class ProfileRepositoryImpl(
                     nodes = favourites?.characters?.nodes,
                     pageInfo = favourites?.characters?.pageInfo,
                     requestedPage = page,
-                    map = CharacterDto::toProfileFavorite,
+                    map = FavoriteCharacterDto::toProfileFavorite,
                 )
                 ProfileFavoritesCategory.STAFF -> profilePage(
                     nodes = favourites?.staff?.nodes,
                     pageInfo = favourites?.staff?.pageInfo,
                     requestedPage = page,
-                    map = StaffDto::toProfileFavorite,
+                    map = FavoriteStaffDto::toProfileFavorite,
                 )
                 ProfileFavoritesCategory.STUDIOS -> profilePage(
                     nodes = favourites?.studios?.nodes,

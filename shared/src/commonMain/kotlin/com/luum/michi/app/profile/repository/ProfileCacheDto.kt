@@ -60,7 +60,8 @@ internal data class ProfileFavoritesCacheDto(
 )
 
 /** One favourite: [medium]/[large]/[extraLarge] carry the cover variants, all
- *  null for a studio (AniList has no image for them). */
+ *  null for a studio (AniList has no image for them). [subtitle] is the card's
+ *  second line. */
 @Serializable
 internal data class ProfileFavoriteCacheDto(
     val id: Int,
@@ -69,6 +70,7 @@ internal data class ProfileFavoriteCacheDto(
     val large: String? = null,
     val extraLarge: String? = null,
     val paletteHex: String? = null,
+    val subtitle: String? = null,
 )
 
 internal fun ProfileData.toCacheDto(): ProfileCacheDto = ProfileCacheDto(
@@ -152,6 +154,7 @@ private fun ProfileFavorite.toCacheDto(): ProfileFavoriteCacheDto = ProfileFavor
     large = image?.large,
     extraLarge = image?.extraLarge,
     paletteHex = paletteHex,
+    subtitle = subtitle,
 )
 
 private fun ProfileFavoriteCacheDto.toDomain(): ProfileFavorite = ProfileFavorite(
@@ -163,4 +166,5 @@ private fun ProfileFavoriteCacheDto.toDomain(): ProfileFavorite = ProfileFavorit
         CoverSizes(medium = medium, large = large, extraLarge = extraLarge)
     },
     paletteHex = paletteHex,
+    subtitle = subtitle,
 )

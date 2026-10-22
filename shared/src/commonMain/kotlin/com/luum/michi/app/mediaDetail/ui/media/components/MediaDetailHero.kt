@@ -1,11 +1,9 @@
 package com.luum.michi.app.mediaDetail.ui.media.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,18 +15,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.model.compactCount
 import com.luum.michi.app.ui.components.CoverImage
 import com.luum.michi.app.ui.components.CoverSize
+import com.luum.michi.app.ui.components.HeroBanner
+import com.luum.michi.app.ui.components.HeroBannerHeight
 import com.luum.michi.app.ui.components.HeroCoverOverlap
 import com.luum.michi.app.mediaDetail.ui.components.MediaDetailHeroIdentity
 import com.luum.michi.app.core.media.domain.airingCountdown
@@ -38,11 +34,10 @@ import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
 import com.luum.michi.app.ui.components.PanelShape
 import com.luum.michi.app.ui.components.flatBorder
-import com.luum.michi.app.ui.theme.brandColor
 import com.luum.michi.app.ui.icons.AppIcons
 
 /**
- * Full-bleed hero: a [MediaDetailBannerHeight] backdrop with a bottom gradient
+ * Full-bleed hero: a [HeroBanner] of [HeroBannerHeight] with a bottom gradient
  * into `surface`, the [CoverSize.Featured] cover overlapping its bottom edge by
  * [HeroCoverOverlap], and the title/meta identity to the right of the cover
  * (the studios are chips in the information panel, not a hero line). Padding —
@@ -54,12 +49,12 @@ import com.luum.michi.app.ui.icons.AppIcons
 internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
     val meta = listOfNotNull(detail.format, detail.season, detail.workStatusLabel(strings)).joinToString(" · ")
     Box(modifier = Modifier.fillMaxWidth()) {
-        BannerBackdrop(
+        HeroBanner(
             bannerUrl = detail.bannerUrl,
             paletteHex = detail.paletteHex,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(MediaDetailBannerHeight),
+                .height(HeroBannerHeight),
         )
         CoverImage(
             cover = detail.cover,
@@ -67,7 +62,7 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
             bordered = true,
             modifier = Modifier.padding(
                 start = 16.dp,
-                top = MediaDetailBannerHeight - HeroCoverOverlap,
+                top = HeroBannerHeight - HeroCoverOverlap,
             ),
         )
         MediaDetailHeroIdentity(
@@ -81,41 +76,7 @@ internal fun MediaDetailHero(detail: MediaDetail, strings: LanguageStrings) {
                 .padding(
                     start = 16.dp + CoverSize.Featured.width + 16.dp,
                     end = 16.dp,
-                    top = MediaDetailBannerHeight + 12.dp,
-                ),
-        )
-    }
-}
-
-private val MediaDetailBannerHeight = 180.dp
-
-@Composable
-private fun BannerBackdrop(
-    bannerUrl: String?,
-    paletteHex: String?,
-    modifier: Modifier,
-) {
-    val fallback = paletteHex?.let { brandColor(it) }?.takeIf { it != Color.Transparent }
-        ?: MaterialTheme.colorScheme.surfaceVariant
-    Box(modifier = modifier.background(fallback)) {
-        if (!bannerUrl.isNullOrBlank()) {
-            SubcomposeAsyncImage(
-                model = bannerUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                loading = {},
-                error = {},
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to Color.Transparent,
-                        1f to MaterialTheme.colorScheme.surface,
-                    ),
+                    top = HeroBannerHeight + 12.dp,
                 ),
         )
     }

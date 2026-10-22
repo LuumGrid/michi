@@ -14,7 +14,7 @@ internal val RailHorizontalPadding = 16.dp
 
 /**
  * The one rail header: a [SectionHeader] with an optional trailing control on
- * the same row, carrying the standard rail insets. Level-1 rails ([MediaRail]),
+ * the same row, carrying the standard rail insets. Level-1 rails ([MediaCardRail]),
  * the profile's studio-favourites section and the media tags section draw it, so
  * a section header measures the same wherever it appears.
  *
