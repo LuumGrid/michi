@@ -1,5 +1,6 @@
 package com.luum.michi.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,8 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.model.CoverSizes
@@ -41,7 +38,7 @@ internal data class PersonRailPerson(
 
 /**
  * One card of a [PersonCardRail]: [primary] alone in the simple layout, or
- * [primary] + [secondary] side by side in the double one (character + actor).
+ * [primary] with [secondary] in the card's actor row in the double one.
  */
 internal data class PersonRailItem(
     val primary: PersonRailPerson,
@@ -50,18 +47,17 @@ internal data class PersonRailItem(
 
 private val PersonCardRailGap = 12.dp
 private val PersonCardRailRowGap = 8.dp
-private val PersonCardRailPairGap = 8.dp
 private const val PersonCardRailRows = 3
 
 /**
  * Horizontal rail of people cards, three per column, snapped like
  * [MediaCardRail] and sharing its header, empty label and scroll rule.
  *
- * A rail where any item carries a [PersonRailItem.secondary] switches the whole
- * rail to the double card (character + Japanese voice actor): one column of
- * three pairs, each half tap-able on its own. Otherwise every card is the
- * standard [MediaCoverCard] over [CoverSize.Compact]. Card sizes derive from the
- * compact token only — no per-rail measurements.
+ * Every card is the shared [MediaCoverCard] at [CoverSize.Compact]. When any
+ * item carries a [PersonRailItem.secondary] the whole rail is in double mode:
+ * the character is the card itself (one title line + role) and the actor takes
+ * the bottom row — the slot where [MediaCardRail] paints its chips — with its
+ * own tap target. Otherwise the card is the simple title + role layout.
  */
 @Composable
 internal fun PersonCardRail(
@@ -125,25 +121,25 @@ internal fun PersonCardRail(
                             verticalArrangement = Arrangement.spacedBy(PersonCardRailRowGap),
                         ) {
                             column.forEach { item ->
-                                if (double) {
-                                    PersonDoubleCard(
-                                        item = item,
-                                        onSelectPrimary = onSelectPrimary,
-                                        onSelectSecondary = onSelectSecondary,
-                                    )
-                                } else {
-                                    val primary = item.primary
-                                    MediaCoverCard(
-                                        cover = primary.image,
-                                        title = primary.name,
-                                        subtitle = primary.subtitle,
-                                        onClick = { onSelectPrimary(primary.id) },
-                                        modifier = Modifier.testTag(TestTags.Poster),
-                                        titleMaxLines = 2,
-                                        subtitleMaxLines = 1,
-                                        coverSize = CoverSize.Compact,
-                                    )
-                                }
+                                MediaCoverCard(
+                                    cover = item.primary.image,
+                                    title = item.primary.name,
+                                    subtitle = item.primary.subtitle,
+                                    onClick = { onSelectPrimary(item.primary.id) },
+                                    modifier = Modifier.testTag(TestTags.Poster),
+                                    titleMaxLines = if (double) 1 else 2,
+                                    subtitleMaxLines = 1,
+                                    coverSize = CoverSize.Compact,
+                                    content = item.secondary?.let { secondary ->
+                                        {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                            PersonCardRailActorRow(
+                                                person = secondary,
+                                                onSelect = onSelectSecondary,
+                                            )
+                                        }
+                                    },
+                                )
                             }
                         }
                     }
@@ -154,105 +150,39 @@ internal fun PersonCardRail(
 }
 
 /**
- * Character + voice actor in one fixed-height card. The [Surface] owns the
- * frame only; each half carries its own tap target, and a missing [secondary]
- * leaves the right half inert.
+ * The actor row of a double card: avatar, one-line name and optional language,
+ * on the flat pill that owns its own tap target. The trailing 12dp keeps the
+ * text clear of the rounded end.
  */
 @Composable
-private fun PersonDoubleCard(
-    item: PersonRailItem,
-    onSelectPrimary: (Int) -> Unit,
-    onSelectSecondary: ((Int) -> Unit)?,
-) {
-    CardCappedDensity {
-        Surface(
-            shape = PanelShape,
-            border = flatBorder(),
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(mediaCoverCardHeight(CoverSize.Compact))
-                .testTag(TestTags.Poster),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(MediaCoverCardPadding),
-            ) {
-                PersonHalf(
-                    person = item.primary,
-                    alignEnd = false,
-                    onClick = { onSelectPrimary(item.primary.id) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                )
-                Spacer(modifier = Modifier.width(PersonCardRailPairGap))
-                val secondary = item.secondary
-                if (secondary != null) {
-                    val secondaryClick = onSelectSecondary?.let { select ->
-                        { select(secondary.id) }
-                    }
-                    PersonHalf(
-                        person = secondary,
-                        alignEnd = true,
-                        onClick = secondaryClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                    )
-                } else {
-                    Spacer(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * One half of [PersonDoubleCard]: portrait + (up to) three lines, mirrored on
- * the right so the two portraits sit on the card's outer edges.
- */
-@Composable
-private fun PersonHalf(
+private fun PersonCardRailActorRow(
     person: PersonRailPerson,
-    alignEnd: Boolean,
-    onClick: (() -> Unit)?,
-    modifier: Modifier = Modifier,
+    onSelect: ((Int) -> Unit)?,
 ) {
-    val interaction = if (onClick != null) {
-        Modifier
-            .clip(CoverShape)
-            .clickable(role = Role.Button, onClick = onClick)
-    } else {
-        Modifier
-    }
+    val interaction = onSelect?.let { select ->
+        Modifier.clickable(role = Role.Button) { select(person.id) }
+    } ?: Modifier
     Row(
-        modifier = modifier.then(interaction),
-        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AvatarSize.Row)
+            .clip(PillShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .then(interaction),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!alignEnd) {
-            CoverImage(cover = person.image, size = CoverSize.Compact)
-            Spacer(modifier = Modifier.width(PersonCardRailPairGap))
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-            horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start,
-            verticalArrangement = Arrangement.Top,
-        ) {
+        Avatar(
+            imageUrl = person.image?.medium ?: person.image?.large,
+            initials = person.name.trim().take(1).uppercase().ifEmpty { "?" },
+            size = AvatarSize.Row,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = person.name,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 3,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = if (alignEnd) TextAlign.End else TextAlign.Start,
             )
             person.subtitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
                 Text(
@@ -261,13 +191,9 @@ private fun PersonHalf(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = if (alignEnd) TextAlign.End else TextAlign.Start,
                 )
             }
         }
-        if (alignEnd) {
-            Spacer(modifier = Modifier.width(PersonCardRailPairGap))
-            CoverImage(cover = person.image, size = CoverSize.Compact)
-        }
+        Spacer(modifier = Modifier.width(12.dp))
     }
 }
