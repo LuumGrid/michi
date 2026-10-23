@@ -460,7 +460,9 @@ object SpanishStrings : LanguageStrings {
     override val mediaDetailOfficialSiteLabel = "Sitio oficial"
     override val mediaDetailOpenInAniListAction = "Abrir en AniList"
     override val mediaDetailShareAction = "Compartir"
-    override val mediaDetailAverageScoreLabel = "Puntaje promedio"
+    override val mediaDetailStatScoreShort = "Puntaje promedio"
+    override val mediaDetailStatPopularityShort = "Miembros"
+    override val mediaDetailStatFavouritesShort = "Favoritos"
     override val moreAction = "Más"
 
     // Shared detail labels (character/staff/studio)

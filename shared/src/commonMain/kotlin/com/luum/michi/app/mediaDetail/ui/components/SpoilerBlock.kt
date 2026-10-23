@@ -17,6 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
@@ -31,8 +36,8 @@ import com.luum.michi.app.ui.icons.AppIcons
  * accessibility; the icon is decorative.
  *
  * Inside another panel (the synopsis/biography prose) [bordered] false drops the
- * outline and steps the fill to `surfaceVariant`, so the block never draws a
- * panel inside a panel.
+ * fill and draws a dashed `outline` edge, so the block reads as hidden content
+ * without boxing a panel inside a panel.
  */
 @Composable
 internal fun SpoilerBlock(
@@ -48,15 +53,37 @@ internal fun SpoilerBlock(
     } else {
         strings.mediaDetailSpoilerShowAction
     }
+    val outlineColor = MaterialTheme.colorScheme.outline
     Surface(
         shape = PanelShape,
         color = if (bordered) {
             MaterialTheme.colorScheme.surface
         } else {
-            MaterialTheme.colorScheme.surfaceVariant
+            Color.Transparent
         },
         border = if (bordered) flatBorder() else null,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (bordered) {
+                    Modifier
+                } else {
+                    Modifier.drawBehind {
+                        drawRoundRect(
+                            color = outlineColor,
+                            // PanelShape's 16dp radius (Shapes.kt keeps it as a
+                            // RoundedCornerShape, not a dp token).
+                            cornerRadius = CornerRadius(16.dp.toPx()),
+                            style = Stroke(
+                                width = 1.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(
+                                    floatArrayOf(6.dp.toPx(), 4.dp.toPx()),
+                                ),
+                            ),
+                        )
+                    }
+                },
+            ),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(

@@ -1,5 +1,6 @@
 package com.luum.michi.app.mediaDetail.ui.media.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -89,38 +93,45 @@ private data class HeroStat(
 )
 
 /**
- * Three equal stat columns (average score, popularity, favourites) as a
- * frameless full-width row — the same icons the stat chips use. Painted only
- * when at least one column has data (the next-episode band is its own item,
- * [MediaDetailNextEpisodeBand]).
+ * A flat band twin of [MediaDetailNextEpisodeBand] (surface + flatBorder,
+ * PanelShape) right under it: icon + bold value per stat, spread evenly; the
+ * label is the accessibility description. Painted only when at least one stat
+ * has data.
  */
 @Composable
 internal fun MediaDetailHeroStats(detail: MediaDetail, strings: LanguageStrings) {
     val columns = buildList {
         detail.averageScore?.let {
-            add(HeroStat(AppIcons.StarOutline, strings.mediaDetailAverageScoreLabel, "$it%"))
+            add(HeroStat(AppIcons.StarOutline, strings.mediaDetailStatScoreShort, "$it%"))
         }
         detail.popularity?.let {
-            add(HeroStat(AppIcons.Groups, strings.popularityLabel, it.compactCount()))
+            add(HeroStat(AppIcons.Groups, strings.mediaDetailStatPopularityShort, it.compactCount()))
         }
         detail.favourites?.let {
-            add(HeroStat(AppIcons.Favorite, strings.favoritesLabel, it.compactCount()))
+            add(HeroStat(AppIcons.Favorite, strings.mediaDetailStatFavouritesShort, it.compactCount()))
         }
     }
     if (columns.isEmpty()) return
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.Top,
     ) {
-        columns.forEach { stat ->
-            StatColumn(
-                icon = stat.icon,
-                label = stat.label,
-                value = stat.value,
-                modifier = Modifier.weight(1f),
-            )
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = PanelShape,
+            border = flatBorder(),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                columns.forEach { stat -> StatInline(stat) }
+            }
         }
     }
 }
@@ -165,32 +176,24 @@ internal fun MediaDetailNextEpisodeBand(detail: MediaDetail, strings: LanguageSt
 }
 
 @Composable
-private fun StatColumn(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+private fun StatInline(stat: HeroStat) {
+    Row(
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = "${stat.label} ${stat.value}"
+        },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Icon(
-            imageVector = icon,
+            imageVector = stat.icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(16.dp),
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
+            text = stat.value,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
         )
     }
 }

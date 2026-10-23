@@ -430,7 +430,9 @@ interface LanguageStrings {
     val mediaDetailOfficialSiteLabel: String
     val mediaDetailOpenInAniListAction: String
     val mediaDetailShareAction: String
-    val mediaDetailAverageScoreLabel: String
+    val mediaDetailStatScoreShort: String
+    val mediaDetailStatPopularityShort: String
+    val mediaDetailStatFavouritesShort: String
     val moreAction: String
 
     // Shared detail labels (character/staff/studio)

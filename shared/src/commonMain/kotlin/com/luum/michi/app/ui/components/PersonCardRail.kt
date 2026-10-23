@@ -1,6 +1,7 @@
 package com.luum.michi.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -155,7 +156,8 @@ internal fun PersonCardRail(
 
 /**
  * The actor row of a double card: avatar, one-line name and optional language,
- * on the flat pill that owns its own tap target. The trailing 12dp keeps the
+ * on a flat bordered pill (`surface` + `flatBorder`), the chip recipe, that
+ * owns its own tap target. The trailing 12dp keeps the
  * text clear of the rounded end.
  */
 @Composable
@@ -171,7 +173,8 @@ private fun PersonCardRailActorRow(
             .fillMaxWidth()
             .height(AvatarSize.Row)
             .clip(PillShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surface, PillShape)
+            .border(flatBorder(), PillShape)
             .then(interaction),
         verticalAlignment = Alignment.CenterVertically,
     ) {

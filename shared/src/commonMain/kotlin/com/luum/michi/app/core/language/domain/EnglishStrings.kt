@@ -458,7 +458,9 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailOfficialSiteLabel = "Official site"
     override val mediaDetailOpenInAniListAction = "Open in AniList"
     override val mediaDetailShareAction = "Share"
-    override val mediaDetailAverageScoreLabel = "Average score"
+    override val mediaDetailStatScoreShort = "Average score"
+    override val mediaDetailStatPopularityShort = "Members"
+    override val mediaDetailStatFavouritesShort = "Favourites"
     override val moreAction = "More"
 
     // Shared detail labels (character/staff/studio)

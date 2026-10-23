@@ -21,6 +21,7 @@ import com.luum.michi.app.ui.icons.generated.FavoriteRoundedFilled
 import com.luum.michi.app.ui.icons.generated.FilterRounded
 import com.luum.michi.app.ui.icons.generated.GroupsRounded
 import com.luum.michi.app.ui.icons.generated.IconPack
+import com.luum.michi.app.ui.icons.generated.ImageRounded
 import com.luum.michi.app.ui.icons.generated.LanguageRounded
 import com.luum.michi.app.ui.icons.generated.MangaRounded
 import com.luum.michi.app.ui.icons.generated.MangaRoundedFilled
@@ -170,6 +171,10 @@ internal object AppIcons {
     /** Two people: popularity / member counts on cards. */
     val Groups: ImageVector
         get() = IconPack.GroupsRounded
+
+    /** Picture frame: a cover or portrait with no image. */
+    val Image: ImageVector
+        get() = IconPack.ImageRounded
 
     /** Calendar: seasonal/schedule surfaces. */
     val Calendar: ImageVector

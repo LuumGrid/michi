@@ -22,6 +22,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
@@ -65,8 +66,9 @@ internal fun MediaDetailExpandableText(
     var expanded by remember(text) { mutableStateOf(false) }
     var overflows by remember(text) { mutableStateOf(false) }
     val hiddenStyle = SpanStyle(
-        color = MaterialTheme.colorScheme.primary,
-        background = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Medium,
+        textDecoration = TextDecoration.Underline,
     )
     val segments = remember(text, spoilers) { SpoilerText(text, spoilers).toSegments() }
     val visibleSegments = if (expanded) segments else segments.collapsedSegments()
