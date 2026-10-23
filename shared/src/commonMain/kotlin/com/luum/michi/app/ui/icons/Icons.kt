@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.luum.michi.app.ui.icons.generated.Anilist
 import com.luum.michi.app.ui.icons.generated.AnimeRounded
 import com.luum.michi.app.ui.icons.generated.AnimeRoundedFilled
+import com.luum.michi.app.ui.icons.generated.AppleMusicBrand
 import com.luum.michi.app.ui.icons.generated.BackRounded
 import com.luum.michi.app.ui.icons.generated.BugReportRounded
 import com.luum.michi.app.ui.icons.generated.CalendarRounded
@@ -31,6 +32,7 @@ import com.luum.michi.app.ui.icons.generated.MangaRoundedFilled
 import com.luum.michi.app.ui.icons.generated.MichiSymbol
 import com.luum.michi.app.ui.icons.generated.MoreRounded
 import com.luum.michi.app.ui.icons.generated.NotificationsRounded
+import com.luum.michi.app.ui.icons.generated.PlayRounded
 import com.luum.michi.app.ui.icons.generated.ProfileRounded
 import com.luum.michi.app.ui.icons.generated.ProfileRoundedFilled
 import com.luum.michi.app.ui.icons.generated.SearchRounded
@@ -38,11 +40,14 @@ import com.luum.michi.app.ui.icons.generated.SettingsRounded
 import com.luum.michi.app.ui.icons.generated.ShareRounded
 import com.luum.michi.app.ui.icons.generated.ShieldRounded
 import com.luum.michi.app.ui.icons.generated.SortRounded
+import com.luum.michi.app.ui.icons.generated.SpotifyBrand
 import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
 import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
 import com.luum.michi.app.ui.icons.generated.VisibilityOffRounded
 import com.luum.michi.app.ui.icons.generated.VisibilityRounded
 import com.luum.michi.app.ui.icons.generated.WebRounded
+import com.luum.michi.app.ui.icons.generated.YouTubeBrand
+import com.luum.michi.app.ui.icons.generated.YouTubeMusicBrand
 
 /**
  * Central icon catalog: Valkyrie-generated [IconPack] ([ImageVector] code,
@@ -215,7 +220,28 @@ internal object AppIcons {
     val Notifications: ImageVector
         get() = IconPack.NotificationsRounded
 
+    /** Play: a video. */
+    val Play: ImageVector
+        get() = IconPack.PlayRounded
+
     /** Filled warning triangle: error panels and inline error rows. */
     val Warning: ImageVector
         get() = Icons.Filled.Warning
+
+    // ---- Brands ----
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val Spotify: ImageVector
+        get() = IconPack.SpotifyBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val YouTube: ImageVector
+        get() = IconPack.YouTubeBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val YouTubeMusic: ImageVector
+        get() = IconPack.YouTubeMusicBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val AppleMusic: ImageVector
+        get() = IconPack.AppleMusicBrand
 }

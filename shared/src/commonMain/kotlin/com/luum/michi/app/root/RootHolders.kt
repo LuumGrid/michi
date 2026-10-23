@@ -26,6 +26,7 @@ import com.luum.michi.app.discover.ui.dashboard.state.createDashboardStateHolder
 import com.luum.michi.app.discover.ui.explore.state.ExploreStateHolder
 import com.luum.michi.app.discover.ui.explore.state.createExploreStateHolder
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.AnimeThemesRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
@@ -135,6 +136,7 @@ internal fun rememberRootHolders(
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     mediaDetailRepository: MediaDetailRepository,
+    animeThemesRepository: AnimeThemesRepository,
     characterDetailRepository: CharacterDetailRepository,
     staffDetailRepository: StaffDetailRepository,
     studioDetailRepository: StudioDetailRepository,
@@ -220,10 +222,11 @@ internal fun rememberRootHolders(
     // language change keeps the holder and its cache). Each owns a child scope
     // cancelled when it is replaced.
     val mediaDetailScope = rememberHolderScope(listScope, viewerId)
-    val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, mediaDetailScope, viewerId) {
+    val mediaDetailHolder = remember(mediaDetailRepository, mediaListEntryRepository, animeThemesRepository, mediaDetailScope, viewerId) {
         MediaDetailStateHolder(
             mediaDetailRepository,
             mediaListEntryRepository,
+            animeThemesRepository,
             mediaDetailScope,
         ) { currentStrings }
     }

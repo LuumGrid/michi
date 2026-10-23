@@ -9,7 +9,10 @@ import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
 import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.media.AnimeThemesRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.model.AnimeTheme
+import com.luum.michi.app.mediaDetail.domain.media.model.AnimeThemeKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterRole
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
@@ -110,6 +113,16 @@ private fun recommendation(id: Int) = MediaRecommendationEntry(
     favouritesCount = null,
 )
 
+private fun sampleTheme(label: String = "OP1") = AnimeTheme(
+    kind = AnimeThemeKind.OPENING,
+    label = label,
+    title = "Yuusha",
+    artists = listOf("YOASOBI"),
+    episodes = "1-16",
+    animeName = "Media 1",
+    pageUrl = "https://animethemes.moe/anime/media_1/$label",
+)
+
 /**
  * Repository double: canned pages per media id, call counters to prove cache
  * hits and voice-language reloads, and an optional failure switch.
@@ -207,6 +220,32 @@ private class GatedPageDetailRepository(
     }
 }
 
+/** A manga detail page: themes must never be requested for it. */
+private class MangaDetailRepository : MediaDetailRepository by RecordingDetailRepository() {
+    override suspend fun loadDetail(
+        mediaId: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<MediaDetail> =
+        NetworkResult.Success(sampleDetail(mediaId).copy(type = MediaDetailType.MANGA))
+}
+
+private object NoopThemesRepository : AnimeThemesRepository {
+    override suspend fun themes(aniListId: Int): NetworkResult<List<AnimeTheme>> =
+        NetworkResult.Success(emptyList())
+}
+
+private class RecordingThemesRepository(
+    private val themes: List<AnimeTheme>,
+) : AnimeThemesRepository {
+    var calls = 0
+        private set
+
+    override suspend fun themes(aniListId: Int): NetworkResult<List<AnimeTheme>> {
+        calls++
+        return NetworkResult.Success(themes)
+    }
+}
+
 private object NoopEntryRepository : MediaListEntryRepository {
     override suspend fun saveEntry(
         mediaId: Int,
@@ -271,9 +310,11 @@ private class GatedEntryRepository(
 private fun holderWired(
     repository: MediaDetailRepository,
     entryRepository: MediaListEntryRepository = NoopEntryRepository,
+    themesRepository: AnimeThemesRepository = NoopThemesRepository,
 ) = MediaDetailStateHolder(
     repository = repository,
     entryRepository = entryRepository,
+    themesRepository = themesRepository,
     scope = CoroutineScope(Dispatchers.Unconfined),
     stringsProvider = { EnglishStrings },
 )
@@ -303,6 +344,58 @@ class MediaDetailIntegrationTest {
         assertEquals(1, repository.detailCalls)
         // Recommendations ride the detail query: no extra page-1 call.
         assertEquals(0, repository.recommendationCalls)
+    }
+
+    @Test
+    fun themesLoadWithTheAnimeDetailOnceAndResetOnAnother() {
+        val theme = sampleTheme()
+        val themesRepository = RecordingThemesRepository(listOf(theme))
+        val holder = holderWired(
+            RecordingDetailRepository(),
+            themesRepository = themesRepository,
+        )
+
+        holder.load(1)
+
+        assertEquals(listOf(theme), holder.themes)
+        assertEquals(1, themesRepository.calls)
+
+        holder.refresh()
+        assertEquals(1, themesRepository.calls, "a refresh of the same anime never asks again")
+
+        holder.load(2)
+        assertEquals(2, themesRepository.calls, "another anime asks for its own themes")
+    }
+
+    @Test
+    fun mangaNeverAsksForThemes() {
+        val themesRepository = RecordingThemesRepository(listOf(sampleTheme()))
+        val holder = holderWired(
+            MangaDetailRepository(),
+            themesRepository = themesRepository,
+        )
+
+        holder.load(1)
+
+        assertEquals(0, themesRepository.calls)
+        assertNull(holder.themes)
+    }
+
+    @Test
+    fun cachedReopenStillLoadsThemesOnce() {
+        val theme = sampleTheme()
+        val themesRepository = RecordingThemesRepository(listOf(theme))
+        val holder = holderWired(
+            RecordingDetailRepository(),
+            themesRepository = themesRepository,
+        )
+
+        holder.load(1)
+        holder.load(2)
+        holder.load(1)
+
+        assertEquals(3, themesRepository.calls)
+        assertEquals(listOf(theme), holder.themes)
     }
 
     @Test

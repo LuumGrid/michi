@@ -199,6 +199,7 @@ fun App(
                             mangaListRepository = dependencies.mangaListRepository,
                             mediaListEntryRepository = dependencies.mediaListEntryRepository,
                             mediaDetailRepository = dependencies.mediaDetailRepository,
+                            animeThemesRepository = dependencies.animeThemesRepository,
                             characterDetailRepository = dependencies.characterDetailRepository,
                             staffDetailRepository = dependencies.staffDetailRepository,
                             studioDetailRepository = dependencies.studioDetailRepository,

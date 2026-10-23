@@ -306,6 +306,7 @@ interface LanguageStrings {
     val aboutPrivacyTitle: String
     val aboutLicenseTitle: String
     val aboutDataByTitle: String
+    val aboutThemesByTitle: String
     val aboutNotAffiliatedText: String
     val settingsAccountTitle: String
     val settingsAccountSettingsTitle: String
@@ -432,6 +433,11 @@ interface LanguageStrings {
     val mediaDetailTagsTitle: String
     val mediaDetailExternalLinksTitle: String
     val mediaDetailStreamingLinksTitle: String
+    val mediaDetailOpeningsTitle: String
+    val mediaDetailEndingsTitle: String
+    fun mediaDetailThemeEpisodes(range: String): String
+    fun mediaDetailThemesShowAllLabel(count: Int): String
+    val mediaDetailThemesShowLessAction: String
     fun mediaDetailNextEpisodeReleaseLabel(
         episode: Int,
         releaseDateTime: MediaReleaseDateTime,

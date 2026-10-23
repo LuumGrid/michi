@@ -158,6 +158,13 @@ internal fun AboutScreen(
                     icon = AppIcons.AniList,
                     onClick = { onOpenUrl(AboutLinks.AniList) },
                 )
+                SettingsRow(
+                    label = strings.aboutThemesByTitle,
+                    value = "",
+                    supportingText = "animethemes.moe",
+                    icon = AppIcons.Play,
+                    onClick = { onOpenUrl(AboutLinks.AnimeThemes) },
+                )
             }
         }
     }
@@ -171,4 +178,5 @@ private object AboutLinks {
         "https://github.com/LuumGrid/michi/blob/main/docs/privacy.md"
     const val License = "https://github.com/LuumGrid/michi/blob/main/LICENSE"
     const val AniList = "https://anilist.co"
+    const val AnimeThemes = "https://animethemes.moe"
 }

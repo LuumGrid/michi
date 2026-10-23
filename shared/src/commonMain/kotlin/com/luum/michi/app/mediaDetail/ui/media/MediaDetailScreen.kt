@@ -13,6 +13,7 @@ import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
+import com.luum.michi.app.mediaDetail.domain.media.model.AnimeThemeKind
 import com.luum.michi.app.mediaDetail.domain.media.model.hasTags
 import com.luum.michi.app.mediaDetail.domain.media.model.upcomingNextEpisode
 import com.luum.michi.app.mediaDetail.ui.components.DetailLoadState
@@ -32,6 +33,7 @@ import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailHeroStats
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailInformationPanel
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailNextEpisodeBand
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailTags
+import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailThemePanel
 import com.luum.michi.app.mediaDetail.ui.media.components.MediaDetailVideos
 import com.luum.michi.app.mediaDetail.ui.media.components.hasInformation
 import com.luum.michi.app.mediaDetail.ui.media.components.trailerUrl
@@ -183,6 +185,31 @@ private fun MediaDetailContent(
         if (detail.trailerUrl() != null) {
             item(key = "videos") {
                 MediaDetailVideos(detail = detail, strings = strings, onOpenUrl = onOpenUrl)
+            }
+        }
+        if (detail.type == MediaDetailType.ANIME) {
+            val themes = holder.themes.orEmpty()
+            val openings = themes.filter { it.kind == AnimeThemeKind.OPENING }
+            val endings = themes.filter { it.kind == AnimeThemeKind.ENDING }
+            if (openings.isNotEmpty()) {
+                item(key = "openings") {
+                    MediaDetailThemePanel(
+                        strings.mediaDetailOpeningsTitle,
+                        openings,
+                        strings,
+                        onOpenUrl,
+                    )
+                }
+            }
+            if (endings.isNotEmpty()) {
+                item(key = "endings") {
+                    MediaDetailThemePanel(
+                        strings.mediaDetailEndingsTitle,
+                        endings,
+                        strings,
+                        onOpenUrl,
+                    )
+                }
             }
         }
         if (linkGroups.any { it.links.isNotEmpty() }) {

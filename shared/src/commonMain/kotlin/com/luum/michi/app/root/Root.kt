@@ -31,6 +31,7 @@ import com.luum.michi.app.core.session.domain.Viewer
 import com.luum.michi.app.discover.domain.DashboardRepository
 import com.luum.michi.app.discover.domain.ExploreRepository
 import com.luum.michi.app.mediaDetail.domain.character.CharacterDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.AnimeThemesRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
@@ -75,6 +76,7 @@ internal fun Root(
     mangaListRepository: MangaListRepository,
     mediaListEntryRepository: MediaListEntryRepository,
     mediaDetailRepository: MediaDetailRepository,
+    animeThemesRepository: AnimeThemesRepository,
     characterDetailRepository: CharacterDetailRepository,
     staffDetailRepository: StaffDetailRepository,
     studioDetailRepository: StudioDetailRepository,
@@ -160,6 +162,7 @@ internal fun Root(
         mangaListRepository = mangaListRepository,
         mediaListEntryRepository = mediaListEntryRepository,
         mediaDetailRepository = mediaDetailRepository,
+        animeThemesRepository = animeThemesRepository,
         characterDetailRepository = characterDetailRepository,
         staffDetailRepository = staffDetailRepository,
         studioDetailRepository = studioDetailRepository,

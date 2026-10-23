@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
@@ -20,7 +23,8 @@ import coil3.compose.SubcomposeAsyncImage
  * recipe; ripple on tap. [compact] (cards) tightens padding and type so a card
  * chip lands where the list pills land; [iconUrl] draws a 16dp leading image
  * (platform logos) and [count] appends " · N". Shared by [ChipRail] and the
- * editor status rail.
+ * editor status rail. [leadingIcon] draws a 16dp leading icon tinted with
+ * [leadingIconTint] (null = the chip's content color).
  */
 @Composable
 internal fun ChipPill(
@@ -30,6 +34,8 @@ internal fun ChipPill(
     compact: Boolean = false,
     iconUrl: String? = null,
     count: Int? = null,
+    leadingIcon: ImageVector? = null,
+    leadingIconTint: Color? = null,
 ) {
     val contentColor = if (selected) {
         MaterialTheme.colorScheme.onPrimaryContainer
@@ -60,6 +66,14 @@ internal fun ChipPill(
                     contentScale = ContentScale.Fit,
                     loading = {},
                     error = {},
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            } else if (leadingIcon != null) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = leadingIconTint ?: contentColor,
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))

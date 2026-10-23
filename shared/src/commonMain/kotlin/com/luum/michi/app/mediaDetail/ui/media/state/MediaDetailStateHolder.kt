@@ -1,10 +1,15 @@
 package com.luum.michi.app.mediaDetail.ui.media.state
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.media.AnimeThemesRepository
 import com.luum.michi.app.mediaDetail.domain.media.MediaDetailRepository
+import com.luum.michi.app.mediaDetail.domain.media.model.AnimeTheme
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaCharacterEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
@@ -13,6 +18,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaStaffEntry
 import com.luum.michi.app.mediaDetail.ui.state.DetailStateHolderBase
 import com.luum.michi.app.ui.state.PagedList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /** Snapshot of MediaDetail content that can be restored without a network call. */
 internal data class MediaDetailSnapshot(
@@ -25,6 +32,7 @@ internal data class MediaDetailSnapshot(
 internal class MediaDetailStateHolder(
     private val repository: MediaDetailRepository,
     private val entryRepository: MediaListEntryRepository,
+    private val themesRepository: AnimeThemesRepository,
     scope: CoroutineScope,
     // Read at request launch (not stored): a language change must not recreate
     // the holder and drop its cache, but a new request must use the new strings.
@@ -43,6 +51,17 @@ internal class MediaDetailStateHolder(
      * whose snapshot is cached restores this list with no network call.
      */
     val recommendations = PagedList<MediaRecommendationEntry> { a, b -> (a + b).distinctBy { it.id } }
+
+    /**
+     * AnimeThemes songs of the current anime: null until loaded (or while
+     * another anime loads); empty when there are none or the request failed
+     * (the section is an extra and is simply not painted).
+     */
+    var themes: List<AnimeTheme>? by mutableStateOf(null)
+        private set
+
+    private var themesFor: Int? = null
+    private var themesJob: Job? = null
 
     override fun isFavouriteOf(detail: MediaDetail): Boolean = detail.isFavourite
 
@@ -92,10 +111,38 @@ internal class MediaDetailStateHolder(
     override suspend fun fetchDetail(id: Int): NetworkResult<MediaDetail> =
         repository.loadDetail(id, stringsProvider())
 
+    /**
+     * Fetches the themes once per anime, as soon as its detail is on screen
+     * (fresh or restored). Repeated calls for the same anime are no-ops.
+     */
+    private fun loadThemes() {
+        val id = currentDetailId ?: return
+        if (themesFor == id) return
+        themesFor = id
+        themes = null
+        themesJob?.cancel()
+        themesJob = scope.launch {
+            val result = themesRepository.themes(id)
+            if (currentDetailId != id || themesFor != id) return@launch
+            themes = (result as? NetworkResult.Success<List<AnimeTheme>>)?.value ?: emptyList()
+        }
+    }
+
+    private fun resetThemesUnless(id: Int) {
+        if (themesFor != id) {
+            themesJob?.cancel()
+            themesJob = null
+            themesFor = null
+            themes = null
+        }
+    }
+
     override fun onDetailLoaded(detail: MediaDetail) {
+        resetThemesUnless(detail.id)
         characters.set(detail.characters)
         staff.set(detail.staff)
         recommendations.set(detail.recommendations)
+        if (detail.type == MediaDetailType.ANIME) loadThemes()
     }
 
     override fun cancelPages() {
@@ -108,6 +155,9 @@ internal class MediaDetailStateHolder(
         characters.clear()
         staff.clear()
         recommendations.clear()
+        themesJob?.cancel()
+        themesFor = null
+        themes = null
     }
 
     override fun snapshot(detail: MediaDetail): MediaDetailSnapshot = MediaDetailSnapshot(
@@ -118,10 +168,12 @@ internal class MediaDetailStateHolder(
     )
 
     override fun restore(snapshot: MediaDetailSnapshot) {
+        resetThemesUnless(snapshot.detail.id)
         detail = snapshot.detail
         characters.set(snapshot.characters)
         staff.set(snapshot.staff)
         recommendations.set(snapshot.recommendations)
+        if (snapshot.detail.type == MediaDetailType.ANIME) loadThemes()
     }
 
     override fun withFavourite(detail: MediaDetail, value: Boolean): MediaDetail =

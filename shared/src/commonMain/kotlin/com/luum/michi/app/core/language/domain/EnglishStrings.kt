@@ -314,6 +314,7 @@ object EnglishStrings : LanguageStrings {
     override val aboutPrivacyTitle = "Privacy policy"
     override val aboutLicenseTitle = "License"
     override val aboutDataByTitle = "Data by AniList"
+    override val aboutThemesByTitle = "Openings by AnimeThemes"
     override val aboutNotAffiliatedText = "Michi is not affiliated with AniList"
     override val settingsAccountTitle = "Account"
     override val settingsAccountSettingsTitle = "Account settings"
@@ -460,6 +461,11 @@ object EnglishStrings : LanguageStrings {
     override val mediaDetailTagsTitle = "Tags"
     override val mediaDetailExternalLinksTitle = "External links"
     override val mediaDetailStreamingLinksTitle = "Streaming"
+    override val mediaDetailOpeningsTitle = "Openings"
+    override val mediaDetailEndingsTitle = "Endings"
+    override fun mediaDetailThemeEpisodes(range: String) = "eps $range"
+    override fun mediaDetailThemesShowAllLabel(count: Int) = "Show all $count"
+    override val mediaDetailThemesShowLessAction = "Show less"
     override fun mediaDetailNextEpisodeReleaseLabel(
         episode: Int,
         releaseDateTime: MediaReleaseDateTime,
