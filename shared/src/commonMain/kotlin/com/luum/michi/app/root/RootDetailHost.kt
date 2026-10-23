@@ -16,6 +16,8 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailType
 import com.luum.michi.app.mediaDetail.ui.character.CharacterDetailScreen
 import com.luum.michi.app.mediaDetail.ui.components.DetailListLayout
 import com.luum.michi.app.mediaDetail.ui.components.DetailListScreen
+import com.luum.michi.app.mediaDetail.ui.components.toAppearanceCardItem
+import com.luum.michi.app.mediaDetail.ui.components.toCardRailItem
 import com.luum.michi.app.mediaDetail.ui.components.toRailItem
 import com.luum.michi.app.mediaDetail.ui.media.MediaDetailScreen
 import com.luum.michi.app.mediaDetail.ui.staff.StaffDetailScreen
@@ -263,7 +265,7 @@ private fun DetailListHost(
             onDismissActionError = { holders.mediaDetail.clearActionError() },
         )
         DetailListKind.MEDIA_RELATED -> DetailListScreen(
-            items = holders.mediaDetail.detail?.relations.orEmpty().map { it.toRailItem(strings, isManga) },
+            items = holders.mediaDetail.detail?.relations.orEmpty().map { it.toCardRailItem(strings, isManga) },
             layout = DetailListLayout.ROWS,
             onSelect = { state.openMedia(it) },
             bottomPadding = listBottom,
@@ -274,8 +276,8 @@ private fun DetailListHost(
             onDismissActionError = { holders.mediaDetail.clearActionError() },
         )
         DetailListKind.MEDIA_RECOMMENDATIONS -> DetailListScreen(
-            items = holders.mediaDetail.recommendations.items.map { it.toRailItem(strings, isManga) },
-            layout = DetailListLayout.ROWS,
+            items = holders.mediaDetail.recommendations.items.map { it.toCardRailItem(strings, isManga) },
+            layout = DetailListLayout.GRID,
             onSelect = { state.openMedia(it) },
             bottomPadding = listBottom,
             hasMore = holders.mediaDetail.recommendations.hasNextPage,
@@ -287,8 +289,8 @@ private fun DetailListHost(
             onDismissActionError = { holders.mediaDetail.clearActionError() },
         )
         DetailListKind.CHARACTER_MEDIA -> DetailListScreen(
-            items = holders.character.media.items.map { it.toRailItem(strings) },
-            layout = DetailListLayout.ROWS,
+            items = holders.character.media.items.map { it.toAppearanceCardItem(strings) },
+            layout = DetailListLayout.GRID,
             onSelect = { state.openMedia(it) },
             bottomPadding = listBottom,
             hasMore = holders.character.media.hasNextPage,
@@ -301,7 +303,7 @@ private fun DetailListHost(
         )
         DetailListKind.STAFF_MEDIA -> DetailListScreen(
             items = holders.staff.media.items.map { it.toRailItem() },
-            layout = DetailListLayout.ROWS,
+            layout = DetailListLayout.GRID,
             onSelect = { state.openMedia(it) },
             bottomPadding = listBottom,
             hasMore = holders.staff.media.hasNextPage,

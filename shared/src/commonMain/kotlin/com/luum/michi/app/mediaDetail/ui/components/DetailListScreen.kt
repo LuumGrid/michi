@@ -7,27 +7,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.components.DetailPosterGrid
 import com.luum.michi.app.ui.components.LoadMoreEffect
 import com.luum.michi.app.ui.components.LoadMoreFooter
 import com.luum.michi.app.ui.components.LoadMoreKey
-import com.luum.michi.app.ui.components.MediaCoverCard
+import com.luum.michi.app.ui.components.MediaCardRailCard
 import com.luum.michi.app.ui.components.MediaRailItem
 import com.luum.michi.app.ui.components.RefreshErrorRow
 
 /** How a [DetailListScreen] lays its items out. */
 internal enum class DetailListLayout {
-    /** Full-width cover rows (media: relations, recommendations, works). */
+    /**
+     * Compact list for finite queries (related works): the same 120dp card the
+     * rails paint ([MediaCardRailCard]), one full-width row per item.
+     */
     ROWS,
 
-    /** Portrait cards in a grid (people: characters, staff). */
+    /** Poster grid of [PosterCard] for paginated queries ("View all" lists). */
     GRID,
 }
 
@@ -121,29 +121,14 @@ private fun RowsList(
             items = items,
             key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
         ) { _, item ->
-            MediaCoverCard(
-                cover = item.image,
-                title = item.title,
-                // Catalog line as the subtitle: same slot/size as the lists
-                // and calendar (`bodyMedium` via MediaCoverCard).
-                subtitle = item.meta ?: item.subtitle,
+            // Same 120dp card the rails paint: the catalog line as its second
+            // line and the relation kind as its chip.
+            MediaCardRailCard(
+                item = item,
+                rank = 0,
+                compact = true,
+                numbered = false,
                 onClick = { onSelect(item.id) },
-                content = {
-                    // Extra row (the relation kind): same type and color as
-                    // the calendar's episode line. Only when a meta subtitle
-                    // took the line above, so it never replaces the title info.
-                    if (item.meta != null) {
-                        item.subtitle?.let { extra ->
-                            Text(
-                                text = extra,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                },
             )
         }
         if (paged) {

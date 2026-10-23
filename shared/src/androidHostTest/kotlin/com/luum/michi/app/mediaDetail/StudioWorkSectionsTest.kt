@@ -15,10 +15,7 @@ class StudioWorkSectionsTest {
         title = "Media $id",
         cover = null,
         paletteHex = null,
-        format = "TV",
         year = year,
-        averageScore = null,
-        favourites = null,
     )
 
     @Test

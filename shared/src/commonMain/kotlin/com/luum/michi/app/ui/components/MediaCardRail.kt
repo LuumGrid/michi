@@ -39,6 +39,13 @@ private val MediaCardRailGap = 12.dp
 private val MediaCardRailRowGap = 8.dp
 
 /**
+ * Rows a card rail reserves for its first column: one per item, capped at three
+ * (an empty rail reserves one). Calling rails use it so a rail with fewer than
+ * three cards does not paint dead air below its last card.
+ */
+internal fun cardRailVisibleRows(itemCount: Int, rows: Int): Int = itemCount.coerceIn(1, rows)
+
+/**
  * Horizontal rail of media cards with the standard rail header (title +
  * "View all"). Every card is a [MediaCoverCard], so Discover, the detail and the
  * profile share the list language instead of poster covers.
@@ -54,6 +61,9 @@ private val MediaCardRailRowGap = 8.dp
  * nothing; the caller passes the first items it already has. [resetKey]
  * re-creates the scroll state in place when the item set changes (the app-wide
  * scroll rule).
+ *
+ * The column always measures three rows, except when the whole rail has fewer
+ * than three cards: then it measures just those.
  *
  * The subtitle is the item's [MediaRailItem.meta] when it has one (the same
  * catalog line the "View all" rows use), otherwise its subtitle. An explicit
@@ -101,7 +111,8 @@ internal fun MediaCardRail(
                 // Fixed column height, even for the last column with one or two
                 // cards: the rail never changes height while scrolling.
                 val cardHeight = mediaCoverCardHeight(coverSize)
-                val columnHeight = (cardHeight + MediaCardRailRowGap) * rows.count -
+                val visibleRows = cardRailVisibleRows(items.size, rows.count)
+                val columnHeight = (cardHeight + MediaCardRailRowGap) * visibleRows -
                     MediaCardRailRowGap
                 val columns = items.chunked(rows.count)
                 LazyRow(
@@ -142,7 +153,7 @@ internal fun MediaCardRail(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MediaCardRailCard(
+internal fun MediaCardRailCard(
     item: MediaRailItem,
     rank: Int,
     compact: Boolean,

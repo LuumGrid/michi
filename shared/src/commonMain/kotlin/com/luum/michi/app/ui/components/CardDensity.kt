@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.Density
 /**
  * Caps the OS font scale inside dense cards (list rows, rail cards), so large
  * text settings degrade to ellipsis instead of clipping the content or pushing
- * cover badges into each other (1.3× still keeps the badge row apart on the
+ * stat chips into each other (1.3× still keeps the chip row apart on the
  * smallest cover). Full-scale access lives on the detail screens (unbounded
  * layouts).
  */

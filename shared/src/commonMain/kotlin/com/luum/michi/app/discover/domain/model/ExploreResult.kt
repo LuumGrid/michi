@@ -8,11 +8,6 @@ internal data class ExploreResult(
     val meta: String,
     val cover: CoverSizes?,
     val paletteHex: String?,
-    val averageScore: Int?,
-    val favourites: Int? = null,
-    val genres: List<String> = emptyList(),
-    val isUserFavorited: Boolean = false,
-    val isUserRanked: Boolean = false,
     /** Studio results only: true = animation studio, false = producer. */
     val isAnimationStudio: Boolean = false,
 )

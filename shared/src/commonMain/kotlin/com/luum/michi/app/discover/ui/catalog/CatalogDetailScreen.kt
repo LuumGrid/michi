@@ -16,6 +16,7 @@ import com.luum.michi.app.discover.domain.model.seasonRail
 import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
 import com.luum.michi.app.ui.components.ChipRail
 import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.toPosterItem
 import com.luum.michi.app.ui.language.Strings
 
 /**
@@ -39,8 +40,8 @@ internal fun CatalogDetailScreen(
     onOpenMedia: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val items = remember(holder.media.items, kind) {
-        holder.media.items.map { it.toCatalogPosterItem(kind) }
+    val items = remember(holder.media.items) {
+        holder.media.items.map { it.toPosterItem() }
     }
     // The rail window is anchored on the kind's default season once per page
     // instance, so picking another chip never shifts it.

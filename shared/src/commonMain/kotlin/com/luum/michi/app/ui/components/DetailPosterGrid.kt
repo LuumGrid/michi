@@ -66,6 +66,11 @@ internal fun DetailPosterGrid(
         loadedPage = loadedPage,
         onLoadMore = onLoadMore,
     )
+    // Shared line budget of every cell: a grid is uniform, so whether the
+    // subtitle row exists anywhere decides whether every card reserves it (the
+    // poster card paints it when present/reserved). No stat chips in grids.
+    val allItems = items + sections.orEmpty().flatMap { it.items }
+    val reserveSubtitle = allItems.any { it.subtitle != null }
     GridCoverSizeProvider { coverSize ->
         LazyVerticalGrid(
             // Cells are exactly a standard poster (the token the provider picked
@@ -81,7 +86,7 @@ internal fun DetailPosterGrid(
                 bottom = 24.dp + bottomPadding,
             ),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             header?.invoke(this)
             if (items.isEmpty() && !isLoading && emptyLabel != null) {
@@ -102,7 +107,7 @@ internal fun DetailPosterGrid(
                         // a bare id would make duplicate lazy keys and crash.
                         key = { index, item -> "${item.key.ifBlank { item.id.toString() }}#$index" },
                     ) { _, item ->
-                        PosterGridCard(item, coverSize, onSelect, cardOverlay)
+                        PosterGridCard(item, coverSize, onSelect, cardOverlay, reserveSubtitle)
                     }
                 } else {
                     var globalIndex = 0
@@ -126,7 +131,7 @@ internal fun DetailPosterGrid(
                                 "${item.key.ifBlank { item.id.toString() }}#${startIndex + index}"
                             },
                         ) { _, item ->
-                            PosterGridCard(item, coverSize, onSelect, cardOverlay)
+                            PosterGridCard(item, coverSize, onSelect, cardOverlay, reserveSubtitle)
                         }
                         globalIndex += section.items.size
                     }
@@ -147,6 +152,7 @@ private fun PosterGridCard(
     coverSize: CoverSize,
     onSelect: (Int) -> Unit,
     cardOverlay: (@Composable BoxScope.(MediaRailItem) -> Unit)?,
+    reserveSubtitle: Boolean,
 ) {
     PosterCard(
         cover = item.image,
@@ -157,9 +163,10 @@ private fun PosterGridCard(
         } else {
             null
         },
-        subtitle = item.subtitle,
+        // Same slot rule as MediaCardRail: the catalog line before the item one.
+        subtitle = item.meta ?: item.subtitle,
+        reserveSubtitle = reserveSubtitle,
         placeholderHex = item.placeholderHex,
-        stats = item.stats,
         overlay = cardOverlay?.let { overlay -> { overlay(this, item) } },
     )
 }

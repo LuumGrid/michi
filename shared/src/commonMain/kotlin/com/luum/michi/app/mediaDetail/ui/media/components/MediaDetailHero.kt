@@ -90,7 +90,7 @@ private data class HeroStat(
 
 /**
  * Three equal stat columns (average score, popularity, favourites) as a
- * frameless full-width row — the same icons the cover badges use. Painted only
+ * frameless full-width row — the same icons the stat chips use. Painted only
  * when at least one column has data (the next-episode band is its own item,
  * [MediaDetailNextEpisodeBand]).
  */

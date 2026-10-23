@@ -16,5 +16,4 @@ internal data class MediaItem(
     val placeholderHex: String? = null,
     val averageScore: Int? = null,
     val popularity: Int? = null,
-    val favourites: Int? = null,
 )

@@ -12,11 +12,6 @@ internal data class MediaGridItem(
     val title: String,
     val cover: CoverSizes?,
     val paletteHex: String?,
-    val format: String?,
     val year: Int?,
-    val averageScore: Int?,
-    val favourites: Int? = null,
     val genres: List<String> = emptyList(),
-    /** Popularity count, for the "Most popular" catalogs' badge. */
-    val popularity: Int? = null,
 )

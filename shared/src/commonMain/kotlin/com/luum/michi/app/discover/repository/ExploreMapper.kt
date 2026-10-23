@@ -16,11 +16,6 @@ internal fun MediaDto.toExploreResult(strings: LanguageStrings): ExploreResult {
         meta = buildMeta(strings),
         cover = coverImage?.toCoverSizes(),
         paletteHex = coverImage?.color,
-        averageScore = averageScore?.takeIf { it > 0 },
-        favourites = favourites,
-        genres = genres.orEmpty(),
-        isUserFavorited = isFavourite == true,
-        isUserRanked = mediaListEntry != null && (mediaListEntry.score ?: 0.0) > 0.0,
     )
 }
 

@@ -1,7 +1,7 @@
 package com.luum.michi.app.core.model
 
 /**
- * Compact count for cover badges and stat columns: `950`, `1.8K`, `12K`, `1.3M`.
+ * Compact count for stat chips and stat columns: `950`, `1.8K`, `12K`, `1.3M`.
  * Truncates (never rounds up across a unit) and drops a zero decimal.
  */
 internal fun Int.compactCount(): String = when {

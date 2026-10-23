@@ -9,7 +9,7 @@ import com.luum.michi.app.discover.domain.model.MediaItem
 /**
  * Items per dashboard rail: 12 fills four columns of the three-row card rail,
  * so the last column never paints a lonely card. Kept separate from the
- * detail/profile `RailPageSize` (10) because only the dashboard stacks cards in
+ * detail/profile `RailPageSize` (12) because only the dashboard stacks cards in
  * threes.
  */
 internal const val DashboardRailPageSize = 12

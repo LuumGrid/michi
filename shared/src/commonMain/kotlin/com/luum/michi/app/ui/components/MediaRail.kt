@@ -20,7 +20,6 @@ internal data class MediaRailItem(
     val key: String = "",
     /** Cover color painted while a poster-grid image loads. */
     val placeholderHex: String? = null,
-    // Up to two badges painted over the cover (first = top-start). Empty keeps
-    // every existing rail byte-identical.
+    // The first stat painted as the chip under the subtitle; empty = no chip.
     val stats: List<CoverStat> = emptyList(),
 )

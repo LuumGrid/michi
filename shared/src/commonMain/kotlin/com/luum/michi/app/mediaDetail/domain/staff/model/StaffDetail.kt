@@ -38,9 +38,6 @@ internal data class StaffMediaItem(
     val cover: CoverSizes?,
     val paletteHex: String?,
     val staffRole: String?,
-    val format: String?,
-    val year: Int?,
-    val averageScore: Int?,
 )
 
 internal data class StaffCharacterItem(

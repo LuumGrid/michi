@@ -20,16 +20,12 @@ import kotlin.test.assertTrue
 
 private fun studioMediaItem(
     id: Int,
-    format: String? = "TV",
 ) = MediaGridItem(
     mediaId = id,
     title = "Media $id",
     cover = null,
     paletteHex = null,
-    format = format,
     year = 2020,
-    averageScore = null,
-    favourites = 42,
     genres = listOf("Action", "Comedy"),
 )
 
@@ -110,7 +106,6 @@ class StudioDetailIntegrationTest {
         assertEquals("Studio 3", holder.detail?.name)
         assertEquals(listOf(7), holder.media.items.map { it.mediaId })
         val item = holder.media.items.single()
-        assertEquals(42, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
         assertFalse(holder.isLoading)
         assertNull(holder.error)

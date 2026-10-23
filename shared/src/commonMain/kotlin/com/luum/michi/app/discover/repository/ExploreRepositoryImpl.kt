@@ -30,8 +30,7 @@ import com.luum.michi.app.core.media.repository.toMediaGridItem
 /**
  * One catalog query for both types: `$type` decides the API `type` and the year
  * filter (`season`/`seasonYear` for anime, `startDate_greater`/`lesser` for
- * manga). `mediaListEntry.score` feeds Explore's "in your list" mark; the shared
- * grid no longer reads a list status.
+ * manga). The shared grid reads no viewer status.
  */
 private const val MediaCatalogQuery = """
 query MediaCatalog(
@@ -77,17 +76,12 @@ query MediaCatalog(
       status
       episodes
       chapters
-      averageScore
-      popularity
-      favourites
       genres
       coverImage { extraLarge large medium color }
       season
       seasonYear
       startDate { year month day }
       isAdult
-      isFavourite
-      mediaListEntry { id score }
     }
   }
 }
@@ -408,7 +402,6 @@ private fun CharacterDto.toExploreResult(strings: LanguageStrings): ExploreResul
     meta = strings.characterLabel,
     cover = image?.toCoverSizes(),
     paletteHex = null,
-    averageScore = null
 )
 
 private fun StaffDto.toExploreResult(strings: LanguageStrings): ExploreResult = ExploreResult(
@@ -417,7 +410,6 @@ private fun StaffDto.toExploreResult(strings: LanguageStrings): ExploreResult = 
     meta = strings.staffLabel,
     cover = image?.toCoverSizes(),
     paletteHex = null,
-    averageScore = null
 )
 
 /** A studio has no image on AniList: text-only, like the profile favourites. */
@@ -427,7 +419,6 @@ private fun StudioDto.toExploreResult(strings: LanguageStrings): ExploreResult =
     meta = strings.studioLabel,
     cover = null,
     paletteHex = null,
-    averageScore = null,
     isAnimationStudio = isAnimationStudio,
 )
 

@@ -1,7 +1,6 @@
 package com.luum.michi.app.core.media.repository
 
 import com.luum.michi.app.core.media.domain.MediaGridItem
-import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.core.media.repository.dto.MediaDto
 
 /**
@@ -14,10 +13,6 @@ internal fun MediaDto.toMediaGridItem(): MediaGridItem = MediaGridItem(
     title = title?.bestTitle() ?: "",
     cover = coverImage?.toCoverSizes(),
     paletteHex = coverImage?.color,
-    format = format?.toTitleCase(),
     year = startDate?.year,
-    averageScore = averageScore?.takeIf { it > 0 },
-    favourites = favourites?.takeIf { it > 0 },
     genres = genres.orEmpty().filter { it.isNotBlank() },
-    popularity = popularity?.takeIf { it > 0 },
 )

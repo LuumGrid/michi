@@ -39,36 +39,12 @@ internal fun MediaStaffEntry.toRailItem(): MediaRailItem = MediaRailItem(
     key = edgeKey,
 )
 
-internal fun MediaDetailRelation.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
-    id = mediaId,
-    title = title,
-    image = cover,
-    subtitle = kind.label(strings),
-    meta = catalogMeta(format, season, year, workStatus, strings, isManga),
-)
-
-internal fun MediaRecommendationEntry.toRailItem(strings: LanguageStrings, isManga: Boolean): MediaRailItem = MediaRailItem(
-    id = id,
-    title = title,
-    image = cover,
-    meta = catalogMeta(format, season, year, workStatus, strings, isManga),
-)
-
-internal fun CharacterMediaItem.toRailItem(strings: LanguageStrings): MediaRailItem = MediaRailItem(
-    id = mediaId,
-    title = title,
-    image = cover,
-    subtitle = listOfNotNull(
-        characterRoleLabel(role, strings),
-        voiceActorName,
-    ).joinToString(" · ").takeIf { it.isNotBlank() },
-)
-
 internal fun StaffMediaItem.toRailItem(): MediaRailItem = MediaRailItem(
     id = mediaId,
     title = title,
     image = cover,
     subtitle = staffRole?.takeIf { it.isNotBlank() },
+    placeholderHex = paletteHex,
 )
 
 internal fun StaffCharacterItem.toRailItem(): MediaRailItem = MediaRailItem(
@@ -149,7 +125,11 @@ internal fun MediaDetailRelation.toCardRailItem(
 internal fun MediaRecommendationEntry.toCardRailItem(
     strings: LanguageStrings,
     isManga: Boolean,
-): MediaRailItem = toRailItem(strings, isManga).copy(
+): MediaRailItem = MediaRailItem(
+    id = id,
+    title = title,
+    image = cover,
+    meta = catalogMeta(format, season, year, workStatus, strings, isManga),
     stats = listOfNotNull(scoreBadge(averageScore)),
 )
 
@@ -159,6 +139,7 @@ internal fun CharacterMediaItem.toAppearanceCardItem(strings: LanguageStrings): 
     title = title,
     image = cover,
     subtitle = characterRoleLabel(role, strings),
+    placeholderHex = paletteHex,
 )
 
 /** Localized role label; unknown values fall through to null. */

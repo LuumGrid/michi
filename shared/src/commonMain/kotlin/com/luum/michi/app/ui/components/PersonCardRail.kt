@@ -53,6 +53,9 @@ private const val PersonCardRailRows = 3
  * Horizontal rail of people cards, three per column, snapped like
  * [MediaCardRail] and sharing its header, empty label and scroll rule.
  *
+ * The column always measures three rows, except when the whole rail has fewer
+ * than three cards: then it measures just those.
+ *
  * Every card is the shared [MediaCoverCard] at [CoverSize.Compact]. When any
  * item carries a [PersonRailItem.secondary] the whole rail is in double mode:
  * the character is the card itself (one title line + role) and the actor takes
@@ -95,10 +98,11 @@ internal fun PersonCardRail(
                 val columnWidth = (
                     maxWidth - RailHorizontalPadding * 2 - PersonCardRailGap - MediaCardRailPeek
                 ).coerceAtLeast(0.dp)
-                // Fixed column height, even for the last column with one or two
-                // cards: the rail never changes height while scrolling.
+                // Column height always three rows, except when the whole rail
+                // has fewer than three cards: then it measures just those.
                 val cardHeight = mediaCoverCardHeight(CoverSize.Compact)
-                val columnHeight = (cardHeight + PersonCardRailRowGap) * PersonCardRailRows -
+                val visibleRows = cardRailVisibleRows(items.size, PersonCardRailRows)
+                val columnHeight = (cardHeight + PersonCardRailRowGap) * visibleRows -
                     PersonCardRailRowGap
                 val columns = items.chunked(PersonCardRailRows)
                 LazyRow(

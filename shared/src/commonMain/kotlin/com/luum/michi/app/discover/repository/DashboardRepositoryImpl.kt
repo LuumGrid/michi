@@ -22,7 +22,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 private const val MediaFields = """
       id format episodes chapters
-      averageScore popularity favourites
+      averageScore popularity
       title { romaji english native userPreferred }
       coverImage { extraLarge large medium color }
 """

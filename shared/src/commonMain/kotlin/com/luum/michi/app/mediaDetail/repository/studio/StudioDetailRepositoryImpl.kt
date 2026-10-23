@@ -26,11 +26,8 @@ import com.luum.michi.app.core.model.GridPageSize
  *  copy each). It is exactly the catalog node the shared grid mapper reads. */
 private const val StudioMediaNodeSelection = """
         id
-        format
         title { userPreferred romaji english native }
         coverImage { extraLarge large medium color }
-        averageScore
-        favourites
         genres
         startDate { year }
 """

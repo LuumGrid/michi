@@ -8,11 +8,12 @@ import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
 import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
 import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
-import com.luum.michi.app.mediaDetail.ui.components.toRailItem
+import com.luum.michi.app.mediaDetail.ui.components.toCardRailItem
 import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageLabel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Pure mapping of detail entries to rail/list cards: the shared role label and
@@ -31,27 +32,28 @@ class DetailRailItemsTest {
     }
 
     @Test
-    fun relatedRailItemCarriesKindAndCatalogMeta() {
-        val item = relation().toRailItem(EnglishStrings, isManga = false)
+    fun relatedCardItemCarriesKindChipAndCatalogMeta() {
+        val item = relation().toCardRailItem(EnglishStrings, isManga = false)
 
         assertEquals(70, item.id)
-        assertEquals("Sequel", item.subtitle)
-        assertEquals("TV · Summer 2026 · Airing", item.meta)
+        assertEquals("TV · Summer 2026 · Airing", item.subtitle)
+        assertEquals("Sequel", item.tag)
     }
 
     @Test
-    fun relatedMetaUsesTheMangaStatusWording() {
-        val item = relation().toRailItem(EnglishStrings, isManga = true)
+    fun relatedCardMetaUsesTheMangaStatusWording() {
+        val item = relation().toCardRailItem(EnglishStrings, isManga = true)
 
-        assertEquals("TV · Summer 2026 · Publishing", item.meta)
+        assertEquals("TV · Summer 2026 · Publishing", item.subtitle)
     }
 
     @Test
-    fun recommendationRailItemHasNoSubtitleAndCarriesCatalogMeta() {
-        val item = recommendation().toRailItem(EnglishStrings, isManga = true)
+    fun recommendationCardItemHasNoSubtitleAndCarriesCatalogMeta() {
+        val item = recommendation().toCardRailItem(EnglishStrings, isManga = true)
 
         assertNull(item.subtitle)
         assertEquals("MANGA · Fall 2025 · Finished", item.meta)
+        assertTrue(item.stats.isEmpty())
     }
 
     @Test

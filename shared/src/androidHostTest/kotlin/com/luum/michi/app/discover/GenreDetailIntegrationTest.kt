@@ -29,10 +29,7 @@ internal fun gridItem(id: Int) = MediaGridItem(
     title = "Media $id",
     cover = null,
     paletteHex = null,
-    format = "TV",
     year = 2020,
-    averageScore = null,
-    favourites = 42,
     genres = listOf("Action", "Comedy"),
 )
 
@@ -146,7 +143,6 @@ class GenreDetailIntegrationTest {
         assertEquals(listOf("Action"), holder.filter.genres)
         assertEquals(listOf(7), holder.media.items.map { it.mediaId })
         val item = holder.media.items.single()
-        assertEquals(42, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
         assertTrue(holder.pageLoaded)
         assertFalse(holder.isLoading)

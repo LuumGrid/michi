@@ -32,14 +32,11 @@ private fun studioDetailJson() = buildJsonObject {
                 buildJsonObject {
                     put("id", 7)
                     put("type", "ANIME")
-                    put("format", "TV")
                     put("title", buildJsonObject { put("userPreferred", "My Hero Academia") })
                     put("coverImage", buildJsonObject {
                         put("large", "https://img/7.jpg")
                         put("color", "#123456")
                     })
-                    put("averageScore", 81)
-                    put("favourites", 500)
                     put("genres", JsonArray(listOf(JsonPrimitive("Action"), JsonPrimitive("Comedy"))))
                     put("startDate", buildJsonObject { put("year", 2016) })
                 },
@@ -51,7 +48,7 @@ private fun studioDetailJson() = buildJsonObject {
 class StudioDetailMapperTest {
 
     @Test
-    fun mapsFavouritesAndGenres() = runBlocking {
+    fun mapsStudioFavouritesAndGenres() = runBlocking {
         val graphQL = FakeGraphQL(listOf(studioDetailJson()))
         val repository = StudioDetailRepositoryImpl(graphQL, FavouriteRepositoryImpl(graphQL))
         val result = repository.loadDetail(9, "POPULARITY_DESC")
@@ -62,10 +59,7 @@ class StudioDetailMapperTest {
         val item = detail.media.items.single()
         assertEquals(7, item.mediaId)
         assertEquals("My Hero Academia", item.title)
-        assertEquals("TV", item.format)
         assertEquals(2016, item.year)
-        assertEquals(81, item.averageScore)
-        assertEquals(500, item.favourites)
         assertEquals(listOf("Action", "Comedy"), item.genres)
     }
 
@@ -76,7 +70,8 @@ class StudioDetailMapperTest {
 
         val query = graphQL.requests.single().query
         assertTrue(query.contains("genres"), query)
-        assertTrue(query.contains("favourites"), query)
+        assertFalse(query.contains("averageScore"), query)
+        assertFalse(query.contains("format"), query)
         assertFalse(query.contains("mediaListEntry"), "the grid no longer reads a viewer list status")
     }
 }

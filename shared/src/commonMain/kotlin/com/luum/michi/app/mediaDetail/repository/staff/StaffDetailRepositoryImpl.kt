@@ -4,7 +4,6 @@ import com.luum.michi.app.core.favourite.domain.FavouriteRepository
 import com.luum.michi.app.core.favourite.domain.FavouriteTarget
 import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.media.repository.bestTitle
-import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.mediaDetail.domain.staff.StaffDetailRepository
 import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
@@ -59,11 +58,8 @@ query StaffDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}charPage: Int!, ${'$'}
         staffRole
         node {
           id
-          format
           title { userPreferred romaji english native }
           coverImage { extraLarge large medium color }
-          averageScore
-          startDate { year }
         }
       }
     }
@@ -88,11 +84,8 @@ query StaffMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!) {
         staffRole
         node {
           id
-          format
           title { userPreferred romaji english native }
           coverImage { extraLarge large medium color }
-          averageScore
-          startDate { year }
         }
       }
     }
@@ -191,11 +184,8 @@ private data class StaffCharacterMediaEdgeDto(
 @Serializable
 private data class StaffMediaNodeDto(
     val id: Int,
-    val format: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
-    val averageScore: Int? = null,
-    val startDate: FuzzyDateDto? = null,
 )
 
 @Serializable
@@ -221,9 +211,6 @@ private fun StaffMediaEdgeDto.toItem(): StaffMediaItem? {
         cover = node.coverImage?.toCoverSizes(),
         paletteHex = node.coverImage?.color,
         staffRole = staffRole?.takeIf { it.isNotBlank() },
-        format = node.format?.toTitleCase(),
-        year = node.startDate?.year,
-        averageScore = node.averageScore?.takeIf { it > 0 },
     )
 }
 

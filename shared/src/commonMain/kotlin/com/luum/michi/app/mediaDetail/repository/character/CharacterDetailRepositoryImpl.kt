@@ -9,7 +9,6 @@ import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
 import com.luum.michi.app.core.media.repository.dto.MediaCoverImageDto
 import com.luum.michi.app.core.media.repository.bestTitle
-import com.luum.michi.app.core.media.domain.toTitleCase
 import com.luum.michi.app.core.media.repository.dto.MediaTitleDto
 import com.luum.michi.app.core.network.repository.dto.PageInfoDto
 import com.luum.michi.app.core.person.repository.dto.PersonImageDto
@@ -60,12 +59,8 @@ query CharacterDetail(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, ${'
         }
         node {
           id
-          type
-          format
           title { userPreferred romaji english native }
           coverImage { extraLarge large medium color }
-          averageScore
-          startDate { year }
         }
       }
     }
@@ -89,12 +84,8 @@ query CharacterMediaPage(${'$'}id: Int!, ${'$'}page: Int!, ${'$'}perPage: Int!, 
         }
         node {
           id
-          type
-          format
           title { userPreferred romaji english native }
           coverImage { extraLarge large medium color }
-          averageScore
-          startDate { year }
         }
       }
     }
@@ -159,12 +150,8 @@ private data class VoiceActorDto(
 @Serializable
 private data class CharacterMediaNodeDto(
     val id: Int,
-    val type: String? = null,
-    val format: String? = null,
     val title: MediaTitleDto? = null,
     val coverImage: MediaCoverImageDto? = null,
-    val averageScore: Int? = null,
-    val startDate: FuzzyDateDto? = null,
 )
 
 // ────────────── mapper helpers ──────────────
@@ -184,9 +171,6 @@ private fun CharacterMediaEdgeDto.toItem(): CharacterMediaItem? {
         cover = node.coverImage?.toCoverSizes(),
         paletteHex = node.coverImage?.color,
         role = normalizeCharacterRole(characterRole),
-        format = node.format?.toTitleCase(),
-        year = node.startDate?.year,
-        averageScore = node.averageScore?.takeIf { it > 0 },
         voiceActorName = va?.name?.userPreferred,
         voiceActorImage = va?.image?.let { personCoverSizes(it.large, it.medium) },
         voiceActorLanguage = va?.languageV2,

@@ -24,9 +24,6 @@ private fun staffMediaItem(id: Int) = StaffMediaItem(
     cover = null,
     paletteHex = null,
     staffRole = "Director",
-    format = null,
-    year = null,
-    averageScore = null,
 )
 
 private fun staffCharacterItem(id: Int) = StaffCharacterItem(

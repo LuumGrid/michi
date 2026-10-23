@@ -56,7 +56,6 @@ private fun MediaDto.toMediaItem(strings: LanguageStrings, isManga: Boolean): Me
         placeholderHex = coverImage?.color,
         averageScore = averageScore,
         popularity = popularity,
-        favourites = favourites,
     )
 
 private fun animeMeta(media: MediaDto, strings: LanguageStrings): String {

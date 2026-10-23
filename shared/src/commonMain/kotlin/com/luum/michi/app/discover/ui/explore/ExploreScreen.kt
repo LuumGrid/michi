@@ -33,9 +33,7 @@ import com.luum.michi.app.ui.components.MessagePanel
 import com.luum.michi.app.ui.components.OptionGroup
 import com.luum.michi.app.ui.components.SettingsRow
 import com.luum.michi.app.ui.components.SortSheet
-import com.luum.michi.app.ui.components.favouritesBadge
 import com.luum.michi.app.ui.components.rememberResetListState
-import com.luum.michi.app.ui.components.scoreBadge
 import com.luum.michi.app.ui.icons.AppIcons
 import com.luum.michi.app.ui.language.Strings
 
@@ -230,5 +228,4 @@ private fun ExploreResult.toRailItem(showMeta: Boolean): MediaRailItem = MediaRa
     image = cover,
     subtitle = meta.takeIf { showMeta && it.isNotBlank() },
     placeholderHex = paletteHex,
-    stats = listOfNotNull(scoreBadge(averageScore), favouritesBadge(favourites)),
 )
