@@ -30,6 +30,7 @@ import com.luum.michi.app.mediaDetail.ui.media.state.MediaDetailStateHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -220,13 +221,30 @@ private class GatedPageDetailRepository(
     }
 }
 
-/** A manga detail page: themes must never be requested for it. */
+/** The AniList detail waits on [gate]: proves the themes do not wait for it. */
+private class GatedDetailRepository : MediaDetailRepository by RecordingDetailRepository() {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun loadDetail(
+        mediaId: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<MediaDetail> {
+        gate.await()
+        return NetworkResult.Success(sampleDetail(mediaId))
+    }
+}
+
+/** A manga detail page: its speculative themes are dropped. */
 private class MangaDetailRepository : MediaDetailRepository by RecordingDetailRepository() {
     override suspend fun loadDetail(
         mediaId: Int,
         strings: LanguageStrings,
-    ): NetworkResult<MediaDetail> =
-        NetworkResult.Success(sampleDetail(mediaId).copy(type = MediaDetailType.MANGA))
+    ): NetworkResult<MediaDetail> {
+        // AniList always suspends on the network; yielding lets the speculative
+        // AnimeThemes request start first, exactly like on a real device.
+        yield()
+        return NetworkResult.Success(sampleDetail(mediaId).copy(type = MediaDetailType.MANGA))
+    }
 }
 
 private object NoopThemesRepository : AnimeThemesRepository {
@@ -368,7 +386,7 @@ class MediaDetailIntegrationTest {
     }
 
     @Test
-    fun mangaNeverAsksForThemes() {
+    fun mangaDropsItsSpeculativeThemes() {
         val themesRepository = RecordingThemesRepository(listOf(sampleTheme()))
         val holder = holderWired(
             MangaDetailRepository(),
@@ -377,8 +395,30 @@ class MediaDetailIntegrationTest {
 
         holder.load(1)
 
-        assertEquals(0, themesRepository.calls)
+        assertEquals(1, themesRepository.calls, "asked in parallel, before the type is known")
         assertNull(holder.themes)
+
+        holder.refresh()
+        assertEquals(1, themesRepository.calls, "a refresh of the same manga never asks again")
+        assertNull(holder.themes)
+    }
+
+    @Test
+    fun themesStartBeforeTheAniListDetailArrives() {
+        val theme = sampleTheme()
+        val themesRepository = RecordingThemesRepository(listOf(theme))
+        val repository = GatedDetailRepository()
+        val holder = holderWired(repository, themesRepository = themesRepository)
+
+        holder.load(1)
+
+        assertNull(holder.detail)
+        assertEquals(1, themesRepository.calls, "themes do not wait for AniList")
+
+        repository.gate.complete(Unit)
+
+        assertEquals(1, themesRepository.calls)
+        assertEquals(listOf(theme), holder.themes)
     }
 
     @Test

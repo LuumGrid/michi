@@ -108,12 +108,17 @@ internal class MediaDetailStateHolder(
         )
     }
 
-    override suspend fun fetchDetail(id: Int): NetworkResult<MediaDetail> =
-        repository.loadDetail(id, stringsProvider())
+    override suspend fun fetchDetail(id: Int): NetworkResult<MediaDetail> {
+        // In parallel with AniList: the type is unknown until it answers, so a
+        // manga asks once too (AnimeThemes answers empty) and onDetailLoaded drops it.
+        loadThemes()
+        return repository.loadDetail(id, stringsProvider())
+    }
 
     /**
-     * Fetches the themes once per anime, as soon as its detail is on screen
-     * (fresh or restored). Repeated calls for the same anime are no-ops.
+     * Fetches the themes once per media id, in parallel with the AniList detail
+     * (fresh) or as soon as a snapshot is restored. Repeated calls for the same
+     * id are no-ops.
      */
     private fun loadThemes() {
         val id = currentDetailId ?: return
@@ -137,12 +142,20 @@ internal class MediaDetailStateHolder(
         }
     }
 
+    /** A manga never shows themes: cancel the speculative request and keep
+     *  [themesFor] so a refresh of the same manga does not ask again. */
+    private fun dropThemes() {
+        themesJob?.cancel()
+        themesJob = null
+        themes = null
+    }
+
     override fun onDetailLoaded(detail: MediaDetail) {
         resetThemesUnless(detail.id)
         characters.set(detail.characters)
         staff.set(detail.staff)
         recommendations.set(detail.recommendations)
-        if (detail.type == MediaDetailType.ANIME) loadThemes()
+        if (detail.type == MediaDetailType.ANIME) loadThemes() else dropThemes()
     }
 
     override fun cancelPages() {
