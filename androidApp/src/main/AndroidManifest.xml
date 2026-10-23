@@ -14,7 +14,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Michi">
+        <!-- Compose redraws on these changes by itself (theme switch, rotation);
+             recreating the activity would drop the in-memory navigation state. -->
         <activity
+            android:configChanges="uiMode|orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTask"
             android:name=".MainActivity">

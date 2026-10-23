@@ -291,12 +291,22 @@ interface LanguageStrings {
     val notificationsMessagesTitle: String
     val notificationsMediaTitle: String
     val settingsAboutTitle: String
-    val settingsAboutSubtitle: String
     val settingsAboutVersionLabel: String
-    val settingsAboutDataByText: String
-    val settingsAboutUnofficialText: String
-    val settingsAboutDescriptionFirst: String
-    val settingsAboutDescriptionSecond: String
+    val aboutTagline: String
+    val aboutChipFree: String
+    val aboutChipNoAds: String
+    val aboutChipOpenSource: String
+    val aboutProjectSection: String
+    val aboutLegalSection: String
+    val aboutSourceCodeTitle: String
+    val aboutReportIssueTitle: String
+    val aboutReportIssueSubtitle: String
+    val aboutShareTitle: String
+    fun aboutShareText(url: String): String
+    val aboutPrivacyTitle: String
+    val aboutLicenseTitle: String
+    val aboutDataByTitle: String
+    val aboutNotAffiliatedText: String
     val settingsAccountTitle: String
     val settingsAccountSettingsTitle: String
     val settingsSignInTitle: String

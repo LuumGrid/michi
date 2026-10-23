@@ -45,6 +45,7 @@ import com.luum.michi.app.root.state.detailSurfaceKey
 import com.luum.michi.app.root.state.rememberState
 import com.luum.michi.app.root.state.resolveStartDestination
 import com.luum.michi.app.root.state.startDestinationChoice
+import com.luum.michi.app.settings.ui.AboutScreen
 import com.luum.michi.app.settings.ui.SettingsScreen
 import com.luum.michi.app.settings.ui.state.SettingsState
 import com.luum.michi.app.ui.components.SearchScrim
@@ -232,14 +233,25 @@ internal fun Root(
                 surfaceStates.SaveableStateProvider(surface) {
                     key(surface) {
                         if (state.isOpen(RootOverlay.Settings)) {
-                            SettingsScreen(
-                                settingsState = settingsState,
-                                startDestination = startChoice,
-                                viewer = viewer,
-                                onLogin = { state.open(RootOverlay.SignIn) },
-                                onLogout = onLogout,
-                                bottomPadding = padding.calculateBottomPadding(),
-                            )
+                            if (state.settingsAboutOpen) {
+                                AboutScreen(
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                    onOpenUrl = { urlOpener.open(it) },
+                                    onShare = { text, subject ->
+                                        shareLauncher.share(text, subject)
+                                    },
+                                )
+                            } else {
+                                SettingsScreen(
+                                    settingsState = settingsState,
+                                    startDestination = startChoice,
+                                    viewer = viewer,
+                                    onLogin = { state.open(RootOverlay.SignIn) },
+                                    onLogout = onLogout,
+                                    onOpenAbout = { state.openSettingsAbout() },
+                                    bottomPadding = padding.calculateBottomPadding(),
+                                )
+                            }
                         } else if (state.isDetailOpen) {
                             // Detail page over the current tab (tab bar hidden):
                             // pushes onto detailStack, back pops one at a time.
@@ -320,6 +332,7 @@ internal fun Root(
 
 /** Which saved surface the content area shows: the slot's tab + the view. */
 private fun surfaceKey(tab: TabSection, state: State): String = when {
+    state.isOpen(RootOverlay.Settings) && state.settingsAboutOpen -> "${tab.name}:settings-about"
     state.isOpen(RootOverlay.Settings) -> "${tab.name}:settings"
     state.isDetailOpen -> detailSurfaceKey(tab, state.currentDetailEntryId)
     state.isOpen(RootOverlay.Calendar) -> "${tab.name}:calendar"

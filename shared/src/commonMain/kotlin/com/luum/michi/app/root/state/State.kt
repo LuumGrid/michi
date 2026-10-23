@@ -18,8 +18,8 @@ import com.luum.michi.app.mediaList.domain.manga.model.MangaListSection
 /**
  * Progressive back order shared by the toolbar back affordance, the search
  * scrim and the system back handler:
- * sheet -> above-detail (modal/settings/editor) -> detail -> search ->
- * Explore results -> below-detail overlay -> system.
+ * sheet -> settings About page -> above-detail (modal/settings/editor) ->
+ * detail -> search -> Explore results -> below-detail overlay -> system.
  * The detail page renders over calendar/explore/notifications, so it closes
  * before them; the search and its results mode are tab-surface states, so they
  * close after the detail but before those below-detail overlays (one back per
@@ -30,6 +30,7 @@ internal sealed interface BackStep {
     data object CloseExploreResults : BackStep
     data object CloseFavoritesEdit : BackStep
     data object CloseSheet : BackStep
+    data object CloseSettingsAbout : BackStep
     data object CloseOverlay : BackStep
     data object CloseDetail : BackStep
     data object SystemDefault : BackStep
@@ -64,11 +65,28 @@ internal class State(
     fun isOpen(overlay: RootOverlay): Boolean = overlay in openOverlays
 
     fun open(overlay: RootOverlay) {
+        // Settings always starts on the list, never on the About page.
+        if (overlay == RootOverlay.Settings) settingsAboutOpen = false
         openOverlays = openOverlays + overlay
     }
 
     fun close(overlay: RootOverlay) {
         openOverlays = openOverlays - overlay
+    }
+
+    /**
+     * The About page is a page inside the settings overlay: Root renders it in
+     * place of the list and back leaves it before closing Settings.
+     */
+    var settingsAboutOpen: Boolean by mutableStateOf(false)
+        private set
+
+    fun openSettingsAbout() {
+        settingsAboutOpen = true
+    }
+
+    fun closeSettingsAbout() {
+        settingsAboutOpen = false
     }
 
     /** In-context search: one active tab at a time, query preserved per tab. */
@@ -185,6 +203,10 @@ internal class State(
 
     fun nextBackStep(): BackStep = when {
         openOverlays.any { it.layer == OverlayLayer.SHEET } -> BackStep.CloseSheet
+        // The About page is a root flag inside Settings: back leaves it before
+        // the settings overlay itself (and before sign-in closes the layer).
+        settingsAboutOpen && isOpen(RootOverlay.Settings) && !isOpen(RootOverlay.SignIn) &&
+            !isEditorOpen -> BackStep.CloseSettingsAbout
         // Surfaces drawn ABOVE the detail page (modal sheets + settings), plus
         // the editor, which is not part of the overlay set.
         isEditorOpen || openOverlays.any { it.layer == OverlayLayer.ABOVE_DETAIL } -> BackStep.CloseOverlay
@@ -222,6 +244,10 @@ internal class State(
         }
         BackStep.CloseSheet -> {
             openOverlays = openOverlays.filter { it.layer != OverlayLayer.SHEET }.toSet()
+            true
+        }
+        BackStep.CloseSettingsAbout -> {
+            closeSettingsAbout()
             true
         }
         BackStep.CloseOverlay -> {
@@ -318,6 +344,7 @@ internal class State(
         exploreSentQuery = ""
         favoritesEditing = false
         openOverlays = emptySet()
+        settingsAboutOpen = false
     }
 }
 

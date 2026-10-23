@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.luum.michi.app.ui.icons.AppIcons
 
@@ -25,6 +26,8 @@ import com.luum.michi.app.ui.icons.AppIcons
  * when tappable (static when [onClick] is null). Rows draw their own dividers, so
  * set [divider]=false on the first row of a group. Shared by Settings and by
  * Explore's studio results (settings look: name + "Anime studio"/"Producer").
+ * Optional leading [icon] (20dp, onSurfaceVariant) and a [supportingText] line
+ * under the label (About page rows).
  */
 @Composable
 internal fun SettingsRow(
@@ -38,6 +41,8 @@ internal fun SettingsRow(
     // It is painted as a centered end overlay, so a 48dp control never grows
     // the row (the same row measures the same height in both modes).
     trailing: (@Composable () -> Unit)? = null,
+    icon: ImageVector? = null,
+    supportingText: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (divider) {
@@ -51,11 +56,28 @@ internal fun SettingsRow(
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    if (supportingText != null) {
+                        Text(
+                            text = supportingText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyMedium,

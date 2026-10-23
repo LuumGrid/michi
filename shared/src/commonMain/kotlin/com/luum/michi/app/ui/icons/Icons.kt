@@ -7,10 +7,13 @@ import com.luum.michi.app.ui.icons.generated.Anilist
 import com.luum.michi.app.ui.icons.generated.AnimeRounded
 import com.luum.michi.app.ui.icons.generated.AnimeRoundedFilled
 import com.luum.michi.app.ui.icons.generated.BackRounded
+import com.luum.michi.app.ui.icons.generated.BugReportRounded
 import com.luum.michi.app.ui.icons.generated.CalendarRounded
 import com.luum.michi.app.ui.icons.generated.CheckRounded
 import com.luum.michi.app.ui.icons.generated.ChevronRightRounded
 import com.luum.michi.app.ui.icons.generated.ClearRounded
+import com.luum.michi.app.ui.icons.generated.CodeRounded
+import com.luum.michi.app.ui.icons.generated.DescriptionRounded
 import com.luum.michi.app.ui.icons.generated.EditRounded
 import com.luum.michi.app.ui.icons.generated.ExpandLessRounded
 import com.luum.michi.app.ui.icons.generated.ExpandMoreRounded
@@ -25,12 +28,15 @@ import com.luum.michi.app.ui.icons.generated.ImageRounded
 import com.luum.michi.app.ui.icons.generated.LanguageRounded
 import com.luum.michi.app.ui.icons.generated.MangaRounded
 import com.luum.michi.app.ui.icons.generated.MangaRoundedFilled
+import com.luum.michi.app.ui.icons.generated.MichiSymbol
 import com.luum.michi.app.ui.icons.generated.MoreRounded
 import com.luum.michi.app.ui.icons.generated.NotificationsRounded
 import com.luum.michi.app.ui.icons.generated.ProfileRounded
 import com.luum.michi.app.ui.icons.generated.ProfileRoundedFilled
 import com.luum.michi.app.ui.icons.generated.SearchRounded
 import com.luum.michi.app.ui.icons.generated.SettingsRounded
+import com.luum.michi.app.ui.icons.generated.ShareRounded
+import com.luum.michi.app.ui.icons.generated.ShieldRounded
 import com.luum.michi.app.ui.icons.generated.SortRounded
 import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
 import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
@@ -146,6 +152,31 @@ internal object AppIcons {
     /** Crossed-out eye: hides an open spoiler paragraph. */
     val VisibilityOff: ImageVector
         get() = IconPack.VisibilityOffRounded
+
+    // ---- About: the Settings About page ----
+    /** Source code. */
+    val Code: ImageVector
+        get() = IconPack.CodeRounded
+
+    /** Report a problem. */
+    val BugReport: ImageVector
+        get() = IconPack.BugReportRounded
+
+    /** Share the app. */
+    val Share: ImageVector
+        get() = IconPack.ShareRounded
+
+    /** Privacy policy. */
+    val Shield: ImageVector
+        get() = IconPack.ShieldRounded
+
+    /** A document: the license. */
+    val Description: ImageVector
+        get() = IconPack.DescriptionRounded
+
+    /** The Michi logo symbol (black, evenOdd); paint it untinted on white. */
+    val MichiSymbol: ImageVector
+        get() = IconPack.MichiSymbol
 
     // ---- Misc: catalogued, wired when their surface lands ----
     /** Chevron-right: rows that open a picker sheet. */
