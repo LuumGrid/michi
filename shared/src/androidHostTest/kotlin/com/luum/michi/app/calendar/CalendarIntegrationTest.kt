@@ -350,9 +350,8 @@ class CalendarIntegrationTest {
 
     @Test
     fun guestEntriesWithoutListEntryMapToNullUserFields() {
-        // Live guest shape: airing data is public but mediaListEntry (and
-        // isFavourite) resolve null without a session. The feed must still
-        // decode and render with null user fields.
+        // Live guest shape: airing data is public but mediaListEntry resolves
+        // null without a session. The feed must still decode and render.
         val graphQL = FakeGraphQL(
             listOf(pageJson(false, schedJson(1, Now, mediaJson(10)))),
         )
@@ -362,17 +361,15 @@ class CalendarIntegrationTest {
 
         val item = holder.selectedItems.single().item
         assertNull(item.userStatus)
-        assertEquals(false, item.isUserFavorited)
-        assertEquals(false, item.isUserRanked)
         assertEquals(1, holder.selectedItems.size)
     }
 
     @Test
     fun authenticatedEntryShapeMapsUserFields() {
-        // Live logged-in shape: mediaListEntry resolves with id + status +
-        // score. The entry id selection is required by the shared DTO, so a
-        // populated entry must decode and map (this bit the calendar once:
-        // the query omitted id and every logged-in load failed).
+        // Live logged-in shape: mediaListEntry resolves with id + status. The
+        // entry id selection is required by the shared DTO, so a populated
+        // entry must decode and map (this bit the calendar once: the query
+        // omitted id and every logged-in load failed).
         val entryJson = buildJsonObject {
             put("id", 7)
             put("status", "CURRENT")
@@ -391,7 +388,6 @@ class CalendarIntegrationTest {
 
         val item = holder.selectedItems.single().item
         assertEquals(MediaListStatus.CURRENT, item.userStatus)
-        assertEquals(true, item.isUserRanked)
     }
 
     @Test
@@ -406,15 +402,14 @@ class CalendarIntegrationTest {
         holder.load()
 
         val query = graphQL.requests.single().query
-        assertTrue(query.contains("mediaListEntry { id status progress score }"))
+        assertTrue(query.contains("mediaListEntry { id status }"))
         assertTrue(query.contains("status"))
     }
 
     @Test
-    fun releaseMetadataMapsFormatStatusScoreAndPlatforms() {
+    fun releaseMetadataMapsFormatStatusAndPlatforms() {
         // Card metadata mirrors the lists: format + work status drive the
-        // meta line, the entry score drives the user pill, and only
-        // enabled STREAMING links become platform chips.
+        // meta line, and only enabled STREAMING links become platform chips.
         val media = buildJsonObject {
             put("id", 10)
             put("format", "TV")
@@ -464,7 +459,6 @@ class CalendarIntegrationTest {
         val item = holder.selectedItems.single().item
         assertEquals(MediaFormat.TV, item.format)
         assertEquals(MediaWorkStatus.RELEASING, item.mediaStatus)
-        assertEquals(8.5f, item.userScore)
         assertEquals(Now, item.airingAtEpoch)
         assertEquals(1, item.episode)
         assertEquals(listOf("Crunchyroll"), item.streamingPlatforms.map { it.site })

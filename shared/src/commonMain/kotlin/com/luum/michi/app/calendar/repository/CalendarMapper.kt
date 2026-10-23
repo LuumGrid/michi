@@ -12,22 +12,14 @@ import com.luum.michi.app.core.media.repository.toCoverSizes
 
 internal fun AiringScheduleDto.toReleaseItemOrNull(): ReleaseItem? {
     val media = media ?: return null
-    val hasUserScore = (media.mediaListEntry?.score ?: 0.0) > 0.0
     return ReleaseItem(
         title = media.title.bestTitle(),
         episode = episode,
         airingAtEpoch = airingAt,
-        paletteHex = media.coverImage?.color,
         id = media.id,
         cover = media.coverImage?.toCoverSizes(),
         format = parseMediaFormat(media.format),
         mediaStatus = parseMediaWorkStatus(media.status),
-        averageScore = media.averageScore,
-        favourites = media.favourites,
-        popularity = media.popularity,
-        isUserFavorited = media.isFavourite ?: false,
-        isUserRanked = hasUserScore,
-        userScore = media.mediaListEntry?.score?.toFloat(),
         userStatus = parseMediaListStatus(media.mediaListEntry?.status),
         season = parseMediaSeason(media.season),
         seasonYear = media.seasonYear,

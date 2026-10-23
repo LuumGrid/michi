@@ -25,14 +25,9 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {
         status
         season
         seasonYear
-        episodes
-        averageScore
-        favourites
-        popularity
         title { romaji english native userPreferred }
         coverImage { extraLarge large medium color }
-        isFavourite
-        mediaListEntry { id status progress score }
+        mediaListEntry { id status }
         externalLinks {
           id
           site
@@ -40,7 +35,6 @@ query Calendar(${'$'}from: Int!, ${'$'}to: Int!, ${'$'}page: Int!) {
           type
           icon
           color
-          language
           isDisabled
         }
       }
