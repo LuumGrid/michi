@@ -284,7 +284,8 @@ internal class State(
         push(destination)
     }
 
-    fun openMedia(id: Int) = openDeepLink(DetailDestination.Media(id))
+    fun openMedia(id: Int, typeHint: MediaType? = null) =
+        openDeepLink(DetailDestination.Media(id, typeHint))
     fun openCharacter(id: Int) = push(DetailDestination.Character(id))
     fun openStaff(id: Int) = push(DetailDestination.Staff(id))
     fun openStudio(id: Int) = push(DetailDestination.Studio(id))

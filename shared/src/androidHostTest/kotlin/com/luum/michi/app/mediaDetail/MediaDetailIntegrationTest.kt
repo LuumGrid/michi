@@ -6,6 +6,7 @@ import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.medialist.domain.MediaListStatus
 import com.luum.michi.app.core.medialist.domain.MediaListViewerEntry
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.media.domain.MediaWorkStatus
 import com.luum.michi.app.core.network.domain.NetworkError
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -247,6 +248,19 @@ private class MangaDetailRepository : MediaDetailRepository by RecordingDetailRe
     }
 }
 
+/** MANGA for [mangaId], ANIME for the rest. */
+private class PerTypeDetailRepository(private val mangaId: Int) :
+    MediaDetailRepository by RecordingDetailRepository() {
+    override suspend fun loadDetail(
+        mediaId: Int,
+        strings: LanguageStrings,
+    ): NetworkResult<MediaDetail> = NetworkResult.Success(
+        sampleDetail(mediaId).copy(
+            type = if (mediaId == mangaId) MediaDetailType.MANGA else MediaDetailType.ANIME,
+        ),
+    )
+}
+
 private object NoopThemesRepository : AnimeThemesRepository {
     override suspend fun themes(aniListId: Int): NetworkResult<List<AnimeTheme>> =
         NetworkResult.Success(emptyList())
@@ -401,6 +415,32 @@ class MediaDetailIntegrationTest {
         holder.refresh()
         assertEquals(1, themesRepository.calls, "a refresh of the same manga never asks again")
         assertNull(holder.themes)
+    }
+
+    @Test
+    fun knownMangaNeverAsksForThemes() {
+        val themesRepository = RecordingThemesRepository(listOf(sampleTheme()))
+        val holder = holderWired(MangaDetailRepository(), themesRepository = themesRepository)
+
+        holder.load(1, MediaType.MANGA)
+
+        assertEquals(0, themesRepository.calls)
+        assertNull(holder.themes)
+    }
+
+    @Test
+    fun aMangaHintNeverLeaksOntoAnotherMedia() {
+        val theme = sampleTheme()
+        val themesRepository = RecordingThemesRepository(listOf(theme))
+        val holder = holderWired(
+            PerTypeDetailRepository(mangaId = 1),
+            themesRepository = themesRepository,
+        )
+
+        holder.load(1, MediaType.MANGA)
+        holder.load(2)
+
+        assertEquals(1, themesRepository.calls, "media 2 has no hint: it asks as in 10.9")
     }
 
     @Test

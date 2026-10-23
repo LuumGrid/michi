@@ -1,5 +1,6 @@
 package com.luum.michi.app.core
 
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.parseAniListDestination
 import kotlin.test.Test
@@ -95,6 +96,14 @@ class AniListDeepLinkTest {
     fun plainTextWithoutLinkIsIgnored() {
         assertNull(parseAniListDestination("hello world"))
         assertNull(parseAniListDestination("https://example.com/anime/1"))
+    }
+
+    @Test
+    fun mediaLinksCarryTheirTypeHint() {
+        val anime = parseAniListDestination("https://anilist.co/anime/123") as DetailDestination.Media
+        val manga = parseAniListDestination("https://anilist.co/manga/456") as DetailDestination.Media
+        assertEquals(MediaType.ANIME, anime.typeHint)
+        assertEquals(MediaType.MANGA, manga.typeHint)
     }
 
     @Test

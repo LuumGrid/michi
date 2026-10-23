@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.medialist.domain.MediaListEntryRepository
 import com.luum.michi.app.core.model.Page
 import com.luum.michi.app.core.network.domain.NetworkResult
@@ -63,7 +64,17 @@ internal class MediaDetailStateHolder(
     private var themesFor: Int? = null
     private var themesJob: Job? = null
 
+    // What the opener knew about the media being loaded, keyed by its id so a
+    // hint never leaks onto another media.
+    private var typeHint: Pair<Int, MediaType>? = null
+
     override fun isFavouriteOf(detail: MediaDetail): Boolean = detail.isFavourite
+
+    /** [load] with what the opener already knows: a known manga never asks AnimeThemes. */
+    fun load(id: Int, typeHint: MediaType?) {
+        this.typeHint = typeHint?.let { id to it }
+        load(id)
+    }
 
     fun loadMoreCharacters() {
         val id = currentDetailId ?: return
@@ -109,9 +120,10 @@ internal class MediaDetailStateHolder(
     }
 
     override suspend fun fetchDetail(id: Int): NetworkResult<MediaDetail> {
-        // In parallel with AniList: the type is unknown until it answers, so a
-        // manga asks once too (AnimeThemes answers empty) and onDetailLoaded drops it.
-        loadThemes()
+        // In parallel with AniList. A known manga (the opener's hint) skips it; with
+        // no hint the type is unknown until AniList answers, so a manga asks once and
+        // onDetailLoaded drops it.
+        if (typeHint?.takeIf { it.first == id }?.second != MediaType.MANGA) loadThemes()
         return repository.loadDetail(id, stringsProvider())
     }
 

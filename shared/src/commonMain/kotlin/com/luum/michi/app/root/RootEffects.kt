@@ -218,7 +218,7 @@ internal fun RootEffects(
     }
     LaunchedEffect(state.currentDetail) {
         when (val destination = state.currentDetail) {
-            is DetailDestination.Media -> holders.mediaDetail.load(destination.id)
+            is DetailDestination.Media -> holders.mediaDetail.load(destination.id, destination.typeHint)
             is DetailDestination.Character -> holders.character.load(destination.id)
             is DetailDestination.Staff -> holders.staff.load(destination.id)
             is DetailDestination.Studio -> holders.studio.load(destination.id)

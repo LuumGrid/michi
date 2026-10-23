@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.TabSection
 import com.luum.michi.app.core.navigation.domain.label
 import com.luum.michi.app.core.session.domain.Viewer
@@ -180,7 +181,7 @@ internal fun RootTabContent(
             onDismissFilter = { state.close(RootOverlay.SectionFilter) },
             isSortOpen = state.isOpen(RootOverlay.ListSort),
             onDismissSort = { state.close(RootOverlay.ListSort) },
-            onOpenDetail = { state.openMedia(it) },
+            onOpenDetail = { state.openMedia(it, MediaType.ANIME) },
             onEditEntry = { state.openEditor(it) },
             onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
         )
@@ -203,7 +204,7 @@ internal fun RootTabContent(
             onDismissFilter = { state.close(RootOverlay.SectionFilter) },
             isSortOpen = state.isOpen(RootOverlay.ListSort),
             onDismissSort = { state.close(RootOverlay.ListSort) },
-            onOpenDetail = { state.openMedia(it) },
+            onOpenDetail = { state.openMedia(it, MediaType.MANGA) },
             onEditEntry = { state.openEditor(it) },
             onCompleteEntry = { id, progress -> state.openEditorForCompletion(id, progress) },
         )

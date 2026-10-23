@@ -1,5 +1,6 @@
 package com.luum.michi.app.root
 
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.root.state.RootOverlay
 import com.luum.michi.app.root.state.State
@@ -38,5 +39,17 @@ class StateOpenMediaTest {
 
         assertFalse(state.isOpen(RootOverlay.Settings))
         assertEquals(DetailDestination.Media(7), state.currentDetail)
+    }
+
+    @Test
+    fun aTypeHintDoesNotDuplicateTheSameMediaOnTop() {
+        val state = state()
+
+        state.openMedia(3)
+        state.openMedia(3, MediaType.MANGA)
+
+        assertEquals(DetailDestination.Media(3), state.currentDetail)
+        state.closeDetail()
+        assertFalse(state.isDetailOpen, "only one entry was stacked")
     }
 }

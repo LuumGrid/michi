@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import com.luum.michi.app.core.language.domain.LanguageStrings
 import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.media.domain.MediaType
 import com.luum.michi.app.core.navigation.domain.DetailDestination
 import com.luum.michi.app.core.navigation.domain.DetailListKind
 import com.luum.michi.app.core.platform.domain.UrlOpener
@@ -52,7 +53,7 @@ internal fun RootDetailHost(
             bottomPadding = bottomPadding,
             onRetry = {
                 if (holders.mediaDetail.detail == null) {
-                    holders.mediaDetail.load(destination.id)
+                    holders.mediaDetail.load(destination.id, destination.typeHint)
                 } else {
                     holders.mediaDetail.refresh()
                 }
@@ -215,8 +216,8 @@ internal fun RootDetailHost(
  *  profile rails and the "View all" grid: one category→detail mapping). */
 internal fun State.openProfileFavorite(category: ProfileFavoritesCategory, id: Int) {
     when (category) {
-        ProfileFavoritesCategory.ANIME,
-        ProfileFavoritesCategory.MANGA -> openMedia(id)
+        ProfileFavoritesCategory.ANIME -> openMedia(id, MediaType.ANIME)
+        ProfileFavoritesCategory.MANGA -> openMedia(id, MediaType.MANGA)
         ProfileFavoritesCategory.CHARACTERS -> openCharacter(id)
         ProfileFavoritesCategory.STAFF -> openStaff(id)
         ProfileFavoritesCategory.STUDIOS -> openStudio(id)

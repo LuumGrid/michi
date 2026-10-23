@@ -1,5 +1,7 @@
 package com.luum.michi.app.core.navigation.domain
 
+import com.luum.michi.app.core.media.domain.MediaType
+
 /**
  * Matches an AniList entity link inside free text (a bare URL or a shared
  * message): anime, manga, character, staff or studio with a numeric id. The
@@ -25,7 +27,8 @@ internal fun parseAniListDestination(raw: String?): DetailDestination? {
     val match = aniListDestinationPattern.find(raw) ?: return null
     val id = match.groupValues[2].toIntOrNull()?.takeIf { it > 0 } ?: return null
     return when (match.groupValues[1].lowercase()) {
-        "anime", "manga" -> DetailDestination.Media(id)
+        "anime" -> DetailDestination.Media(id, MediaType.ANIME)
+        "manga" -> DetailDestination.Media(id, MediaType.MANGA)
         "character" -> DetailDestination.Character(id)
         "staff" -> DetailDestination.Staff(id)
         "studio" -> DetailDestination.Studio(id)

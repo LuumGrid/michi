@@ -3,7 +3,16 @@ package com.luum.michi.app.core.navigation.domain
 import com.luum.michi.app.core.media.domain.MediaType
 
 internal sealed interface DetailDestination {
-    data class Media(val id: Int) : DetailDestination
+    /**
+     * A media detail. [typeHint] is what the opener already knows (a list tab, a
+     * favourites category, a deep link); null when it does not know. It is only a
+     * hint for the holder, so it never takes part in equality: `Media(1, MANGA)`
+     * and `Media(1)` are the same destination (no duplicate on top of the stack).
+     */
+    data class Media(val id: Int, val typeHint: MediaType? = null) : DetailDestination {
+        override fun equals(other: Any?): Boolean = other is Media && other.id == id
+        override fun hashCode(): Int = id
+    }
     data class Character(val id: Int) : DetailDestination
     data class Staff(val id: Int) : DetailDestination
     data class Studio(val id: Int) : DetailDestination
