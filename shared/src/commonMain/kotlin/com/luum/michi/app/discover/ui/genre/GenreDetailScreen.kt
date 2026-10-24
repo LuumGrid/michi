@@ -1,0 +1,62 @@
+package com.luum.michi.app.discover.ui.genre
+
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.discover.ui.catalog.CatalogGridContent
+import com.luum.michi.app.discover.ui.catalog.state.CatalogGridStateHolder
+import com.luum.michi.app.ui.components.CatalogChipRail
+import com.luum.michi.app.ui.components.toPosterItem
+import com.luum.michi.app.ui.language.Strings
+
+/**
+ * Genre page: an Anime/Manga chip row that switches the catalog over a poster
+ * grid of that catalog's works. A genre is not an entity with a hero, so its
+ * name lives in the toolbar (like a "View all" list), not in the content; the
+ * chips are the grid's only header. The sort lives in the holder and is edited
+ * from the shared `SortSheet` (Root toolbar action): the server orders the grid,
+ * so a change re-queries from page 1. The grid pages itself when its footer
+ * scrolls into view. A genre is just the catalog filtered by name, so it shares
+ * the catalog grid holder/screen with the Dashboard "View all" pages. Reached
+ * from a media genre chip via [com.luum.michi.app.root.state.State.openGenre].
+ */
+@Composable
+internal fun GenreDetailScreen(
+    holder: CatalogGridStateHolder,
+    strings: LanguageStrings = Strings.current,
+    bottomPadding: Dp = 0.dp,
+    onRetry: () -> Unit,
+    onOpenMedia: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val items = remember(holder.media.items) { holder.media.items.map { it.toPosterItem() } }
+    CatalogGridContent(
+        holder = holder,
+        items = items,
+        strings = strings,
+        bottomPadding = bottomPadding,
+        // Scroll rule: a catalog/sort change returns the grid to the top.
+        resetKey = listOf(holder.filter.type, holder.sortOption, holder.sortOrder),
+        onRetry = onRetry,
+        onOpenMedia = onOpenMedia,
+        modifier = modifier,
+        header = {
+            item(key = "type", span = { GridItemSpan(maxLineSpan) }) {
+                // The catalog switch is the grid's only header: the genre name
+                // already reads in the toolbar, so no title item, no "Works" line.
+                CatalogChipRail(
+                    anime = MediaType.ANIME,
+                    manga = MediaType.MANGA,
+                    selected = holder.filter.type,
+                    onSelect = { holder.changeType(it) },
+                    strings = strings,
+                )
+            }
+        },
+    )
+}

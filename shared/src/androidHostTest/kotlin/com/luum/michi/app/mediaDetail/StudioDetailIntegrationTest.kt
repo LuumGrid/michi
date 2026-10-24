@@ -1,0 +1,437 @@
+package com.luum.michi.app.mediaDetail
+
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.medialist.domain.UserListOrder
+import com.luum.michi.app.core.medialist.domain.UserListSort
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.studio.StudioDetailRepository
+import com.luum.michi.app.mediaDetail.domain.studio.model.StudioDetail
+import com.luum.michi.app.core.media.domain.MediaGridItem
+import com.luum.michi.app.mediaDetail.ui.studio.state.StudioDetailStateHolder
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private fun studioMediaItem(
+    id: Int,
+) = MediaGridItem(
+    mediaId = id,
+    title = "Media $id",
+    cover = null,
+    paletteHex = null,
+    year = 2020,
+    genres = listOf("Action", "Comedy"),
+)
+
+private fun studioDetail(
+    id: Int,
+    media: Page<MediaGridItem> = Page(emptyList(), hasNextPage = false, currentPage = 1),
+    isFavourite: Boolean = false,
+) = StudioDetail(
+    id = id,
+    name = "Studio $id",
+    isAnimeStudio = true,
+    favourites = null,
+    isFavourite = isFavourite,
+    media = media,
+)
+
+/**
+ * Repository double: canned media pages per page number plus call counters and
+ * the last sort key, to prove cache hits and that a sort change re-queries.
+ */
+private class RecordingStudioRepository(
+    private val mediaPages: Map<Int, Page<MediaGridItem>> = emptyMap(),
+    var failDetail: Boolean = false,
+) : StudioDetailRepository {
+    var detailCalls = 0
+        private set
+    var mediaCalls = 0
+        private set
+    var lastSort: String? = null
+        private set
+    private var favourite = false
+
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
+        detailCalls++
+        lastSort = sort
+        if (failDetail) return NetworkResult.Failure(NetworkError.Http(500, null))
+        return NetworkResult.Success(
+            studioDetail(
+                id = id,
+                media = mediaPages[1] ?: Page(emptyList(), false, 1),
+                isFavourite = favourite,
+            ),
+        )
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        sort: String,
+    ): NetworkResult<Page<MediaGridItem>> {
+        mediaCalls++
+        lastSort = sort
+        return NetworkResult.Success(mediaPages[page] ?: Page(emptyList(), false, page))
+    }
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        favourite = !favourite
+        return NetworkResult.Success(Unit)
+    }
+}
+
+private fun holderWired(repository: StudioDetailRepository) = StudioDetailStateHolder(
+    repository = repository,
+    scope = CoroutineScope(Dispatchers.Unconfined),
+)
+
+class StudioDetailIntegrationTest {
+
+    @Test
+    fun loadHydratesDetailAndMediaByReleaseDate() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(1 to Page(listOf(studioMediaItem(7)), false, 1)),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(3)
+
+        assertEquals("Studio 3", holder.detail?.name)
+        assertEquals(listOf(7), holder.media.items.map { it.mediaId })
+        val item = holder.media.items.single()
+        assertEquals(listOf("Action", "Comedy"), item.genres)
+        assertFalse(holder.isLoading)
+        assertNull(holder.error)
+        assertEquals(1, repository.detailCalls)
+        // Default selection: a studio opens ordered by release date, descending.
+        assertEquals(UserListSort.RELEASE_DATE, holder.sortOption)
+        assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
+        assertEquals("START_DATE_DESC", repository.lastSort)
+    }
+
+    @Test
+    fun cacheHitSkipsNetworkOnRevisit() {
+        val repository = RecordingStudioRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        holder.load(2)
+        holder.load(1)
+
+        assertEquals(2, repository.detailCalls)
+        assertEquals(1, holder.detail?.id)
+    }
+
+    @Test
+    fun loadMoreAppendsNextPage() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(
+                1 to Page(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
+            ),
+        )
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertTrue(holder.media.hasNextPage)
+
+        holder.loadMore()
+
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
+        assertFalse(holder.media.hasNextPage)
+        assertEquals(1, repository.mediaCalls)
+    }
+
+    @Test
+    fun changeSortRequeriesFromPageOneWithTheServerSort() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(
+                1 to Page(listOf(studioMediaItem(1)), hasNextPage = true, currentPage = 1),
+                2 to Page(listOf(studioMediaItem(2)), hasNextPage = false, currentPage = 2),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        holder.loadMore()
+        assertEquals(listOf(1, 2), holder.media.items.map { it.mediaId })
+
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        assertEquals(2, repository.detailCalls, "the change re-queries page 1")
+        assertEquals("SCORE_DESC", repository.lastSort)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the loaded page 2 is dropped")
+        assertEquals(1, holder.media.currentPage)
+        assertTrue(holder.media.hasNextPage)
+        assertEquals(UserListSort.AVERAGE_SCORE, holder.sortOption)
+        assertEquals(UserListOrder.DESCENDING, holder.sortOrder)
+    }
+
+    @Test
+    fun changeSortOrderDerivesTheAscendingApiKey() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(1 to Page(listOf(studioMediaItem(1)), false, 1)),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+
+        holder.changeSort(UserListSort.TITLE, UserListOrder.ASCENDING)
+
+        assertEquals("TITLE_ROMAJI", repository.lastSort)
+        assertEquals(2, repository.detailCalls)
+    }
+
+    @Test
+    fun repickingTheSameSelectionDoesNotRequery() {
+        val repository = RecordingStudioRepository()
+        val holder = holderWired(repository)
+        holder.load(1)
+
+        holder.changeSort(UserListSort.RELEASE_DATE, UserListOrder.DESCENDING)
+
+        assertEquals(1, repository.detailCalls)
+    }
+
+    @Test
+    fun aPageInFlightIsDroppedWhenTheSortChanges() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+                "SCORE_DESC" to mapOf(1 to listOf(2)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        holder.loadMore() // page 2 of the default sort, held at the gate
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        repository.gate.complete(Unit) // the stale page lands after the sort change
+
+        assertEquals(listOf(2), holder.media.items.map { it.mediaId }, "only the new sort's page")
+        assertEquals(1, holder.media.currentPage)
+    }
+
+    @Test
+    fun aPageInFlightIsDroppedWhenAnotherStudioLoads() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        holder.loadMore() // page 2, held at the gate
+        holder.load(2) // another studio cancels it
+
+        repository.gate.complete(Unit) // the stale page lands after the reload
+
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the stale page never appends")
+        assertEquals(2, holder.detail?.id)
+    }
+
+    @Test
+    fun aPageInFlightIsDroppedWhenAStudioComesFromTheCache() {
+        val repository = GatedPageStudioRepository(
+            pageItems = mapOf(
+                "START_DATE_DESC" to mapOf(1 to listOf(1), 2 to listOf(99)),
+            ),
+        )
+        val holder = holderWired(repository)
+        holder.load(1) // caches studio 1
+        holder.load(2) // caches studio 2
+        assertEquals(2, holder.detail?.id)
+
+        holder.loadMore() // page 2 of studio 2, held at the gate
+        holder.load(1) // studio 1 comes from the cache
+
+        repository.gate.complete(Unit) // the stale page lands after the restore
+
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the stale page never appends")
+        assertEquals(1, holder.detail?.id)
+        assertFalse(holder.media.isLoadingMore, "the footer must not keep spinning")
+    }
+
+    @Test
+    fun refreshKeepsTheWorksVisibleUntilTheNewPageArrives() {
+        val repository = GatedDetailStudioRepository()
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        repository.pageOne = listOf(9)
+        repository.hold()
+        holder.refresh()
+
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId }, "the works stay on screen")
+
+        repository.release()
+
+        assertEquals(listOf(9), holder.media.items.map { it.mediaId }, "the response replaces them")
+    }
+
+    @Test
+    fun refreshDropsTheStaleCacheEntry() {
+        val repository = RecordingStudioRepository(
+            mediaPages = mapOf(1 to Page(listOf(studioMediaItem(1)), false, 1)),
+        )
+        val holder = holderWired(repository)
+        holder.load(1) // caches studio 1
+
+        // The refresh fails: its cache entry must be gone, or a later visit would
+        // restore the stale snapshot instead of re-fetching.
+        repository.failDetail = true
+        holder.refresh()
+        repository.failDetail = false
+
+        holder.load(2)
+        holder.load(1)
+
+        assertEquals(4, repository.detailCalls, "the old snapshot is not restored")
+        assertEquals(1, holder.detail?.id)
+    }
+
+    @Test
+    fun changeSortClearsTheWorksWhileItReloads() {
+        val repository = GatedDetailStudioRepository()
+        val holder = holderWired(repository)
+        holder.load(1)
+        assertEquals(listOf(1), holder.media.items.map { it.mediaId })
+
+        repository.pageOne = listOf(2)
+        repository.hold()
+        holder.changeSort(UserListSort.AVERAGE_SCORE, UserListOrder.DESCENDING)
+
+        assertTrue(holder.media.items.isEmpty(), "a new order invalidates the loaded works")
+
+        repository.release()
+
+        assertEquals(listOf(2), holder.media.items.map { it.mediaId })
+    }
+
+    @Test
+    fun toggleFavouriteFlips() {
+        val repository = RecordingStudioRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertFalse(holder.isFavourite)
+
+        holder.toggleFavourite()
+        assertTrue(holder.isFavourite)
+
+        holder.toggleFavourite()
+        assertFalse(holder.isFavourite)
+    }
+}
+
+/**
+ * Sort-aware double whose media page is held until [gate] completes, so a page
+ * in flight can be interrupted by a sort change.
+ */
+private class GatedPageStudioRepository(
+    private val pageItems: Map<String, Map<Int, List<Int>>>,
+) : StudioDetailRepository {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
+        val items = pageItems[sort]?.get(1).orEmpty().map { studioMediaItem(it) }
+        return NetworkResult.Success(
+            studioDetail(id = id, media = Page(items, hasNextPage = true, currentPage = 1)),
+        )
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        sort: String,
+    ): NetworkResult<Page<MediaGridItem>> {
+        gate.await()
+        val items = pageItems[sort]?.get(page).orEmpty().map { studioMediaItem(it) }
+        return NetworkResult.Success(Page(items, hasNextPage = false, currentPage = page))
+    }
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
+}
+
+private class GatedStudioRepository : StudioDetailRepository by RecordingStudioRepository() {
+    val gate = CompletableDeferred<Unit>()
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> {
+        gate.await()
+        return NetworkResult.Success(Unit)
+    }
+}
+
+/**
+ * Detail-page double held until [release], so the "in flight" state of a reload
+ * is observable; [pageOne] lets the test change what the next response carries.
+ */
+private class GatedDetailStudioRepository : StudioDetailRepository {
+    var pageOne: List<Int> = listOf(1)
+    private var gated = false
+    private var gate = CompletableDeferred<Unit>()
+
+    fun hold() {
+        gate = CompletableDeferred()
+        gated = true
+    }
+
+    fun release() = gate.complete(Unit)
+
+    override suspend fun loadDetail(id: Int, sort: String): NetworkResult<StudioDetail> {
+        if (gated) gate.await()
+        return NetworkResult.Success(
+            studioDetail(
+                id = id,
+                media = Page(
+                    items = pageOne.map { studioMediaItem(it) },
+                    hasNextPage = false,
+                    currentPage = 1,
+                ),
+            ),
+        )
+    }
+
+    override suspend fun loadMediaPage(
+        id: Int,
+        page: Int,
+        sort: String,
+    ): NetworkResult<Page<MediaGridItem>> =
+        NetworkResult.Success(Page(emptyList(), hasNextPage = false, currentPage = page))
+
+    override suspend fun toggleFavourite(id: Int): NetworkResult<Unit> = NetworkResult.Success(Unit)
+}
+
+/** See `MediaDetailFavouriteCacheTest`: the late response must not mix entries. */
+class StudioDetailFavouriteCacheTest {
+
+    @Test
+    fun togglingOnAnotherStudioKeepsEachCacheEntrySeparate() {
+        val repository = GatedStudioRepository()
+        val holder = holderWired(repository)
+
+        holder.load(1)
+        assertFalse(holder.isFavourite)
+        holder.toggleFavourite()
+        assertTrue(holder.isFavourite, "optimistic")
+
+        holder.load(2)
+        assertFalse(holder.isFavourite, "the visible studio is the second one")
+
+        repository.gate.complete(Unit)
+
+        assertFalse(holder.isFavourite, "the late response does not touch the visible one")
+        holder.load(1)
+        assertTrue(holder.isFavourite, "the first studio's snapshot kept the toggle")
+    }
+}

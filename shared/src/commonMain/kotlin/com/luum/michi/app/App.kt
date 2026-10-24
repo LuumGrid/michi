@@ -1,103 +1,270 @@
 package com.luum.michi.app
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luum.michi.app.auth.presentation.AuthLandingScreen
-import com.luum.michi.app.auth.presentation.AuthLoadingScreen
-import com.luum.michi.app.core.language.AppLanguage
-import com.luum.michi.app.core.language.LanguageProvider
-import com.luum.michi.app.core.language.ProvideLanguageStrings
-import com.luum.michi.app.core.language.currentPlatformLanguageCode
-import com.luum.michi.app.core.language.networkErrorMessage
-import com.luum.michi.app.core.platform.SettingsStoreKeys
-import com.luum.michi.app.core.platform.rememberPlatformSettingsStore
-import com.luum.michi.app.core.session.SessionState
-import com.luum.michi.app.shell.ShellScreen
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.auth.domain.AniListOAuthConfig
+import com.luum.michi.app.core.language.domain.getLanguageStrings
+import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.session.domain.SessionState
+import com.luum.michi.app.core.storage.domain.SettingsStoreKeys
+import com.luum.michi.app.core.medialist.repository.StoreSortPersistence
+import com.luum.michi.app.root.AuthService
+import com.luum.michi.app.root.Root
+import com.luum.michi.app.settings.ui.state.rememberSettingsState
+import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.tabFadeSpec
+import com.luum.michi.app.ui.installImageLoader
+import com.luum.michi.app.ui.LocalImageQuality
+import com.luum.michi.app.core.model.resolved
+import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.language.LocalStrings
+import com.luum.michi.app.ui.network.LocalNetworkThrottle
+import com.luum.michi.app.ui.testTagsAsResourceIds
+import com.luum.michi.app.ui.theme.PlatformThemeModeEffect
+import com.luum.michi.app.ui.theme.Theme
+import kotlinx.coroutines.launch
 
+/**
+ * App entry: owns theme (palette + mode + font) + language state and routes
+ * between the auth landing and the shell based on [SessionState].
+ * Called once from each platform entry.
+ */
 @Composable
 fun App(
     dependencies: MichiDependencies,
-    initialLanguage: AppLanguage = AppLanguage.fromCode(currentPlatformLanguageCode()),
 ) {
-    val store = rememberPlatformSettingsStore()
-    val systemDark = isSystemInDarkTheme()
-    // Theme + language are owned here (above the authenticated shell), so they must read their
-    // persisted value at startup — SettingsState writes both keys but can't restore them this early.
-    val initialDark = when (store.getString(SettingsStoreKeys.ThemeMode)) {
-        "LIGHT" -> false
-        "DARK" -> true
-        else -> systemDark // SYSTEM or unset
-    }
-    var isDarkMode by remember { mutableStateOf(initialDark) }
-    var language by remember {
-        mutableStateOf(
-            store.getString(SettingsStoreKeys.Language)?.let { AppLanguage.fromCode(it) } ?: initialLanguage,
-        )
+    // Coil setup + reactive network metering for the AUTO image-quality mode.
+    installImageLoader()
+    val unmeteredConnection by dependencies.connectivity.isUnmetered.collectAsState()
+    val store = dependencies.settingsStore
+    val session by dependencies.sessionManager.state.collectAsState()
+    val deepLinkDestination by dependencies.pendingDeepLink.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    // Synced settings holder: one per session. Guests get canSync = false
+    // (local-only, never touches the network); login/logout recreates it. It
+    // also owns the app appearance prefs (language, theme, font, surfaces),
+    // hydrated from the store once and persisted on every change.
+    val settingsState = rememberSettingsState(
+        repository = dependencies.settingsRepository,
+        store = dependencies.settingsStore,
+        scope = scope,
+        canSync = session is SessionState.Authenticated,
+    )
+
+    val strings = getLanguageStrings(settingsState.language)
+
+    // Keep Android's per-app night mode in sync with the user's choice: the
+    // next cold start's splash/window background then uses the same mode.
+    PlatformThemeModeEffect(settingsState.themeType)
+
+    // Login services (AniList today; MAL appends here tomorrow): shared by
+    // the sign-in modal everywhere it opens.
+    val authServices = listOf(
+        AuthService(
+            id = "anilist",
+            label = strings.authLoginAction,
+            onLogin = { dependencies.oAuthLauncher.open() },
+            icon = AppIcons.AniList,
+            brandHex = ANILIST_BRAND_HEX,
+        ),
+    )
+    // Sort memory backing (Settings persist toggle, per tab): store-owned,
+    // session-independent — Root hydrates holders from it, holders save
+    // into it. Local-only, like theme/language.
+    val sortPersistence = remember { StoreSortPersistence(store) }
+
+    // Synced prefs follow the viewer. This lives here (not in Root) so it
+    // survives Root being recomposed from scratch (login → error → retry):
+    // seed from the Viewer + refresh the rest on authenticate; clear on
+    // user → guest so a guest never inherits the account's 18+ gate.
+    val settingsViewerId = (session as? SessionState.Authenticated)?.viewer?.id
+    var lastSettingsViewerId by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(settingsViewerId) {
+        val previous = lastSettingsViewerId
+        if (settingsViewerId != previous) {
+            val viewer = (session as? SessionState.Authenticated)?.viewer
+            if (viewer != null) {
+                settingsState.seedFrom(viewer)
+                // Pulls the rest (split completed, etc.) the Viewer does not carry.
+                settingsState.refresh(force = true)
+            } else if (previous != null) {
+                settingsState.clearSynced()
+            }
+            lastSettingsViewerId = settingsViewerId
+        }
     }
 
-    LaunchedEffect(dependencies) {
-        dependencies.bootstrap()
-    }
+    // Sign-in modal auto-open: first anonymous launch only. Logout never
+    // reopens it (the flag persists); login closes it via the viewer effect.
+    val autoOpenSignIn =
+        session is SessionState.Anonymous && !store.getBoolean(SettingsStoreKeys.SeenSignIn, false)
 
-    val sessionState by dependencies.sessionManager.state.collectAsStateWithLifecycle()
-
-    MaterialTheme(
-        colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme(),
+    CompositionLocalProvider(
+        LocalStrings provides strings,
+        LocalImageQuality provides settingsState.imageQuality.resolved(unmeteredConnection),
+        LocalNetworkThrottle provides dependencies.networkThrottle,
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
+        Theme(
+            palette = settingsState.palette,
+            type = settingsState.themeType,
+            font = settingsState.font,
+            surfaces = settingsState.surfaces,
+            style = settingsState.themeStyle,
         ) {
-            ProvideLanguageStrings(language) {
-                val strings = LanguageProvider.strings
-                when (val state = sessionState) {
-                    is SessionState.Loading -> AuthLoadingScreen()
-                    is SessionState.Anonymous -> AuthLandingScreen(
-                        onLoginClick = { dependencies.oAuthLauncher.open() },
-                    )
-                    is SessionState.Error -> AuthLandingScreen(
-                        onLoginClick = { dependencies.oAuthLauncher.open() },
-                        errorMessage = strings.networkErrorMessage(state.error),
-                    )
-                    is SessionState.Authenticated -> ShellScreen(
-                        viewer = state.viewer,
-                        animationListRepository = dependencies.animationListRepository,
-                        readingListRepository = dependencies.readingListRepository,
-                        accountRepository = dependencies.accountRepository,
-                        dashboardRepository = dependencies.dashboardRepository,
-                        exploreRepository = dependencies.exploreRepository,
-                        calendarRepository = dependencies.calendarRepository,
-                        mediaDetailRepository = dependencies.mediaDetailRepository,
-                        mediaListEntryRepository = dependencies.mediaListEntryRepository,
-                        feedRepository = dependencies.feedRepository,
-                        notificationsRepository = dependencies.notificationsRepository,
-                        studioDetailRepository = dependencies.studioDetailRepository,
-                        characterDetailRepository = dependencies.characterDetailRepository,
-                        staffDetailRepository = dependencies.staffDetailRepository,
-                        settingsRepository = dependencies.settingsRepository,
-                        language = language,
-                        onLanguageChange = {
-                            language = it
-                            store.putString(SettingsStoreKeys.Language, it.code)
-                        },
-                        isDarkMode = isDarkMode,
-                        onToggleTheme = { isDarkMode = !isDarkMode },
-                        onLogout = { dependencies.logout() },
-                    )
+            val current = session
+            // No login wall: anonymous users enter the shell as guests
+            // (Discover works without a session); sign-in is on-demand
+            // via the modal wherever a gated surface needs it.
+            val route = when (current) {
+                SessionState.Loading -> AppRoute.LOADING
+                SessionState.Anonymous -> AppRoute.SHELL
+                is SessionState.Authenticated -> AppRoute.SHELL
+                is SessionState.Error -> AppRoute.ERROR
+            }
+            // Same motion language as the tab switch: fade + quarter slide.
+            // Opaque theme backdrop: this AnimatedContent sits outside every
+            // Scaffold, so the crossfade alpha overlap would otherwise bleed
+            // the (light) window background through. (Tab switches don't need
+            // this: they compose inside Root's opaque Scaffold.)
+            AnimatedContent(
+                targetState = route,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .testTagsAsResourceIds(),
+                transitionSpec = {
+                    (fadeIn(animationSpec = tabFadeSpec()) +
+                        slideInHorizontally(animationSpec = tabFadeSpec()) { it / 4 } togetherWith
+                        fadeOut(animationSpec = tabFadeSpec()) +
+                        slideOutHorizontally(animationSpec = tabFadeSpec()) { -it / 4 }) using
+                        SizeTransform(clip = false)
+                },
+                label = "session-route",
+            ) { activeRoute ->
+                when (activeRoute) {
+                    AppRoute.LOADING -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = strings.authLoadingLabel,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    AppRoute.SHELL -> {
+                        Root(
+                            settingsState = settingsState,
+                            viewer = (current as? SessionState.Authenticated)?.viewer,
+                            onLogout = {
+                                dependencies.logout()
+                            },
+                            animeListRepository = dependencies.animeListRepository,
+                            mangaListRepository = dependencies.mangaListRepository,
+                            mediaListEntryRepository = dependencies.mediaListEntryRepository,
+                            mediaDetailRepository = dependencies.mediaDetailRepository,
+                            animeThemesRepository = dependencies.animeThemesRepository,
+                            characterDetailRepository = dependencies.characterDetailRepository,
+                            staffDetailRepository = dependencies.staffDetailRepository,
+                            studioDetailRepository = dependencies.studioDetailRepository,
+                            exploreRepository = dependencies.exploreRepository,
+                            calendarRepository = dependencies.calendarRepository,
+                            dashboardRepository = dependencies.dashboardRepository,
+                            profileRepository = dependencies.profileRepository,
+                            favouriteRepository = dependencies.favouriteRepository,
+                            notificationsRepository = dependencies.notificationsRepository,
+                            urlOpener = dependencies.urlOpener,
+                            shareLauncher = dependencies.shareLauncher,
+                            sortPersistence = sortPersistence,
+                            authServices = authServices,
+                            isAuthConfigured = AniListOAuthConfig.isConfigured,
+                            autoOpenSignIn = autoOpenSignIn,
+                            onAutoSignInShown = {
+                                store.putBoolean(SettingsStoreKeys.SeenSignIn, true)
+                            },
+                            deepLinkDestination = deepLinkDestination,
+                            onDeepLinkHandled = { dependencies.consumeDeepLink() },
+                        )
+                    }
+                    AppRoute.ERROR -> {
+                        val sessionError = (current as? SessionState.Error)?.error
+                        val detail = sessionError?.let { strings.networkErrorMessage(it) }
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            MessagePanel(
+                                title = strings.errorUnknownLabel,
+                                // Unknown maps to the same copy as the title; hiding
+                                // it avoids showing the same line twice.
+                                message = detail?.takeIf { it != strings.errorUnknownLabel },
+                                icon = AppIcons.Warning,
+                                actionLabel = strings.retryAction,
+                                onAction = {
+                                    scope.launch { dependencies.sessionManager.bootstrap() }
+                                },
+                            )
+                            TextButton(
+                                onClick = {
+                                    dependencies.logout()
+                                },
+                            ) {
+                                Text(
+                                    text = strings.logoutAction,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+/** Session routing key: drives the landing/shell transition, never the session itself. */
+private enum class AppRoute {
+    LOADING,
+    SHELL,
+    ERROR,
+}
+
+/** AniList brand blue, raw hex (converted at the UI boundary). */
+private const val ANILIST_BRAND_HEX = "#02A9FF"

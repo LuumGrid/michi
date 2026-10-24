@@ -4,7 +4,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.baselineprofile)
     alias(libs.plugins.composeCompiler)
 }
 
@@ -16,14 +16,15 @@ kotlin {
 dependencies {
     implementation(projects.shared)
 
+    // Compose entry point: setContent + activity-compose APIs.
     implementation(libs.androidx.activity.compose)
 
-    implementation(libs.compose.uiToolingPreview)
-    debugImplementation(libs.compose.uiTooling)
+    // Installs the generated Baseline Profile at install time and lets
+    // Macrobenchmark's CompilationMode.Partial find it.
+    implementation(libs.androidx.profileinstaller)
 
-    // Coil: needed by MichiApplication to configure the singleton ImageLoader
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
+    // Generates the profile and the startup benchmark for this app.
+    baselineProfile(projects.baselineprofile)
 }
 
 val keystoreProperties = Properties().apply {
@@ -39,8 +40,8 @@ android {
         applicationId = "com.luum.michi.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (project.findProperty("michiVersionCode") as? String)?.toInt() ?: 1
+        versionName = (project.findProperty("michiVersionName") as? String) ?: "1.0"
     }
     packaging {
         resources {

@@ -1,0 +1,247 @@
+package com.luum.michi.app.ui.icons
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.luum.michi.app.ui.icons.generated.Anilist
+import com.luum.michi.app.ui.icons.generated.AnimeRounded
+import com.luum.michi.app.ui.icons.generated.AnimeRoundedFilled
+import com.luum.michi.app.ui.icons.generated.AppleMusicBrand
+import com.luum.michi.app.ui.icons.generated.BackRounded
+import com.luum.michi.app.ui.icons.generated.BugReportRounded
+import com.luum.michi.app.ui.icons.generated.CalendarRounded
+import com.luum.michi.app.ui.icons.generated.CheckRounded
+import com.luum.michi.app.ui.icons.generated.ChevronRightRounded
+import com.luum.michi.app.ui.icons.generated.ClearRounded
+import com.luum.michi.app.ui.icons.generated.CodeRounded
+import com.luum.michi.app.ui.icons.generated.DescriptionRounded
+import com.luum.michi.app.ui.icons.generated.EditRounded
+import com.luum.michi.app.ui.icons.generated.ExpandLessRounded
+import com.luum.michi.app.ui.icons.generated.ExpandMoreRounded
+import com.luum.michi.app.ui.icons.generated.ExploreRounded
+import com.luum.michi.app.ui.icons.generated.ExploreRoundedFilled
+import com.luum.michi.app.ui.icons.generated.FavoriteRounded
+import com.luum.michi.app.ui.icons.generated.FavoriteRoundedFilled
+import com.luum.michi.app.ui.icons.generated.FilterRounded
+import com.luum.michi.app.ui.icons.generated.GroupsRounded
+import com.luum.michi.app.ui.icons.generated.IconPack
+import com.luum.michi.app.ui.icons.generated.ImageRounded
+import com.luum.michi.app.ui.icons.generated.LanguageRounded
+import com.luum.michi.app.ui.icons.generated.MangaRounded
+import com.luum.michi.app.ui.icons.generated.MangaRoundedFilled
+import com.luum.michi.app.ui.icons.generated.MichiSymbol
+import com.luum.michi.app.ui.icons.generated.MoreRounded
+import com.luum.michi.app.ui.icons.generated.NotificationsRounded
+import com.luum.michi.app.ui.icons.generated.PlayRounded
+import com.luum.michi.app.ui.icons.generated.ProfileRounded
+import com.luum.michi.app.ui.icons.generated.ProfileRoundedFilled
+import com.luum.michi.app.ui.icons.generated.SearchRounded
+import com.luum.michi.app.ui.icons.generated.SettingsRounded
+import com.luum.michi.app.ui.icons.generated.ShareRounded
+import com.luum.michi.app.ui.icons.generated.ShieldRounded
+import com.luum.michi.app.ui.icons.generated.SortRounded
+import com.luum.michi.app.ui.icons.generated.SpotifyBrand
+import com.luum.michi.app.ui.icons.generated.StarOutlineRounded
+import com.luum.michi.app.ui.icons.generated.StarRoundedFilled
+import com.luum.michi.app.ui.icons.generated.VisibilityOffRounded
+import com.luum.michi.app.ui.icons.generated.VisibilityRounded
+import com.luum.michi.app.ui.icons.generated.WebRounded
+import com.luum.michi.app.ui.icons.generated.YouTubeBrand
+import com.luum.michi.app.ui.icons.generated.YouTubeMusicBrand
+
+/**
+ * Central icon catalog: Valkyrie-generated [IconPack] ([ImageVector] code,
+ * no resource system involved), curated here by surface with stable generic
+ * names — call sites never touch the generated pack directly, so renaming
+ * or swapping an icon is a one-line change below.
+ * Grouped by surface; root/Root.kt::tabs() owns the section->icon mapping.
+ */
+internal object AppIcons {
+    // ---- Toolbar: floating actions + in-context search ----
+    // Glass circles/capsule of Toolbar and SearchField. Generic primitives:
+    // any surface may use them without coupling destinations.
+    val Search: ImageVector
+        get() = IconPack.SearchRounded
+
+    /** Chevron-left: the modern back (cancels search, standard back). */
+    val Back: ImageVector
+        get() = IconPack.BackRounded
+
+    /** X: clears the search query. */
+    val Clear: ImageVector
+        get() = IconPack.ClearRounded
+
+    /** Gear: trailing action of the Profile tab. */
+    val Settings: ImageVector
+        get() = IconPack.SettingsRounded
+
+    /** Globe: app-language switch. */
+    val Language: ImageVector
+        get() = IconPack.LanguageRounded
+
+    // ---- TabBar: the 4 top-level destinations ----
+    // Vectors live in the generated pack, but the section->icon MAPPING
+    // belongs to root/Root.kt::tabs() — ui holds the catalog, never decides
+    // destinations.
+    val Discover: ImageVector
+        get() = IconPack.ExploreRounded
+
+    /** Filled twin for the active tab (TabBar selected state). */
+    val DiscoverSelected: ImageVector
+        get() = IconPack.ExploreRoundedFilled
+
+    val Anime: ImageVector
+        get() = IconPack.AnimeRounded
+
+    /** Filled twin for the active tab (TabBar selected state). */
+    val AnimeSelected: ImageVector
+        get() = IconPack.AnimeRoundedFilled
+
+    val Manga: ImageVector
+        get() = IconPack.MangaRounded
+
+    /** Filled twin for the active tab (TabBar selected state). */
+    val MangaSelected: ImageVector
+        get() = IconPack.MangaRoundedFilled
+
+    val Profile: ImageVector
+        get() = IconPack.ProfileRounded
+
+    /** Filled twin for the active tab (TabBar selected state). */
+    val ProfileSelected: ImageVector
+        get() = IconPack.ProfileRoundedFilled
+
+    // ---- Brand ----
+    /** AniList mark. Tint it for mono use (e.g. white on the brand button). */
+    val AniList: ImageVector
+        get() = IconPack.Anilist
+
+    // ---- Lists: filter + sort share one capsule (lone search circle aside) ----
+    /** Funnel-list: opens the list filter sheet (anime/manga rails). */
+    val Filter: ImageVector
+        get() = IconPack.FilterRounded
+
+    /** Up-down arrows: opens list sort (anime/manga rails). */
+    val Sort: ImageVector
+        get() = IconPack.SortRounded
+
+    // ---- Detail: back is ToolbarNavigation, these are trailing actions ----
+    /** Pencil: opens the list-entry editor. */
+    val Edit: ImageVector
+        get() = IconPack.EditRounded
+
+    /** Check: closes the profile's favourites edit mode ("Done"). */
+    val Check: ImageVector
+        get() = IconPack.CheckRounded
+
+    /** Heart outline: adds to favorites (see FavoriteFilled for the on-state). */
+    val Favorite: ImageVector
+        get() = IconPack.FavoriteRounded
+
+    /** Heart filled: the favorited on-state (toggle with Favorite). */
+    val FavoriteFilled: ImageVector
+        get() = IconPack.FavoriteRoundedFilled
+
+    /** Vertical ellipsis: detail overflow menu. */
+    val More: ImageVector
+        get() = IconPack.MoreRounded
+
+    /** Globe/web: official-site external links. */
+    val Web: ImageVector
+        get() = IconPack.WebRounded
+
+    /** Eye: shows a closed spoiler paragraph. */
+    val Visibility: ImageVector
+        get() = IconPack.VisibilityRounded
+
+    /** Crossed-out eye: hides an open spoiler paragraph. */
+    val VisibilityOff: ImageVector
+        get() = IconPack.VisibilityOffRounded
+
+    // ---- About: the Settings About page ----
+    /** Source code. */
+    val Code: ImageVector
+        get() = IconPack.CodeRounded
+
+    /** Report a problem. */
+    val BugReport: ImageVector
+        get() = IconPack.BugReportRounded
+
+    /** Share the app. */
+    val Share: ImageVector
+        get() = IconPack.ShareRounded
+
+    /** Privacy policy. */
+    val Shield: ImageVector
+        get() = IconPack.ShieldRounded
+
+    /** A document: the license. */
+    val Description: ImageVector
+        get() = IconPack.DescriptionRounded
+
+    /** The Michi logo symbol (black, evenOdd); paint it untinted on white. */
+    val MichiSymbol: ImageVector
+        get() = IconPack.MichiSymbol
+
+    // ---- Misc: catalogued, wired when their surface lands ----
+    /** Chevron-right: rows that open a picker sheet. */
+    val ChevronRight: ImageVector
+        get() = IconPack.ChevronRightRounded
+
+    /** Chevron-down: expands an accordion row (year filter decades). */
+    val ExpandMore: ImageVector
+        get() = IconPack.ExpandMoreRounded
+
+    /** Chevron-up: collapses an accordion row. */
+    val ExpandLess: ImageVector
+        get() = IconPack.ExpandLessRounded
+
+    /** Filled star: the user's own rating (global averages use the outline twin). */
+    val StarFilled: ImageVector
+        get() = IconPack.StarRoundedFilled
+
+    /** Outline star: global average ratings (user scores use the filled twin). */
+    val StarOutline: ImageVector
+        get() = IconPack.StarOutlineRounded
+
+    /** Two people: popularity / member counts on cards. */
+    val Groups: ImageVector
+        get() = IconPack.GroupsRounded
+
+    /** Picture frame: a cover or portrait with no image. */
+    val Image: ImageVector
+        get() = IconPack.ImageRounded
+
+    /** Calendar: seasonal/schedule surfaces. */
+    val Calendar: ImageVector
+        get() = IconPack.CalendarRounded
+
+    /** Bell: opens the notifications overlay (trigger lives in profile). */
+    val Notifications: ImageVector
+        get() = IconPack.NotificationsRounded
+
+    /** Play: a video. */
+    val Play: ImageVector
+        get() = IconPack.PlayRounded
+
+    /** Filled warning triangle: error panels and inline error rows. */
+    val Warning: ImageVector
+        get() = Icons.Filled.Warning
+
+    // ---- Brands ----
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val Spotify: ImageVector
+        get() = IconPack.SpotifyBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val YouTube: ImageVector
+        get() = IconPack.YouTubeBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val YouTubeMusic: ImageVector
+        get() = IconPack.YouTubeMusicBrand
+
+    /** Brand mark (Simple Icons, CC0); tint it with its brand color. */
+    val AppleMusic: ImageVector
+        get() = IconPack.AppleMusicBrand
+}

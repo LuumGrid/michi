@@ -29,4 +29,5 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
+include(":baselineprofile")
 include(":shared")

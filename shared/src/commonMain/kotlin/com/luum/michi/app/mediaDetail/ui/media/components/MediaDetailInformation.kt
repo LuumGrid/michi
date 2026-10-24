@@ -1,0 +1,294 @@
+package com.luum.michi.app.mediaDetail.ui.media.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.media.domain.MediaType
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetail
+import com.luum.michi.app.mediaDetail.domain.media.model.StudioRef
+import com.luum.michi.app.mediaDetail.domain.media.model.hasTags
+import com.luum.michi.app.mediaDetail.domain.media.model.orderedTags
+import com.luum.michi.app.mediaDetail.domain.media.model.toMediaType
+
+
+import com.luum.michi.app.mediaDetail.domain.media.model.videoUrl
+import com.luum.michi.app.mediaDetail.domain.media.model.workStatusLabel
+import com.luum.michi.app.mediaDetail.ui.components.InfoPanel
+import com.luum.michi.app.mediaDetail.ui.components.MediaDetailInfoEntry
+import com.luum.michi.app.mediaDetail.ui.components.addInfo
+import com.luum.michi.app.mediaDetail.ui.components.alternativeNamesEntry
+import com.luum.michi.app.ui.components.ChipEmphasis
+import com.luum.michi.app.ui.components.ChipRail
+import com.luum.michi.app.ui.components.ChipTab
+import com.luum.michi.app.ui.components.PanelShape
+import com.luum.michi.app.ui.components.RailHeader
+import com.luum.michi.app.ui.components.SectionHeader
+import com.luum.michi.app.ui.components.TrailingPill
+import com.luum.michi.app.ui.components.flatBorder
+
+/**
+ * Whether the information panel has anything to paint: any identity field, any
+ * wide title/synonym, or a studio/producer. Shared by the panel and by the
+ * screen's item gate so the two can never disagree on whether the block exists.
+ */
+internal fun MediaDetail.hasInformation(isManga: Boolean): Boolean {
+    val hasEntry = format != null ||
+        status != null ||
+        (if (isManga) chapters != null || volumes != null else episodes != null) ||
+        duration != null ||
+        season != null ||
+        startedLabel != null ||
+        endedLabel != null ||
+        source != null
+    val hasWide = !titleRomaji.isNullOrBlank() ||
+        !titleNative.isNullOrBlank() ||
+        synonyms.any { it.isNotBlank() }
+    return hasEntry || hasWide || studios.isNotEmpty() || producers.isNotEmpty()
+}
+
+/**
+ * The trailer's openable URL, or null when there is no trailer or its site is
+ * unresolvable. Shared by the screen's item gate and [MediaDetailVideos] so the
+ * card is never emitted for a trailer that would paint nothing.
+ */
+internal fun MediaDetail.trailerUrl(): String? = trailer?.videoUrl()
+
+/**
+ * Framed information panel: a two-column grid of the short identity fields
+ * (type, status, counts, runtime, season, dates, source) with the long ones
+ * (titles, synonyms) full width below, then tappable studio chips. Style-
+ * aware: glass or solid recipe, same layout in both.
+ */
+@Composable
+internal fun MediaDetailInformationPanel(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    isManga: Boolean,
+    onOpenStudio: (Int) -> Unit,
+) {
+    val entries = buildList {
+        detail.format?.let { add(MediaDetailInfoEntry(strings.mediaDetailFormatLabel, it)) }
+        detail.workStatusLabel(strings)?.let { add(MediaDetailInfoEntry(strings.mediaDetailStatusLabel, it)) }
+        if (isManga) {
+            detail.chapters?.let { add(MediaDetailInfoEntry(strings.chaptersLabel, it.toString())) }
+            detail.volumes?.let { add(MediaDetailInfoEntry(strings.volumesLabel, it.toString())) }
+        } else {
+            detail.episodes?.let { add(MediaDetailInfoEntry(strings.mediaDetailEpisodesLabel, it.toString())) }
+        }
+        detail.duration?.let { add(MediaDetailInfoEntry(strings.mediaDetailDurationLabel, strings.mediaDetailDurationValueLabel(it))) }
+        detail.season?.let { add(MediaDetailInfoEntry(strings.mediaDetailSeasonLabel, it)) }
+        detail.startedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailStartDateLabel, it)) }
+        detail.endedLabel?.let { add(MediaDetailInfoEntry(strings.mediaDetailEndedLabel, it)) }
+        // Already `toTitleCase()`-d by the mapper ("LIGHT_NOVEL" -> "Light Novel").
+        detail.source?.let { add(MediaDetailInfoEntry(strings.mediaDetailSourceLabel, it)) }
+    }
+    val wideEntries = buildList {
+        addInfo(strings.mediaDetailRomajiLabel, detail.titleRomaji)
+        addInfo(strings.mediaDetailNativeLabel, detail.titleNative)
+        alternativeNamesEntry(detail.synonyms, strings.mediaDetailSynonymsLabel)?.let { add(it) }
+    }
+    if (!detail.hasInformation(isManga)) {
+        return
+    }
+    InfoPanel(
+        entries = entries,
+        wideEntries = wideEntries,
+        strings = strings,
+        footer = {
+            StudioChipGroup(
+                label = strings.mediaDetailStudiosLabel,
+                studios = detail.studios,
+                onOpenStudio = onOpenStudio,
+            )
+            StudioChipGroup(
+                label = strings.mediaDetailProducersLabel,
+                studios = detail.producers,
+                onOpenStudio = onOpenStudio,
+            )
+        },
+    )
+}
+
+/** One labelled row of interactive studio chips; an empty list paints nothing. */
+@Composable
+private fun StudioChipGroup(
+    label: String,
+    studios: List<StudioRef>,
+    onOpenStudio: (Int) -> Unit,
+) {
+    if (studios.isEmpty()) return
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        // Same label treatment as the grid's cells (uppercase labelSmall).
+        text = label.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+    // Interactive on purpose: a studio chip opens the studio page.
+    ChipRail(
+        tabs = studios.map { ChipTab(value = it.id, label = it.name) },
+        selected = null,
+        onSelect = onOpenStudio,
+        contentPadding = PaddingValues(0.dp),
+    )
+}
+
+/** Genres as interactive chips (a tap opens the genre page); flat when the
+ *  catalog is unknown, since a genre page needs a real one. */
+@Composable
+internal fun MediaDetailGenres(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    onOpenGenre: (String, MediaType) -> Unit,
+) {
+    if (detail.genres.isEmpty()) return
+    val mediaType = detail.type.toMediaType()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = strings.mediaDetailGenresTitle,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        ChipRail(
+            tabs = detail.genres.map { ChipTab(value = it, label = it) },
+            selected = null,
+            onSelect = { genre -> mediaType?.let { onOpenGenre(genre, it) } },
+            // Glass like the studio chips; UNKNOWN leaves them inert.
+            interactive = mediaType != null,
+        )
+    }
+}
+
+/**
+ * Tag pills: `"name rank%"`, flat and display-only. The section exists whenever
+ * the media has any tag. Spoiler tags come after the regular ones, in the error
+ * color, and stay hidden behind the header pill until the viewer asks for them;
+ * with only spoilers, the header (and its pill) is all that paints.
+ */
+@Composable
+internal fun MediaDetailTags(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    showSpoilers: Boolean,
+    onToggleSpoilers: () -> Unit,
+) {
+    if (!detail.tags.hasTags()) return
+    val spoilerCount = detail.tags.count { it.isMediaSpoiler }
+    val tags = detail.tags.orderedTags(showSpoilers)
+    val spoilerAction: (@Composable () -> Unit)? = if (spoilerCount > 0) {
+        {
+            TrailingPill(
+                label = if (showSpoilers) {
+                    strings.mediaDetailSpoilersHideAction
+                } else {
+                    strings.mediaDetailSpoilersShowLabel(spoilerCount)
+                },
+                onClick = onToggleSpoilers,
+            )
+        }
+    } else {
+        null
+    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        RailHeader(title = strings.mediaDetailTagsTitle, trailing = spoilerAction)
+        if (tags.isNotEmpty()) {
+            ChipRail(
+                tabs = tags.map {
+                    ChipTab(
+                        value = it.name,
+                        label = "${it.name} ${it.rank}%",
+                        emphasis = if (it.isMediaSpoiler) ChipEmphasis.ALERT else ChipEmphasis.DEFAULT,
+                    )
+                },
+                selected = null,
+                onSelect = {},
+                interactive = false,
+            )
+        }
+    }
+}
+
+/** Trailer card; taps open the external video URL when there is one. */
+@Composable
+internal fun MediaDetailVideos(
+    detail: MediaDetail,
+    strings: LanguageStrings,
+    onOpenUrl: (String) -> Unit,
+) {
+    // No trailer, or an unresolvable site: nothing to open, so paint nothing
+    // instead of an inert card (kept in sync with the screen's item gate).
+    val url = detail.trailerUrl() ?: return
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = strings.mediaDetailVideosTitle,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .aspectRatio(16f / 9f)
+                .clip(PanelShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(flatBorder(), PanelShape)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = strings.mediaDetailVideosTitle,
+                    onClick = { onOpenUrl(url) },
+                ),
+        ) {
+            val thumbnail = detail.trailer?.thumbnailUrl
+            if (!thumbnail.isNullOrBlank()) {
+                SubcomposeAsyncImage(
+                    model = thumbnail,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    loading = {},
+                    error = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(48.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window/splash colors follow the system mode by default; the app mode
+         set through UiModeManager decides which qualified copy Android uses. -->
+    <color name="michi_window_background">#FFF9F9F9</color>
+    <color name="michi_splash_background">#FFFFFFFF</color>
+    <color name="michi_splash_icon">#FF000000</color>
+</resources>

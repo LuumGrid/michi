@@ -1,0 +1,93 @@
+package com.luum.michi.app.mediaDetail
+
+import com.luum.michi.app.core.language.domain.EnglishStrings
+import com.luum.michi.app.core.language.domain.SpanishStrings
+import com.luum.michi.app.core.media.domain.MediaSeason
+import com.luum.michi.app.core.media.domain.MediaWorkStatus
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaDetailRelation
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRecommendationEntry
+import com.luum.michi.app.mediaDetail.domain.media.model.MediaRelationKind
+import com.luum.michi.app.mediaDetail.ui.components.characterRoleLabel
+import com.luum.michi.app.mediaDetail.ui.components.toCardRailItem
+import com.luum.michi.app.mediaDetail.ui.components.voiceLanguageLabel
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * Pure mapping of detail entries to rail/list cards: the shared role label and
+ * the `format · season year · status` catalog meta (whose status wording must
+ * follow the parent's anime/manga type, like the lists).
+ */
+class DetailRailItemsTest {
+
+    @Test
+    fun characterRoleLabelMapsKnownRolesAndDropsUnknown() {
+        assertEquals("Main", characterRoleLabel("MAIN", EnglishStrings))
+        assertEquals("Supporting", characterRoleLabel("SUPPORTING", EnglishStrings))
+        assertEquals("Background", characterRoleLabel("BACKGROUND", EnglishStrings))
+        assertNull(characterRoleLabel(null, EnglishStrings))
+        assertNull(characterRoleLabel("OTHER", EnglishStrings))
+    }
+
+    @Test
+    fun relatedCardItemCarriesKindChipAndCatalogMeta() {
+        val item = relation().toCardRailItem(EnglishStrings, isManga = false)
+
+        assertEquals(70, item.id)
+        assertEquals("TV · Summer 2026 · Airing", item.subtitle)
+        assertEquals("Sequel", item.tag)
+    }
+
+    @Test
+    fun relatedCardMetaUsesTheMangaStatusWording() {
+        val item = relation().toCardRailItem(EnglishStrings, isManga = true)
+
+        assertEquals("TV · Summer 2026 · Publishing", item.subtitle)
+    }
+
+    @Test
+    fun recommendationCardItemHasNoSubtitleAndCarriesCatalogMeta() {
+        val item = recommendation().toCardRailItem(EnglishStrings, isManga = true)
+
+        assertNull(item.subtitle)
+        assertEquals("MANGA · Fall 2025 · Finished", item.meta)
+        assertTrue(item.stats.isEmpty())
+    }
+
+    @Test
+    fun voiceLanguageLabelLocalizesTheAniListLanguage() {
+        assertEquals("Japonés", voiceLanguageLabel("Japanese", SpanishStrings))
+        assertEquals("Japanese", voiceLanguageLabel("JAPANESE", EnglishStrings))
+        assertEquals("Klingon", voiceLanguageLabel("Klingon", SpanishStrings))
+        assertNull(voiceLanguageLabel(null, SpanishStrings))
+        assertNull(voiceLanguageLabel("  ", SpanishStrings))
+    }
+
+    private fun relation() = MediaDetailRelation(
+        mediaId = 70,
+        title = "Related",
+        cover = null,
+        kind = MediaRelationKind.SEQUEL,
+        format = "TV",
+        season = MediaSeason.SUMMER,
+        year = 2026,
+        workStatus = MediaWorkStatus.RELEASING,
+    )
+
+    private fun recommendation() = MediaRecommendationEntry(
+        id = 9,
+        title = "Recommended",
+        cover = null,
+        format = "MANGA",
+        season = MediaSeason.FALL,
+        year = 2025,
+        workStatus = MediaWorkStatus.FINISHED,
+        episodesCount = null,
+        chaptersCount = 40,
+        volumesCount = 5,
+        averageScore = null,
+        favouritesCount = null,
+    )
+}

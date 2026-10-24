@@ -1,0 +1,146 @@
+package com.luum.michi.app.mediaList
+
+import com.luum.michi.app.core.medialist.domain.SortPersistence
+import com.luum.michi.app.core.medialist.domain.SortScope
+import com.luum.michi.app.core.storage.domain.FileStore
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+private fun titleJson(romaji: String, english: String? = null, native: String? = null) =
+    buildJsonObject {
+        put("romaji", romaji)
+        if (english != null) put("english", english)
+        if (native != null) put("native", native)
+    }
+
+internal fun animeMediaJson(
+    id: Int,
+    format: String = "TV",
+    mediaStatus: String? = "RELEASING",
+    romaji: String = "Romaji Title",
+    english: String? = "English Title",
+    native: String? = null,
+    episodes: Int? = 12,
+    season: String? = "WINTER",
+    seasonYear: Int? = 2024,
+    genres: List<String> = emptyList(),
+    isAdult: Boolean = false,
+): JsonObject = buildJsonObject {
+    put("id", id)
+    put("title", titleJson(romaji, english, native))
+    put("format", format)
+    if (mediaStatus != null) put("status", mediaStatus)
+    if (episodes != null) put("episodes", episodes)
+    put("coverImage", buildJsonObject { put("thumbnailUrl", "https://img/$id.jpg") })
+    if (season != null) put("season", season)
+    if (seasonYear != null) put("seasonYear", seasonYear)
+    put("genres", JsonArray(genres.map { JsonPrimitive(it) }))
+    if (isAdult) put("isAdult", true)
+}
+
+internal fun mangaMediaJson(
+    id: Int,
+    format: String = "MANGA",
+    mediaStatus: String? = "FINISHED",
+    romaji: String = "Romaji Manga",
+    chapters: Int? = 100,
+    volumes: Int? = 10,
+    startDateYear: Int? = null,
+): JsonObject = buildJsonObject {
+    put("id", id)
+    put("title", titleJson(romaji))
+    put("format", format)
+    if (mediaStatus != null) put("status", mediaStatus)
+    if (chapters != null) put("chapters", chapters)
+    if (volumes != null) put("volumes", volumes)
+    put("coverImage", buildJsonObject { put("thumbnailUrl", "https://img/$id.jpg") })
+    if (startDateYear != null) {
+        put("startDate", buildJsonObject { put("year", startDateYear) })
+    }
+}
+
+internal fun listEntryJson(
+    id: Int,
+    status: String,
+    progress: Int,
+    score: Double = 0.0,
+    progressVolumes: Int? = null,
+    media: JsonObject,
+): JsonObject = buildJsonObject {
+    put("id", id)
+    put("status", status)
+    put("progress", progress)
+    put("score", score)
+    if (progressVolumes != null) put("progressVolumes", progressVolumes)
+    put("media", media)
+}
+
+/** Single-group collection: entries carry their own list status. */
+internal fun singleGroupCollection(vararg entries: JsonObject): JsonElement = buildJsonObject {
+    put("MediaListCollection", buildJsonObject {
+        put("lists", JsonArray(listOf(
+            buildJsonObject {
+                put("name", "All")
+                put("status", "CURRENT")
+                put("isCustomList", false)
+                put("entries", JsonArray(entries.toList()))
+            },
+        )))
+    })
+}
+
+internal val emptyUpdateAck: JsonElement = buildJsonObject {
+    put("SaveMediaListEntry", buildJsonObject { put("id", 1) })
+}
+
+/** In-memory SortPersistence: per-scope slots, like the store impl. */
+internal class MemorySortPersistence : SortPersistence {
+    private val slots = mutableMapOf<SortScope, Pair<String, String>>()
+    val cleared = mutableListOf<SortScope>()
+
+    override fun saveSort(scope: SortScope, sort: String, order: String) {
+        slots[scope] = sort to order
+    }
+
+    override fun loadSort(scope: SortScope): Pair<String, String>? = slots[scope]
+
+    override fun clearSort(scope: SortScope) {
+        slots.remove(scope)
+        cleared += scope
+    }
+}
+
+/** In-memory [FileStore]: synchronous, so tests stay deterministic. */
+internal class InMemoryFileStore : FileStore {
+    private val files = mutableMapOf<String, String>()
+
+    /** Number of [clear] calls; lets a test assert the privacy wipe ran. */
+    var clearCount = 0
+        private set
+
+    /** Seed / corrupt a file directly, bypassing the writer. */
+    fun put(name: String, content: String) {
+        files[name] = content
+    }
+
+    fun contains(name: String): Boolean = files.containsKey(name)
+
+    override suspend fun read(name: String): String? = files[name]
+
+    override suspend fun write(name: String, content: String) {
+        files[name] = content
+    }
+
+    override suspend fun delete(name: String) {
+        files.remove(name)
+    }
+
+    override suspend fun clear() {
+        files.clear()
+        clearCount++
+    }
+}

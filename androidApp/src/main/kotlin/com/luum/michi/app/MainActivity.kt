@@ -1,36 +1,64 @@
 package com.luum.michi.app
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 
+/**
+ * Compose entry: renders the shared [App] (auth landing vs shell routing)
+ * and keeps dispatching the OAuth deep link against the process-wide
+ * [MichiDependencies] owned by [MichiApplication].
+ */
 class MainActivity : ComponentActivity() {
 
-    private lateinit var dependencies: MichiDependencies
+    private val dependencies: MichiDependencies
+        get() = (application as MichiApplication).dependencies
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        dependencies = createMichiDependencies(this)
-
+        handleDeepLink(intent)
+        enableEdgeToEdge()
         setContent {
             App(dependencies = dependencies)
         }
-
-        handleOAuthCallback(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleOAuthCallback(intent)
+        handleDeepLink(intent)
     }
 
-    private fun handleOAuthCallback(intent: Intent?) {
-        val uri = intent?.dataString ?: return
-        dependencies.onOAuthCallback(uri)
+    /**
+     * Re-applies the system bar style: without recreation (configChanges), a
+     * theme switch would keep the previous status-bar icon color.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        enableEdgeToEdge()
+    }
+
+    /**
+     * Routes an incoming intent: the OAuth callback (`michi://…`) goes to the
+     * auth flow; a shared text (`ACTION_SEND`) or a web link (`ACTION_VIEW`) is
+     * offered to the media deep-link parser, which ignores non-media content.
+     */
+    private fun handleDeepLink(intent: Intent?) {
+        if (intent == null) return
+        if (intent.action == Intent.ACTION_SEND) {
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+            dependencies.onDeepLink(text)
+            return
+        }
+        val uri = intent.dataString ?: return
+        if (uri.startsWith("michi://", ignoreCase = true)) {
+            dependencies.onOAuthCallback(uri)
+        } else {
+            dependencies.onDeepLink(uri)
+        }
     }
 }

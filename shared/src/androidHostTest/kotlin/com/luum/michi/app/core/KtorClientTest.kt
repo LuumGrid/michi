@@ -1,0 +1,170 @@
+package com.luum.michi.app.core
+
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.domain.NetworkError
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.repository.AniListRateLimiter
+import com.luum.michi.app.core.network.repository.KtorAniListGraphQLClient
+import com.luum.michi.app.core.network.repository.AniListJson
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.http.Headers
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
+
+private fun client(
+    handler: MockEngine,
+    rateLimiter: AniListRateLimiter = AniListRateLimiter(),
+) = KtorAniListGraphQLClient(
+    httpClient = HttpClient(handler) {
+        install(ContentNegotiation) {
+            json(AniListJson)
+        }
+    },
+    tokenProvider = { null },
+    rateLimiter = rateLimiter,
+)
+
+private fun request() = AniListGraphQLRequest(
+    query = "query X { ok }",
+    variables = JsonObject(mapOf("a" to JsonPrimitive(1))),
+    operationName = "X",
+)
+
+private fun <T> runExecute(client: KtorAniListGraphQLClient, parse: (JsonElement) -> T): NetworkResult<T> =
+    runBlocking { client.execute(request(), parse) }
+
+class KtorClientTest {
+
+    @Test
+    fun successParsesData() {
+        val engine = MockEngine { respond("""{"data":{"ok":true}}""", HttpStatusCode.OK) }
+        val result = runExecute(client(engine)) { data ->
+            data.jsonObject["ok"]!!.jsonPrimitive.boolean
+        }
+        assertEquals(NetworkResult.Success(true), result)
+    }
+
+    @Test
+    fun graphQLErrorsBecomeFailure() {
+        val engine = MockEngine {
+            respond("""{"errors":[{"message":"Bad"}]}""", HttpStatusCode.OK)
+        }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.GraphQL(listOf("Bad"))), result)
+    }
+
+    @Test
+    fun emptyDataBecomesFailure() {
+        val engine = MockEngine { respond("""{}""", HttpStatusCode.OK) }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertTrue(result is NetworkResult.Failure)
+    }
+
+    @Test
+    fun unauthorizedMapsBody() {
+        val engine = MockEngine {
+            respond("denied", HttpStatusCode.Unauthorized, Headers.Empty)
+        }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.Unauthorized("denied")), result)
+    }
+
+    @Test
+    fun rateLimitedRetriesThenGivesUp() {
+        var calls = 0
+        val engine = MockEngine {
+            calls++
+            respond("slow", HttpStatusCode.TooManyRequests, headersOf("Retry-After", "0"))
+        }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.RateLimited(0)), result)
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun rateLimitedRetryWaitsThroughTheLimiterAndIsVisible() {
+        var calls = 0
+        val engine = MockEngine {
+            calls++
+            if (calls == 1) {
+                respond("slow", HttpStatusCode.TooManyRequests, headersOf("Retry-After", "5"))
+            } else {
+                respond("""{"data":{"ok":true}}""", HttpStatusCode.OK)
+            }
+        }
+        // Virtual clock + injected pause: the retry's wait is advanced instantly.
+        val clock = TestTimeSource()
+        val observed = mutableListOf<Int>()
+        lateinit var limiter: AniListRateLimiter
+        limiter = AniListRateLimiter(clock) { ms ->
+            observed += limiter.waitingRequests.value
+            clock += ms.milliseconds
+        }
+
+        val result = runExecute(client(engine, limiter)) { data ->
+            data.jsonObject["ok"]!!.jsonPrimitive.boolean
+        }
+
+        assertEquals(NetworkResult.Success(true), result)
+        assertEquals(2, calls)
+        // The 429's Retry-After pause is now a phase-1 wait: surfaced while parked.
+        assertEquals(listOf(1), observed, "the retry wait is counted as a parked request")
+        assertEquals(0, limiter.waitingRequests.value, "and clears once admitted")
+    }
+
+    @Test
+    fun malformedBodyBecomesUnknown() {
+        val engine = MockEngine { respond("not json", HttpStatusCode.OK) }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        val failure = assertIs<NetworkResult.Failure>(result)
+        assertTrue(failure.error is NetworkError.Unknown)
+    }
+
+    @Test
+    fun connectivityFailureBecomesNoConnection() {
+        val engine = MockEngine { throw UnknownHostException() }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.NoConnection), result)
+    }
+
+    @Test
+    fun wrappedConnectivityFailureBecomesNoConnection() {
+        val engine = MockEngine { throw RuntimeException("wrap", ConnectException()) }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        assertEquals(NetworkResult.Failure(NetworkError.NoConnection), result)
+    }
+
+    @Test
+    fun unexpectedFailureStaysUnknown() {
+        val engine = MockEngine { throw RuntimeException("boom") }
+        val result = runExecute(client(engine)) { data -> data.toString() }
+        val failure = assertIs<NetworkResult.Failure>(result)
+        assertTrue(failure.error is NetworkError.Unknown)
+    }
+}
+
+/**
+ * Local stubs mirroring the JDK/Ktor connectivity names. The mapper matches
+ * by simple name (common-safe, no `java.net` imports), so these exercise
+ * the same path the real engine errors take.
+ */
+private class UnknownHostException : Exception("offline")
+
+private class ConnectException : Exception("refused")

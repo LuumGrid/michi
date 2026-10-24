@@ -1,0 +1,88 @@
+package com.luum.michi.app.notifications.repository
+
+import com.luum.michi.app.notifications.domain.NotificationsPage
+import com.luum.michi.app.notifications.domain.NotificationsRepository
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.notifications.domain.model.NotificationFilter
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+private const val NotificationsQuery = """
+query Notifications(${'$'}page: Int, ${'$'}reset: Boolean, ${'$'}withCount: Boolean = false, ${'$'}types: [NotificationType]) {
+  Viewer @include(if: ${'$'}withCount) { unreadNotificationCount }
+  Page(page: ${'$'}page) {
+    pageInfo { hasNextPage }
+    notifications(type_in: ${'$'}types, resetNotificationCount: ${'$'}reset) {
+      ... on AiringNotification { id type episode media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on FollowingNotification { id type user { id name avatar { large medium } } createdAt }
+      ... on ActivityLikeNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityReplyNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityReplyLikeNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityReplySubscribedNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityMentionNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on ActivityMessageNotification { id type activityId user { id name avatar { large medium } } createdAt }
+      ... on RelatedMediaAdditionNotification { id type media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on MediaDataChangeNotification { id type reason media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on MediaMergeNotification { id type reason deletedMediaTitles media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on MediaDeletionNotification { id type reason deletedMediaTitle createdAt }
+      ... on ThreadCommentReplyNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentMentionNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentSubscribedNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadCommentLikeNotification { id type commentId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on ThreadLikeNotification { id type threadId thread { id title } user { id name avatar { large medium } } createdAt }
+      ... on MediaSubmissionUpdateNotification { id type status notes submittedTitle media { id title { userPreferred romaji english native } coverImage { extraLarge large medium color } } createdAt }
+      ... on StaffSubmissionUpdateNotification { id type status notes staff { id name { full userPreferred } image { large medium } } createdAt }
+      ... on CharacterSubmissionUpdateNotification { id type status notes character { id name { full userPreferred } image { large medium } } createdAt }
+    }
+  }
+}
+"""
+
+internal class NotificationsRepositoryImpl(
+    private val graphQLClient: AniListGraphQLClient,
+) : NotificationsRepository {
+
+    override suspend fun loadNotifications(
+        page: Int,
+        resetCount: Boolean,
+        filter: NotificationFilter,
+    ): NetworkResult<NotificationsPage> {
+        val types = filter.toAniListTypes()
+        val variables = buildJsonObject {
+            put("page", page)
+            put("reset", resetCount)
+            // The unread count is asked on page 1 always, not only when resetting:
+            // otherwise it is never known. A reset still forces it to 0 (see the
+            // holder), because AniList may resolve Viewer before the reset.
+            put("withCount", page == 1)
+            // Omit `types` entirely when unfiltered (ALL). Passing an explicit
+            // null to AniList's `type_in` makes the notifications resolver fail;
+            // an unprovided nullable variable is treated as an absent argument.
+            if (types != null) {
+                put("types", buildJsonArray { types.forEach { add(it) } })
+            }
+        }
+
+        val request = AniListGraphQLRequest(
+            query = NotificationsQuery,
+            variables = variables,
+            operationName = "Notifications",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(NotificationsResponseDto.serializer(), dataJson)
+        }.map { response ->
+            NotificationsPage(
+                notifications = response.page.notifications.mapNotNull { it?.toAppNotification() },
+                hasNextPage = response.page.pageInfo.hasNextPage,
+                unreadCount = response.viewer?.unreadNotificationCount,
+            )
+        }
+    }
+}

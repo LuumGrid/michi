@@ -1,10 +1,11 @@
-import org.gradle.api.DefaultTask
+    import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -16,6 +17,13 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+// Pin the generated Res package: without this it falls back to a
+// name-derived default that has already drifted once (stale outputs under
+// a different package broke incremental builds).
+compose.resources {
+    packageOfResClass = "com.luum.michi.app.resources"
+}
+
 abstract class GenerateAniListBuildConfigTask : DefaultTask() {
     @get:Input
     abstract val clientId: Property<String>
@@ -25,11 +33,11 @@ abstract class GenerateAniListBuildConfigTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/auth")
+        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app/core/auth/domain")
         packageDir.mkdirs()
         packageDir.resolve("AniListBuildConfig.kt").writeText(
             """
-            package com.luum.michi.app.core.auth
+            package com.luum.michi.app.core.auth.domain
 
             /**
              * Generated at build time from `local.properties`.
@@ -52,6 +60,13 @@ val anilistClientIdValue: String =
         ?.takeIf { it.isNotBlank() }
         ?: System.getenv("ANILIST_CLIENT_ID").orEmpty()
 
+// Test-only AniList token for the opt-in live suite (see `live` test package).
+// local.properties is gitignored; never commit or log this value.
+val anilistTestTokenValue: String =
+    (localProperties["anilistTestToken"] as? String)
+        ?.takeIf { it.isNotBlank() }
+        ?: System.getenv("ANILIST_TEST_TOKEN").orEmpty()
+
 // Fail fast when packaging a release without a client id, otherwise the shipped
 // binary would bake in an empty ClientId and every user would hit the
 // "Missing anilistClientId" screen. Debug builds are intentionally allowed to
@@ -73,7 +88,53 @@ val generateAniListBuildConfig = tasks.register<GenerateAniListBuildConfigTask>(
     outputDir.set(layout.buildDirectory.dir("generated/source/authConfig/commonMain/kotlin"))
 }
 
+abstract class GenerateMichiBuildConfigTask : DefaultTask() {
+    @get:Input
+    abstract val appVersion: Property<String>
+
+    @get:Input
+    abstract val appVersionCode: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val packageDir = outputDir.get().asFile.resolve("com/luum/michi/app")
+        packageDir.mkdirs()
+        packageDir.resolve("MichiBuildConfig.kt").writeText(
+            """
+            package com.luum.michi.app
+
+            /**
+             * Generated at build time from `gradle.properties`
+             * (`michiVersionName` / `michiVersionCode`). Do not edit by hand.
+             */
+            internal object MichiBuildConfig {
+                const val Version: String = "${appVersion.get()}"
+                const val VersionCode: Int = ${appVersionCode.get()}
+            }
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
+val generateMichiBuildConfig = tasks.register<GenerateMichiBuildConfigTask>("generateMichiBuildConfig") {
+    appVersion.set((project.findProperty("michiVersionName") as? String) ?: "1.0")
+    appVersionCode.set((project.findProperty("michiVersionCode") as? String) ?: "1")
+    outputDir.set(layout.buildDirectory.dir("generated/source/michiConfig/commonMain/kotlin"))
+}
+
 kotlin {
+    // NOTE: resource accessors (`Res.*`) are generated into
+    // `commonMainResourceAccessors` by the compose-resources plugin, but under
+    // androidMultiplatformLibrary that source set never reaches the Android
+    // compilation (verified via build logs: compileAndroidMain only looks
+    // for `androidMainResourceAccessors`, which is never generated). Do NOT
+    // re-register that dir into another source set: K2 fragments reject a
+    // file belonging to two modules. Icons avoid this entirely (Valkyrie
+    // `ImageVector` code, see ui/icons); fonts use a hand-written mirror
+    // (see LocalFonts in ui/theme/Typography.kt).
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -102,14 +163,14 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.coil.network.okhttp)
             implementation(libs.androidx.browser)
+            implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.coil.network.okhttp)
         }
         commonMain {
             kotlin.srcDir(generateAniListBuildConfig)
+            kotlin.srcDir(generateMichiBuildConfig)
             dependencies {
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.foundation)
@@ -117,15 +178,15 @@ kotlin {
                 implementation(libs.compose.materialIconsCore)
                 implementation(libs.compose.ui)
                 implementation(libs.compose.components.resources)
-                implementation(libs.compose.uiToolingPreview)
-                implementation(libs.androidx.lifecycle.viewmodelCompose)
-                implementation(libs.androidx.lifecycle.runtimeCompose)
-                implementation(libs.coil.compose)
+                implementation(libs.material.kolor)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinxJson)
+                implementation(libs.qrose)
+                implementation(libs.coil.compose)
             }
         }
         iosMain.dependencies {
@@ -133,16 +194,12 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.ktor.client.mock)
         }
     }
 }
 
-compose.resources {
-    publicResClass = true
-    packageOfResClass = "com.luum.michi.app.resources"
-    generateResClass = always
+tasks.withType<Test> {
+    environment("ANILIST_TEST_TOKEN", anilistTestTokenValue)
 }
 
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
-}

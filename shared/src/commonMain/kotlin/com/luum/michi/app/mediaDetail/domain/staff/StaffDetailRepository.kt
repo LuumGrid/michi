@@ -1,0 +1,15 @@
+package com.luum.michi.app.mediaDetail.domain.staff
+
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.model.Page
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.mediaDetail.domain.staff.model.StaffDetail
+import com.luum.michi.app.mediaDetail.domain.staff.model.StaffCharacterItem
+import com.luum.michi.app.mediaDetail.domain.staff.model.StaffMediaItem
+
+internal interface StaffDetailRepository {
+    suspend fun loadDetail(id: Int, strings: LanguageStrings): NetworkResult<StaffDetail>
+    suspend fun loadMediaPage(id: Int, page: Int): NetworkResult<Page<StaffMediaItem>>
+    suspend fun loadCharacterPage(id: Int, page: Int): NetworkResult<Page<StaffCharacterItem>>
+    suspend fun toggleFavourite(id: Int): NetworkResult<Unit>
+}

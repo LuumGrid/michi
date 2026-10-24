@@ -1,0 +1,242 @@
+package com.luum.michi.app.settings.repository
+
+import com.luum.michi.app.core.network.domain.AniListGraphQLClient
+import com.luum.michi.app.settings.domain.SettingsRepository
+import com.luum.michi.app.settings.domain.model.SettingsData
+import com.luum.michi.app.core.network.domain.AniListGraphQLRequest
+import com.luum.michi.app.core.network.repository.AniListJson
+import com.luum.michi.app.core.network.domain.NetworkResult
+import com.luum.michi.app.core.network.domain.map
+import com.luum.michi.app.settings.domain.model.ListSort
+import com.luum.michi.app.settings.domain.model.NotificationPreferences
+import com.luum.michi.app.core.medialist.domain.ScoreFormat
+import com.luum.michi.app.settings.domain.model.StaffNameLanguage
+import com.luum.michi.app.settings.domain.model.TitleLanguage
+import com.luum.michi.app.core.medialist.domain.parseScoreFormat
+import com.luum.michi.app.settings.domain.model.parseTitleLanguage
+import com.luum.michi.app.core.model.NotificationBucket
+import com.luum.michi.app.core.model.apiTypes
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+
+private const val UserSettingsQuery = """
+query UserSettings {
+  Viewer {
+    options { titleLanguage staffNameLanguage displayAdultContent airingNotifications notificationOptions { type enabled } }
+    mediaListOptions { scoreFormat rowOrder animeList { splitCompletedSectionByFormat advancedScoringEnabled advancedScoring } mangaList { splitCompletedSectionByFormat advancedScoring } }
+  }
+}
+"""
+
+private const val UpdateUserMutation = """
+mutation UpdateUser(${'$'}titleLanguage: UserTitleLanguage, ${'$'}staffNameLanguage: UserStaffNameLanguage, ${'$'}displayAdultContent: Boolean, ${'$'}airingNotifications: Boolean, ${'$'}scoreFormat: ScoreFormat, ${'$'}rowOrder: String, ${'$'}notificationOptions: [NotificationOptionInput], ${'$'}splitCompletedAnime: Boolean, ${'$'}splitCompletedManga: Boolean, ${'$'}advancedScoringEnabled: Boolean) {
+  UpdateUser(titleLanguage: ${'$'}titleLanguage, staffNameLanguage: ${'$'}staffNameLanguage, displayAdultContent: ${'$'}displayAdultContent, airingNotifications: ${'$'}airingNotifications, scoreFormat: ${'$'}scoreFormat, rowOrder: ${'$'}rowOrder, notificationOptions: ${'$'}notificationOptions, animeListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedAnime, advancedScoringEnabled: ${'$'}advancedScoringEnabled }, mangaListOptions: { splitCompletedSectionByFormat: ${'$'}splitCompletedManga }) { id }
+}
+"""
+
+@Serializable
+private data class UserSettingsResponseDto(
+    @SerialName("Viewer") val viewer: ViewerSettingsDto? = null,
+)
+
+@Serializable
+private data class ViewerSettingsDto(
+    val options: ViewerOptionsDto? = null,
+    val mediaListOptions: ViewerMediaListOptionsDto? = null,
+)
+
+@Serializable
+private data class ViewerOptionsDto(
+    val titleLanguage: String? = null,
+    val staffNameLanguage: String? = null,
+    val displayAdultContent: Boolean? = null,
+    val airingNotifications: Boolean? = null,
+    val notificationOptions: List<ViewerNotificationOptionDto> = emptyList(),
+)
+
+@Serializable
+private data class ViewerNotificationOptionDto(
+    val type: String? = null,
+    val enabled: Boolean = false,
+)
+
+@Serializable
+private data class ViewerMediaListOptionsDto(
+    val scoreFormat: String? = null,
+    val rowOrder: String? = null,
+    val animeList: ViewerAnimeListOptionsDto? = null,
+    val mangaList: ViewerMangaListOptionsDto? = null,
+)
+
+@Serializable
+private data class ViewerAnimeListOptionsDto(
+    val splitCompletedSectionByFormat: Boolean? = null,
+    val advancedScoringEnabled: Boolean? = null,
+    val advancedScoring: List<String>? = null,
+)
+
+@Serializable
+private data class ViewerMangaListOptionsDto(
+    val splitCompletedSectionByFormat: Boolean? = null,
+    val advancedScoring: List<String>? = null,
+)
+
+@Serializable
+private data class UpdateUserResponseDto(
+    @SerialName("UpdateUser") val user: UpdateUserPayloadDto? = null,
+)
+
+@Serializable
+private data class UpdateUserPayloadDto(
+    val id: Int? = null,
+)
+
+private fun TitleLanguage.toApiValue(): String = when (this) {
+    TitleLanguage.ROMAJI -> "ROMAJI"
+    TitleLanguage.ENGLISH -> "ENGLISH"
+    TitleLanguage.NATIVE -> "NATIVE"
+}
+
+private fun StaffNameLanguage.toApiValue(): String = when (this) {
+    StaffNameLanguage.ROMAJI_WESTERN -> "ROMAJI_WESTERN"
+    StaffNameLanguage.ROMAJI -> "ROMAJI"
+    StaffNameLanguage.NATIVE -> "NATIVE"
+}
+
+private fun String?.toStaffNameLanguage(): StaffNameLanguage = when (this) {
+    "ROMAJI" -> StaffNameLanguage.ROMAJI
+    "NATIVE" -> StaffNameLanguage.NATIVE
+    else -> StaffNameLanguage.ROMAJI_WESTERN
+}
+
+private fun ScoreFormat.toApiValue(): String = when (this) {
+    ScoreFormat.POINT_100 -> "POINT_100"
+    ScoreFormat.POINT_10_DECIMAL -> "POINT_10_DECIMAL"
+    ScoreFormat.POINT_10 -> "POINT_10"
+    ScoreFormat.POINT_5_STARS -> "POINT_5"
+    ScoreFormat.POINT_3_SMILEYS -> "POINT_3"
+}
+
+// AniList offers no "release date" rowOrder, so it is not offered in the UI;
+// an unrecognized rowOrder from the server maps to UPDATED on load.
+private fun ListSort.toApiRowOrder(): String = when (this) {
+    ListSort.TITLE -> "title"
+    ListSort.SCORE -> "score"
+    ListSort.UPDATED -> "updatedAt"
+    ListSort.ADDED -> "id"
+}
+
+private fun String?.toListSort(): ListSort = when (this) {
+    "title" -> ListSort.TITLE
+    "score" -> ListSort.SCORE
+    "id" -> ListSort.ADDED
+    else -> ListSort.UPDATED
+}
+
+/** AniList NotificationType values per [NotificationPreferences] bucket, derived from the shared [NotificationBucket] source. */
+private val AiringTypes get() = NotificationBucket.AIRING.apiTypes
+private val ActivityTypes get() = NotificationBucket.ACTIVITY.apiTypes
+private val FollowingTypes get() = NotificationBucket.FOLLOWING.apiTypes
+private val ForumTypes get() = NotificationBucket.FORUM.apiTypes
+private val MessagesTypes get() = NotificationBucket.MESSAGE.apiTypes
+private val MediaTypes get() = NotificationBucket.MEDIA.apiTypes
+
+private fun ViewerOptionsDto?.toNotificationPreferences(): NotificationPreferences {
+    val byType = this?.notificationOptions.orEmpty().associate { it.type to it.enabled }
+    // Defaults live on NotificationPreferences itself, never repeated here.
+    val defaults = NotificationPreferences()
+    fun bucketEnabled(types: List<String>, default: Boolean): Boolean {
+        if (byType.isEmpty()) return default
+        val relevant = types.mapNotNull { byType[it] }
+        if (relevant.isEmpty()) return default
+        return relevant.any { it }
+    }
+    return NotificationPreferences(
+        airing = this?.airingNotifications ?: bucketEnabled(AiringTypes, defaults.airing),
+        activity = bucketEnabled(ActivityTypes, defaults.activity),
+        following = bucketEnabled(FollowingTypes, defaults.following),
+        forum = bucketEnabled(ForumTypes, defaults.forum),
+        messages = bucketEnabled(MessagesTypes, defaults.messages),
+        media = bucketEnabled(MediaTypes, defaults.media),
+    )
+}
+
+private fun notificationOptionsPayload(preferences: NotificationPreferences): List<Pair<String, Boolean>> =
+    buildList {
+        AiringTypes.forEach { add(it to preferences.airing) }
+        ActivityTypes.forEach { add(it to preferences.activity) }
+        FollowingTypes.forEach { add(it to preferences.following) }
+        ForumTypes.forEach { add(it to preferences.forum) }
+        MessagesTypes.forEach { add(it to preferences.messages) }
+        MediaTypes.forEach { add(it to preferences.media) }
+    }
+
+internal class SettingsRepositoryImpl(
+    private val graphQLClient: AniListGraphQLClient,
+) : SettingsRepository {
+
+    override suspend fun loadSettings(): NetworkResult<SettingsData> {
+        val request = AniListGraphQLRequest(
+            query = UserSettingsQuery,
+            operationName = "UserSettings",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(UserSettingsResponseDto.serializer(), dataJson)
+        }.map { response ->
+            val viewer = response.viewer
+            val options = viewer?.options
+            val listOptions = viewer?.mediaListOptions
+            SettingsData(
+                titleLanguage = parseTitleLanguage(options?.titleLanguage),
+                staffNameLanguage = options?.staffNameLanguage.toStaffNameLanguage(),
+                scoreFormat = parseScoreFormat(listOptions?.scoreFormat),
+                displayAdultContent = options?.displayAdultContent ?: false,
+                listSort = listOptions?.rowOrder.toListSort(),
+                splitCompletedAnime = listOptions?.animeList?.splitCompletedSectionByFormat ?: true,
+                splitCompletedManga = listOptions?.mangaList?.splitCompletedSectionByFormat ?: false,
+                advancedScoring = listOptions?.animeList?.advancedScoringEnabled ?: false,
+                advancedScoringAnime = listOptions?.animeList?.advancedScoring.orEmpty().filter { it.isNotBlank() },
+                advancedScoringManga = listOptions?.mangaList?.advancedScoring.orEmpty().filter { it.isNotBlank() },
+                notifications = options.toNotificationPreferences(),
+            )
+        }
+    }
+
+    override suspend fun saveSettings(data: SettingsData): NetworkResult<Unit> {
+        val variables = buildJsonObject {
+            put("titleLanguage", data.titleLanguage.toApiValue())
+            put("staffNameLanguage", data.staffNameLanguage.toApiValue())
+            put("displayAdultContent", data.displayAdultContent)
+            put("airingNotifications", data.notifications.airing)
+            put("scoreFormat", data.scoreFormat.toApiValue())
+            put("rowOrder", data.listSort.toApiRowOrder())
+            put("splitCompletedAnime", data.splitCompletedAnime)
+            put("splitCompletedManga", data.splitCompletedManga)
+            put("advancedScoringEnabled", data.advancedScoring)
+            putJsonArray("notificationOptions") {
+                notificationOptionsPayload(data.notifications).forEach { (type, enabled) ->
+                    add(
+                        buildJsonObject {
+                            put("type", type)
+                            put("enabled", enabled)
+                        },
+                    )
+                }
+            }
+        }
+
+        val request = AniListGraphQLRequest(
+            query = UpdateUserMutation,
+            variables = variables,
+            operationName = "UpdateUser",
+        )
+
+        return graphQLClient.execute(request) { dataJson ->
+            AniListJson.decodeFromJsonElement(UpdateUserResponseDto.serializer(), dataJson)
+        }.map { }
+    }
+}

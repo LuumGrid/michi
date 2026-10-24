@@ -1,0 +1,49 @@
+package com.luum.michi.app.mediaList.repository
+
+import com.luum.michi.app.core.media.repository.dto.FuzzyDateDto
+import com.luum.michi.app.core.media.repository.dto.MediaDto
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * Response shape for the `MediaListCollection` query — the authenticated user's
+ * full anime or manga list grouped by status.
+ */
+@Serializable
+internal data class MediaListCollectionResponseDto(
+    @SerialName("MediaListCollection")
+    val collection: MediaListCollectionDto,
+)
+
+@Serializable
+internal data class MediaListCollectionDto(
+    val lists: List<MediaListGroupDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaListGroupDto(
+    val isCustomList: Boolean = false,
+    val entries: List<MediaListEntryDto> = emptyList(),
+)
+
+@Serializable
+internal data class MediaListEntryDto(
+    val id: Int,
+    val status: String? = null,
+    val score: Double = 0.0,
+    val progress: Int = 0,
+    val progressVolumes: Int? = null,
+    val updatedAt: Long? = null,
+    val startedAt: FuzzyDateDto? = null,
+    val completedAt: FuzzyDateDto? = null,
+    val priority: Int? = null,
+    val media: MediaDto,
+)
+
+internal fun FuzzyDateDto?.toComparableInt(): Int {
+    if (this == null) return 0
+    val y = year ?: 0
+    val m = month ?: 0
+    val d = day ?: 0
+    return y * 10000 + m * 100 + d
+}

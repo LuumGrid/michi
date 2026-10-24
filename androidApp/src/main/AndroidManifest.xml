@@ -2,17 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".MichiApplication"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="Michi"
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.Michi">
+        <!-- Compose redraws on these changes by itself (theme switch, rotation);
+             recreating the activity would drop the in-memory navigation state. -->
         <activity
+            android:configChanges="uiMode|orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTask"
             android:name=".MainActivity">
@@ -31,6 +36,66 @@
                     android:scheme="michi"
                     android:host="oauth"
                     android:path="/callback" />
+            </intent-filter>
+            <!-- AniList entity links (anime/manga/character/staff/studio) open
+                 the app's detail page. Not verifiable (we don't own anilist.co),
+                 so Android offers the app in the "open with" chooser next to the
+                 browser. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/anime/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/manga/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/character/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/staff/" />
+                <data
+                    android:scheme="https"
+                    android:host="anilist.co"
+                    android:pathPrefix="/studio/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/anime/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/manga/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/character/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/staff/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.anilist.co"
+                    android:pathPrefix="/studio/" />
+            </intent-filter>
+            <!-- Share target: sharing an AniList link (Share → Michi) captures
+                 it reliably, unlike unverifiable web links. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
     </application>

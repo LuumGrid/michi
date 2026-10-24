@@ -1,0 +1,430 @@
+package com.luum.michi.app.mediaDetail.ui.media
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.luum.michi.app.core.language.domain.LanguageStrings
+import com.luum.michi.app.core.language.domain.networkErrorMessage
+import com.luum.michi.app.core.medialist.domain.MediaListStatus
+import com.luum.michi.app.core.medialist.domain.label
+import com.luum.michi.app.mediaDetail.ui.media.components.EditorCounterField
+import com.luum.michi.app.mediaDetail.ui.media.components.StatusChipRail
+import com.luum.michi.app.mediaDetail.ui.media.state.MediaEntryEditorState
+import com.luum.michi.app.ui.components.AppButton
+import com.luum.michi.app.ui.components.ButtonEmphasis
+import com.luum.michi.app.ui.components.DatePickerField
+import com.luum.michi.app.ui.components.SheetTextField
+import com.luum.michi.app.ui.components.MessagePanel
+import com.luum.michi.app.ui.components.ModalSheet
+import com.luum.michi.app.ui.components.OptionGroup
+import com.luum.michi.app.ui.components.ToggleRow
+import com.luum.michi.app.ui.components.ToolbarAction
+import com.luum.michi.app.ui.icons.AppIcons
+import com.luum.michi.app.ui.language.Strings
+
+/**
+ * Full entry editor as a bottom sheet (not a screen): status, progress,
+ * score, notes, repeat, priority, flags, dates, favourite, save and
+ * delete. Takes the holder (like SettingsScreen takes SettingsState) —
+ * primitives would be a 30-param call. Applies nothing until Save;
+ * the lists refresh on [onSaved]/[onDeleted]. Closing with unsaved edits
+ * asks first.
+ */
+@Composable
+internal fun MediaEntryEditorSheet(
+    editor: MediaEntryEditorState,
+    formatScore: (Float) -> String,
+    parseScore: (String) -> Float?,
+    scoreSuffix: String?,
+    scoreStep: Float,
+    onSaved: () -> Unit,
+    onDeleted: () -> Unit,
+    onDismiss: () -> Unit,
+    strings: LanguageStrings = Strings.current,
+    modifier: Modifier = Modifier,
+) {
+    var confirmDelete by remember { mutableStateOf(false) }
+    var confirmDiscard by remember { mutableStateOf(false) }
+    val busy = editor.isSaving || editor.isDeleting || editor.isLoadingDetail
+    // Every close path (X, swipe, scrim, back) funnels here.
+    fun requestClose() {
+        if (editor.hasChanges) confirmDiscard = true else onDismiss()
+    }
+    ModalSheet(
+        // No title: the media title opens the body, actions float right.
+        title = "",
+        dismissLabel = strings.dismissAction,
+        onDismiss = { requestClose() },
+        modifier = modifier,
+        fullscreen = true,
+        dismissBlocked = editor.hasChanges,
+        onDismissBlocked = { confirmDiscard = true },
+        headerActions = listOf(
+            ToolbarAction(
+                id = ACTION_FAVOURITE,
+                icon = if (editor.isFavourite) {
+                    AppIcons.FavoriteFilled
+                } else {
+                    AppIcons.Favorite
+                },
+                contentDescription = strings.favouriteLabel,
+            ),
+        ),
+        onHeaderAction = { id ->
+            if (id == ACTION_FAVOURITE) editor.toggleFavourite()
+        },
+        footer = {
+            if (!editor.isLoadingDetail && editor.data != null) {
+                if (editor.isExisting) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        AppButton(
+                            label = strings.mediaDetailEditorDeleteAction,
+                            onClick = {
+                                // A previous save failure must not show up on
+                                // the delete confirmation sheet.
+                                editor.clearError()
+                                confirmDelete = true
+                            },
+                            emphasis = ButtonEmphasis.Secondary,
+                            enabled = !busy,
+                            contentColor = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    AppButton(
+                        label = strings.saveAction,
+                        onClick = { editor.save(onSaved) },
+                        emphasis = ButtonEmphasis.Primary,
+                        enabled = !busy && editor.isDirty,
+                    )
+                }
+            }
+        },
+    ) {
+        when {
+            editor.isLoadingDetail -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            editor.loadError != null -> {
+                MessagePanel(
+                    title = strings.mediaDetailErrorLabel,
+                    message = editor.loadError?.let { strings.networkErrorMessage(it) },
+                    icon = AppIcons.Warning,
+                    actionLabel = strings.retryAction,
+                    onAction = { editor.load() },
+                )
+            }
+            else -> {
+                EditorBody(
+                    editor = editor,
+                    formatScore = formatScore,
+                    parseScore = parseScore,
+                    scoreSuffix = scoreSuffix,
+                    scoreStep = scoreStep,
+                    strings = strings,
+                )
+                if (editor.error != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = editor.error?.let { strings.networkErrorMessage(it) }.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        ModalSheet(
+            title = strings.deleteEntryConfirmTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { confirmDelete = false },
+            footer = {
+                Box(modifier = Modifier.weight(1f)) {
+                    AppButton(
+                        label = strings.confirmDeleteAction,
+                        onClick = {
+                            editor.delete {
+                                confirmDelete = false
+                                onDeleted()
+                            }
+                        },
+                        emphasis = ButtonEmphasis.Secondary,
+                        enabled = !busy,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+        ) {
+            Text(
+                text = strings.deleteEntryConfirmMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            // The failed delete stays on THIS sheet (the editor's own error is
+            // painted behind it): same compact style as the editor's. The button
+            // above retries, and delete() clears the error when it starts.
+            editor.error?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = strings.networkErrorMessage(error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+
+    if (confirmDiscard) {
+        ModalSheet(
+            title = strings.discardChangesConfirmTitle,
+            dismissLabel = strings.dismissAction,
+            onDismiss = { confirmDiscard = false },
+            footer = {
+                Box(modifier = Modifier.weight(1f)) {
+                    AppButton(
+                        label = strings.keepEditingAction,
+                        onClick = { confirmDiscard = false },
+                        emphasis = ButtonEmphasis.Secondary,
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    AppButton(
+                        label = strings.discardChangesConfirmAction,
+                        onClick = {
+                            confirmDiscard = false
+                            onDismiss()
+                        },
+                        emphasis = ButtonEmphasis.Secondary,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+        ) {
+            Text(
+                text = strings.discardChangesConfirmMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditorBody(
+    editor: MediaEntryEditorState,
+    formatScore: (Float) -> String,
+    parseScore: (String) -> Float?,
+    scoreSuffix: String?,
+    scoreStep: Float,
+    strings: LanguageStrings,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = editor.data?.title.orEmpty(),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = strings.statusLabel,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        StatusChipRail(
+            options = MediaListStatus.entries,
+            labels = MediaListStatus.entries.map { it.label(strings, editor.isManga) },
+            selected = editor.status,
+            onSelect = { editor.updateStatus(it) },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        if (editor.isManga) {
+            IntCounterField(
+                label = strings.chaptersLabel,
+                value = editor.progress,
+                max = editor.maxProgress,
+                onSet = { editor.updateProgress(it) },
+                onDecrement = { editor.updateProgress(editor.progress - 1) },
+                onIncrement = { editor.incrementProgress() },
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            IntCounterField(
+                label = strings.volumesLabel,
+                value = editor.progressVolumes,
+                max = editor.maxProgressVolumes,
+                onSet = { editor.updateProgressVolumes(it) },
+                onDecrement = { editor.updateProgressVolumes(editor.progressVolumes - 1) },
+                onIncrement = { editor.incrementProgressVolumes() },
+            )
+        } else {
+            IntCounterField(
+                label = strings.mediaDetailEpisodesLabel,
+                value = editor.progress,
+                max = editor.maxProgress,
+                onSet = { editor.updateProgress(it) },
+                onDecrement = { editor.updateProgress(editor.progress - 1) },
+                onIncrement = { editor.incrementProgress() },
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        EditorCounterField(
+            label = strings.scoreLabel,
+            displayValue = formatScore(editor.score),
+            suffix = scoreSuffix,
+            onCommit = { raw ->
+                parseScore(raw)?.let { editor.updateScore(it) }
+            },
+            onDecrement = {
+                editor.updateScore((editor.score - scoreStep).coerceAtLeast(0f))
+            },
+            onIncrement = { editor.updateScore(editor.score + scoreStep) },
+            decrementEnabled = editor.score > 0f,
+        )
+        if (editor.showAdvancedScoring) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = strings.settingsAdvancedScoringTitle,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            editor.advancedScoringNames.forEachIndexed { index, name ->
+                Spacer(modifier = Modifier.height(8.dp))
+                val value = editor.advancedScoreValues.getOrNull(index) ?: 0f
+                EditorCounterField(
+                    label = name,
+                    displayValue = formatScore(value),
+                    suffix = scoreSuffix,
+                    onCommit = { raw ->
+                        parseScore(raw)?.let { editor.updateAdvancedScore(index, it) }
+                    },
+                    onDecrement = { editor.updateAdvancedScore(index, value - ADVANCED_SCORE_STEP) },
+                    onIncrement = { editor.updateAdvancedScore(index, value + ADVANCED_SCORE_STEP) },
+                    decrementEnabled = value > 0f,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        DatePickerField(
+            label = strings.startedLabel,
+            millis = editor.startedAtMillis,
+            onConfirm = { editor.updateStartedAt(it) },
+            onClear = { editor.updateStartedAt(null) },
+            strings = strings,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        DatePickerField(
+            label = strings.completedLabel,
+            millis = editor.completedAtMillis,
+            onConfirm = { editor.updateCompletedAt(it) },
+            onClear = { editor.updateCompletedAt(null) },
+            strings = strings,
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        IntCounterField(
+            label = strings.repeatLabel,
+            value = editor.repeat,
+            max = null,
+            onSet = { editor.updateRepeat(it) },
+            onDecrement = { editor.decrementRepeat() },
+            onIncrement = { editor.incrementRepeat() },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        IntCounterField(
+            label = strings.priorityLabel,
+            value = editor.priority,
+            max = null,
+            onSet = { editor.updatePriority(it) },
+            onDecrement = { editor.decrementPriority() },
+            onIncrement = { editor.incrementPriority() },
+            incrementEnabled = editor.priority < 5,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        OptionGroup(title = null) {
+            ToggleRow(
+                title = strings.privateLabel,
+                checked = editor.isPrivate,
+                onCheckedChange = { editor.updatePrivate(it) },
+                divider = false,
+            )
+            ToggleRow(
+                title = strings.hiddenFromStatusListsLabel,
+                checked = editor.hiddenFromStatusLists,
+                onCheckedChange = { editor.updateHiddenFromStatusLists(it) },
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = strings.notesLabel,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        SheetTextField(
+            value = editor.notes,
+            onValueChange = { editor.updateNotes(it) },
+            minLines = 3,
+            maxLines = 6,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * Integer [EditorCounterField]: the value as-is, `"/max"` when there is a max,
+ * the draft parsed as an int (ignored when it is not a number) and the − stepper
+ * off at zero. The callbacks stay the editor's own (increment/decrement), only
+ * the wiring is shared.
+ */
+@Composable
+private fun IntCounterField(
+    label: String,
+    value: Int,
+    max: Int?,
+    onSet: (Int) -> Unit,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
+    incrementEnabled: Boolean = true,
+) {
+    EditorCounterField(
+        label = label,
+        displayValue = value.toString(),
+        suffix = max?.let { "/$it" },
+        onCommit = { raw -> raw.toIntOrNull()?.let(onSet) },
+        onDecrement = onDecrement,
+        onIncrement = onIncrement,
+        decrementEnabled = value > 0,
+        incrementEnabled = incrementEnabled,
+    )
+}
+
+private const val ACTION_FAVOURITE = "favourite"
+
+// Advanced rows always draft in 0–10 (server scale is fixed 0–100),
+// so their step is fixed too — unlike the main row, which steps in
+// the user's score format via [scoreStep].
+private const val ADVANCED_SCORE_STEP = 0.5f
