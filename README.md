@@ -18,17 +18,13 @@ It is **unofficial** and **non-commercial**, made for the AniList community, fre
 
 ## Screenshots
 
-| Anime list | Manga list | Discover | Calendar |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/03-manga-manga.webp" width="200" alt="Manga list (Reading)" /> | <img src="docs/screenshots/04-discover.webp" width="200" alt="Discover, trending and seasonal" /> | <img src="docs/screenshots/05-calendar.webp" width="200" alt="Airing calendar" /> |
-
-| Profile | Notifications | Completed list |
+| Anime list | Discover | Search |
 |:---:|:---:|:---:|
-| <img src="docs/screenshots/07-profile.webp" width="200" alt="Profile with favorites" /> | <img src="docs/screenshots/06-notifications.webp" width="200" alt="Notifications feed" /> | <img src="docs/screenshots/02-anime-completed.webp" width="200" alt="Anime list (Completed TV)" /> |
+| <img src="docs/screenshots/01-anime-watching.webp" width="200" alt="Anime list (Watching)" /> | <img src="docs/screenshots/02-discover.webp" width="200" alt="Discover, seasonal anime" /> | <img src="docs/screenshots/03-search.webp" width="200" alt="Search results across media and people" /> |
 
-| Media detail | Character detail | Staff detail | Studio detail |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/08-media-detail.webp" width="200" alt="Media detail: hero, stats and synopsis" /> | <img src="docs/screenshots/09-character-detail.webp" width="200" alt="Character detail with voice actors" /> | <img src="docs/screenshots/10-staff-detail.webp" width="200" alt="Staff detail with roles" /> | <img src="docs/screenshots/11-studio-detail.webp" width="200" alt="Studio detail with works grouped by year" /> |
+| Calendar | Media detail | Notifications |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/04-calendar.webp" width="200" alt="Airing calendar" /> | <img src="docs/screenshots/05-media-detail.webp" width="200" alt="Media detail: hero, stats and synopsis" /> | <img src="docs/screenshots/06-notifications.webp" width="200" alt="Notifications feed" /> |
 
 ## Features
 
